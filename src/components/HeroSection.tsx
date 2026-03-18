@@ -10,29 +10,17 @@ import vf7Street from "@/assets/vf7-street.jpg";
 const slides = [
   {
     image: homepageHero,
-    subtitle: "Bihar's First Authorized Dealer",
-    title: "VinFast Electric SUVs",
-    titleAccent: "Now in Bihar",
-    description:
-      "Experience the VF Series — Design You Can Feel. Book your test drive with Patliputra Auto today.",
+    subtitle: "Bihar's First Authorized VinFast Dealer — Book Your Test Drive Today",
     objectPosition: "center 60%",
   },
   {
     image: vfSeriesBanner,
-    subtitle: "Introducing the VF Series",
-    title: "Design You",
-    titleAccent: "Can Feel",
-    description:
-      "Pre-booking now open for VF 6 & VF 7. Premium electric SUVs with 5-star Bharat NCAP safety.",
+    subtitle: "Introducing the VF Series — Design You Can Feel. 5-Star Safety.",
     objectPosition: "center 55%",
   },
   {
     image: vf7Street,
-    subtitle: "VinFast VF 7",
-    title: "Bold. Intelligent.",
-    titleAccent: "Unstoppable.",
-    description:
-      "349 HP. 431 km range. Level 2+ ADAS. The premium electric SUV that redefines performance.",
+    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
     objectPosition: "center 50%",
   },
 ];
@@ -84,7 +72,7 @@ const HeroSection = () => {
         >
           <img
             src={slide.image}
-            alt={slide.title}
+            alt={slide.subtitle}
             className="w-full h-full object-cover"
             style={{ objectPosition: slide.objectPosition }}
             loading="eager"
@@ -100,24 +88,14 @@ const HeroSection = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
             className="max-w-2xl"
           >
-            <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.25em] mb-4 drop-shadow-lg">
+            <p className="text-foreground/80 font-display font-medium text-sm sm:text-base max-w-lg mb-6 leading-relaxed drop-shadow-lg">
               {slides[current].subtitle}
-            </p>
-            <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-6 drop-shadow-xl">
-              {slides[current].title}
-              <br />
-              <span className="text-gradient-red">
-                {slides[current].titleAccent}
-              </span>
-            </h1>
-            <p className="text-foreground/70 text-base sm:text-lg max-w-lg mb-8 leading-relaxed drop-shadow-md">
-              {slides[current].description}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/test-drive">
