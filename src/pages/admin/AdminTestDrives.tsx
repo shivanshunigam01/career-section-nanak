@@ -1,0 +1,150 @@
+import { useState } from "react";
+import { mockTestDrives, type TestDriveBooking } from "@/data/mockData";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Clock } from "lucide-react";
+
+const statusColors: Record<string, string> = {
+  Pending: "bg-amber-400/10 text-amber-400",
+  Confirmed: "bg-green-400/10 text-green-400",
+  Completed: "bg-primary/10 text-primary",
+  Cancelled: "bg-destructive/10 text-destructive",
+  Rescheduled: "bg-purple-400/10 text-purple-400",
+};
+
+const AdminTestDrives = () => {
+  const [bookings, setBookings] = useState<TestDriveBooking[]>(mockTestDrives);
+  const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [editBooking, setEditBooking] = useState<TestDriveBooking | null>(null);
+  const [showForm, setShowForm] = useState(false);
+
+  const emptyBooking: TestDriveBooking = { id: "", leadId: "", customerName: "", mobile: "", model: "VF 7", preferredDate: "", preferredTime: "", branch: "Patna Showroom", status: "Pending", assignedExecutive: "", feedback: "", createdAt: new Date().toISOString().split("T")[0] };
+
+  const filtered = bookings.filter(b => {
+    const matchSearch = b.customerName.toLowerCase().includes(search.toLowerCase()) || b.mobile.includes(search);
+    const matchStatus = filterStatus === "all" || b.status === filterStatus;
+    return matchSearch && matchStatus;
+  });
+
+  const handleSave = (booking: TestDriveBooking) => {
+    if (booking.id) {
+      setBookings(prev => prev.map(b => b.id === booking.id ? booking : b));
+    } else {
+      setBookings(prev => [...prev, { ...booking, id: `TD${String(prev.length + 1).padStart(3, "0")}` }]);
+    }
+    setShowForm(false);
+    setEditBooking(null);
+  };
+
+  const handleDelete = (id: string) => setBookings(prev => prev.filter(b => b.id !== id));
+
+  const quickStatus = (id: string, status: TestDriveBooking["status"]) => {
+    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Test Drives</h1>
+          <p className="text-muted-foreground text-sm">{bookings.length} total bookings</p>
+        </div>
+        <Button onClick={() => { setEditBooking(emptyBooking); setShowForm(true); }} className="bg-primary text-primary-foreground">
+          <Plus className="w-4 h-4 mr-2" /> Add Booking
+        </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search customer..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50" />
+        </div>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-full sm:w-48 bg-secondary/50"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            {["Pending", "Confirmed", "Completed", "Cancelled", "Rescheduled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Cards View */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filtered.map((td) => (
+          <Card key={td.id} className="bg-card border-border/50 p-4 space-y-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-medium text-foreground">{td.customerName}</p>
+                <p className="text-xs text-muted-foreground">{td.mobile}</p>
+              </div>
+              <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${statusColors[td.status]}`}>{td.status}</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div><span className="text-muted-foreground">Model:</span> <span className="text-foreground">{td.model}</span></div>
+              <div><span className="text-muted-foreground">Date:</span> <span className="text-foreground">{td.preferredDate}</span></div>
+              <div><span className="text-muted-foreground">Time:</span> <span className="text-foreground">{td.preferredTime}</span></div>
+              <div><span className="text-muted-foreground">Branch:</span> <span className="text-foreground">{td.branch}</span></div>
+              <div className="col-span-2"><span className="text-muted-foreground">Executive:</span> <span className="text-foreground">{td.assignedExecutive || "Unassigned"}</span></div>
+            </div>
+            {td.feedback && <p className="text-xs text-muted-foreground italic border-t border-border/30 pt-2">"{td.feedback}"</p>}
+            <div className="flex items-center gap-1 pt-1 border-t border-border/30">
+              <button onClick={() => quickStatus(td.id, "Confirmed")} title="Confirm" className="p-1.5 rounded hover:bg-green-400/10 text-muted-foreground hover:text-green-400"><CheckCircle className="w-3.5 h-3.5" /></button>
+              <button onClick={() => quickStatus(td.id, "Completed")} title="Complete" className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"><Clock className="w-3.5 h-3.5" /></button>
+              <button onClick={() => quickStatus(td.id, "Cancelled")} title="Cancel" className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><XCircle className="w-3.5 h-3.5" /></button>
+              <div className="flex-1" />
+              <button onClick={() => { setEditBooking(td); setShowForm(true); }} className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
+              <button onClick={() => handleDelete(td.id)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+            </div>
+          </Card>
+        ))}
+      </div>
+      {filtered.length === 0 && <p className="text-center text-muted-foreground py-8 text-sm">No test drive bookings found</p>}
+
+      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditBooking(null); }}>
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display">{editBooking?.id ? "Edit Booking" : "New Booking"}</DialogTitle></DialogHeader>
+          {editBooking && <TestDriveForm booking={editBooking} onSave={handleSave} onCancel={() => { setShowForm(false); setEditBooking(null); }} />}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+const TestDriveForm = ({ booking, onSave, onCancel }: { booking: TestDriveBooking; onSave: (b: TestDriveBooking) => void; onCancel: () => void }) => {
+  const [form, setForm] = useState(booking);
+  const update = (key: keyof TestDriveBooking, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5"><Label className="text-xs">Customer Name</Label><Input value={form.customerName} onChange={e => update("customerName", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5"><Label className="text-xs">Mobile</Label><Input value={form.mobile} onChange={e => update("mobile", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Model</Label>
+          <Select value={form.model} onValueChange={v => update("model", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent></Select>
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Status</Label>
+          <Select value={form.status} onValueChange={v => update("status", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent>{["Pending", "Confirmed", "Completed", "Cancelled", "Rescheduled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+        </div>
+        <div className="space-y-1.5"><Label className="text-xs">Date</Label><Input type="date" value={form.preferredDate} onChange={e => update("preferredDate", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5"><Label className="text-xs">Time</Label><Input value={form.preferredTime} onChange={e => update("preferredTime", e.target.value)} className="bg-secondary/50" placeholder="e.g. 10:00 AM" /></div>
+        <div className="space-y-1.5"><Label className="text-xs">Branch</Label><Input value={form.branch} onChange={e => update("branch", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5"><Label className="text-xs">Executive</Label><Input value={form.assignedExecutive} onChange={e => update("assignedExecutive", e.target.value)} className="bg-secondary/50" /></div>
+      </div>
+      <div className="space-y-1.5"><Label className="text-xs">Feedback</Label><Textarea value={form.feedback} onChange={e => update("feedback", e.target.value)} className="bg-secondary/50" rows={2} /></div>
+      <div className="flex gap-3 pt-2">
+        <Button onClick={() => onSave(form)} className="bg-primary text-primary-foreground flex-1">Save</Button>
+        <Button onClick={onCancel} variant="outline" className="flex-1">Cancel</Button>
+      </div>
+    </div>
+  );
+};
+
+export default AdminTestDrives;
