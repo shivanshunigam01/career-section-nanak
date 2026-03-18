@@ -9,10 +9,10 @@ const Footer = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <div className="font-display font-bold text-xl mb-4">
-              <span className="text-foreground">PATLIPUTRA</span>{" "}
-              <span className="text-primary">VINFAST</span>
+            <div className="flex items-center gap-3 mb-4">
+              <img src={vinfastLogo} alt="VinFast" className="h-5 invert brightness-0 filter opacity-80" />
             </div>
+            <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">Patliputra Auto — Authorized Dealer, Bihar</p>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mb-6">
               Bihar's authorized VinFast dealer. Experience premium electric SUVs — VF 6 & VF 7 — with world-class safety, technology, and support.
             </p>
