@@ -1,16 +1,33 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import Navbar from "@/components/Navbar";
+import HeroSection from "@/components/HeroSection";
+import QuickActionBar from "@/components/QuickActionBar";
+import ModelDiscovery from "@/components/ModelDiscovery";
+import WhyVinFast from "@/components/WhyVinFast";
+import VirtualShowroom from "@/components/VirtualShowroom";
+import OwnershipSection from "@/components/OwnershipSection";
+import OffersSection from "@/components/OffersSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
+import LeadCaptureStrip from "@/components/LeadCaptureStrip";
+import Footer from "@/components/Footer";
+import StickyMobileCTA from "@/components/StickyMobileCTA";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+const Index = () => {
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <HeroSection />
+      <QuickActionBar />
+      <ModelDiscovery />
+      <WhyVinFast />
+      <VirtualShowroom />
+      <OwnershipSection />
+      <OffersSection />
+      <TestimonialsSection />
+      <LeadCaptureStrip />
+      <Footer />
+      <StickyMobileCTA />
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
