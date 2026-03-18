@@ -60,7 +60,7 @@ const HeroSection = () => {
   }, []);
 
   return (
-    <section className="relative h-screen min-h-[600px] max-h-[1000px] flex items-end pb-20 lg:pb-28 overflow-hidden">
+    <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 overflow-hidden">
       {/* All slide images rendered, crossfade via opacity */}
       {slides.map((slide, i) => (
         <motion.div
@@ -77,9 +77,10 @@ const HeroSection = () => {
             style={{ objectPosition: slide.objectPosition }}
             loading="eager"
           />
-          {/* Gradient overlays — lighter so the car images stay visible */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-background/30 to-transparent lg:via-transparent" />
+          {/* Bottom gradient for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 sm:via-background/30 to-transparent" />
+          {/* Left gradient — stronger on mobile for text contrast */}
+          <div className="absolute inset-0 bg-gradient-to-r from-background/90 sm:from-background/70 via-background/40 sm:via-transparent to-transparent" />
         </motion.div>
       ))}
 
@@ -92,19 +93,19 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
             transition={{ duration: 0.5, delay: 0.15 }}
-            className="max-w-2xl"
+            className="max-w-lg lg:max-w-2xl"
           >
-            <p className="text-foreground/80 font-display font-medium text-sm sm:text-base max-w-lg mb-6 leading-relaxed drop-shadow-lg">
+            <p className="text-foreground/80 font-display font-medium text-xs sm:text-sm lg:text-base max-w-sm sm:max-w-lg mb-4 sm:mb-6 leading-relaxed drop-shadow-lg">
               {slides[current].subtitle}
             </p>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-wrap gap-3 sm:gap-4">
               <Link to="/test-drive">
-                <Button variant="hero" size="xl">
+                <Button variant="hero" size="lg" className="sm:!px-8 sm:!py-5 sm:!text-base">
                   Book Test Drive
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button variant="heroOutline" size="xl">
+                <Button variant="heroOutline" size="lg" className="sm:!px-8 sm:!py-5 sm:!text-base">
                   Get Best Offer
                 </Button>
               </Link>
@@ -113,12 +114,12 @@ const HeroSection = () => {
         </AnimatePresence>
 
         {/* Slide controls */}
-        <div className="flex items-center gap-4 mt-12">
+        <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12">
           <button
             onClick={prev}
-            className="w-10 h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
           >
-            <ChevronLeft className="w-5 h-5" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
           <div className="flex gap-2">
             {slides.map((_, i) => (
@@ -126,21 +127,21 @@ const HeroSection = () => {
                 key={i}
                 onClick={() => setCurrent(i)}
                 className={`h-1 rounded-full transition-all duration-500 ${
-                  i === current ? "w-8 bg-primary" : "w-4 bg-foreground/20"
+                  i === current ? "w-6 sm:w-8 bg-primary" : "w-3 sm:w-4 bg-foreground/20"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={next}
-            className="w-10 h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
           >
-            <ChevronRight className="w-5 h-5" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
-        {/* Quick links below hero */}
-        <div className="flex items-center gap-6 mt-8">
+        {/* Quick links below hero — hidden on small mobile to save space */}
+        <div className="hidden sm:flex items-center gap-6 mt-6 lg:mt-8">
           <Link
             to="/models/vf7"
             className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
