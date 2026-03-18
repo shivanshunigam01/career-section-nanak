@@ -12,6 +12,16 @@ import AboutPage from "./pages/About";
 import ContactPage from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminLayout from "./pages/admin/AdminLayout";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLeads from "./pages/admin/AdminLeads";
+import AdminTestDrives from "./pages/admin/AdminTestDrives";
+import AdminEnquiries from "./pages/admin/AdminEnquiries";
+import AdminProducts from "./pages/admin/AdminProducts";
+import AdminOffers from "./pages/admin/AdminOffers";
+import AdminContent from "./pages/admin/AdminContent";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 const queryClient = new QueryClient();
 
@@ -22,6 +32,7 @@ const App = () => (
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/models/vf7" element={<ModelVF7 />} />
           <Route path="/models/vf6" element={<ModelVF6 />} />
@@ -30,6 +41,20 @@ const App = () => (
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+
+          {/* Admin routes */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="leads" element={<AdminLeads />} />
+            <Route path="test-drives" element={<AdminTestDrives />} />
+            <Route path="enquiries" element={<AdminEnquiries />} />
+            <Route path="products" element={<AdminProducts />} />
+            <Route path="offers" element={<AdminOffers />} />
+            <Route path="content" element={<AdminContent />} />
+            <Route path="settings" element={<AdminSettings />} />
+          </Route>
+
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
