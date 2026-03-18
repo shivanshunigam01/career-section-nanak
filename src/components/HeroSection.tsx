@@ -88,24 +88,14 @@ const HeroSection = () => {
         <AnimatePresence mode="wait">
           <motion.div
             key={current}
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
             className="max-w-2xl"
           >
-            <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.25em] mb-4 drop-shadow-lg">
+            <p className="text-foreground/80 font-display font-medium text-sm sm:text-base max-w-lg mb-6 leading-relaxed drop-shadow-lg">
               {slides[current].subtitle}
-            </p>
-            <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.05] mb-6 drop-shadow-xl">
-              {slides[current].title}
-              <br />
-              <span className="text-gradient-red">
-                {slides[current].titleAccent}
-              </span>
-            </h1>
-            <p className="text-foreground/70 text-base sm:text-lg max-w-lg mb-8 leading-relaxed drop-shadow-md">
-              {slides[current].description}
             </p>
             <div className="flex flex-wrap gap-4">
               <Link to="/test-drive">
