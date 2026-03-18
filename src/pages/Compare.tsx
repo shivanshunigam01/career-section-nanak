@@ -5,8 +5,8 @@ import { Check, Minus } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf7Card from "@/assets/vf7-card.jpg";
-import vf6Card from "@/assets/vf6-card.jpg";
+import vf7Real from "@/assets/vf7-real.png";
+import vf6Banner from "@/assets/vf6-banner.webp";
 
 const compareData = [
   { label: "Starting Price", vf7: "₹43.90 Lakh*", vf6: "₹35.00 Lakh*" },
@@ -39,16 +39,15 @@ const ComparePage = () => {
             <p className="text-muted-foreground">VF 7 vs VF 6 — find the perfect VinFast for you.</p>
           </motion.div>
 
-          {/* Model headers */}
           <div className="max-w-4xl mx-auto">
             <div className="grid grid-cols-3 gap-4 mb-8">
               <div />
               {[
-                { name: "VF 7", img: vf7Card, href: "/models/vf7" },
-                { name: "VF 6", img: vf6Card, href: "/models/vf6" },
+                { name: "VF 7", img: vf7Real, href: "/models/vf7" },
+                { name: "VF 6", img: vf6Banner, href: "/models/vf6" },
               ].map((m) => (
                 <div key={m.name} className="text-center">
-                  <div className="glass-card-sm overflow-hidden mb-4 aspect-[16/10]">
+                  <div className="rounded-2xl overflow-hidden mb-4 aspect-[16/10] border border-foreground/[0.06]">
                     <img src={m.img} alt={`VinFast ${m.name}`} className="w-full h-full object-cover" />
                   </div>
                   <h3 className="font-display font-bold text-xl mb-2">VinFast {m.name}</h3>
@@ -59,10 +58,9 @@ const ComparePage = () => {
               ))}
             </div>
 
-            {/* Comparison table */}
             <div className="glass-card overflow-hidden">
               {compareData.map((row, i) => (
-                <div key={row.label} className={`grid grid-cols-3 gap-4 px-6 py-4 ${i < compareData.length - 1 ? "border-b border-border/20" : ""}`}>
+                <div key={row.label} className={`grid grid-cols-3 gap-4 px-6 py-4 ${i < compareData.length - 1 ? "border-b border-foreground/[0.04]" : ""} ${i % 2 === 0 ? "bg-foreground/[0.01]" : ""}`}>
                   <span className="text-muted-foreground text-sm">{row.label}</span>
                   <span className="text-center font-display font-medium text-sm tabular-nums">
                     {typeof row.vf7 === "boolean" ? (row.vf7 ? <Check className="w-4 h-4 text-primary mx-auto" /> : <Minus className="w-4 h-4 text-muted-foreground mx-auto" />) : row.vf7}

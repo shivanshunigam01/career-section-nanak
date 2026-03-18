@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Plug, Home, Wrench, ShieldCheck } from "lucide-react";
-import chargingImg from "@/assets/charging.jpg";
+import vf8Convoy from "@/assets/vf8-convoy.jpg";
 
 const ownershipItems = [
   {
@@ -76,11 +76,16 @@ const OwnershipSection = () => {
           >
             <div className="rounded-3xl overflow-hidden shadow-luxury">
               <img
-                src={chargingImg}
-                alt="EV Charging Station"
+                src={vf8Convoy}
+                alt="VinFast Fleet on Road"
                 className="w-full h-full object-cover aspect-[4/3]"
                 loading="lazy"
               />
+            </div>
+            {/* Floating stat card */}
+            <div className="absolute -bottom-6 -left-4 glass-card p-5 hidden lg:block">
+              <p className="font-display font-bold text-2xl text-primary">24 min</p>
+              <p className="text-foreground/60 text-xs">Fast charge 10-70%</p>
             </div>
           </motion.div>
         </div>
