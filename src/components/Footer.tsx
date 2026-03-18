@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
+import vinfastLogo from "@/assets/vinfast-logo.png";
 
 const Footer = () => {
   return (
