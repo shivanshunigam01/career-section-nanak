@@ -10,29 +10,17 @@ import vf7Street from "@/assets/vf7-street.jpg";
 const slides = [
   {
     image: homepageHero,
-    subtitle: "Bihar's First Authorized Dealer",
-    title: "VinFast Electric SUVs",
-    titleAccent: "Now in Bihar",
-    description:
-      "Experience the VF Series — Design You Can Feel. Book your test drive with Patliputra Auto today.",
+    subtitle: "Bihar's First Authorized VinFast Dealer — Book Your Test Drive Today",
     objectPosition: "center 60%",
   },
   {
     image: vfSeriesBanner,
-    subtitle: "Introducing the VF Series",
-    title: "Design You",
-    titleAccent: "Can Feel",
-    description:
-      "Pre-booking now open for VF 6 & VF 7. Premium electric SUVs with 5-star Bharat NCAP safety.",
+    subtitle: "Introducing the VF Series — Design You Can Feel. 5-Star Safety.",
     objectPosition: "center 55%",
   },
   {
     image: vf7Street,
-    subtitle: "VinFast VF 7",
-    title: "Bold. Intelligent.",
-    titleAccent: "Unstoppable.",
-    description:
-      "349 HP. 431 km range. Level 2+ ADAS. The premium electric SUV that redefines performance.",
+    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
     objectPosition: "center 50%",
   },
 ];
