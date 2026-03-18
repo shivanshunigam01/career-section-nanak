@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf6Hero from "@/assets/vf6-hero.jpg";
+import vf6Banner from "@/assets/vf6-banner.webp";
 import interiorImg from "@/assets/interior.jpg";
 
 const colors = [
@@ -50,18 +50,10 @@ const specs = [
 ];
 
 const features = [
-  "12.9-inch Touchscreen",
-  "Wireless Apple CarPlay",
-  "Heated Front Seats",
-  "Wireless Charging",
-  "Connected Car Features",
-  "Voice Assistant",
-  "6-Speaker Audio",
-  "Ambient Lighting",
-  "Auto Climate Control",
-  "Cruise Control",
-  "Lane Keep Assist",
-  "Hill Descent Control",
+  "12.9-inch Touchscreen", "Wireless Apple CarPlay", "Heated Front Seats",
+  "Wireless Charging", "Connected Car Features", "Voice Assistant",
+  "6-Speaker Audio", "Ambient Lighting", "Auto Climate Control",
+  "Cruise Control", "Lane Keep Assist", "Hill Descent Control",
 ];
 
 const ModelVF6 = () => {
@@ -72,18 +64,19 @@ const ModelVF6 = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative min-h-[80vh] flex items-end pb-16 lg:pb-24">
+      {/* Hero - using VF6 banner */}
+      <section className="relative min-h-[85vh] flex items-end pb-16 lg:pb-24">
         <div className="absolute inset-0">
-          <img src={vf6Hero} alt="VinFast VF 6" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent" />
+          <img src={vf6Banner} alt="VinFast VF 6" className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
         </div>
         <div className="relative container mx-auto px-4 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Compact Electric SUV</p>
+            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">Compact Electric SUV</p>
             <h1 className="font-display font-bold text-5xl md:text-6xl lg:text-8xl mb-4">VF 6</h1>
-            <p className="text-muted-foreground text-lg max-w-xl mb-6">
-              Compact. Smart. Electrifying. The perfect urban electric SUV for the modern family.
+            <p className="text-foreground/50 text-lg max-w-xl mb-6">
+              Built Sleek. Feels Smart. The perfect urban electric SUV for the modern family.
             </p>
             <div className="flex flex-wrap items-center gap-6 mb-8">
               {[
@@ -93,10 +86,10 @@ const ModelVF6 = () => {
                 { val: "5★", label: "Safety", red: true },
               ].map((s, i) => (
                 <div key={s.label} className="flex items-center gap-6">
-                  {i > 0 && <div className="w-px h-10 bg-border" />}
+                  {i > 0 && <div className="w-px h-10 bg-foreground/10" />}
                   <div className="text-center">
                     <p className={`font-display font-bold text-2xl ${s.red ? "text-primary" : ""}`}>{s.val}</p>
-                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="text-xs text-foreground/40">{s.label}</p>
                   </div>
                 </div>
               ))}
@@ -117,7 +110,7 @@ const ModelVF6 = () => {
           <div className="flex items-center justify-center gap-4 mb-4">
             {colors.map((c, i) => (
               <button key={c.name} onClick={() => setSelectedColor(i)}
-                className={`w-10 h-10 rounded-full border-2 transition-all ${i === selectedColor ? "border-primary scale-125" : "border-transparent"}`}
+                className={`w-10 h-10 rounded-full border-2 transition-all ${i === selectedColor ? "border-primary scale-125 shadow-glow-red" : "border-foreground/10"}`}
                 style={{ backgroundColor: c.hex }} title={c.name} />
             ))}
           </div>
@@ -135,14 +128,14 @@ const ModelVF6 = () => {
           <div className="flex flex-wrap justify-center gap-2 mb-12">
             {specs.map((s, i) => (
               <button key={s.category} onClick={() => setActiveSpec(i)}
-                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${i === activeSpec ? "bg-primary text-primary-foreground" : "bg-foreground/5 text-muted-foreground hover:text-foreground"}`}>
+                className={`px-5 py-2.5 rounded-full text-sm font-medium transition-all ${i === activeSpec ? "bg-primary text-primary-foreground" : "bg-foreground/5 text-muted-foreground hover:text-foreground hover:bg-foreground/10"}`}>
                 {s.category}
               </button>
             ))}
           </div>
-          <motion.div key={activeSpec} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto">
+          <motion.div key={activeSpec} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto glass-card p-8">
             {specs[activeSpec].items.map((item, i) => (
-              <div key={item.label} className={`flex items-center justify-between py-4 ${i < specs[activeSpec].items.length - 1 ? "border-b border-border/30" : ""}`}>
+              <div key={item.label} className={`flex items-center justify-between py-4 ${i < specs[activeSpec].items.length - 1 ? "border-b border-foreground/[0.06]" : ""}`}>
                 <span className="text-muted-foreground text-sm">{item.label}</span>
                 <span className="font-display font-semibold tabular-nums">{item.value}</span>
               </div>

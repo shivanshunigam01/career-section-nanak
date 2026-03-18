@@ -2,15 +2,15 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Battery, Gauge, Shield, Zap } from "lucide-react";
-import vf7Card from "@/assets/vf7-card.jpg";
-import vf6Card from "@/assets/vf6-card.jpg";
+import vf7Real from "@/assets/vf7-real.png";
+import vf6Banner from "@/assets/vf6-banner.webp";
 
 const models = [
   {
     name: "VF 7",
     tagline: "Bold. Intelligent. Unstoppable.",
     price: "₹43.90 Lakh*",
-    image: vf7Card,
+    image: vf7Real,
     href: "/models/vf7",
     specs: [
       { icon: Battery, label: "Battery", value: "75.3 kWh" },
@@ -23,7 +23,7 @@ const models = [
     name: "VF 6",
     tagline: "Compact. Smart. Electrifying.",
     price: "₹35.00 Lakh*",
-    image: vf6Card,
+    image: vf6Banner,
     href: "/models/vf6",
     specs: [
       { icon: Battery, label: "Battery", value: "59.6 kWh" },
@@ -60,15 +60,16 @@ const ModelDiscovery = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.15 }}
-              className="glass-card overflow-hidden group"
+              className="group relative rounded-3xl overflow-hidden border border-foreground/[0.06] bg-card hover:border-foreground/[0.12] transition-all duration-500"
             >
-              <div className="relative aspect-[16/10] overflow-hidden bg-card">
+              <div className="relative aspect-[16/10] overflow-hidden">
                 <img
                   src={model.image}
                   alt={`VinFast ${model.name}`}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   loading="lazy"
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
               </div>
               <div className="p-6 lg:p-8">
                 <div className="flex items-start justify-between mb-4">
@@ -79,7 +80,7 @@ const ModelDiscovery = () => {
                     <p className="text-muted-foreground text-sm mt-1">{model.tagline}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs text-muted-foreground">Starting from</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">From</p>
                     <p className="font-display font-bold text-lg text-primary">{model.price}</p>
                   </div>
                 </div>
@@ -88,9 +89,9 @@ const ModelDiscovery = () => {
                   {model.specs.map((spec) => {
                     const Icon = spec.icon;
                     return (
-                      <div key={spec.label} className="text-center p-3 rounded-xl bg-background/50">
+                      <div key={spec.label} className="text-center p-3 rounded-xl bg-background/50 border border-foreground/[0.04]">
                         <Icon className="w-4 h-4 text-primary mx-auto mb-1.5" />
-                        <p className="text-xs text-muted-foreground">{spec.label}</p>
+                        <p className="text-[10px] text-muted-foreground">{spec.label}</p>
                         <p className="text-sm font-semibold font-display tabular-nums">{spec.value}</p>
                       </div>
                     );
@@ -99,14 +100,10 @@ const ModelDiscovery = () => {
 
                 <div className="flex gap-3">
                   <Link to={model.href} className="flex-1">
-                    <Button variant="hero" className="w-full">
-                      Explore {model.name}
-                    </Button>
+                    <Button variant="hero" className="w-full">Explore {model.name}</Button>
                   </Link>
                   <Link to="/compare">
-                    <Button variant="outline" className="h-10">
-                      Compare
-                    </Button>
+                    <Button variant="outline" className="h-10">Compare</Button>
                   </Link>
                 </div>
               </div>
