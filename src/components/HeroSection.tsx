@@ -72,7 +72,7 @@ const HeroSection = () => {
         >
           <img
             src={slide.image}
-            alt={slide.title}
+            alt={slide.subtitle}
             className="w-full h-full object-cover"
             style={{ objectPosition: slide.objectPosition }}
             loading="eager"
