@@ -36,15 +36,15 @@ const Navbar = () => {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-background/80 backdrop-blur-xl border-b border-border/50 py-0"
-            : "bg-gradient-to-b from-background/70 to-transparent py-1"
+            ? "bg-background/95 backdrop-blur-xl border-b border-white/10 py-0 shadow-lg"
+            : "bg-gradient-to-b from-black/60 via-black/30 to-transparent py-1 backdrop-blur-sm"
         }`}
       >
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
-              <img src={vinfastLogo} alt="Patliputra VinFast" className="h-8 lg:h-10" />
+              <img src={vinfastLogo} alt="Patliputra VinFast" className="h-24 lg:h-36" style={{ height: "100px" }} />
             </Link>
 
             {/* Desktop Nav */}
@@ -56,7 +56,7 @@ const Navbar = () => {
                   className={`px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
                     location.pathname === link.href
                       ? "text-primary"
-                      : "text-foreground/70 hover:text-foreground"
+                      : "text-white/80 hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -66,10 +66,10 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-3">
-              <a href="tel:+919876543210" className="text-foreground/60 hover:text-foreground transition-colors">
+              <a href="tel:+919231445060" className="text-foreground/60 hover:text-foreground transition-colors">
                 <Phone className="w-4 h-4" />
               </a>
-              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="text-foreground/60 hover:text-foreground transition-colors">
+              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="text-foreground/60 hover:text-foreground transition-colors">
                 <MessageCircle className="w-4 h-4" />
               </a>
               <Link to="/test-drive">
@@ -112,7 +112,7 @@ const Navbar = () => {
                 <Link to="/test-drive">
                   <Button variant="hero" size="lg" className="w-full">Book Test Drive</Button>
                 </Link>
-                <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer">
+                <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer">
                   <Button variant="whatsapp" size="lg" className="w-full">
                     <MessageCircle className="w-5 h-5" /> WhatsApp
                   </Button>

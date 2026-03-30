@@ -62,28 +62,29 @@ const HeroSection = () => {
 
   return (
     <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 overflow-hidden">
-      {/* Slides — opacity-only crossfade, no scale transform to preserve image sharpness */}
+      {/* Slides — CSS opacity crossfade (no Framer GPU layer, preserves image sharpness) */}
       {slides.map((slide, i) => (
-        <motion.div
+        <div
           key={i}
-          animate={{ opacity: i === current ? 1 : 0 }}
-          transition={{ duration: 1.0, ease: "easeInOut" }}
-          className="absolute inset-0"
-          style={{ zIndex: i === current ? 1 : 0 }}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          style={{
+            opacity: i === current ? 1 : 0,
+            zIndex: i === current ? 1 : 0,
+          }}
         >
           <img
             src={slide.image}
             alt={slide.subtitle}
             className="w-full h-full object-cover"
-            style={{ objectPosition: slide.objectPosition, imageRendering: "auto" }}
+            style={{ objectPosition: slide.objectPosition }}
             loading="eager"
-            decoding="async"
+            decoding="sync"
           />
           {/* Bottom gradient for text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 sm:via-background/30 to-transparent" />
           {/* Left gradient — stronger on mobile for text contrast */}
           <div className="absolute inset-0 bg-gradient-to-r from-background/90 sm:from-background/70 via-background/40 sm:via-transparent to-transparent" />
-        </motion.div>
+        </div>
       ))}
 
       {/* Content */}
@@ -97,7 +98,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="max-w-lg lg:max-w-2xl"
           >
-            <p className="text-foreground/80 font-display font-medium text-xs sm:text-sm lg:text-base max-w-sm sm:max-w-lg mb-4 sm:mb-6 leading-relaxed drop-shadow-lg">
+            <p className="text-white font-display font-semibold text-sm sm:text-base lg:text-xl max-w-sm sm:max-w-xl mb-4 sm:mb-6 leading-relaxed drop-shadow-lg">
               {slides[current].subtitle}
             </p>
             <div className="flex flex-wrap gap-3 sm:gap-4">
@@ -119,7 +120,7 @@ const HeroSection = () => {
         <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12">
           <button
             onClick={prev}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/30 border border-white/40 hover:border-white/70 flex items-center justify-center text-white transition-all duration-300 backdrop-blur-md shadow-lg hover:scale-105"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -128,41 +129,41 @@ const HeroSection = () => {
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`h-1 rounded-full transition-all duration-500 ${
-                  i === current ? "w-6 sm:w-8 bg-primary" : "w-3 sm:w-4 bg-foreground/20"
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  i === current ? "w-8 sm:w-10 bg-primary shadow-glow-red" : "w-3 sm:w-4 bg-white/30 hover:bg-white/50"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={next}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/30 border border-white/40 hover:border-white/70 flex items-center justify-center text-white transition-all duration-300 backdrop-blur-md shadow-lg hover:scale-105"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
-        {/* Quick links below hero — hidden on small mobile to save space */}
-        <div className="hidden sm:flex items-center gap-6 mt-6 lg:mt-8">
+        {/* Quick link pills */}
+        <div className="hidden sm:flex items-center gap-3 mt-6 lg:mt-8 flex-wrap">
           <Link
             to="/models/vf7"
-            className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 text-white text-xs sm:text-sm font-medium transition-all duration-300 backdrop-blur-sm"
           >
-            Explore VF 7 →
+            Explore VF 7 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/models/vf6"
-            className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 text-white text-xs sm:text-sm font-medium transition-all duration-300 backdrop-blur-sm"
           >
-            Explore VF 6 →
+            Explore VF 6 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <a
-            href="https://wa.me/919876543210"
+            href="https://wa.me/919231445060"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#25D366]/50 bg-[#25D366]/15 hover:bg-[#25D366]/30 hover:border-[#25D366]/80 text-[#25D366] text-xs sm:text-sm font-medium transition-all duration-300 backdrop-blur-sm"
           >
-            WhatsApp Now →
+            WhatsApp Now <ChevronRight className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>

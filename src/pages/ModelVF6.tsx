@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, Download, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
@@ -159,14 +159,62 @@ const ModelVF6 = () => {
                   </div>
                 ))}
               </div>
-              <div className="mt-8">
-                <Button variant="outline" size="lg">Download Brochure <ChevronRight className="w-4 h-4" /></Button>
+              <div className="mt-8 flex flex-wrap gap-3">
+                <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="lg">
+                    <Download className="w-4 h-4 mr-2" /> Download Brochure
+                  </Button>
+                </a>
               </div>
             </div>
             <div className="rounded-3xl overflow-hidden shadow-luxury">
               <img src={interiorImg} alt="VF 6 Interior" className="w-full aspect-[4/3] object-cover" loading="lazy" />
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Brochure PDF Viewer */}
+      <section className="py-24 section-dark">
+        <div className="container mx-auto px-4 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center mb-10"
+          >
+            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Official Brochure</p>
+            <h2 className="font-display font-bold text-3xl md:text-4xl mb-4">VF 6 — Full Brochure</h2>
+            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
+              Browse the complete VinFast VF 6 brochure below or download it for offline reading.
+            </p>
+            <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" target="_blank" rel="noopener noreferrer">
+              <Button variant="hero" size="lg">
+                <Download className="w-4 h-4 mr-2" /> Download PDF
+              </Button>
+            </a>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="glass-card overflow-hidden rounded-3xl"
+          >
+            <div className="flex items-center gap-3 px-6 py-4 border-b border-foreground/[0.06]">
+              <FileText className="w-5 h-5 text-primary" />
+              <span className="font-display font-semibold text-sm">VinFast VF 6 — Official Brochure</span>
+              <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" className="ml-auto flex items-center gap-1.5 text-xs text-primary hover:underline">
+                <Download className="w-3.5 h-3.5" /> Download
+              </a>
+            </div>
+            <iframe
+              src="/brochures/VF6-Brochure.pdf"
+              title="VinFast VF 6 Brochure"
+              className="w-full"
+              style={{ height: "80vh", minHeight: "600px" }}
+            />
+          </motion.div>
         </div>
       </section>
 

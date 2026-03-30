@@ -8,9 +8,9 @@ const AdminSettings = () => {
   const [settings, setSettings] = useState({
     dealerName: "Patliputra Auto",
     brand: "VinFast",
-    phone: "+91 9876543210",
+    phone: "+91 9231445060",
     email: "info@patliputraauto.com",
-    whatsapp: "919876543210",
+    whatsapp: "919231445060",
     address: "Boring Road, Patna, Bihar 800001",
     gstNo: "10AABCP1234Q1ZX",
     showroomHours: "Mon-Sat: 9:00 AM - 7:00 PM",

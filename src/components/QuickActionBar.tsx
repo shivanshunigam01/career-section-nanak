@@ -7,8 +7,8 @@ const actions = [
   { icon: Calculator, label: "EMI Calculator", href: "/emi-calculator" },
   { icon: ArrowLeftRight, label: "Exchange", href: "/contact" },
   { icon: MapPin, label: "Find Showroom", href: "/contact" },
-  { icon: Phone, label: "Call", href: "tel:+919876543210", external: true },
-  { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/919876543210", external: true },
+  { icon: Phone, label: "Call", href: "tel:+919231445060", external: true },
+  { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/919231445060", external: true },
 ];
 
 const QuickActionBar = () => {

@@ -17,10 +17,10 @@ const Footer = () => {
               Bihar's authorized VinFast dealer. Experience premium electric SUVs — VF 6 & VF 7 — with world-class safety, technology, and support.
             </p>
             <div className="flex gap-4">
-              <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <a href="tel:+919876543210" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a href="tel:+919231445060" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
                 <Phone className="w-4 h-4" />
               </a>
               <a href="mailto:info@patliputravinfast.com" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
@@ -77,12 +77,12 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex gap-3 text-sm">
                 <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-muted-foreground">Near Saguna More, Bailey Road, Patna, Bihar 801503</span>
+                <span className="text-muted-foreground">Plot No. 2421, NH 30, Bypass Road, Paijawa, Patna, Bihar 800009</span>
               </li>
               <li className="flex gap-3 text-sm">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                <a href="tel:+919876543210" className="text-muted-foreground hover:text-foreground transition-colors">
-                  +91 98765 43210
+                <a href="tel:+919231445060" className="text-muted-foreground hover:text-foreground transition-colors">
+                  +91 92314 45060
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
