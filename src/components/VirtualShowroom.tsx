@@ -40,7 +40,7 @@ const VirtualShowroom = () => {
             className="w-full aspect-[21/9] object-cover"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 lg:bottom-10 lg:left-10 lg:right-10 flex items-end justify-between">
             <div>
               <p className="font-display font-bold text-xl lg:text-3xl text-foreground">VF 6 & VF 7</p>
@@ -72,10 +72,10 @@ const VirtualShowroom = () => {
               className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-700"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between">
               <div>
-                <p className="font-display font-bold text-xl text-foreground">VinFast VF 7</p>
+                <p className="font-display font-bold text-xl text-white">VinFast VF 7</p>
                 <p className="text-foreground/60 text-sm">349 HP · 431 km · AWD · 5-Star</p>
               </div>
               <Link to="/models/vf7">
@@ -97,10 +97,10 @@ const VirtualShowroom = () => {
               className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-700"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/10 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             <div className="absolute bottom-5 left-6 right-6 flex items-end justify-between">
               <div>
-                <p className="font-display font-bold text-xl text-foreground">VinFast VF 6</p>
+                <p className="font-display font-bold text-xl text-white">VinFast VF 6</p>
                 <p className="text-foreground/60 text-sm">201 HP · 381 km · FWD · 5-Star</p>
               </div>
               <Link to="/models/vf6">
@@ -123,7 +123,7 @@ const VirtualShowroom = () => {
             className="w-full aspect-[21/9] object-cover"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
           <div className="absolute bottom-6 left-6 right-6 lg:bottom-10 lg:left-10 lg:right-10">
             <p className="font-display font-bold text-xl lg:text-2xl text-foreground">Premium Interior</p>
             <p className="text-foreground/60 text-sm mt-1">Handcrafted luxury meets intelligent design</p>

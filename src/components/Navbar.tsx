@@ -36,7 +36,7 @@ const Navbar = () => {
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
           isScrolled
-            ? "bg-background/95 backdrop-blur-xl border-b border-white/10 py-0 shadow-lg"
+            ? "bg-white/95 backdrop-blur-xl border-b border-gray-200 py-0 shadow-sm"
             : "bg-gradient-to-b from-black/60 via-black/30 to-transparent py-1 backdrop-blur-sm"
         }`}
       >
@@ -56,7 +56,9 @@ const Navbar = () => {
                   className={`px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
                     location.pathname === link.href
                       ? "text-primary"
-                      : "text-white/80 hover:text-white"
+                      : isScrolled
+                        ? "text-foreground/70 hover:text-foreground"
+                        : "text-white/90 hover:text-white"
                   }`}
                 >
                   {link.label}
@@ -66,10 +68,10 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-3">
-              <a href="tel:+919231445060" className="text-foreground/60 hover:text-foreground transition-colors">
+              <a href="tel:+919231445060" className={`transition-colors ${isScrolled ? "text-foreground/60 hover:text-foreground" : "text-white/70 hover:text-white"}`}>
                 <Phone className="w-4 h-4" />
               </a>
-              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="text-foreground/60 hover:text-foreground transition-colors">
+              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className={`transition-colors ${isScrolled ? "text-foreground/60 hover:text-foreground" : "text-white/70 hover:text-white"}`}>
                 <MessageCircle className="w-4 h-4" />
               </a>
               <Link to="/test-drive">
@@ -78,7 +80,7 @@ const Navbar = () => {
             </div>
 
             {/* Mobile toggle */}
-            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="lg:hidden text-foreground p-2">
+            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className={`lg:hidden p-2 transition-colors ${isScrolled ? "text-foreground" : "text-white"}`}>
               {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>

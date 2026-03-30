@@ -68,8 +68,8 @@ const ModelVF6 = () => {
       <section className="relative min-h-[85vh] flex items-end pb-16 lg:pb-24">
         <div className="absolute inset-0">
           <img src={vf6Banner} alt="VinFast VF 6" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/80 via-transparent to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
         </div>
         <div className="relative container mx-auto px-4 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>

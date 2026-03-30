@@ -69,7 +69,7 @@ const ModelDiscovery = () => {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   loading="lazy"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-card via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               </div>
               <div className="p-6 lg:p-8">
                 <div className="flex items-start justify-between mb-4">

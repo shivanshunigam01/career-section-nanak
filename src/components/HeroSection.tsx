@@ -80,10 +80,6 @@ const HeroSection = () => {
             loading="eager"
             decoding="sync"
           />
-          {/* Bottom gradient for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 sm:via-background/30 to-transparent" />
-          {/* Left gradient — stronger on mobile for text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 sm:from-background/70 via-background/40 sm:via-transparent to-transparent" />
         </div>
       ))}
 
@@ -98,7 +94,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="max-w-lg lg:max-w-2xl"
           >
-            <p className="text-white font-display font-semibold text-sm sm:text-base lg:text-xl max-w-sm sm:max-w-xl mb-4 sm:mb-6 leading-relaxed drop-shadow-lg">
+            <p className="text-white font-display font-semibold text-sm sm:text-base lg:text-xl max-w-sm sm:max-w-xl mb-4 sm:mb-6 leading-relaxed [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_24px_rgba(0,0,0,0.75)]">
               {slides[current].subtitle}
             </p>
             <div className="flex flex-wrap gap-3 sm:gap-4">
@@ -120,7 +116,7 @@ const HeroSection = () => {
         <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12">
           <button
             onClick={prev}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/30 border border-white/40 hover:border-white/70 flex items-center justify-center text-white transition-all duration-300 backdrop-blur-md shadow-lg hover:scale-105"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -130,14 +126,14 @@ const HeroSection = () => {
                 key={i}
                 onClick={() => setCurrent(i)}
                 className={`h-1.5 rounded-full transition-all duration-500 ${
-                  i === current ? "w-8 sm:w-10 bg-primary shadow-glow-red" : "w-3 sm:w-4 bg-white/30 hover:bg-white/50"
+                  i === current ? "w-8 sm:w-10 bg-primary shadow-glow-red" : "w-3 sm:w-4 bg-black/25 hover:bg-black/40"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={next}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/15 hover:bg-white/30 border border-white/40 hover:border-white/70 flex items-center justify-center text-white transition-all duration-300 backdrop-blur-md shadow-lg hover:scale-105"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -147,13 +143,13 @@ const HeroSection = () => {
         <div className="hidden sm:flex items-center gap-3 mt-6 lg:mt-8 flex-wrap">
           <Link
             to="/models/vf7"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 text-white text-xs sm:text-sm font-medium transition-all duration-300 backdrop-blur-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
             Explore VF 7 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/models/vf6"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-white/25 bg-white/10 hover:bg-white/20 hover:border-white/50 text-white text-xs sm:text-sm font-medium transition-all duration-300 backdrop-blur-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
             Explore VF 6 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -161,7 +157,7 @@ const HeroSection = () => {
             href="https://wa.me/919231445060"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#25D366]/50 bg-[#25D366]/15 hover:bg-[#25D366]/30 hover:border-[#25D366]/80 text-[#25D366] text-xs sm:text-sm font-medium transition-all duration-300 backdrop-blur-sm"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1fa855] bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
             WhatsApp Now <ChevronRight className="w-3.5 h-3.5" />
           </a>
