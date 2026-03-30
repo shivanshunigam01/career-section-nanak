@@ -45,9 +45,6 @@ const slides = [
 
 const HeroSection = () => {
   const [current, setCurrent] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>(
-    new Array(slides.length).fill(false)
-  );
 
   const next = useCallback(
     () => setCurrent((c) => (c + 1) % slides.length),
@@ -63,28 +60,14 @@ const HeroSection = () => {
     return () => clearInterval(timer);
   }, [next]);
 
-  // Preload all hero images
-  useEffect(() => {
-    slides.forEach((slide, idx) => {
-      const img = new Image();
-      img.src = slide.image;
-      img.onload = () =>
-        setImagesLoaded((prev) => {
-          const next = [...prev];
-          next[idx] = true;
-          return next;
-        });
-    });
-  }, []);
-
   return (
     <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 overflow-hidden">
-      {/* All slide images rendered, crossfade via opacity */}
+      {/* Slides — opacity-only crossfade, no scale transform to preserve image sharpness */}
       {slides.map((slide, i) => (
         <motion.div
           key={i}
-          animate={{ opacity: i === current ? 1 : 0, scale: i === current ? 1 : 1.05 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
+          animate={{ opacity: i === current ? 1 : 0 }}
+          transition={{ duration: 1.0, ease: "easeInOut" }}
           className="absolute inset-0"
           style={{ zIndex: i === current ? 1 : 0 }}
         >
@@ -92,8 +75,9 @@ const HeroSection = () => {
             src={slide.image}
             alt={slide.subtitle}
             className="w-full h-full object-cover"
-            style={{ objectPosition: slide.objectPosition }}
+            style={{ objectPosition: slide.objectPosition, imageRendering: "auto" }}
             loading="eager"
+            decoding="async"
           />
           {/* Bottom gradient for text readability */}
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 sm:via-background/30 to-transparent" />
