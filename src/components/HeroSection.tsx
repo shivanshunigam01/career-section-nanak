@@ -3,25 +3,43 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import homepageHero from "@/assets/homepage-hero.webp";
-import vfSeriesBanner from "@/assets/vf-series-banner.jpeg";
-import vf7Street from "@/assets/vf7-street.jpg";
+import slideVf7Driving from "@/assets/slide-vf7-driving.png";
+import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
+import slideVf6Lifestyle from "@/assets/slide-vf6-lifestyle.png";
+import slideVf7Interior from "@/assets/slide-vf7-interior.png";
+import slideVf7RearDetail from "@/assets/slide-vf7-rear-detail.png";
+import slideVf7Wheel from "@/assets/slide-vf7-wheel.png";
 
 const slides = [
   {
-    image: homepageHero,
+    image: slideVf7Driving,
     subtitle: "Bihar's First Authorized VinFast Dealer — Book Your Test Drive Today",
-    objectPosition: "center 60%",
+    objectPosition: "center 50%",
   },
   {
-    image: vfSeriesBanner,
-    subtitle: "Introducing the VF Series — Design You Can Feel. 5-Star Safety.",
+    image: slideVf6Vf7Night,
+    subtitle: "VF 6 & VF 7 — Two Electric SUVs. One Bold Choice.",
+    objectPosition: "center 45%",
+  },
+  {
+    image: slideVf6Lifestyle,
+    subtitle: "VinFast VF 6 — Smart, Safe & Built for Every Family",
     objectPosition: "center 55%",
   },
   {
-    image: vf7Street,
-    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
+    image: slideVf7Interior,
+    subtitle: "Premium Interior. 12.9\" Infotainment. Ventilated Seats.",
+    objectPosition: "center 40%",
+  },
+  {
+    image: slideVf7RearDetail,
+    subtitle: "Bold Design. Distinctive Style. Made to Turn Heads.",
     objectPosition: "center 50%",
+  },
+  {
+    image: slideVf7Wheel,
+    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
+    objectPosition: "center 60%",
   },
 ];
 

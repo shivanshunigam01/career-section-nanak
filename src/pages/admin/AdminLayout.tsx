@@ -5,7 +5,7 @@ import {
   TestTube, MessageSquare, Tag, Bell
 } from "lucide-react";
 import { useState } from "react";
-import vinLogo from "@/assets/vinfast-logo.png";
+import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 
 const navItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
@@ -44,8 +44,7 @@ const AdminLayout = () => {
       <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-card border-r border-border z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="p-5 border-b border-border flex items-center justify-between">
           <Link to="/admin/dashboard" className="flex items-center gap-2">
-            <img src={vinLogo} alt="VinFast" className="h-6 invert" />
-            <span className="font-display font-bold text-sm text-foreground">Admin</span>
+            <img src={vinLogo} alt="Patliputra VinFast" className="h-7" />
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground">
             <X className="w-5 h-5" />

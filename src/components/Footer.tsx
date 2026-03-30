@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
-import vinfastLogo from "@/assets/vinfast-logo.png";
+import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
 
 const Footer = () => {
   return (
@@ -10,9 +10,9 @@ const Footer = () => {
           {/* Brand */}
           <div className="lg:col-span-2">
             <div className="flex items-center gap-3 mb-4">
-              <img src={vinfastLogo} alt="VinFast" className="h-5 invert brightness-0 filter opacity-80" />
+              <img src={vinfastLogo} alt="Patliputra VinFast" className="h-9 opacity-80" />
             </div>
-            <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">Patliputra Auto — Authorized Dealer, Bihar</p>
+            <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">Authorized Dealer, Bihar</p>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mb-6">
               Bihar's authorized VinFast dealer. Experience premium electric SUVs — VF 6 & VF 7 — with world-class safety, technology, and support.
             </p>
