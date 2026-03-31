@@ -17,15 +17,8 @@ const navLinks = [
 ];
 
 const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
-
-  useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -34,11 +27,7 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled
-            ? "bg-white/95 backdrop-blur-xl border-b border-gray-200 py-0 shadow-sm"
-            : "bg-gradient-to-b from-black/60 via-black/30 to-transparent py-1 backdrop-blur-sm"
-        }`}
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white/95 backdrop-blur-xl border-b border-gray-200 py-0 shadow-sm"
       >
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
@@ -56,9 +45,7 @@ const Navbar = () => {
                   className={`px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
                     location.pathname === link.href
                       ? "text-primary"
-                      : isScrolled
-                        ? "text-foreground/70 hover:text-foreground"
-                        : "text-white/90 hover:text-white"
+                      : "text-foreground/70 hover:text-foreground"
                   }`}
                 >
                   {link.label}
@@ -68,10 +55,10 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-3">
-              <a href="tel:+919231445060" className={`transition-colors ${isScrolled ? "text-foreground/60 hover:text-foreground" : "text-white/70 hover:text-white"}`}>
+              <a href="tel:+919231445060" className="transition-colors text-foreground/60 hover:text-foreground">
                 <Phone className="w-4 h-4" />
               </a>
-              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className={`transition-colors ${isScrolled ? "text-foreground/60 hover:text-foreground" : "text-white/70 hover:text-white"}`}>
+              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground">
                 <MessageCircle className="w-4 h-4" />
               </a>
               <Link to="/test-drive">
@@ -80,7 +67,7 @@ const Navbar = () => {
             </div>
 
             {/* Mobile toggle */}
-            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className={`lg:hidden p-2 transition-colors ${isScrolled ? "text-foreground" : "text-white"}`}>
+            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="lg:hidden p-2 transition-colors text-foreground">
               {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>

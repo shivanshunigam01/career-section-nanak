@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Check, ChevronRight, Download, FileText } from "lucide-react";
+import { Check, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
@@ -9,13 +9,20 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import vf6Banner from "@/assets/vf6-banner.webp";
 import interiorImg from "@/assets/interior.jpg";
+import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
+import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
+import vf6JetBlack from "@/assets/vf6-jet-black.png";
+import vf6DesatSilver from "@/assets/vf6-desat-silver.png";
+import vf6ZenithGrey from "@/assets/vf6-zenith-grey.png";
+import vf6UrbanMint from "@/assets/vf6-urban-mint.png";
 
 const colors = [
-  { name: "Neptune Blue", hex: "#1B3A5C" },
-  { name: "Everest White", hex: "#E8E8E8" },
-  { name: "Decepticon Grey", hex: "#4A4A4A" },
-  { name: "Crimson Red", hex: "#8B1A1A" },
-  { name: "Brazen Black", hex: "#1A1A1A" },
+  { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
+  { name: "Crimson Red", hex: "#C80F1E", image: vf6CrimsonRed },
+  { name: "Desat Silver", hex: "#C8C9C4", image: vf6DesatSilver },
+  { name: "Zenith Grey", hex: "#61656B", image: vf6ZenithGrey },
+  { name: "Urban Mint", hex: "#727A67", image: vf6UrbanMint },
+  { name: "Jet Black", hex: "#18191D", image: vf6JetBlack },
 ];
 
 const specs = [
@@ -65,7 +72,7 @@ const ModelVF6 = () => {
       <Navbar />
 
       {/* Hero - using VF6 banner */}
-      <section className="relative min-h-[85vh] flex items-end pb-16 lg:pb-24">
+      <section className="relative min-h-[85vh] flex items-end pb-16 lg:pb-24 pt-16 lg:pt-0">
         <div className="absolute inset-0">
           <img src={vf6Banner} alt="VinFast VF 6" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
@@ -73,30 +80,37 @@ const ModelVF6 = () => {
         </div>
         <div className="relative container mx-auto px-4 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">Compact Electric SUV</p>
-            <h1 className="font-display font-bold text-5xl md:text-6xl lg:text-8xl mb-4">VF 6</h1>
-            <p className="text-foreground/50 text-lg max-w-xl mb-6">
+            <p className="text-white/90 font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">Compact Electric SUV</p>
+            <h1 className="font-display font-bold text-5xl md:text-6xl lg:text-8xl mb-4 text-white">VF 6</h1>
+            <p className="text-white/85 text-lg max-w-xl mb-6">
               Built Sleek. Feels Smart. The perfect urban electric SUV for the modern family.
             </p>
             <div className="flex flex-wrap items-center gap-6 mb-8">
               {[
-                { val: "₹35.00L*", label: "Starting Price" },
+                { val: "₹17.29L*", label: "Ex-Showroom Price" },
                 { val: "381 km", label: "Range" },
                 { val: "6.8s", label: "0–100 km/h" },
                 { val: "5★", label: "Safety", red: true },
               ].map((s, i) => (
                 <div key={s.label} className="flex items-center gap-6">
-                  {i > 0 && <div className="w-px h-10 bg-foreground/10" />}
+                  {i > 0 && <div className="w-px h-10 bg-white/25" />}
                   <div className="text-center">
-                    <p className={`font-display font-bold text-2xl ${s.red ? "text-primary" : ""}`}>{s.val}</p>
-                    <p className="text-xs text-foreground/40">{s.label}</p>
+                    <p className="font-display font-bold text-2xl text-white">{s.val}</p>
+                    <p className="text-xs text-white/70">{s.label}</p>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap gap-3">
-              <Link to="/test-drive"><Button variant="hero" size="lg">Book Test Drive</Button></Link>
-              <Link to="/contact"><Button variant="heroOutline" size="lg">Get On-Road Price</Button></Link>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 w-full max-w-3xl">
+              <Link to="/test-drive" className="w-full">
+                <Button variant="hero" size="lg" className="w-full">Book Test Drive</Button>
+              </Link>
+              <Link to="/contact" className="w-full">
+                <Button variant="heroOutline" size="lg" className="w-full">Get On-Road Price</Button>
+              </Link>
+              <Link to="/emi-calculator" className="w-full">
+                <Button variant="outline" size="lg" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20">EMI Calculator</Button>
+              </Link>
             </div>
           </motion.div>
         </div>
@@ -107,6 +121,14 @@ const ModelVF6 = () => {
         <div className="container mx-auto px-4 lg:px-8 text-center">
           <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Color Studio</p>
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-8">Choose Your Shade</h2>
+          <div className="max-w-5xl mx-auto mb-8 rounded-3xl overflow-hidden bg-[#F0F0F0]">
+            <img
+              src={colors[selectedColor].image}
+              alt={`VinFast VF 6 in ${colors[selectedColor].name}`}
+              className="w-full h-auto object-contain"
+              loading="lazy"
+            />
+          </div>
           <div className="flex items-center justify-center gap-4 mb-4">
             {colors.map((c, i) => (
               <button key={c.name} onClick={() => setSelectedColor(i)}
@@ -141,6 +163,13 @@ const ModelVF6 = () => {
               </div>
             ))}
           </motion.div>
+          <div className="mt-8 flex justify-center">
+            <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="lg">
+                <Download className="w-4 h-4 mr-2" /> Download Brochure
+              </Button>
+            </a>
+          </div>
         </div>
       </section>
 
@@ -174,50 +203,6 @@ const ModelVF6 = () => {
         </div>
       </section>
 
-      {/* Brochure PDF Viewer */}
-      <section className="py-24 section-dark">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-10"
-          >
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Official Brochure</p>
-            <h2 className="font-display font-bold text-3xl md:text-4xl mb-4">VF 6 — Full Brochure</h2>
-            <p className="text-muted-foreground max-w-xl mx-auto mb-6">
-              Browse the complete VinFast VF 6 brochure below or download it for offline reading.
-            </p>
-            <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" target="_blank" rel="noopener noreferrer">
-              <Button variant="hero" size="lg">
-                <Download className="w-4 h-4 mr-2" /> Download PDF
-              </Button>
-            </a>
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="glass-card overflow-hidden rounded-3xl"
-          >
-            <div className="flex items-center gap-3 px-6 py-4 border-b border-foreground/[0.06]">
-              <FileText className="w-5 h-5 text-primary" />
-              <span className="font-display font-semibold text-sm">VinFast VF 6 — Official Brochure</span>
-              <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" className="ml-auto flex items-center gap-1.5 text-xs text-primary hover:underline">
-                <Download className="w-3.5 h-3.5" /> Download
-              </a>
-            </div>
-            <iframe
-              src="/brochures/VF6-Brochure.pdf"
-              title="VinFast VF 6 Brochure"
-              className="w-full"
-              style={{ height: "80vh", minHeight: "600px" }}
-            />
-          </motion.div>
-        </div>
-      </section>
-
       <LeadCaptureStrip />
       <Footer />
       <StickyMobileCTA />
@@ -226,3 +211,7 @@ const ModelVF6 = () => {
 };
 
 export default ModelVF6;
+
+
+
+

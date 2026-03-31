@@ -22,6 +22,8 @@ import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOffers from "./pages/admin/AdminOffers";
 import AdminContent from "./pages/admin/AdminContent";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminHomepage from "./pages/admin/AdminHomepage";
+import AdminMedia from "./pages/admin/AdminMedia";
 
 const queryClient = new QueryClient();
 
@@ -52,6 +54,8 @@ const App = () => (
             <Route path="products" element={<AdminProducts />} />
             <Route path="offers" element={<AdminOffers />} />
             <Route path="content" element={<AdminContent />} />
+            <Route path="homepage" element={<AdminHomepage />} />
+            <Route path="media" element={<AdminMedia />} />
             <Route path="settings" element={<AdminSettings />} />
           </Route>
 
