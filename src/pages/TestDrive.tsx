@@ -7,20 +7,50 @@ import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
 import { CalendarDays, MapPin, Car } from "lucide-react";
 
+const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
 const TestDrivePage = () => {
   const [formData, setFormData] = useState({
     name: "", mobile: "", email: "", city: "Patna", model: "VF 7",
     date: "", time: "", remarks: "",
   });
+  const [mobileError, setMobileError] = useState("");
+
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setFormData({ ...formData, mobile: digits });
+    if (digits.length === 0) {
+      setMobileError("");
+    } else if (digits.length < 10) {
+      setMobileError("Mobile number must be 10 digits.");
+    } else if (!MOBILE_REGEX.test(digits)) {
+      setMobileError("Enter a valid Indian mobile number (starts with 6–9).");
+    } else {
+      setMobileError("");
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.mobile || !formData.date) {
-      toast.error("Please fill in required fields.");
+    if (!formData.name.trim()) {
+      toast.error("Please enter your full name.");
+      return;
+    }
+    if (!formData.mobile) {
+      toast.error("Please enter your mobile number.");
+      return;
+    }
+    if (!MOBILE_REGEX.test(formData.mobile)) {
+      toast.error("Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+    if (!formData.date) {
+      toast.error("Please select a preferred date.");
       return;
     }
     toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
     setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", date: "", time: "", remarks: "" });
+    setMobileError("");
   };
 
   const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });
@@ -71,7 +101,20 @@ const TestDrivePage = () => {
               <h3 className="font-display font-bold text-xl mb-6">Book Your Test Drive</h3>
               <div className="space-y-4">
                 <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
-                <input type="tel" placeholder="Mobile Number *" value={formData.mobile} onChange={(e) => update("mobile", e.target.value)} className={inputClass} />
+                <div className="flex flex-col gap-1">
+                  <input
+                    type="tel"
+                    placeholder="Mobile Number *"
+                    value={formData.mobile}
+                    onChange={handleMobileChange}
+                    maxLength={10}
+                    inputMode="numeric"
+                    className={`${inputClass} ${mobileError ? "border-red-500 focus:ring-red-500/50" : ""}`}
+                  />
+                  {mobileError && (
+                    <p className="text-red-500 text-[11px] px-1 leading-tight">{mobileError}</p>
+                  )}
+                </div>
                 <input type="email" placeholder="Email (Optional)" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} />
                 <div className="grid grid-cols-2 gap-4">
                   <select value={formData.model} onChange={(e) => update("model", e.target.value)} className={inputClass}>

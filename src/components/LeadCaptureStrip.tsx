@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
+const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
 const LeadCaptureStrip = () => {
   const [formData, setFormData] = useState({
     name: "",
@@ -11,15 +13,41 @@ const LeadCaptureStrip = () => {
     model: "VF 7",
     interest: "Test Drive",
   });
+  const [mobileError, setMobileError] = useState("");
+
+  const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    // Allow digits only, max 10 characters
+    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
+    setFormData({ ...formData, mobile: digits });
+
+    if (digits.length === 0) {
+      setMobileError("");
+    } else if (digits.length < 10) {
+      setMobileError("Mobile number must be 10 digits.");
+    } else if (!MOBILE_REGEX.test(digits)) {
+      setMobileError("Enter a valid Indian mobile number (starts with 6–9).");
+    } else {
+      setMobileError("");
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.mobile) {
-      toast.error("Please fill in your name and mobile number.");
+    if (!formData.name.trim()) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (!formData.mobile) {
+      toast.error("Please enter your mobile number.");
+      return;
+    }
+    if (!MOBILE_REGEX.test(formData.mobile)) {
+      toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
     toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
     setFormData({ name: "", mobile: "", city: "Patna", model: "VF 7", interest: "Test Drive" });
+    setMobileError("");
   };
 
   return (
@@ -55,13 +83,22 @@ const LeadCaptureStrip = () => {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
-            <input
-              type="tel"
-              placeholder="Mobile Number"
-              value={formData.mobile}
-              onChange={(e) => setFormData({ ...formData, mobile: e.target.value })}
-              className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
+            <div className="flex flex-col gap-1">
+              <input
+                type="tel"
+                placeholder="Mobile Number"
+                value={formData.mobile}
+                onChange={handleMobileChange}
+                maxLength={10}
+                inputMode="numeric"
+                className={`h-12 px-4 rounded-xl bg-background/50 border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                  mobileError ? "border-red-500 focus:ring-red-500/50" : "border-border"
+                }`}
+              />
+              {mobileError && (
+                <p className="text-red-500 text-[11px] px-1 leading-tight">{mobileError}</p>
+              )}
+            </div>
             <select
               value={formData.city}
               onChange={(e) => setFormData({ ...formData, city: e.target.value })}

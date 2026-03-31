@@ -15,7 +15,7 @@ const AboutPage = () => {
       <section className="relative h-[50vh] flex items-end pb-12">
         <div className="absolute inset-0">
           <img src={vinFastLuxury} alt="VinFast Luxury" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-background/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
         </div>
         <div className="relative container mx-auto px-4 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>

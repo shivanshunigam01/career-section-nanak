@@ -3,33 +3,48 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import homepageHero from "@/assets/homepage-hero.webp";
-import vfSeriesBanner from "@/assets/vf-series-banner.jpeg";
-import vf7Street from "@/assets/vf7-street.jpg";
+import slideVf7Driving from "@/assets/slide-vf7-driving.png";
+import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
+import slideVf6Lifestyle from "@/assets/slide-vf6-lifestyle.png";
+import slideVf7Interior from "@/assets/slide-vf7-interior.png";
+import slideVf7RearDetail from "@/assets/slide-vf7-rear-detail.png";
+import slideVf7Wheel from "@/assets/slide-vf7-wheel.png";
 
 const slides = [
   {
-    image: homepageHero,
+    image: slideVf7Driving,
     subtitle: "Bihar's First Authorized VinFast Dealer — Book Your Test Drive Today",
-    objectPosition: "center 60%",
+    objectPosition: "center 50%",
   },
   {
-    image: vfSeriesBanner,
-    subtitle: "Introducing the VF Series — Design You Can Feel. 5-Star Safety.",
+    image: slideVf6Vf7Night,
+    subtitle: "VF 6 & VF 7 — Two Electric SUVs. One Bold Choice.",
+    objectPosition: "center 45%",
+  },
+  {
+    image: slideVf6Lifestyle,
+    subtitle: "VinFast VF 6 — Smart, Safe & Built for Every Family",
     objectPosition: "center 55%",
   },
   {
-    image: vf7Street,
-    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
+    image: slideVf7Interior,
+    subtitle: "Premium Interior. 12.9\" Infotainment. Ventilated Seats.",
+    objectPosition: "center 40%",
+  },
+  {
+    image: slideVf7RearDetail,
+    subtitle: "Bold Design. Distinctive Style. Made to Turn Heads.",
     objectPosition: "center 50%",
+  },
+  {
+    image: slideVf7Wheel,
+    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
+    objectPosition: "center 60%",
   },
 ];
 
 const HeroSection = () => {
   const [current, setCurrent] = useState(0);
-  const [imagesLoaded, setImagesLoaded] = useState<boolean[]>(
-    new Array(slides.length).fill(false)
-  );
 
   const next = useCallback(
     () => setCurrent((c) => (c + 1) % slides.length),
@@ -45,30 +60,17 @@ const HeroSection = () => {
     return () => clearInterval(timer);
   }, [next]);
 
-  // Preload all hero images
-  useEffect(() => {
-    slides.forEach((slide, idx) => {
-      const img = new Image();
-      img.src = slide.image;
-      img.onload = () =>
-        setImagesLoaded((prev) => {
-          const next = [...prev];
-          next[idx] = true;
-          return next;
-        });
-    });
-  }, []);
-
   return (
     <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 overflow-hidden">
-      {/* All slide images rendered, crossfade via opacity */}
+      {/* Slides — CSS opacity crossfade (no Framer GPU layer, preserves image sharpness) */}
       {slides.map((slide, i) => (
-        <motion.div
+        <div
           key={i}
-          animate={{ opacity: i === current ? 1 : 0, scale: i === current ? 1 : 1.05 }}
-          transition={{ duration: 1.2, ease: "easeInOut" }}
-          className="absolute inset-0"
-          style={{ zIndex: i === current ? 1 : 0 }}
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          style={{
+            opacity: i === current ? 1 : 0,
+            zIndex: i === current ? 1 : 0,
+          }}
         >
           <img
             src={slide.image}
@@ -76,12 +78,9 @@ const HeroSection = () => {
             className="w-full h-full object-cover"
             style={{ objectPosition: slide.objectPosition }}
             loading="eager"
+            decoding="sync"
           />
-          {/* Bottom gradient for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 sm:via-background/30 to-transparent" />
-          {/* Left gradient — stronger on mobile for text contrast */}
-          <div className="absolute inset-0 bg-gradient-to-r from-background/90 sm:from-background/70 via-background/40 sm:via-transparent to-transparent" />
-        </motion.div>
+        </div>
       ))}
 
       {/* Content */}
@@ -95,7 +94,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.15 }}
             className="max-w-lg lg:max-w-2xl"
           >
-            <p className="text-foreground/80 font-display font-medium text-xs sm:text-sm lg:text-base max-w-sm sm:max-w-lg mb-4 sm:mb-6 leading-relaxed drop-shadow-lg">
+            <p className="text-white font-display font-semibold text-sm sm:text-base lg:text-xl max-w-sm sm:max-w-xl mb-4 sm:mb-6 leading-relaxed [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_24px_rgba(0,0,0,0.75)]">
               {slides[current].subtitle}
             </p>
             <div className="flex flex-wrap gap-3 sm:gap-4">
@@ -117,7 +116,7 @@ const HeroSection = () => {
         <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12">
           <button
             onClick={prev}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
@@ -126,41 +125,41 @@ const HeroSection = () => {
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                className={`h-1 rounded-full transition-all duration-500 ${
-                  i === current ? "w-6 sm:w-8 bg-primary" : "w-3 sm:w-4 bg-foreground/20"
+                className={`h-1.5 rounded-full transition-all duration-500 ${
+                  i === current ? "w-8 sm:w-10 bg-primary shadow-glow-red" : "w-3 sm:w-4 bg-black/25 hover:bg-black/40"
                 }`}
               />
             ))}
           </div>
           <button
             onClick={next}
-            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-foreground/20 flex items-center justify-center text-foreground/50 hover:text-foreground hover:border-foreground/40 transition-all backdrop-blur-sm"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
-        {/* Quick links below hero — hidden on small mobile to save space */}
-        <div className="hidden sm:flex items-center gap-6 mt-6 lg:mt-8">
+        {/* Quick link pills */}
+        <div className="hidden sm:flex items-center gap-3 mt-6 lg:mt-8 flex-wrap">
           <Link
             to="/models/vf7"
-            className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
-            Explore VF 7 →
+            Explore VF 7 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/models/vf6"
-            className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
-            Explore VF 6 →
+            Explore VF 6 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <a
-            href="https://wa.me/919876543210"
+            href="https://wa.me/919231445060"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-xs sm:text-sm text-foreground/40 hover:text-foreground transition-colors underline underline-offset-4 decoration-foreground/20"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1fa855] bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
-            WhatsApp Now →
+            WhatsApp Now <ChevronRight className="w-3.5 h-3.5" />
           </a>
         </div>
       </div>

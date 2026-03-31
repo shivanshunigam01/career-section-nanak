@@ -46,8 +46,8 @@ const ContactPage = () => {
                 <h3 className="font-display font-bold text-xl mb-6">Patna Showroom</h3>
                 <div className="space-y-4">
                   {[
-                    { icon: MapPin, text: "Near Saguna More, Bailey Road, Patna, Bihar 801503" },
-                    { icon: Phone, text: "+91 98765 43210", href: "tel:+919876543210" },
+                    { icon: MapPin, text: "Plot No. 2421, NH 30, Bypass Road, Paijawa, Patna, Bihar 800009" },
+                    { icon: Phone, text: "+91 92314 45060", href: "tel:+919231445060" },
                     { icon: Mail, text: "info@patliputravinfast.com", href: "mailto:info@patliputravinfast.com" },
                     { icon: Clock, text: "10:00 AM – 8:00 PM, Monday – Saturday" },
                   ].map((item) => {
@@ -77,12 +77,12 @@ const ContactPage = () => {
               </div>
 
               <div className="flex gap-3">
-                <a href="https://wa.me/919876543210" target="_blank" rel="noopener noreferrer" className="flex-1">
+                <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="flex-1">
                   <Button variant="whatsapp" size="lg" className="w-full">
                     <MessageCircle className="w-5 h-5" /> WhatsApp Us
                   </Button>
                 </a>
-                <a href="tel:+919876543210" className="flex-1">
+                <a href="tel:+919231445060" className="flex-1">
                   <Button variant="outline" size="lg" className="w-full">
                     <Phone className="w-5 h-5" /> Call Now
                   </Button>

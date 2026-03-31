@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion } from "framer-motion";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
-import vinLogo from "@/assets/vinfast-logo.png";
+import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -34,7 +34,7 @@ const AdminLogin = () => {
       >
         <div className="glass-card p-8 sm:p-10">
           <div className="text-center mb-8">
-            <img src={vinLogo} alt="VinFast" className="h-8 mx-auto mb-4 invert" />
+            <img src={vinLogo} alt="Patliputra VinFast" className="h-10 mx-auto mb-4" />
             <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
             <p className="text-muted-foreground text-sm mt-1">Patliputra Auto Dealer Management</p>
           </div>

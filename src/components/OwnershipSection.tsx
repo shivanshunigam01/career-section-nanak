@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Plug, Home, Wrench, ShieldCheck } from "lucide-react";
-import vf8Convoy from "@/assets/vf8-convoy.jpg";
+import vf7Street from "@/assets/vf7-street.jpg";
 
 const ownershipItems = [
   {
@@ -76,8 +76,8 @@ const OwnershipSection = () => {
           >
             <div className="rounded-3xl overflow-hidden shadow-luxury">
               <img
-                src={vf8Convoy}
-                alt="VinFast Fleet on Road"
+                src={vf7Street}
+                alt="VinFast VF 7 on Road"
                 className="w-full h-full object-cover aspect-[4/3]"
                 loading="lazy"
               />
