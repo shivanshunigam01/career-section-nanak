@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import vinfastLogo from "@/assets/vinfast-logo.png";
 
+
+//this is my footer 
 const Footer = () => {
   return (
     <footer className="section-surface border-t border-border/50">
