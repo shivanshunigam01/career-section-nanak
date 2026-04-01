@@ -12,6 +12,11 @@ const EMICalculator = () => {
   const [tenure, setTenure] = useState(60);
   const [rate, setRate] = useState(8.5);
 
+  const [priceInput, setPriceInput] = useState("4390000");
+  const [downPaymentInput, setDownPaymentInput] = useState("1000000");
+  const [tenureInput, setTenureInput] = useState("60");
+  const [rateInput, setRateInput] = useState("8.5");
+
   const emi = useMemo(() => {
     const principal = price - downPayment;
     const r = rate / 100 / 12;
@@ -25,7 +30,8 @@ const EMICalculator = () => {
 
   const format = (n: number) => "₹" + Math.round(n).toLocaleString("en-IN");
 
-  const inputClass = "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
+  const numInputClass =
+    "w-28 text-right text-sm font-semibold tabular-nums bg-background/60 border border-border/60 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground";
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,42 +50,141 @@ const EMICalculator = () => {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8">
               <h3 className="font-display font-bold text-lg mb-6">Customize Your Plan</h3>
               <div className="space-y-6">
+
+                {/* Vehicle Price */}
                 <div>
-                  <div className="flex justify-between mb-2">
+                  <div className="flex justify-between items-center mb-2">
                     <label className="text-sm text-muted-foreground">Vehicle Price</label>
-                    <span className="text-sm font-semibold tabular-nums">{format(price)}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-muted-foreground">₹</span>
+                      <input
+                        type="number"
+                        className={numInputClass}
+                        value={priceInput}
+                        min={2500000}
+                        max={6000000}
+                        onChange={(e) => {
+                          setPriceInput(e.target.value);
+                          const v = Number(e.target.value);
+                          if (!isNaN(v) && v >= 2500000 && v <= 6000000) setPrice(v);
+                        }}
+                        onBlur={() => {
+                          const clamped = Math.min(6000000, Math.max(2500000, Number(priceInput) || price));
+                          setPrice(clamped);
+                          setPriceInput(String(clamped));
+                        }}
+                      />
+                    </div>
                   </div>
                   <input type="range" min={2500000} max={6000000} step={10000} value={price}
-                    onChange={(e) => setPrice(Number(e.target.value))}
+                    onChange={(e) => { setPrice(Number(e.target.value)); setPriceInput(e.target.value); }}
                     className="w-full accent-primary" />
+                  <div className="flex justify-between text-xs text-muted-foreground/60 mt-1">
+                    <span>₹25L</span><span>₹60L</span>
+                  </div>
                 </div>
+
+                {/* Down Payment */}
                 <div>
-                  <div className="flex justify-between mb-2">
+                  <div className="flex justify-between items-center mb-2">
                     <label className="text-sm text-muted-foreground">Down Payment</label>
-                    <span className="text-sm font-semibold tabular-nums">{format(downPayment)}</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-sm text-muted-foreground">₹</span>
+                      <input
+                        type="number"
+                        className={numInputClass}
+                        value={downPaymentInput}
+                        min={0}
+                        max={price * 0.8}
+                        onChange={(e) => {
+                          setDownPaymentInput(e.target.value);
+                          const v = Number(e.target.value);
+                          if (!isNaN(v) && v >= 0 && v <= price * 0.8) setDownPayment(v);
+                        }}
+                        onBlur={() => {
+                          const clamped = Math.min(price * 0.8, Math.max(0, Number(downPaymentInput) || downPayment));
+                          setDownPayment(clamped);
+                          setDownPaymentInput(String(clamped));
+                        }}
+                      />
+                    </div>
                   </div>
                   <input type="range" min={0} max={price * 0.8} step={10000} value={downPayment}
-                    onChange={(e) => setDownPayment(Number(e.target.value))}
+                    onChange={(e) => { setDownPayment(Number(e.target.value)); setDownPaymentInput(e.target.value); }}
                     className="w-full accent-primary" />
-                </div>
-                <div>
-                  <div className="flex justify-between mb-2">
-                    <label className="text-sm text-muted-foreground">Tenure (months)</label>
-                    <span className="text-sm font-semibold tabular-nums">{tenure} months</span>
+                  <div className="flex justify-between text-xs text-muted-foreground/60 mt-1">
+                    <span>₹0</span><span>80% of price</span>
                   </div>
-                  <input type="range" min={12} max={84} step={6} value={tenure}
-                    onChange={(e) => setTenure(Number(e.target.value))}
-                    className="w-full accent-primary" />
                 </div>
+
+                {/* Tenure */}
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <label className="text-sm text-muted-foreground">Interest Rate (%)</label>
-                    <span className="text-sm font-semibold tabular-nums">{rate}%</span>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm text-muted-foreground">Tenure</label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        className={numInputClass}
+                        value={tenureInput}
+                        min={12}
+                        max={84}
+                        onChange={(e) => {
+                          setTenureInput(e.target.value);
+                          const v = Number(e.target.value);
+                          if (!isNaN(v) && v >= 12 && v <= 84) setTenure(v);
+                        }}
+                        onBlur={() => {
+                          const clamped = Math.min(84, Math.max(12, Number(tenureInput) || tenure));
+                          setTenure(clamped);
+                          setTenureInput(String(clamped));
+                        }}
+                      />
+                      <span className="text-sm text-muted-foreground">mo</span>
+                    </div>
+                  </div>
+                  <input type="range" min={12} max={84} step={1} value={tenure}
+                    onChange={(e) => { setTenure(Number(e.target.value)); setTenureInput(e.target.value); }}
+                    className="w-full accent-primary" />
+                  <div className="flex justify-between text-xs text-muted-foreground/60 mt-1">
+                    <span>12 mo</span><span>84 mo</span>
+                  </div>
+                </div>
+
+                {/* Interest Rate */}
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <label className="text-sm text-muted-foreground">Interest Rate</label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        className={numInputClass}
+                        value={rateInput}
+                        min={6}
+                        max={15}
+                        step={0.1}
+                        onChange={(e) => {
+                          setRateInput(e.target.value);
+                          const v = parseFloat(e.target.value);
+                          if (!isNaN(v) && v >= 6 && v <= 15) setRate(v);
+                        }}
+                        onBlur={() => {
+                          const clamped = Math.min(15, Math.max(6, parseFloat(rateInput) || rate));
+                          const rounded = Math.round(clamped * 10) / 10;
+                          setRate(rounded);
+                          setRateInput(String(rounded));
+                        }}
+                      />
+                      <span className="text-sm text-muted-foreground">%</span>
+                    </div>
                   </div>
                   <input type="range" min={6} max={15} step={0.1} value={rate}
-                    onChange={(e) => setRate(Number(e.target.value))}
+                    onChange={(e) => { setRate(Number(e.target.value)); setRateInput(e.target.value); }}
                     className="w-full accent-primary" />
+                  <div className="flex justify-between text-xs text-muted-foreground/60 mt-1">
+                    <span>6%</span><span>15%</span>
+                  </div>
                 </div>
+
               </div>
             </motion.div>
 
