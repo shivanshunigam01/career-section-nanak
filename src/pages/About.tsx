@@ -12,15 +12,21 @@ const AboutPage = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative h-[50vh] flex items-end pb-12">
+      <section className="relative min-h-[60vh] flex items-end pb-14 pt-16 lg:pt-20">
         <div className="absolute inset-0">
-          <img src={vinFastLuxury} alt="VinFast Luxury" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+          <img src={vinFastLuxury} alt="VinFast Luxury" className="w-full h-full object-cover object-center" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
         </div>
         <div className="relative container mx-auto px-4 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
-            <h1 className="font-display font-bold text-4xl md:text-5xl lg:text-6xl">Patliputra Auto × VinFast</h1>
+            <h1 className="font-display font-bold text-4xl md:text-6xl lg:text-7xl text-white leading-tight mb-3">
+              Patliputra Auto<br className="hidden sm:block" /> × VinFast
+            </h1>
+            <p className="text-white/75 text-base md:text-lg max-w-xl">
+              Bihar's first authorized VinFast dealer — bringing electric excellence to your doorstep.
+            </p>
           </motion.div>
         </div>
       </section>

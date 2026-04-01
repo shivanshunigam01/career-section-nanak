@@ -10,6 +10,7 @@ const LeadCaptureStrip = () => {
     name: "",
     mobile: "",
     city: "Patna",
+    otherCity: "",
     model: "VF 7",
     interest: "Test Drive",
   });
@@ -46,7 +47,7 @@ const LeadCaptureStrip = () => {
       return;
     }
     toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", city: "Patna", model: "VF 7", interest: "Test Drive" });
+    setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", interest: "Test Drive" });
     setMobileError("");
   };
 
@@ -99,16 +100,28 @@ const LeadCaptureStrip = () => {
                 <p className="text-red-500 text-[11px] px-1 leading-tight">{mobileError}</p>
               )}
             </div>
-            <select
-              value={formData.city}
-              onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-              className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="Patna">Patna</option>
-              <option value="Muzaffarpur">Muzaffarpur</option>
-              <option value="Gaya">Gaya</option>
-              <option value="Other">Other</option>
-            </select>
+            <div className="flex flex-col gap-2">
+              <select
+                value={formData.city}
+                onChange={(e) => setFormData({ ...formData, city: e.target.value, otherCity: "" })}
+                className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              >
+                <option value="Patna">Patna</option>
+                <option value="Muzaffarpur">Muzaffarpur</option>
+                <option value="Gaya">Gaya</option>
+                <option value="Other">Other</option>
+              </select>
+              {formData.city === "Other" && (
+                <input
+                  type="text"
+                  placeholder="Enter your city / state"
+                  value={formData.otherCity}
+                  onChange={(e) => setFormData({ ...formData, otherCity: e.target.value })}
+                  className="h-12 px-4 rounded-xl bg-background/50 border border-primary/50 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  autoFocus
+                />
+              )}
+            </div>
             <select
               value={formData.model}
               onChange={(e) => setFormData({ ...formData, model: e.target.value })}

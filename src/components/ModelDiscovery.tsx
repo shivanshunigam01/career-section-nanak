@@ -9,7 +9,7 @@ const models = [
   {
     name: "VF 7",
     tagline: "Bold. Intelligent. Unstoppable.",
-    price: "₹43.90 Lakh*",
+    price: "₹21.89 Lakh*",
     image: vf7Real,
     href: "/models/vf7",
     specs: [
@@ -22,7 +22,7 @@ const models = [
   {
     name: "VF 6",
     tagline: "Compact. Smart. Electrifying.",
-    price: "₹35.00 Lakh*",
+    price: "₹17.29 Lakh*",
     image: vf6Banner,
     href: "/models/vf6",
     specs: [

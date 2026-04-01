@@ -2,20 +2,22 @@ import { useEffect } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
-  TestTube, MessageSquare, Tag, Bell
+  TestTube, MessageSquare, Tag, Bell, Home, Image, Globe
 } from "lucide-react";
 import { useState } from "react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 
 const navItems = [
-  { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
-  { label: "Leads", icon: Users, path: "/admin/leads" },
-  { label: "Test Drives", icon: TestTube, path: "/admin/test-drives" },
-  { label: "Products", icon: Car, path: "/admin/products" },
-  { label: "Enquiries", icon: MessageSquare, path: "/admin/enquiries" },
-  { label: "Offers", icon: Tag, path: "/admin/offers" },
-  { label: "Content", icon: FileText, path: "/admin/content" },
-  { label: "Settings", icon: Settings, path: "/admin/settings" },
+  { label: "Dashboard",   icon: LayoutDashboard, path: "/admin/dashboard" },
+  { label: "Homepage",    icon: Home,             path: "/admin/homepage" },
+  { label: "Leads",       icon: Users,            path: "/admin/leads" },
+  { label: "Test Drives", icon: TestTube,         path: "/admin/test-drives" },
+  { label: "Products",    icon: Car,              path: "/admin/products" },
+  { label: "Enquiries",   icon: MessageSquare,    path: "/admin/enquiries" },
+  { label: "Offers",      icon: Tag,              path: "/admin/offers" },
+  { label: "Content",     icon: FileText,         path: "/admin/content" },
+  { label: "Media",       icon: Image,            path: "/admin/media" },
+  { label: "Settings",    icon: Settings,         path: "/admin/settings" },
 ];
 
 const AdminLayout = () => {

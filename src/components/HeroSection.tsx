@@ -61,7 +61,7 @@ const HeroSection = () => {
   }, [next]);
 
   return (
-    <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 overflow-hidden">
+    <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 pt-16 lg:pt-0 overflow-hidden">
       {/* Slides — CSS opacity crossfade (no Framer GPU layer, preserves image sharpness) */}
       {slides.map((slide, i) => (
         <div
