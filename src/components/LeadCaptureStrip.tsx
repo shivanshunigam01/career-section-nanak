@@ -2,8 +2,19 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { addLead } from "@/lib/vfLocalStorage";
+import type { Lead } from "@/data/mockData";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
+const getLocalISODate = () => {
+  // Returns YYYY-MM-DD in the user's local timezone.
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 const LeadCaptureStrip = () => {
   const [formData, setFormData] = useState({
@@ -46,6 +57,31 @@ const LeadCaptureStrip = () => {
       toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
+
+    try {
+      const todayStr = getLocalISODate();
+      const city = formData.city === "Other" ? (formData.otherCity || "Other") : formData.city;
+      const lead: Lead = {
+        id: `WL_${Date.now()}`,
+        name: formData.name.trim(),
+        mobile: formData.mobile,
+        email: "",
+        city,
+        model: formData.model,
+        source: "Website",
+        status: "New Lead",
+        assignedTo: "",
+        createdAt: todayStr,
+        nextFollowUp: "",
+        remarks: `Interest: ${formData.interest}`,
+        financeNeeded: false,
+        exchangeNeeded: false,
+      };
+      addLead(lead);
+    } catch {
+      // Ignore localStorage failures; keep UX intact.
+    }
+
     toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
     setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", interest: "Test Drive" });
     setMobileError("");

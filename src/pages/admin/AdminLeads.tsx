@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { mockLeads, LEAD_STATUSES, type Lead, type LeadStatus } from "@/data/mockData";
+import { getLeads, setLeads as setLeadsToStorage } from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Edit2, Trash2, Phone, Mail } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, Phone, Mail, Download, FileText, MessageCircle } from "lucide-react";
 
 const AdminLeads = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -18,11 +20,100 @@ const AdminLeads = () => {
 
   const emptyLead: Lead = { id: "", name: "", mobile: "", email: "", city: "", model: "VF 7", source: "Website", status: "New Lead", assignedTo: "", createdAt: new Date().toISOString().split("T")[0], nextFollowUp: "", remarks: "", financeNeeded: false, exchangeNeeded: false };
 
+  useEffect(() => {
+    const stored = getLeads();
+    if (stored.length > 0) setLeads(stored);
+    else setLeads(mockLeads);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setLeadsToStorage(leads);
+  }, [leads, hydrated]);
+
   const filtered = leads.filter(l => {
     const matchSearch = l.name.toLowerCase().includes(search.toLowerCase()) || l.mobile.includes(search) || l.email.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "all" || l.status === filterStatus;
     return matchSearch && matchStatus;
   });
+
+  const escapeCsv = (value: unknown) => {
+    const str = String(value ?? "");
+    if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+
+  const exportCsv = () => {
+    const headers: (keyof Lead)[] = ["id", "name", "mobile", "email", "city", "model", "source", "status", "assignedTo", "createdAt", "nextFollowUp", "remarks", "financeNeeded", "exchangeNeeded"];
+    const rows = filtered.map((l) => headers.map((h) => escapeCsv(l[h])).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `patliputra-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPdf = () => {
+    const htmlRows = filtered
+      .map(
+        (l) => `<tr>
+          <td>${l.name}</td>
+          <td>${l.mobile}</td>
+          <td>${l.email}</td>
+          <td>${l.model}</td>
+          <td>${l.city}</td>
+          <td>${l.source}</td>
+          <td>${l.status}</td>
+          <td>${l.assignedTo || "-"}</td>
+          <td>${l.nextFollowUp || "-"}</td>
+        </tr>`,
+      )
+      .join("");
+
+    const html = `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Leads Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 16px; }
+            table { border-collapse: collapse; width: 100%; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f5f5f5; }
+          </style>
+        </head>
+        <body>
+          <h2>Patliputra Leads Export (${filtered.length})</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th><th>Mobile</th><th>Email</th><th>Model</th><th>City</th><th>Source</th><th>Status</th><th>Assigned</th><th>Next Follow-up</th>
+              </tr>
+            </thead>
+            <tbody>${htmlRows}</tbody>
+          </table>
+          <p style="margin-top:12px;color:#666;">Tip: Use your browser's print dialog to save as PDF.</p>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  };
+
+  const shareWhatsApp = () => {
+    const preview = filtered.slice(0, 10).map((l) => `• ${l.name} (${l.mobile}) - ${l.model} - ${l.status}`).join("\n");
+    const suffix = filtered.length > 10 ? `\n...and ${filtered.length - 10} more` : "";
+    const msg = `Patliputra Leads (${filtered.length})\n${preview}${suffix}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
 
   const handleSave = (lead: Lead) => {
     if (lead.id) {
@@ -45,9 +136,20 @@ const AdminLeads = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Leads</h1>
           <p className="text-muted-foreground text-sm">{leads.length} total leads</p>
         </div>
-        <Button onClick={() => { setEditLead(emptyLead); setShowForm(true); }} className="bg-primary text-primary-foreground">
-          <Plus className="w-4 h-4 mr-2" /> Add Lead
-        </Button>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button onClick={() => { setEditLead(emptyLead); setShowForm(true); }} className="bg-primary text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" /> Add Lead
+          </Button>
+          <Button onClick={exportCsv} variant="outline" className="bg-secondary/50">
+            <Download className="w-4 h-4 mr-2" /> Export CSV
+          </Button>
+          <Button onClick={exportPdf} variant="outline" className="bg-secondary/50">
+            <FileText className="w-4 h-4 mr-2" /> Export PDF
+          </Button>
+          <Button onClick={shareWhatsApp} variant="outline" className="bg-secondary/50">
+            <MessageCircle className="w-4 h-4 mr-2" /> Share WhatsApp
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}

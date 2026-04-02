@@ -6,6 +6,8 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
 import { CalendarDays, MapPin, Car } from "lucide-react";
+import { addLead, addTestDriveBooking } from "@/lib/vfLocalStorage";
+import type { Lead, TestDriveBooking } from "@/data/mockData";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -68,6 +70,47 @@ const TestDrivePage = () => {
     if (selected.getTime() < today.getTime()) {
       toast.error("Back date test drive booking is not allowed. Please select today or a future date.");
       return;
+    }
+
+    try {
+      const leadId = `WL_${Date.now()}`;
+      const lead: Lead = {
+        id: leadId,
+        name: formData.name.trim(),
+        mobile: formData.mobile,
+        email: formData.email.trim(),
+        city: formData.city,
+        model: formData.model,
+        source: "Website",
+        status: "Test Drive Scheduled",
+        assignedTo: "",
+        createdAt: todayStr,
+        nextFollowUp: "",
+        remarks: formData.remarks?.trim() ? formData.remarks.trim() : `Preferred: ${formData.date} ${formData.time}` ,
+        financeNeeded: false,
+        exchangeNeeded: false,
+      };
+
+      addLead(lead);
+
+      const booking: TestDriveBooking = {
+        id: `WTD_${Date.now()}`,
+        leadId,
+        customerName: formData.name.trim(),
+        mobile: formData.mobile,
+        model: formData.model,
+        preferredDate: formData.date,
+        preferredTime: formData.time,
+        branch: "Patna Showroom",
+        status: "Pending",
+        assignedExecutive: "",
+        feedback: "",
+        createdAt: todayStr,
+      };
+
+      addTestDriveBooking(booking);
+    } catch {
+      // If localStorage is blocked, we still allow the form submission UX.
     }
 
     toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");

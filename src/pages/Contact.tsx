@@ -6,9 +6,20 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
+import { addEnquiry } from "@/lib/vfLocalStorage";
+import type { Enquiry } from "@/data/mockData";
 
 const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
 const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
+
+const getLocalISODate = () => {
+  // Returns YYYY-MM-DD in the user's local timezone.
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
@@ -22,6 +33,24 @@ const ContactPage = () => {
       toast.error("Please fill name and mobile number.");
       return;
     }
+
+    try {
+      const todayStr = getLocalISODate();
+      const enquiry: Enquiry = {
+        id: `WE_${Date.now()}`,
+        name: formData.name.trim(),
+        mobile: formData.mobile.trim(),
+        email: formData.email.trim(),
+        type: formData.interest,
+        message: formData.message.trim(),
+        status: "Open",
+        createdAt: todayStr,
+      };
+      addEnquiry(enquiry);
+    } catch {
+      // localStorage failures shouldn't block form submission UX
+    }
+
     toast.success("Thank you! Our team will contact you within 10 minutes.");
     setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", interest: "General Enquiry", message: "" });
   };

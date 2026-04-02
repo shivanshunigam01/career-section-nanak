@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { mockTestDrives, type TestDriveBooking } from "@/data/mockData";
+import { getTestDriveBookings, setTestDriveBookings as setTestDrivesToStorage } from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Clock, Download, FileText, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
@@ -28,6 +29,7 @@ const getLocalISODate = () => {
 };
 
 const AdminTestDrives = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [bookings, setBookings] = useState<TestDriveBooking[]>(mockTestDrives);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -37,11 +39,98 @@ const AdminTestDrives = () => {
 
   const emptyBooking: TestDriveBooking = { id: "", leadId: "", customerName: "", mobile: "", model: "VF 7", preferredDate: "", preferredTime: "", branch: "Patna Showroom", status: "Pending", assignedExecutive: "", feedback: "", createdAt: new Date().toISOString().split("T")[0] };
 
+  useEffect(() => {
+    const stored = getTestDriveBookings();
+    if (stored.length > 0) setBookings(stored);
+    else setBookings(mockTestDrives);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setTestDrivesToStorage(bookings);
+  }, [bookings, hydrated]);
+
   const filtered = bookings.filter(b => {
     const matchSearch = b.customerName.toLowerCase().includes(search.toLowerCase()) || b.mobile.includes(search);
     const matchStatus = filterStatus === "all" || b.status === filterStatus;
     return matchSearch && matchStatus;
   });
+
+  const escapeCsv = (value: unknown) => {
+    const str = String(value ?? "");
+    if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+
+  const exportCsv = () => {
+    const headers: (keyof TestDriveBooking)[] = ["id", "leadId", "customerName", "mobile", "model", "preferredDate", "preferredTime", "branch", "status", "assignedExecutive", "feedback", "createdAt"];
+    const rows = filtered.map((b) => headers.map((h) => escapeCsv(b[h])).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `patliputra-test-drives-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPdf = () => {
+    const htmlRows = filtered
+      .map(
+        (b) => `<tr>
+          <td>${b.customerName}</td>
+          <td>${b.mobile}</td>
+          <td>${b.model}</td>
+          <td>${b.preferredDate}</td>
+          <td>${b.preferredTime}</td>
+          <td>${b.branch}</td>
+          <td>${b.status}</td>
+          <td>${b.assignedExecutive || "-"}</td>
+        </tr>`,
+      )
+      .join("");
+
+    const html = `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Test Drives Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 16px; }
+            table { border-collapse: collapse; width: 100%; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f5f5f5; }
+          </style>
+        </head>
+        <body>
+          <h2>Patliputra Test Drives Export (${filtered.length})</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th><th>Mobile</th><th>Model</th><th>Preferred Date</th><th>Preferred Time</th><th>Branch</th><th>Status</th><th>Executive</th>
+              </tr>
+            </thead>
+            <tbody>${htmlRows}</tbody>
+          </table>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  };
+
+  const shareWhatsApp = () => {
+    const preview = filtered.slice(0, 10).map((b) => `• ${b.customerName} (${b.mobile}) - ${b.model} - ${b.preferredDate} ${b.preferredTime}`).join("\n");
+    const suffix = filtered.length > 10 ? `\n...and ${filtered.length - 10} more` : "";
+    const msg = `Patliputra Test Drives (${filtered.length})\n${preview}${suffix}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
 
   const handleSave = (booking: TestDriveBooking) => {
     if (booking.id) {
@@ -66,9 +155,20 @@ const AdminTestDrives = () => {
           <h1 className="font-display text-2xl font-bold text-foreground">Test Drives</h1>
           <p className="text-muted-foreground text-sm">{bookings.length} total bookings</p>
         </div>
-        <Button onClick={() => { setEditBooking(emptyBooking); setShowForm(true); }} className="bg-primary text-primary-foreground">
-          <Plus className="w-4 h-4 mr-2" /> Add Booking
-        </Button>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button onClick={() => { setEditBooking(emptyBooking); setShowForm(true); }} className="bg-primary text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" /> Add Booking
+          </Button>
+          <Button onClick={exportCsv} variant="outline" className="bg-secondary/50">
+            <Download className="w-4 h-4 mr-2" /> Export CSV
+          </Button>
+          <Button onClick={exportPdf} variant="outline" className="bg-secondary/50">
+            <FileText className="w-4 h-4 mr-2" /> Export PDF
+          </Button>
+          <Button onClick={shareWhatsApp} variant="outline" className="bg-secondary/50">
+            <MessageCircle className="w-4 h-4 mr-2" /> Share WhatsApp
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

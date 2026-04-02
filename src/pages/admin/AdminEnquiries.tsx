@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { mockEnquiries, type Enquiry } from "@/data/mockData";
+import { getEnquiries, setEnquiries as setEnquiriesToStorage } from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Phone, Mail, CheckCircle, MessageSquare, Archive } from "lucide-react";
+import { Search, Phone, Mail, CheckCircle, MessageSquare, Archive, Download, FileText, MessageCircle } from "lucide-react";
 
 const statusColors: Record<string, string> = {
   Open: "bg-amber-400/10 text-amber-400",
@@ -13,9 +14,22 @@ const statusColors: Record<string, string> = {
 };
 
 const AdminEnquiries = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [enquiries, setEnquiries] = useState<Enquiry[]>(mockEnquiries);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+
+  useEffect(() => {
+    const stored = getEnquiries();
+    if (stored.length > 0) setEnquiries(stored);
+    else setEnquiries(mockEnquiries);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setEnquiriesToStorage(enquiries);
+  }, [enquiries, hydrated]);
 
   const filtered = enquiries.filter(e => {
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) || e.mobile.includes(search);
@@ -27,11 +41,95 @@ const AdminEnquiries = () => {
     setEnquiries(prev => prev.map(e => e.id === id ? { ...e, status } : e));
   };
 
+  const escapeCsv = (value: unknown) => {
+    const str = String(value ?? "");
+    if (/[",\n]/.test(str)) return `"${str.replace(/"/g, '""')}"`;
+    return str;
+  };
+
+  const exportCsv = () => {
+    const headers: (keyof Enquiry)[] = ["id", "name", "mobile", "email", "type", "message", "status", "createdAt"];
+    const rows = filtered.map((e) => headers.map((h) => escapeCsv(e[h])).join(","));
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `patliputra-enquiries-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPdf = () => {
+    const htmlRows = filtered
+      .map(
+        (e) => `<tr>
+          <td>${e.name}</td>
+          <td>${e.mobile}</td>
+          <td>${e.email}</td>
+          <td>${e.type}</td>
+          <td>${e.status}</td>
+          <td>${e.createdAt}</td>
+        </tr>`,
+      )
+      .join("");
+
+    const html = `<!doctype html>
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Enquiries Export</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 16px; }
+            table { border-collapse: collapse; width: 100%; font-size: 12px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background: #f5f5f5; }
+          </style>
+        </head>
+        <body>
+          <h2>Patliputra Enquiries Export (${filtered.length})</h2>
+          <table>
+            <thead>
+              <tr><th>Name</th><th>Mobile</th><th>Email</th><th>Type</th><th>Status</th><th>Created At</th></tr>
+            </thead>
+            <tbody>${htmlRows}</tbody>
+          </table>
+          <script>window.onload = () => window.print();</script>
+        </body>
+      </html>`;
+
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  };
+
+  const shareWhatsApp = () => {
+    const preview = filtered.slice(0, 10).map((e) => `• ${e.name} (${e.mobile}) - ${e.type} - ${e.status}`).join("\n");
+    const suffix = filtered.length > 10 ? `\n...and ${filtered.length - 10} more` : "";
+    const msg = `Patliputra Enquiries (${filtered.length})\n${preview}${suffix}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Enquiries</h1>
-        <p className="text-muted-foreground text-sm">{enquiries.length} total enquiries</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Enquiries</h1>
+          <p className="text-muted-foreground text-sm">{enquiries.length} total enquiries</p>
+        </div>
+        <div className="flex flex-wrap gap-2 items-center">
+          <Button onClick={exportCsv} variant="outline" className="bg-secondary/50">
+            <Download className="w-4 h-4 mr-2" /> Export CSV
+          </Button>
+          <Button onClick={exportPdf} variant="outline" className="bg-secondary/50">
+            <FileText className="w-4 h-4 mr-2" /> Export PDF
+          </Button>
+          <Button onClick={shareWhatsApp} variant="outline" className="bg-secondary/50">
+            <MessageCircle className="w-4 h-4 mr-2" /> Share WhatsApp
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
