@@ -1,24 +1,39 @@
+import { useMemo } from "react";
 import { mockLeads, mockTestDrives, mockEnquiries, LEAD_STATUSES } from "@/data/mockData";
+import { getEnquiries, getLeads, getTestDriveBookings } from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Users, Car, TestTube, MessageSquare, TrendingUp, Clock, Phone, CalendarCheck } from "lucide-react";
 
-const statCards = [
-  { label: "Total Leads", value: mockLeads.length, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
-  { label: "Test Drives", value: mockTestDrives.length, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10" },
-  { label: "Enquiries", value: mockEnquiries.length, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10" },
-  { label: "Bookings", value: mockLeads.filter(l => l.status === "Booked").length, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10" },
-  { label: "Hot Leads", value: mockLeads.filter(l => ["Interested", "Negotiation"].includes(l.status)).length, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10" },
-  { label: "Pending Follow-ups", value: mockLeads.filter(l => l.nextFollowUp).length, icon: Clock, color: "text-purple-400", bg: "bg-purple-400/10" },
-  { label: "Contact Pending", value: mockLeads.filter(l => l.status === "Contact Attempted").length, icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10" },
-  { label: "Models in Demand", value: 2, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10" },
-];
-
-const pipelineData = LEAD_STATUSES.map(status => ({
-  status,
-  count: mockLeads.filter(l => l.status === status).length,
-}));
-
 const AdminDashboard = () => {
+  const leads = useMemo(() => {
+    const stored = getLeads();
+    return stored.length > 0 ? stored : mockLeads;
+  }, []);
+  const testDrives = useMemo(() => {
+    const stored = getTestDriveBookings();
+    return stored.length > 0 ? stored : mockTestDrives;
+  }, []);
+  const enquiries = useMemo(() => {
+    const stored = getEnquiries();
+    return stored.length > 0 ? stored : mockEnquiries;
+  }, []);
+
+  const statCards = [
+    { label: "Total Leads", value: leads.length, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
+    { label: "Test Drives", value: testDrives.length, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10" },
+    { label: "Enquiries", value: enquiries.length, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10" },
+    { label: "Bookings", value: leads.filter(l => l.status === "Booked").length, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10" },
+    { label: "Hot Leads", value: leads.filter(l => ["Interested", "Negotiation"].includes(l.status)).length, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10" },
+    { label: "Pending Follow-ups", value: leads.filter(l => l.nextFollowUp).length, icon: Clock, color: "text-purple-400", bg: "bg-purple-400/10" },
+    { label: "Contact Pending", value: leads.filter(l => l.status === "Contact Attempted").length, icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10" },
+    { label: "Models in Demand", value: new Set(leads.map(l => l.model)).size || 2, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+  ];
+
+  const pipelineData = LEAD_STATUSES.map(status => ({
+    status,
+    count: leads.filter(l => l.status === status).length,
+  }));
+
   return (
     <div className="space-y-8">
       <div>
@@ -62,7 +77,7 @@ const AdminDashboard = () => {
         <Card className="bg-card border-border/50 p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Recent Leads</h3>
           <div className="space-y-3">
-            {mockLeads.slice(0, 5).map((lead) => (
+            {leads.slice(0, 5).map((lead) => (
               <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">{lead.name}</p>
@@ -86,7 +101,7 @@ const AdminDashboard = () => {
         <Card className="bg-card border-border/50 p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Test Drive Bookings</h3>
           <div className="space-y-3">
-            {mockTestDrives.map((td) => (
+            {testDrives.slice(0, 5).map((td) => (
               <div key={td.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
                 <div>
                   <p className="text-sm font-medium text-foreground">{td.customerName}</p>
@@ -111,7 +126,7 @@ const AdminDashboard = () => {
         <h3 className="font-display font-semibold text-foreground mb-4">Lead Sources</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           {["Google Ads", "Website", "WhatsApp", "Meta Ads", "Walk-in", "Referral"].map((source) => {
-            const count = mockLeads.filter(l => l.source === source).length;
+            const count = leads.filter(l => l.source === source).length;
             return (
               <div key={source} className="text-center p-3 rounded-lg bg-secondary/30">
                 <p className="text-lg font-bold text-foreground">{count}</p>

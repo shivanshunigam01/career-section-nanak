@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Edit2, Trash2, Plus, Image, FileText, Star } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
+import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+
+const STORAGE_KEY = "vf_admin_content";
 
 interface Banner {
   id: string;
@@ -53,6 +56,7 @@ const emptyFaq: FAQ = { id: "", question: "", answer: "", category: "General" };
 const emptyTestimonial: Testimonial = { id: "", name: "", city: "", model: "VF 7", rating: 5, text: "", photo: "" };
 
 const AdminContent = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [banners, setBanners] = useState<Banner[]>(initialBanners);
   const [faqs, setFaqs] = useState<FAQ[]>(initialFaqs);
   const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
@@ -60,6 +64,21 @@ const AdminContent = () => {
   const [editBanner, setEditBanner] = useState<Banner | null>(null);
   const [editFaq, setEditFaq] = useState<FAQ | null>(null);
   const [editTestimonial, setEditTestimonial] = useState<Testimonial | null>(null);
+
+  useEffect(() => {
+    const stored = getStoredState<{ banners: Banner[]; faqs: FAQ[]; testimonials: Testimonial[] } | null>(STORAGE_KEY, null);
+    if (stored) {
+      setBanners(stored.banners ?? initialBanners);
+      setFaqs(stored.faqs ?? initialFaqs);
+      setTestimonials(stored.testimonials ?? initialTestimonials);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setStoredState(STORAGE_KEY, { banners, faqs, testimonials });
+  }, [banners, faqs, testimonials, hydrated]);
 
   const saveBanner = (b: Banner) => {
     if (b.id) setBanners(p => p.map(x => x.id === b.id ? b : x));
@@ -85,7 +104,7 @@ const AdminContent = () => {
       </div>
 
       <Tabs defaultValue="banners" className="space-y-4">
-        <TabsList className="bg-secondary/50">
+        <TabsList className="bg-secondary/50 w-full overflow-x-auto justify-start">
           <TabsTrigger value="banners" className="gap-1.5"><Image className="w-3.5 h-3.5" /> Banners</TabsTrigger>
           <TabsTrigger value="faqs" className="gap-1.5"><FileText className="w-3.5 h-3.5" /> FAQs</TabsTrigger>
           <TabsTrigger value="testimonials" className="gap-1.5"><Star className="w-3.5 h-3.5" /> Testimonials</TabsTrigger>
@@ -100,7 +119,7 @@ const AdminContent = () => {
           </div>
           {banners.map(b => (
             <Card key={b.id} className={`bg-card border-border/50 p-4 transition-opacity ${b.active ? "" : "opacity-50"}`}>
-              <div className="flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-4">
                 {b.imageUrl
                   ? <div className="w-28 h-16 rounded-lg overflow-hidden flex-shrink-0"><img src={b.imageUrl} alt="banner" className="w-full h-full object-cover" /></div>
                   : <div className="w-28 h-16 rounded-lg bg-secondary/40 flex-shrink-0 flex items-center justify-center text-muted-foreground/30 text-xs">No image</div>
@@ -178,7 +197,7 @@ const AdminContent = () => {
 
       {/* Banner Dialog */}
       <Dialog open={!!editBanner} onOpenChange={(open) => { if (!open) setEditBanner(null); }}>
-        <DialogContent className="bg-card border-border max-w-lg">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">{editBanner?.id ? "Edit Banner" : "Add Banner"}</DialogTitle></DialogHeader>
           {editBanner && (
             <div className="space-y-4">
@@ -202,7 +221,7 @@ const AdminContent = () => {
 
       {/* FAQ Dialog */}
       <Dialog open={!!editFaq} onOpenChange={(open) => { if (!open) setEditFaq(null); }}>
-        <DialogContent className="bg-card border-border max-w-lg">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">{editFaq?.id ? "Edit FAQ" : "Add FAQ"}</DialogTitle></DialogHeader>
           {editFaq && (
             <div className="space-y-4">
@@ -220,7 +239,7 @@ const AdminContent = () => {
 
       {/* Testimonial Dialog */}
       <Dialog open={!!editTestimonial} onOpenChange={(open) => { if (!open) setEditTestimonial(null); }}>
-        <DialogContent className="bg-card border-border max-w-lg">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">{editTestimonial?.id ? "Edit Testimonial" : "Add Testimonial"}</DialogTitle></DialogHeader>
           {editTestimonial && (
             <div className="space-y-4">

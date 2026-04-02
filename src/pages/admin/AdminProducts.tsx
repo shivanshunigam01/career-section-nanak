@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit2, Trash2, Plus, Palette, X } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
+import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
 
 interface ColorVariant {
   name: string;
@@ -83,9 +83,22 @@ const emptyProduct: Product = {
 };
 
 const AdminProducts = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const STORAGE_KEY = "vf_admin_products";
+
+  useEffect(() => {
+    const stored = getStoredState<Product[] | null>(STORAGE_KEY, null);
+    if (stored && stored.length > 0) setProducts(stored);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setStoredState(STORAGE_KEY, products);
+  }, [products, hydrated]);
 
   const handleSave = (product: Product) => {
     if (product.id) {
@@ -101,7 +114,7 @@ const AdminProducts = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Products</h1>
           <p className="text-muted-foreground text-sm">Manage car models, specs, images & colour variants</p>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,8 +7,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Edit2, Trash2, Plus, GripVertical, Phone, MessageCircle, Home } from "lucide-react";
+import { Edit2, Trash2, Plus, MessageCircle, Home } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
+import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+
+const STORAGE_KEY = "vf_admin_homepage";
 
 interface HeroSlide {
   id: string;
@@ -67,11 +70,26 @@ const emptySlide: HeroSlide = {
 };
 
 const AdminHomepage = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
   const [config, setConfig] = useState<SiteConfig>(initialConfig);
   const [editSlide, setEditSlide] = useState<HeroSlide | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const stored = getStoredState<{ slides: HeroSlide[]; config: SiteConfig } | null>(STORAGE_KEY, null);
+    if (stored) {
+      setSlides(stored.slides ?? initialSlides);
+      setConfig(stored.config ?? initialConfig);
+    }
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setStoredState(STORAGE_KEY, { slides, config });
+  }, [slides, config, hydrated]);
 
   const handleSaveSlide = (slide: HeroSlide) => {
     if (slide.id) {
@@ -93,10 +111,11 @@ const AdminHomepage = () => {
 
   const updateConfig = (key: keyof SiteConfig, value: string) =>
     setConfig(prev => ({ ...prev, [key]: value }));
+  const sortedSlides = [...slides].sort((a, b) => a.order - b.order);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
             <Home className="w-6 h-6 text-primary" /> Homepage Manager
@@ -106,7 +125,7 @@ const AdminHomepage = () => {
       </div>
 
       <Tabs defaultValue="slides" className="space-y-4">
-        <TabsList className="bg-secondary/50">
+        <TabsList className="bg-secondary/50 w-full overflow-x-auto justify-start">
           <TabsTrigger value="slides">Hero Slides</TabsTrigger>
           <TabsTrigger value="config">Site Config</TabsTrigger>
           <TabsTrigger value="contact">Contact & WhatsApp</TabsTrigger>
@@ -121,7 +140,7 @@ const AdminHomepage = () => {
             </Button>
           </div>
           <div className="space-y-3">
-            {slides.sort((a, b) => a.order - b.order).map((slide) => (
+            {sortedSlides.map((slide) => (
               <Card key={slide.id} className={`bg-card border-border/50 p-4 transition-opacity ${slide.active ? "" : "opacity-50"}`}>
                 <div className="flex gap-4">
                   <div className="flex-shrink-0 w-28 h-16 rounded-lg overflow-hidden bg-secondary/40 border border-border/30">

@@ -7,12 +7,12 @@ const STORAGE_KEYS = {
 } as const;
 
 function isBrowser() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
+  return globalThis.window?.localStorage !== undefined;
 }
 
 function loadJson<T>(key: string, fallback: T): T {
   if (!isBrowser()) return fallback;
-  const raw = window.localStorage.getItem(key);
+  const raw = globalThis.localStorage.getItem(key);
   if (!raw) return fallback;
   try {
     return JSON.parse(raw) as T;
@@ -23,7 +23,15 @@ function loadJson<T>(key: string, fallback: T): T {
 
 function saveJson<T>(key: string, value: T) {
   if (!isBrowser()) return;
-  window.localStorage.setItem(key, JSON.stringify(value));
+  globalThis.localStorage.setItem(key, JSON.stringify(value));
+}
+
+export function getStoredState<T>(key: string, fallback: T): T {
+  return loadJson<T>(key, fallback);
+}
+
+export function setStoredState<T>(key: string, value: T) {
+  saveJson<T>(key, value);
 }
 
 export function getLeads(): Lead[] {

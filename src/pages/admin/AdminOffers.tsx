@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { Edit2, Trash2, Plus, Tag } from "lucide-react";
+import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
 
 interface Offer {
   id: string;
@@ -26,11 +27,24 @@ const initialOffers: Offer[] = [
 ];
 
 const AdminOffers = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [offers, setOffers] = useState<Offer[]>(initialOffers);
   const [editOffer, setEditOffer] = useState<Offer | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const STORAGE_KEY = "vf_admin_offers";
 
   const emptyOffer: Offer = { id: "", title: "", description: "", model: "All Models", validTill: "", active: true, type: "Launch" };
+
+  useEffect(() => {
+    const stored = getStoredState<Offer[] | null>(STORAGE_KEY, null);
+    if (stored && stored.length > 0) setOffers(stored);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setStoredState(STORAGE_KEY, offers);
+  }, [offers, hydrated]);
 
   const handleSave = (offer: Offer) => {
     if (offer.id) {
@@ -47,7 +61,7 @@ const AdminOffers = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Offers</h1>
           <p className="text-muted-foreground text-sm">Manage deals and promotions</p>
@@ -82,7 +96,7 @@ const AdminOffers = () => {
       </div>
 
       <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditOffer(null); }}>
-        <DialogContent className="bg-card border-border max-w-lg">
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">{editOffer?.id ? "Edit Offer" : "Add Offer"}</DialogTitle></DialogHeader>
           {editOffer && (
             <div className="space-y-4">

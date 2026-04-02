@@ -2,9 +2,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
 
 const AdminSettings = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [settings, setSettings] = useState({
     dealerName: "Patliputra Auto",
     brand: "VinFast",
@@ -15,6 +17,18 @@ const AdminSettings = () => {
     gstNo: "10AABCP1234Q1ZX",
     showroomHours: "Mon-Sat: 9:00 AM - 7:00 PM",
   });
+  const STORAGE_KEY = "vf_admin_settings";
+
+  useEffect(() => {
+    const stored = getStoredState<typeof settings | null>(STORAGE_KEY, null);
+    if (stored) setSettings(stored);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setStoredState(STORAGE_KEY, settings);
+  }, [settings, hydrated]);
 
   return (
     <div className="space-y-6 max-w-2xl">

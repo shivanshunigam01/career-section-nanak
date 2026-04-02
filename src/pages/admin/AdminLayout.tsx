@@ -1,10 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
-  TestTube, MessageSquare, Tag, Bell, Home, Image, Globe
+  TestTube, MessageSquare, Tag, Bell, Home, Image
 } from "lucide-react";
-import { useState } from "react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 
 const navItems = [
@@ -39,14 +38,19 @@ const AdminLayout = () => {
     <div className="min-h-screen bg-background flex">
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 z-40 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <button
+          type="button"
+          aria-label="Close sidebar overlay"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
       {/* Sidebar */}
       <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-card border-r border-border z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
         <div className="p-5 border-b border-border flex items-center justify-between">
           <Link to="/admin/dashboard" className="flex items-center gap-2">
-            <img src={vinLogo} alt="Patliputra VinFast" className="h-7" />
+            <img src={vinLogo} alt="Patliputra VinFast" className="h-10 w-auto object-contain" />
           </Link>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground">
             <X className="w-5 h-5" />

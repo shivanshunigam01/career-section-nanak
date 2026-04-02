@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Trash2, Copy, Check, Search, ImageIcon, Upload } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
+import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
 
 interface MediaItem {
   id: string;
@@ -21,12 +21,25 @@ const initialMedia: MediaItem[] = [
 const TAGS = ["All", "VF 7", "VF 6", "Banner", "Interior", "Exterior", "Colour", "Other"];
 
 const AdminMedia = () => {
+  const [hydrated, setHydrated] = useState(false);
   const [media, setMedia] = useState<MediaItem[]>(initialMedia);
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState("All");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newTag, setNewTag] = useState("Other");
+  const STORAGE_KEY = "vf_admin_media";
+
+  useEffect(() => {
+    const stored = getStoredState<MediaItem[] | null>(STORAGE_KEY, null);
+    if (stored && stored.length > 0) setMedia(stored);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    setStoredState(STORAGE_KEY, media);
+  }, [media, hydrated]);
 
   const filtered = media.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
@@ -71,11 +84,11 @@ const AdminMedia = () => {
         </h3>
         <div className="grid sm:grid-cols-3 gap-4 mb-4">
           <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Image Name / Label</label>
+            <p className="text-xs text-muted-foreground">Image Name / Label</p>
             <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="e.g. VF7 Crimson Red" className="bg-secondary/50" />
           </div>
           <div className="space-y-1.5">
-            <label className="text-xs text-muted-foreground">Tag / Category</label>
+            <p className="text-xs text-muted-foreground">Tag / Category</p>
             <select
               value={newTag}
               onChange={e => setNewTag(e.target.value)}
