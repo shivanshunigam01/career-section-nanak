@@ -1,6 +1,11 @@
 import { motion } from "framer-motion";
 import { Plug, Home, Wrench, ShieldCheck } from "lucide-react";
 import vf7Street from "@/assets/vf7-street.jpg";
+import corrosionWarranty10Years from "@/assets/value-10-years-corrosion-warranty.png";
+import corrosionWarranty10YearsVertical from "@/assets/value-10-years-corrosion-warranty-vertical.png";
+import iceToEvSavings from "@/assets/value-ice-to-ev-savings-1.54-lakhs.png";
+import assuredBuyback from "@/assets/value-assured-buyback-75.png";
+import freeChargingTill2029 from "@/assets/offer-free-charging-till-2029.png";
 
 const ownershipItems = [
   {
@@ -20,8 +25,8 @@ const ownershipItems = [
   },
   {
     icon: ShieldCheck,
-    title: "Warranty & Peace of Mind",
-    description: "Industry-leading warranty on battery, motor, and vehicle components.",
+    title: "Warranty & Value Assured",
+    description: "10 Years* Corrosion Warranty, up to 1.54 Lakhs* ICE to EV savings, and Value Assured buyback up to 75%*.",
   },
 ];
 
@@ -65,6 +70,20 @@ const OwnershipSection = () => {
                   </motion.div>
                 );
               })}
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mt-10">
+              {[
+                { src: corrosionWarranty10Years, alt: "10 Years* Corrosion Warranty" },
+                { src: iceToEvSavings, alt: "Up to 1.54 Lakhs* ICE to EV Savings" },
+                { src: assuredBuyback, alt: "Get Up to 75%* Buyback" },
+                { src: corrosionWarranty10YearsVertical, alt: "10-Years Corrosion Warranty" },
+                { src: freeChargingTill2029, alt: "Get free charging till 31st March 2029*" },
+              ].map((tile) => (
+                <div key={tile.alt} className="rounded-2xl overflow-hidden border border-foreground/[0.08] bg-foreground/[0.02]">
+                  <img src={tile.src} alt={tile.alt} className="w-full h-full object-cover" loading="lazy" />
+                </div>
+              ))}
             </div>
           </motion.div>
 

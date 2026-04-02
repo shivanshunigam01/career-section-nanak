@@ -3,7 +3,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { Award, Users, Target, Globe } from "lucide-react";
-import vinFastLuxury from "@/assets/vinfast-luxury.jpg";
+import patliputraVinfastHero from "@/assets/patliputra-vinfast-about-hero.png";
 import vf8Convoy from "@/assets/vf8-convoy.jpg";
 
 const AboutPage = () => {
@@ -14,7 +14,7 @@ const AboutPage = () => {
       {/* Hero */}
       <section className="relative min-h-[60vh] flex items-end pb-14 pt-16 lg:pt-20">
         <div className="absolute inset-0">
-          <img src={vinFastLuxury} alt="VinFast Luxury" className="w-full h-full object-cover object-center" />
+          <img src={patliputraVinfastHero} alt="Patliputra Auto × VinFast" className="w-full h-full object-cover object-center" />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
         </div>

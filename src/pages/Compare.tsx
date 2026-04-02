@@ -36,7 +36,9 @@ const categories: Category[] = [
     specs: [
       { label: "Ex-Showroom Price", vf7: "₹21.89 Lakh*", vf6: "₹17.29 Lakh*", highlight: true },
       { label: "Variants", vf7: "Plus / Max", vf6: "Plus / Max" },
-      { label: "Warranty", vf7: "5 Yrs / 1.5L km", vf6: "5 Yrs / 1.5L km" },
+      { label: "Corrosion Warranty", vf7: "10 Years*", vf6: "10 Years*" },
+      { label: "ICE to EV Savings", vf7: "Up to 1.54 Lakhs*", vf6: "Up to 1.54 Lakhs*" },
+      { label: "Value Assured Buyback", vf7: "Get up to 75%*", vf6: "Get up to 75%*" },
     ],
   },
   {
@@ -235,14 +237,14 @@ const ComparePage = () => {
                 <button
                   key={cat.id}
                   onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
                     activeCategory === cat.id
                       ? "bg-primary text-primary-foreground shadow-glow-red"
                       : "bg-foreground/5 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
                   }`}
                 >
                   {cat.icon}
-                  <span className="hidden sm:inline">{cat.label}</span>
+                  <span>{cat.label}</span>
                 </button>
               ))}
             </div>
@@ -252,10 +254,10 @@ const ComparePage = () => {
               key={activeCategory}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              className="glass-card overflow-hidden"
+              className="glass-card overflow-x-auto"
             >
               {/* Table Header */}
-              <div className="grid grid-cols-3 gap-2 px-4 sm:px-6 py-3 border-b border-foreground/[0.06] bg-foreground/[0.02]">
+              <div className="grid grid-cols-3 gap-2 px-4 sm:px-6 py-3 border-b border-foreground/[0.06] bg-foreground/[0.02] min-w-[640px]">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Spec</span>
                 <span className="text-center text-xs font-semibold text-primary uppercase tracking-widest">VF 7</span>
                 <span className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest">VF 6</span>
@@ -266,18 +268,18 @@ const ComparePage = () => {
                 return (
                   <div
                     key={row.label}
-                    className={`grid grid-cols-3 gap-2 items-center px-4 sm:px-6 py-4 ${
+                    className={`grid grid-cols-3 gap-2 items-center px-4 sm:px-6 py-4 min-w-[640px] ${
                       i < currentCat.specs.length - 1 ? "border-b border-foreground/[0.04]" : ""
                     } ${row.highlight ? "bg-primary/[0.03]" : i % 2 === 0 ? "bg-foreground/[0.01]" : ""}`}
                   >
                     <span className={`text-sm ${row.highlight ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                       {row.label}
                     </span>
-                    <span className={`text-center font-display font-medium text-sm tabular-nums flex items-center justify-center ${winner === "vf7" ? "text-primary" : ""}`}>
+                    <span className={`text-center font-display font-medium text-sm tabular-nums flex items-center justify-center flex-wrap ${winner === "vf7" ? "text-primary" : ""}`}>
                       {renderValue(typeof row.vf7 === "number" ? `${row.vf7}${row.unit ? " " + row.unit : ""}` : row.vf7)}
                       {winner === "vf7" && <span className="ml-1.5 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold hidden sm:inline">Better</span>}
                     </span>
-                    <span className={`text-center font-display font-medium text-sm tabular-nums flex items-center justify-center ${winner === "vf6" ? "text-emerald-500" : ""}`}>
+                    <span className={`text-center font-display font-medium text-sm tabular-nums flex items-center justify-center flex-wrap ${winner === "vf6" ? "text-emerald-500" : ""}`}>
                       {renderValue(typeof row.vf6 === "number" ? `${row.vf6}${row.unit ? " " + row.unit : ""}` : row.vf6)}
                       {winner === "vf6" && <span className="ml-1.5 text-[10px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded-full font-semibold hidden sm:inline">Better</span>}
                     </span>

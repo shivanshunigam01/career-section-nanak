@@ -7,6 +7,9 @@ import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 
+const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
+const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
+
 const ContactPage = () => {
   const [formData, setFormData] = useState({
     name: "", mobile: "", email: "", city: "Patna", model: "VF 7",
@@ -46,7 +49,7 @@ const ContactPage = () => {
                 <h3 className="font-display font-bold text-xl mb-6">Patna Showroom</h3>
                 <div className="space-y-4">
                   {[
-                    { icon: MapPin, text: "Plot No. 2421, NH 30, Bypass Road, Paijawa, Patna, Bihar 800009" },
+                    { icon: MapPin, text: SHOWROOM_ADDRESS, href: GOOGLE_MAPS_URL },
                     { icon: Phone, text: "+91 92314 45060", href: "tel:+919231445060" },
                     { icon: Mail, text: "info@patliputravinfast.com", href: "mailto:info@patliputravinfast.com" },
                     { icon: Clock, text: "10:00 AM – 8:00 PM, Monday – Saturday" },
@@ -59,7 +62,15 @@ const ContactPage = () => {
                       </div>
                     );
                     return item.href ? (
-                      <a key={item.text} href={item.href} className="block hover:opacity-80 transition-opacity">{content}</a>
+                      <a
+                        key={item.text}
+                        href={item.href}
+                        target={item.href.startsWith("http") ? "_blank" : undefined}
+                        rel={item.href.startsWith("http") ? "noopener noreferrer" : undefined}
+                        className="block hover:opacity-80 transition-opacity"
+                      >
+                        {content}
+                      </a>
                     ) : (
                       <div key={item.text}>{content}</div>
                     );
@@ -69,7 +80,7 @@ const ContactPage = () => {
 
               <div className="glass-card p-8 aspect-video rounded-2xl overflow-hidden">
                 <iframe
-                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3597.943!2d85.1!3d25.6!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zPatna!5e0!3m2!1sen!2sin!4v1"
+                  src={`https://www.google.com/maps?q=${encodeURIComponent(SHOWROOM_ADDRESS)}&output=embed`}
                   width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
                   title="Patliputra VinFast Showroom Location"
                   className="rounded-xl"

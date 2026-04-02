@@ -67,6 +67,12 @@
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     letter-spacing: -0.04em;
   }
+
+  img {
+    filter: none;
+    backdrop-filter: none;
+    image-rendering: auto;
+  }
 }
 
 @layer components {

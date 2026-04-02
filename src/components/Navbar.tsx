@@ -27,13 +27,13 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white/95 backdrop-blur-xl border-b border-gray-200 py-0 shadow-sm"
+        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white border-b border-gray-200 py-0 shadow-sm"
       >
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3">
-              <img src={vinfastLogo} alt="Patliputra VinFast" className="h-24 lg:h-36" style={{ height: "100px" }} />
+              <img src={vinfastLogo} alt="Patliputra VinFast" className="h-10 sm:h-12 lg:h-16 w-auto object-contain" />
             </Link>
 
             {/* Desktop Nav */}
@@ -81,7 +81,7 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 bg-background/98 backdrop-blur-xl pt-20"
+            className="fixed inset-0 z-40 bg-background pt-20"
           >
             <div className="container mx-auto px-4 py-8 flex flex-col gap-2">
               {navLinks.map((link) => (

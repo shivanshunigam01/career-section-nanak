@@ -52,7 +52,7 @@ const LeadCaptureStrip = () => {
   };
 
   return (
-    <section className="py-20 lg:py-28 section-dark relative overflow-hidden">
+    <section className="py-12 sm:py-16 lg:py-24 section-dark relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
       <div className="container mx-auto px-4 lg:px-8 relative">
         <motion.div

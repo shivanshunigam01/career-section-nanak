@@ -140,16 +140,16 @@ const HeroSection = () => {
         </div>
 
         {/* Quick link pills */}
-        <div className="hidden sm:flex items-center gap-3 mt-6 lg:mt-8 flex-wrap">
+        <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-6 lg:mt-8 flex-wrap">
           <Link
             to="/models/vf7"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-[11px] sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
             Explore VF 7 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <Link
             to="/models/vf6"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-200 bg-white/95 hover:bg-white text-gray-900 text-[11px] sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
             Explore VF 6 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
@@ -157,7 +157,7 @@ const HeroSection = () => {
             href="https://wa.me/919231445060"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full border border-[#1fa855] bg-[#25D366] hover:bg-[#20bd5a] text-white text-xs sm:text-sm font-medium transition-all duration-300 shadow-md"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-[#1fa855] bg-[#25D366] hover:bg-[#20bd5a] text-white text-[11px] sm:text-sm font-medium transition-all duration-300 shadow-md"
           >
             WhatsApp Now <ChevronRight className="w-3.5 h-3.5" />
           </a>

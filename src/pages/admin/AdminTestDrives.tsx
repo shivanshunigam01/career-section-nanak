@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Clock } from "lucide-react";
+import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   Pending: "bg-amber-400/10 text-amber-400",
@@ -17,12 +18,22 @@ const statusColors: Record<string, string> = {
   Rescheduled: "bg-purple-400/10 text-purple-400",
 };
 
+const getLocalISODate = () => {
+  // Returns YYYY-MM-DD in the user's local timezone (safe for <input type="date">).
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 const AdminTestDrives = () => {
   const [bookings, setBookings] = useState<TestDriveBooking[]>(mockTestDrives);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [editBooking, setEditBooking] = useState<TestDriveBooking | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const todayStr = getLocalISODate();
 
   const emptyBooking: TestDriveBooking = { id: "", leadId: "", customerName: "", mobile: "", model: "VF 7", preferredDate: "", preferredTime: "", branch: "Patna Showroom", status: "Pending", assignedExecutive: "", feedback: "", createdAt: new Date().toISOString().split("T")[0] };
 
@@ -109,14 +120,24 @@ const AdminTestDrives = () => {
       <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditBooking(null); }}>
         <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">{editBooking?.id ? "Edit Booking" : "New Booking"}</DialogTitle></DialogHeader>
-          {editBooking && <TestDriveForm booking={editBooking} onSave={handleSave} onCancel={() => { setShowForm(false); setEditBooking(null); }} />}
+          {editBooking && <TestDriveForm booking={editBooking} onSave={handleSave} onCancel={() => { setShowForm(false); setEditBooking(null); }} todayStr={todayStr} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 };
 
-const TestDriveForm = ({ booking, onSave, onCancel }: { booking: TestDriveBooking; onSave: (b: TestDriveBooking) => void; onCancel: () => void }) => {
+const TestDriveForm = ({
+  booking,
+  onSave,
+  onCancel,
+  todayStr,
+}: {
+  booking: TestDriveBooking;
+  onSave: (b: TestDriveBooking) => void;
+  onCancel: () => void;
+  todayStr: string;
+}) => {
   const [form, setForm] = useState(booking);
   const update = (key: keyof TestDriveBooking, value: string) => setForm(prev => ({ ...prev, [key]: value }));
 
@@ -133,14 +154,45 @@ const TestDriveForm = ({ booking, onSave, onCancel }: { booking: TestDriveBookin
           <Label className="text-xs">Status</Label>
           <Select value={form.status} onValueChange={v => update("status", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent>{["Pending", "Confirmed", "Completed", "Cancelled", "Rescheduled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs">Date</Label><Input type="date" value={form.preferredDate} onChange={e => update("preferredDate", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Date</Label>
+          <Input
+            type="date"
+            min={todayStr}
+            value={form.preferredDate}
+            onChange={e => update("preferredDate", e.target.value)}
+            className="bg-secondary/50"
+          />
+        </div>
         <div className="space-y-1.5"><Label className="text-xs">Time</Label><Input value={form.preferredTime} onChange={e => update("preferredTime", e.target.value)} className="bg-secondary/50" placeholder="e.g. 10:00 AM" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Branch</Label><Input value={form.branch} onChange={e => update("branch", e.target.value)} className="bg-secondary/50" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Executive</Label><Input value={form.assignedExecutive} onChange={e => update("assignedExecutive", e.target.value)} className="bg-secondary/50" /></div>
       </div>
       <div className="space-y-1.5"><Label className="text-xs">Feedback</Label><Textarea value={form.feedback} onChange={e => update("feedback", e.target.value)} className="bg-secondary/50" rows={2} /></div>
       <div className="flex gap-3 pt-2">
-        <Button onClick={() => onSave(form)} className="bg-primary text-primary-foreground flex-1">Save</Button>
+        <Button
+          onClick={() => {
+            const isUpcoming = ["Pending", "Confirmed", "Rescheduled"].includes(form.status);
+            if (isUpcoming && form.preferredDate) {
+              const selected = new Date(`${form.preferredDate}T00:00:00`);
+              const today = new Date(`${todayStr}T00:00:00`);
+
+              if (Number.isNaN(selected.getTime())) {
+                toast.error("Please select a valid booking date.");
+                return;
+              }
+              if (selected.getTime() < today.getTime()) {
+                toast.error("Back date bookings are not allowed. Please select today or a future date.");
+                return;
+              }
+            }
+
+            onSave(form);
+          }}
+          className="bg-primary text-primary-foreground flex-1"
+        >
+          Save
+        </Button>
         <Button onClick={onCancel} variant="outline" className="flex-1">Cancel</Button>
       </div>
     </div>

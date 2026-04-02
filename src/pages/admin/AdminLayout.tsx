@@ -88,7 +88,7 @@ const AdminLayout = () => {
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header className="sticky top-0 z-30 h-14 bg-card/80 backdrop-blur-md border-b border-border flex items-center px-4 gap-4">
+        <header className="sticky top-0 z-30 h-14 bg-card border-b border-border flex items-center px-4 gap-4">
           <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground">
             <Menu className="w-5 h-5" />
           </button>

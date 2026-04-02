@@ -9,12 +9,22 @@ import { CalendarDays, MapPin, Car } from "lucide-react";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
+const getLocalISODate = () => {
+  // Returns YYYY-MM-DD in the user's local timezone (safe for <input type="date">).
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
+
 const TestDrivePage = () => {
   const [formData, setFormData] = useState({
     name: "", mobile: "", email: "", city: "Patna", model: "VF 7",
     date: "", time: "", remarks: "",
   });
   const [mobileError, setMobileError] = useState("");
+  const todayStr = getLocalISODate();
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -23,10 +33,10 @@ const TestDrivePage = () => {
       setMobileError("");
     } else if (digits.length < 10) {
       setMobileError("Mobile number must be 10 digits.");
-    } else if (!MOBILE_REGEX.test(digits)) {
-      setMobileError("Enter a valid Indian mobile number (starts with 6–9).");
-    } else {
+    } else if (MOBILE_REGEX.test(digits)) {
       setMobileError("");
+    } else {
+      setMobileError("Enter a valid Indian mobile number (starts with 6–9).");
     }
   };
 
@@ -48,6 +58,18 @@ const TestDrivePage = () => {
       toast.error("Please select a preferred date.");
       return;
     }
+
+    const selected = new Date(`${formData.date}T00:00:00`);
+    const today = new Date(`${todayStr}T00:00:00`);
+    if (Number.isNaN(selected.getTime())) {
+      toast.error("Please select a valid preferred date.");
+      return;
+    }
+    if (selected.getTime() < today.getTime()) {
+      toast.error("Back date test drive booking is not allowed. Please select today or a future date.");
+      return;
+    }
+
     toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
     setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", date: "", time: "", remarks: "" });
     setMobileError("");
@@ -128,7 +150,13 @@ const TestDrivePage = () => {
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <input type="date" value={formData.date} onChange={(e) => update("date", e.target.value)} className={inputClass} />
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => update("date", e.target.value)}
+                    min={todayStr}
+                    className={inputClass}
+                  />
                   <select value={formData.time} onChange={(e) => update("time", e.target.value)} className={inputClass}>
                     <option value="">Select Time</option>
                     <option value="10:00 AM">10:00 AM</option>

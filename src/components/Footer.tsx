@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
 
+const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
+const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
 
 //this is my footer 
 const Footer = () => {
@@ -79,7 +81,14 @@ const Footer = () => {
             <ul className="space-y-4">
               <li className="flex gap-3 text-sm">
                 <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                <span className="text-muted-foreground">Plot No. 2421, NH 30, Bypass Road, Paijawa, Patna, Bihar 800009</span>
+                <a
+                  href={GOOGLE_MAPS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {SHOWROOM_ADDRESS}
+                </a>
               </li>
               <li className="flex gap-3 text-sm">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />

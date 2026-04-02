@@ -11,7 +11,7 @@ const AdminSettings = () => {
     phone: "+91 9231445060",
     email: "info@patliputraauto.com",
     whatsapp: "919231445060",
-    address: "Boring Road, Patna, Bihar 800001",
+    address: "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009",
     gstNo: "10AABCP1234Q1ZX",
     showroomHours: "Mon-Sat: 9:00 AM - 7:00 PM",
   });
