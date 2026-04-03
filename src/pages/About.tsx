@@ -27,11 +27,11 @@ const AboutPage = () => {
         </div>
         <div className="relative container mx-auto px-4 lg:px-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
-            <h1 className="font-display font-bold text-4xl md:text-6xl lg:text-7xl text-white leading-tight mb-3">
+            <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
+            <h1 className="text-on-image-lg font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight mb-3">
               Patliputra Auto<br className="hidden sm:block" /> × VinFast
             </h1>
-            <p className="text-white/75 text-base md:text-lg max-w-xl">
+            <p className="text-on-image-soft text-base md:text-lg max-w-xl">
               Bihar's first authorized VinFast dealer — bringing electric excellence to your doorstep.
             </p>
           </motion.div>

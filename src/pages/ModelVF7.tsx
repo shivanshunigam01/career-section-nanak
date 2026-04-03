@@ -441,30 +441,44 @@ const ModelVF7 = () => {
           <div className="min-h-0 flex-1" aria-hidden />
           <div className="container mx-auto w-full shrink-0 px-4 pb-16 lg:px-8 lg:pb-24">
             <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-              <p className="text-white/90 font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">Premium Electric SUV</p>
-              <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-2 text-white leading-[1.05]">
+              <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">Premium Electric SUV</p>
+              <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-2 leading-[1.05]">
                 VF 7
               </h1>
 
-              <div className="flex flex-wrap items-center gap-4 sm:gap-6 mb-6">
-                {[
-                  { val: "₹21.89L*", label: "Indicative ex-showroom*" },
-                  { val: stats.range, label: "Range (MIDC)" },
-                  { val: stats.accel, label: "0–100 km/h" },
-                  { val: stats.power, label: "Max. power" },
-                  { val: stats.driveline, label: "Driveline" },
-                ].map((s, i) => (
-                  <div key={s.label} className="flex items-center gap-4 sm:gap-6">
-                    {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
-                    <div className="text-center sm:text-left">
-                      <p className="font-display font-bold text-xl sm:text-2xl text-white">{s.val}</p>
-                      <p className="text-xs text-white/70">{s.label}</p>
+              <div className="flex flex-col gap-3 sm:gap-4 mb-6 w-full max-w-3xl">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                  {[
+                    { val: "₹21.89L*", label: "Indicative ex-showroom*" },
+                    { val: stats.range, label: "Range (MIDC)" },
+                  ].map((s, i) => (
+                    <div key={s.label} className="flex items-center gap-4 sm:gap-6">
+                      {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
+                      <div className="text-center sm:text-left">
+                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl">{s.val}</p>
+                        <p className="text-on-image-ghost text-xs">{s.label}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                  {[
+                    { val: stats.accel, label: "0–100 km/h" },
+                    { val: stats.power, label: "Max. power" },
+                    { val: stats.driveline, label: "Driveline" },
+                  ].map((s, i) => (
+                    <div key={s.label} className="flex items-center gap-4 sm:gap-6">
+                      {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
+                      <div className="text-center sm:text-left">
+                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl">{s.val}</p>
+                        <p className="text-on-image-ghost text-xs">{s.label}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <p className="text-white/85 text-base sm:text-lg max-w-xl mb-8 leading-relaxed">{vMeta.description}</p>
+              <p className="text-on-image-soft text-base sm:text-lg max-w-xl mb-8 leading-relaxed">{vMeta.description}</p>
 
               <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 sm:gap-x-2 mb-4 w-full max-w-3xl">
                 {vf7Variants.map((v) => (
@@ -483,7 +497,7 @@ const ModelVF7 = () => {
                 ))}
               </div>
 
-              <p className="text-white/50 text-xs max-w-xl mb-6">*Contact Patliputra VinFast Patna for variant-wise on-road price and offers.</p>
+              <p className="text-on-image-ghost text-xs max-w-xl mb-6">*Contact Patliputra VinFast Patna for variant-wise on-road price and offers.</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-3xl">
                 <Link to="/test-drive" className="w-full">
                   <Button variant="hero" size="lg" className="w-full">

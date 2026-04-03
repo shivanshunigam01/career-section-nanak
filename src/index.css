@@ -133,6 +133,44 @@
     box-shadow: 0 0 40px rgba(226, 31, 38, 0.15);
   }
 
+  /**
+   * Readable overlay type on busy / red / high-contrast photos.
+   * White fill + subtle dark stroke (paint-order) + soft shadow.
+   */
+  .text-on-image {
+    color: #fff;
+    -webkit-text-stroke: 0.4px rgba(0, 0, 0, 0.82);
+    paint-order: stroke fill;
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.92),
+      0 2px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .text-on-image-lg {
+    color: #fff;
+    -webkit-text-stroke: 0.55px rgba(0, 0, 0, 0.88);
+    paint-order: stroke fill;
+    text-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.95),
+      0 4px 20px rgba(0, 0, 0, 0.45);
+  }
+
+  .text-on-image-soft {
+    color: rgba(255, 255, 255, 0.9);
+    -webkit-text-stroke: 0.35px rgba(0, 0, 0, 0.78);
+    paint-order: stroke fill;
+    text-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.9),
+      0 2px 10px rgba(0, 0, 0, 0.35);
+  }
+
+  .text-on-image-ghost {
+    color: rgba(255, 255, 255, 0.6);
+    -webkit-text-stroke: 0.28px rgba(0, 0, 0, 0.7);
+    paint-order: stroke fill;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.88);
+  }
+
   .animate-fade-up {
     animation: fadeUp 0.8s ease-out forwards;
     opacity: 0;

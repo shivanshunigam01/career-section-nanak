@@ -43,8 +43,8 @@ const VirtualShowroom = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
           <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="font-display font-bold text-lg sm:text-xl lg:text-3xl text-foreground">VF 6 & VF 7</p>
-              <p className="text-foreground/70 text-xs sm:text-sm lg:text-base mt-1">Two bold electric SUVs. One authorised dealer in Bihar.</p>
+              <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 & VF 7</p>
+              <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Two bold electric SUVs. One authorised dealer in Bihar.</p>
             </div>
             <div className="flex flex-wrap gap-2 md:gap-3">
               <Link to="/models/vf6">
@@ -75,8 +75,8 @@ const VirtualShowroom = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="font-display font-bold text-lg sm:text-xl text-white">VinFast VF 7</p>
-                <p className="text-foreground/80 text-xs sm:text-sm">349 HP · 431 km · AWD · 5-Star</p>
+                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl">VinFast VF 7</p>
+                <p className="text-on-image-soft text-xs sm:text-sm">349 HP · 431 km · AWD · 5-Star</p>
               </div>
               <Link to="/models/vf7">
                 <Button variant="hero" size="sm" className="w-full sm:w-auto">View Model</Button>
@@ -100,8 +100,8 @@ const VirtualShowroom = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
             <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
-                <p className="font-display font-bold text-lg sm:text-xl text-white">VinFast VF 6</p>
-                <p className="text-foreground/80 text-xs sm:text-sm">201 HP · 381 km · FWD · 5-Star</p>
+                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl">VinFast VF 6</p>
+                <p className="text-on-image-soft text-xs sm:text-sm">201 HP · 381 km · FWD · 5-Star</p>
               </div>
               <Link to="/models/vf6">
                 <Button variant="hero" size="sm" className="w-full sm:w-auto">View Model</Button>
@@ -125,8 +125,8 @@ const VirtualShowroom = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
           <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10">
-            <p className="font-display font-bold text-lg sm:text-xl lg:text-2xl text-foreground">Premium Interior</p>
-            <p className="text-foreground/80 text-xs sm:text-sm mt-1">Handcrafted luxury meets intelligent design</p>
+            <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-2xl">Premium Interior</p>
+            <p className="text-on-image-soft text-xs sm:text-sm mt-1">Handcrafted luxury meets intelligent design</p>
           </div>
         </motion.div>
       </div>

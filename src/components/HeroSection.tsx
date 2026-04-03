@@ -104,19 +104,19 @@ const HeroSection = () => {
             transition={{ duration: 0.45, delay: 0.1 }}
             className="max-w-xl sm:max-w-2xl lg:max-w-3xl"
           >
-            <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
+            <p className="text-on-image font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">
               Patliputra VinFast · Patna
             </p>
-            <h2 className="text-white font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-3 sm:mb-4 [text-shadow:0_2px_8px_rgba(0,0,0,0.85)]">
+            <h2 className="text-on-image-lg font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-3 sm:mb-4">
               {slides[current].title}
             </h2>
             {slides[current].sub && (
-              <p className="text-white/90 font-medium text-sm sm:text-base md:text-lg leading-relaxed max-w-prose [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+              <p className="text-on-image-soft font-medium text-sm sm:text-base md:text-lg leading-relaxed max-w-prose">
                 {slides[current].sub}
               </p>
             )}
             {slides[current].footnote && (
-              <p className="text-white/55 text-[11px] sm:text-xs leading-snug max-w-prose mt-3">{slides[current].footnote}</p>
+              <p className="text-on-image-ghost text-[11px] sm:text-xs leading-snug max-w-prose mt-3">{slides[current].footnote}</p>
             )}
             <div className="h-4 sm:h-5" />
             <div className="flex flex-wrap gap-3 sm:gap-4">
