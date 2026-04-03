@@ -37,7 +37,7 @@ const VirtualShowroom = () => {
           <img
             src={slideVf6Vf7Night}
             alt="VinFast VF 6 and VF 7"
-            className="w-full aspect-[21/9] object-cover"
+            className="w-full aspect-[5/4] sm:aspect-[16/9] md:aspect-[21/9] object-cover min-h-[200px] sm:min-h-0"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
@@ -69,7 +69,7 @@ const VirtualShowroom = () => {
             <img
               src={vf7Real}
               alt="VinFast VF 7"
-              className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-700"
+              className="w-full aspect-[16/10] object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -94,7 +94,7 @@ const VirtualShowroom = () => {
             <img
               src={vf6Banner}
               alt="VinFast VF 6"
-              className="w-full aspect-[16/10] object-cover group-hover:scale-105 transition-transform duration-700"
+              className="w-full aspect-[16/10] object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -120,7 +120,7 @@ const VirtualShowroom = () => {
           <img
             src={interiorImg}
             alt="VinFast Premium Interior"
-            className="w-full aspect-[21/9] object-cover"
+            className="w-full aspect-[5/4] sm:aspect-[16/9] md:aspect-[21/9] object-cover min-h-[200px] sm:min-h-0"
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />

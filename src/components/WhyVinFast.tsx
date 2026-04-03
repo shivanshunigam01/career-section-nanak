@@ -36,7 +36,7 @@ const trustItems = [
 
 const WhyVinFast = () => {
   return (
-    <section className="py-24 lg:py-32 section-surface">
+    <section className="py-16 sm:py-24 lg:py-32 section-surface">
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -52,7 +52,7 @@ const WhyVinFast = () => {
           </h2>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
           {trustItems.map((item, i) => {
             const Icon = item.icon;
             return (

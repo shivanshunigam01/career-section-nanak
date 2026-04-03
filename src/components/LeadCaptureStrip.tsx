@@ -110,17 +110,17 @@ const LeadCaptureStrip = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           onSubmit={handleSubmit}
-          className="max-w-4xl mx-auto glass-card p-6 lg:p-8"
+          className="max-w-4xl mx-auto glass-card p-4 sm:p-6 lg:p-8"
         >
-          <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <input
               type="text"
               placeholder="Your Name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
-            <div className="flex flex-col gap-1">
+            <div className="flex min-w-0 w-full flex-col gap-1">
               <input
                 type="tel"
                 placeholder="Mobile Number"
@@ -128,7 +128,7 @@ const LeadCaptureStrip = () => {
                 onChange={handleMobileChange}
                 maxLength={10}
                 inputMode="numeric"
-                className={`h-12 px-4 rounded-xl bg-background/50 border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${
+                className={`h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 ${
                   mobileError ? "border-red-500 focus:ring-red-500/50" : "border-border"
                 }`}
               />
@@ -136,11 +136,11 @@ const LeadCaptureStrip = () => {
                 <p className="text-red-500 text-[11px] px-1 leading-tight">{mobileError}</p>
               )}
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex min-w-0 w-full flex-col gap-2">
               <select
                 value={formData.city}
                 onChange={(e) => setFormData({ ...formData, city: e.target.value, otherCity: "" })}
-                className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               >
                 <option value="Patna">Patna</option>
                 <option value="Muzaffarpur">Muzaffarpur</option>
@@ -153,7 +153,7 @@ const LeadCaptureStrip = () => {
                   placeholder="Enter your city / state"
                   value={formData.otherCity}
                   onChange={(e) => setFormData({ ...formData, otherCity: e.target.value })}
-                  className="h-12 px-4 rounded-xl bg-background/50 border border-primary/50 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-primary/50 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
                   autoFocus
                 />
               )}
@@ -161,12 +161,12 @@ const LeadCaptureStrip = () => {
             <select
               value={formData.model}
               onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-              className="h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
             >
               <option value="VF 7">VF 7</option>
               <option value="VF 6">VF 6</option>
             </select>
-            <Button type="submit" variant="hero" className="h-12">
+            <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0">
               Get in Touch
             </Button>
           </div>

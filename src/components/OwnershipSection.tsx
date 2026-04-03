@@ -1,11 +1,34 @@
 import { motion } from "framer-motion";
-import { Plug, Home, Wrench, ShieldCheck } from "lucide-react";
+import { Check, Plug, Home, Wrench, ShieldCheck } from "lucide-react";
 import vf7Street from "@/assets/vf7-street.jpg";
-import corrosionWarranty10Years from "@/assets/value-10-years-corrosion-warranty.png";
-import corrosionWarranty10YearsVertical from "@/assets/value-10-years-corrosion-warranty-vertical.png";
-import iceToEvSavings from "@/assets/value-ice-to-ev-savings-1.54-lakhs.png";
-import assuredBuyback from "@/assets/value-assured-buyback-75.png";
-import freeChargingTill2029 from "@/assets/offer-free-charging-till-2029.png";
+
+/** Offer messaging as text cards — no promotional bitmap tiles. */
+const valueProgramCards: { title: string; body: string; footnote?: string; className?: string }[] = [
+  {
+    title: "10 years* corrosion warranty",
+    body: "Long-term protection for your VinFast — full terms and coverage at the showroom.",
+    footnote: "*As per official warranty documentation.",
+    className: "bg-gradient-to-br from-red-950/40 via-card/80 to-card/60",
+  },
+  {
+    title: "Up to ₹1.54 Lakhs* ICE to EV savings",
+    body: "See how switching from petrol or diesel to electric can reduce your cost of ownership.",
+    footnote: "*Indicative; subject to programme rules.",
+    className: "bg-gradient-to-br from-sky-950/35 via-card/80 to-card/60",
+  },
+  {
+    title: "Value Assured — up to 75%* buyback",
+    body: "Plan your upgrade path with confidence through VinFast’s value programme.",
+    footnote: "*Confirm eligibility and terms with Patliputra VinFast.",
+    className: "bg-gradient-to-br from-emerald-950/35 via-card/80 to-card/60",
+  },
+  {
+    title: "Power your journeys worry-free",
+    body: "Get free charging till 31st March 2029* when you qualify under the current campaign.",
+    footnote: "*Campaign terms apply — ask our Patna team.",
+    className: "bg-gradient-to-br from-slate-800/80 via-card/80 to-primary/10",
+  },
+];
 
 const ownershipItems = [
   {
@@ -32,9 +55,9 @@ const ownershipItems = [
 
 const OwnershipSection = () => {
   return (
-    <section className="py-24 lg:py-32 section-dark overflow-hidden">
+    <section className="py-16 sm:py-24 lg:py-32 section-dark overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-20 items-center">
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -72,16 +95,24 @@ const OwnershipSection = () => {
               })}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mt-10">
-              {[
-                { src: corrosionWarranty10Years, alt: "10 Years* Corrosion Warranty" },
-                { src: iceToEvSavings, alt: "Up to 1.54 Lakhs* ICE to EV Savings" },
-                { src: assuredBuyback, alt: "Get Up to 75%* Buyback" },
-                { src: corrosionWarranty10YearsVertical, alt: "10-Years Corrosion Warranty" },
-                { src: freeChargingTill2029, alt: "Get free charging till 31st March 2029*" },
-              ].map((tile) => (
-                <div key={tile.alt} className="rounded-2xl overflow-hidden border border-foreground/[0.08] bg-foreground/[0.02]">
-                  <img src={tile.src} alt={tile.alt} className="w-full h-full object-cover" loading="lazy" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-8 sm:mt-10">
+              {valueProgramCards.map((card) => (
+                <div
+                  key={card.title}
+                  className={`rounded-2xl border border-border/60 p-4 sm:p-5 shadow-sm ${card.className ?? ""}`}
+                >
+                  <div className="flex gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                      <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-display font-semibold text-sm sm:text-base text-foreground leading-snug">{card.title}</p>
+                      <p className="text-muted-foreground text-xs sm:text-sm leading-relaxed mt-2">{card.body}</p>
+                      {card.footnote && (
+                        <p className="text-muted-foreground/80 text-[10px] sm:text-[11px] leading-snug mt-2">{card.footnote}</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>

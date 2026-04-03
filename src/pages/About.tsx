@@ -12,9 +12,16 @@ const AboutPage = () => {
       <Navbar />
 
       {/* Hero */}
-      <section className="relative min-h-[60vh] flex items-end pb-14 pt-16 lg:pt-20">
+      <section className="relative min-h-[52vh] sm:min-h-[60vh] flex items-end pb-10 sm:pb-14 pt-16 lg:pt-20">
         <div className="absolute inset-0">
-          <img src={patliputraVinfastHero} alt="Patliputra Auto × VinFast" className="w-full h-full object-cover object-center" />
+          <img
+            src={patliputraVinfastHero}
+            alt="Patliputra Auto × VinFast"
+            className="image-high-quality h-full w-full object-cover object-center"
+            sizes="100vw"
+            fetchPriority="high"
+            decoding="async"
+          />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
         </div>
@@ -31,15 +38,15 @@ const AboutPage = () => {
         </div>
       </section>
 
-      <div className="py-20 lg:py-28">
+      <div className="py-14 sm:py-20 lg:py-28">
         <div className="container mx-auto px-4 lg:px-8">
           <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
-            className="text-foreground/60 text-lg leading-relaxed max-w-3xl mx-auto text-center mb-20">
+            className="text-foreground/60 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto text-center mb-12 sm:mb-20 px-1">
             Bihar's first and authorized VinFast dealer. Backed by Patliputra Group's legacy of trust, we bring Vietnam's leading electric vehicle brand to the heart of India.
           </motion.p>
 
           {/* Stats */}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-20">
             {[
               { icon: Award, value: "25+", label: "Years of Trust" },
               { icon: Users, value: "5,000+", label: "Happy Customers" },
@@ -50,7 +57,7 @@ const AboutPage = () => {
               return (
                 <motion.div key={stat.label} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }} transition={{ delay: i * 0.1 }}
-                  className="glass-card-sm p-8 text-center">
+                  className="glass-card-sm p-5 sm:p-8 text-center">
                   <Icon className="w-8 h-8 text-primary mx-auto mb-4" />
                   <p className="font-display font-bold text-3xl mb-1">{stat.value}</p>
                   <p className="text-muted-foreground text-sm">{stat.label}</p>
@@ -60,10 +67,17 @@ const AboutPage = () => {
           </div>
 
           {/* Image + Text */}
-          <div className="grid lg:grid-cols-2 gap-12 items-center mb-20">
+          <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center mb-12 sm:mb-20">
             <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}
               className="rounded-3xl overflow-hidden shadow-luxury">
-              <img src={vf8Convoy} alt="VinFast Fleet" className="w-full aspect-[4/3] object-cover" />
+              <img
+                src={vf8Convoy}
+                alt="VinFast Fleet"
+                className="image-high-quality aspect-[4/3] w-full object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                loading="lazy"
+                decoding="async"
+              />
             </motion.div>
             <motion.div initial={{ opacity: 0, x: 20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} className="space-y-6">
               <div>

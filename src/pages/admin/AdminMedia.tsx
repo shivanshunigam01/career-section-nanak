@@ -131,7 +131,7 @@ const AdminMedia = () => {
           {filtered.map((item) => (
             <Card key={item.id} className="bg-card border-border/50 overflow-hidden group">
               <div className="aspect-[4/3] bg-secondary/30 relative overflow-hidden">
-                <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                <img src={item.url} alt={item.name} className="w-full h-full object-cover transition-[filter] duration-300 group-hover:brightness-[1.05]" />
                 <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                   <button
                     onClick={() => copyUrl(item.id, item.url)}

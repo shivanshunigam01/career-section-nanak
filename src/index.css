@@ -68,10 +68,23 @@
     letter-spacing: -0.04em;
   }
 
-  img {
+  /* High-quality raster display: no extra filters; best interpolation when scaling */
+  img,
+  picture,
+  video {
     filter: none;
     backdrop-filter: none;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     image-rendering: auto;
+  }
+
+  /* Best photo down/upscaling where supported (Chrome 124+, Safari 17.4+, recent Edge) */
+  @supports (image-rendering: high-quality) {
+    img,
+    picture {
+      image-rendering: high-quality;
+    }
   }
 }
 
@@ -145,6 +158,12 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@layer utilities {
+  .image-high-quality {
+    image-rendering: high-quality;
+  }
 }
 
 /* Smooth scrolling */

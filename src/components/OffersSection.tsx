@@ -32,13 +32,13 @@ const offers = [
 
 const OffersSection = () => {
   return (
-    <section className="py-24 lg:py-32 section-dark">
+    <section className="py-16 sm:py-24 lg:py-32 section-dark">
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10 sm:mb-16"
         >
           <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">
             Limited Time
@@ -48,7 +48,7 @@ const OffersSection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
           {offers.map((offer, i) => {
             const Icon = offer.icon;
             return (

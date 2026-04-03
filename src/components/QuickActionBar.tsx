@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { Car, Calculator, ArrowLeftRight, MapPin, Phone, MessageCircle, CalendarDays } from "lucide-react";
+import { Car, Calculator, ArrowLeftRight, MapPin, Phone, MessageCircle, CalendarDays, ShoppingBag } from "lucide-react";
 
 const actions = [
+  { icon: ShoppingBag, label: "Book Now", href: "/book-now" },
   { icon: CalendarDays, label: "Test Drive", href: "/test-drive" },
   { icon: Car, label: "Get Price", href: "/contact" },
   { icon: Calculator, label: "EMI Calculator", href: "/emi-calculator" },

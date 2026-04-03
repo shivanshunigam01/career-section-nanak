@@ -1,385 +1,523 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, Minus, Zap, Battery, Shield, Layers, Star } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
-import vf6DesatSilver from "@/assets/vf6-desat-silver.png";
+import {
+  compareModels,
+  compareRowLabels,
+  compareSectionDefinitions,
+  getVariantEntry,
+  type CompareSelection,
+} from "@/data/compareCatalog";
 
-type SpecValue = string | boolean | number;
+type Slot = CompareSelection | null;
 
-interface SpecRow {
-  label: string;
-  vf7: SpecValue;
-  vf6: SpecValue;
-  unit?: string;
-  higherIsBetter?: boolean;
-  highlight?: boolean;
-}
-
-interface Category {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  specs: SpecRow[];
-}
-
-const categories: Category[] = [
-  {
-    id: "price",
-    label: "Price & Value",
-    icon: <Star className="w-4 h-4" />,
-    specs: [
-      { label: "Ex-Showroom Price", vf7: "₹21.89 Lakh*", vf6: "₹17.29 Lakh*", highlight: true },
-      { label: "Variants", vf7: "Plus / Max", vf6: "Plus / Max" },
-      { label: "Corrosion Warranty", vf7: "10 Years*", vf6: "10 Years*" },
-      { label: "ICE to EV Savings", vf7: "Up to 1.54 Lakhs*", vf6: "Up to 1.54 Lakhs*" },
-      { label: "Value Assured Buyback", vf7: "Get up to 75%*", vf6: "Get up to 75%*" },
-    ],
-  },
-  {
-    id: "performance",
-    label: "Performance",
-    icon: <Zap className="w-4 h-4" />,
-    specs: [
-      { label: "Motor Power", vf7: 349, vf6: 201, unit: "HP", higherIsBetter: true, highlight: true },
-      { label: "Torque", vf7: 500, vf6: 310, unit: "Nm", higherIsBetter: true },
-      { label: "0–100 km/h", vf7: "5.9s", vf6: "6.8s", higherIsBetter: false },
-      { label: "Top Speed", vf7: "200 km/h", vf6: "175 km/h" },
-      { label: "Drive Type", vf7: "AWD", vf6: "FWD" },
-    ],
-  },
-  {
-    id: "battery",
-    label: "Battery & Range",
-    icon: <Battery className="w-4 h-4" />,
-    specs: [
-      { label: "Battery Capacity", vf7: 75.3, vf6: 59.6, unit: "kWh", higherIsBetter: true, highlight: true },
-      { label: "Range (WLTP)", vf7: 431, vf6: 381, unit: "km", higherIsBetter: true },
-      { label: "Fast Charge (10–70%)", vf7: "24 min", vf6: "26 min" },
-      { label: "Home Charge (0–100%)", vf7: "11 hrs", vf6: "9 hrs" },
-      { label: "Charger Type", vf7: "CCS2", vf6: "CCS2" },
-    ],
-  },
-  {
-    id: "safety",
-    label: "Safety",
-    icon: <Shield className="w-4 h-4" />,
-    specs: [
-      { label: "Global NCAP Rating", vf7: "5-Star", vf6: "5-Star", highlight: true },
-      { label: "Airbags", vf7: "6 Airbags", vf6: "6 Airbags" },
-      { label: "ADAS Level", vf7: "Level 2+", vf6: "Level 2" },
-      { label: "AEB (Auto Emergency Braking)", vf7: true, vf6: true },
-      { label: "Lane Keep Assist", vf7: true, vf6: true },
-      { label: "360° Parking Camera", vf7: true, vf6: false },
-      { label: "Blind Spot Monitor", vf7: true, vf6: false },
-    ],
-  },
-  {
-    id: "features",
-    label: "Features & Comfort",
-    icon: <Layers className="w-4 h-4" />,
-    specs: [
-      { label: "Touchscreen", vf7: '15.6"', vf6: '12.9"', highlight: true },
-      { label: "Panoramic Sunroof", vf7: true, vf6: false },
-      { label: "Ventilated Front Seats", vf7: true, vf6: false },
-      { label: "Heated Front Seats", vf7: true, vf6: true },
-      { label: "Wireless Charging", vf7: true, vf6: true },
-      { label: "Powered Tailgate", vf7: true, vf6: false },
-      { label: "Ambient Lighting", vf7: true, vf6: true },
-      { label: "Boot Space", vf7: "655 L", vf6: "422 L" },
-      { label: "Seating", vf7: "5 Adults", vf6: "5 Adults" },
-    ],
-  },
+const defaultSlots: [Slot, Slot, Slot] = [
+  { modelKey: "vf6", variantId: "infinity" },
+  { modelKey: "vf7", variantId: "skyInfinity" },
+  null,
 ];
 
-const barSpecs = [
-  { label: "Power", vf7: 349, vf6: 201, max: 400, unit: "HP" },
-  { label: "Range", vf7: 431, vf6: 381, max: 500, unit: "km" },
-  { label: "Battery", vf7: 75.3, vf6: 59.6, max: 85, unit: "kWh" },
-  { label: "Boot Space", vf7: 655, vf6: 422, max: 700, unit: "L" },
-];
-
-const renderValue = (val: SpecValue) => {
-  if (typeof val === "boolean") {
-    return val
-      ? <Check className="w-4 h-4 text-primary mx-auto" />
-      : <Minus className="w-4 h-4 text-muted-foreground/40 mx-auto" />;
-  }
-  return <span>{val}</span>;
-};
-
-const getWinner = (row: SpecRow): "vf7" | "vf6" | "tie" | null => {
-  if (typeof row.vf7 === "boolean" && typeof row.vf6 === "boolean") {
-    if (row.vf7 === row.vf6) return "tie";
-    return row.vf7 ? "vf7" : "vf6";
-  }
-  if (typeof row.vf7 === "number" && typeof row.vf6 === "number") {
-    if (row.vf7 === row.vf6) return "tie";
-    if (row.higherIsBetter === false) return row.vf7 < row.vf6 ? "vf7" : "vf6";
-    return row.vf7 > row.vf6 ? "vf7" : "vf6";
-  }
-  return null;
-};
+function VsBadge() {
+  return (
+    <div
+      className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-bold tracking-tight text-background shadow-md border-2 border-background z-10"
+      aria-hidden
+    >
+      VS
+    </div>
+  );
+}
 
 const ComparePage = () => {
-  const [activeCategory, setActiveCategory] = useState("price");
+  const [slots, setSlots] = useState<[Slot, Slot, Slot]>(defaultSlots);
+  const [hideCommon, setHideCommon] = useState(false);
+  const [thirdModelDraft, setThirdModelDraft] = useState<"vf6" | "vf7">("vf6");
+  const [thirdVariantDraft, setThirdVariantDraft] = useState<string>(
+    compareModels.vf6.variants[0]?.id ?? "earth",
+  );
 
-  const currentCat = categories.find((c) => c.id === activeCategory)!;
+  const activeSelections = useMemo(() => slots.filter((s): s is CompareSelection => s !== null), [slots]);
+
+  const comparisonColumns = useMemo(() => {
+    return activeSelections.map((sel) => {
+      const model = compareModels[sel.modelKey];
+      const variant = getVariantEntry(sel);
+      return { sel, model, variant };
+    });
+  }, [activeSelections]);
+
+  const tableSections = useMemo(() => {
+    return compareSectionDefinitions
+      .map((section) => {
+        const rows = section.keys
+          .map((key) => {
+            const label = compareRowLabels[key] ?? key;
+            const values = activeSelections.map((sel) => {
+              const v = getVariantEntry(sel);
+              return (v?.specs[key] ?? "—").trim();
+            });
+            const allEqual = values.length > 1 && values.every((v) => v === values[0]);
+            if (hideCommon && allEqual) return null;
+            return { key, label, values };
+          })
+          .filter(Boolean) as { key: string; label: string; values: string[] }[];
+        return { title: section.title, rows };
+      })
+      .filter((s) => s.rows.length > 0);
+  }, [activeSelections, hideCommon]);
+
+  const colCount = comparisonColumns.length;
+  const gridTemplate = `minmax(140px,1.1fr) repeat(${colCount}, minmax(120px,1fr))`;
+
+  const updateSlot = (index: 0 | 1 | 2, patch: Partial<CompareSelection> | null) => {
+    setSlots((prev) => {
+      const next: [Slot, Slot, Slot] = [...prev];
+      if (patch === null) {
+        next[index] = null;
+        return next;
+      }
+      const cur = next[index];
+      const base: CompareSelection =
+        cur ?? { modelKey: patch.modelKey ?? "vf6", variantId: patch.variantId ?? compareModels.vf6.variants[0].id };
+      next[index] = {
+        modelKey: patch.modelKey ?? base.modelKey,
+        variantId: patch.variantId ?? base.variantId,
+      };
+      const m = compareModels[next[index]!.modelKey];
+      if (!m.variants.find((v) => v.id === next[index]!.variantId)) {
+        next[index]!.variantId = m.variants[0].id;
+      }
+      return next;
+    });
+  };
+
+  const addThirdVehicle = () => {
+    const m = compareModels[thirdModelDraft];
+    const vId = m.variants.some((v) => v.id === thirdVariantDraft) ? thirdVariantDraft : m.variants[0].id;
+    setSlots((prev) => {
+      const next: [Slot, Slot, Slot] = [...prev];
+      next[2] = { modelKey: thirdModelDraft, variantId: vId };
+      return next;
+    });
+  };
+
+  const specRegionRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const fixedHeaderScrollRef = useRef<HTMLDivElement>(null);
+  const [pinnedSpecHeader, setPinnedSpecHeader] = useState(false);
+  const scrollSyncLock = useRef(false);
+
+  const updatePinnedHeader = useCallback(() => {
+    const el = specRegionRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const nh = window.matchMedia("(min-width: 1024px)").matches ? 80 : 64;
+    const headerBand = 88;
+    const pin = r.top <= nh + 1 && r.bottom >= nh + headerBand;
+    setPinnedSpecHeader(pin);
+  }, []);
+
+  useEffect(() => {
+    updatePinnedHeader();
+    window.addEventListener("scroll", updatePinnedHeader, { passive: true });
+    window.addEventListener("resize", updatePinnedHeader);
+    return () => {
+      window.removeEventListener("scroll", updatePinnedHeader);
+      window.removeEventListener("resize", updatePinnedHeader);
+    };
+  }, [updatePinnedHeader]);
+
+  const syncHorizontalScroll = useCallback((source: "table" | "fixed") => {
+    if (scrollSyncLock.current) return;
+    const t = tableScrollRef.current;
+    const f = fixedHeaderScrollRef.current;
+    if (!t || !f) return;
+    scrollSyncLock.current = true;
+    if (source === "table") f.scrollLeft = t.scrollLeft;
+    else t.scrollLeft = f.scrollLeft;
+    requestAnimationFrame(() => {
+      scrollSyncLock.current = false;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!pinnedSpecHeader) return;
+    const f = fixedHeaderScrollRef.current;
+    const tb = tableScrollRef.current;
+    if (f && tb) f.scrollLeft = tb.scrollLeft;
+  }, [pinnedSpecHeader, comparisonColumns, gridTemplate]);
+
+  const columnHeaderGrid = (
+    <div className="grid gap-0 py-3 sm:py-3.5" style={{ gridTemplateColumns: gridTemplate }}>
+      <div className="px-4 flex items-end">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground leading-none pb-0.5">
+          Specification
+        </span>
+      </div>
+      {comparisonColumns.map((col, i) => (
+        <div
+          key={`${col.sel.modelKey}-${col.sel.variantId}-head-${i}`}
+          className="px-2 sm:px-3 text-center border-l border-border/50 flex flex-col justify-end min-h-[4.25rem] sm:min-h-[4.5rem]"
+        >
+          <p className="font-display font-bold text-xs sm:text-sm text-foreground leading-tight">
+            {col.model.brand} {col.model.name}
+          </p>
+          <p className="text-[11px] sm:text-xs font-semibold text-primary mt-1 leading-tight">{col.variant?.label}</p>
+          <p className="text-[10px] text-muted-foreground tabular-nums mt-1">{col.variant?.price}</p>
+        </div>
+      ))}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero */}
-      <section className="pt-24 pb-10 lg:pt-32 lg:pb-12 section-surface">
+      {/* Fixed column legend — sits flush under navbar while spec block is on screen */}
+      {pinnedSpecHeader && (
+        <div
+          className="fixed top-16 lg:top-20 left-0 right-0 z-[45] border-b border-border/80 bg-background/98 backdrop-blur-md shadow-md"
+          role="region"
+          aria-label="Comparison columns — model and variant"
+        >
+          {/* Same horizontal shell as #compare-tool spec table so columns line up with scroll sync */}
+          <div className="container mx-auto px-4 lg:px-8">
+            <div className="max-w-6xl mx-auto">
+              <div
+                ref={fixedHeaderScrollRef}
+                onScroll={() => syncHorizontalScroll("fixed")}
+                className="overflow-x-auto touch-pan-x rounded-2xl border border-border/70 bg-card/30 shadow-sm [-webkit-overflow-scrolling:touch]"
+              >
+                <div className="min-w-[720px] p-1 sm:p-2">
+                  <div className="rounded-xl border border-border/60 bg-muted/30 shadow-sm">
+                    <div className="rounded-xl border border-border/50 bg-card/80">
+                      {columnHeaderGrid}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <section className="pt-20 pb-8 sm:pt-24 lg:pt-32 lg:pb-10 border-b border-border/60 bg-muted/20">
         <div className="container mx-auto px-4 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Side by Side</p>
-            <h1 className="font-display font-bold text-4xl md:text-5xl mb-4">Compare Models</h1>
-            <p className="text-muted-foreground max-w-lg mx-auto">
-              VF 7 vs VF 6 — explore every detail side by side and choose the right EV for you.
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mx-auto mb-10">
+            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">Compare</p>
+            <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 leading-tight px-1">
+              VinFast VF 6 vs VF 7
+            </h1>
+            <p className="text-muted-foreground text-sm md:text-base">
+              Pick up to three trims, hide identical lines, and scroll the full spec stack — Patliputra VinFast Patna.
             </p>
           </motion.div>
 
-          {/* Car Cards */}
-          <div className="grid grid-cols-2 gap-4 sm:gap-8 max-w-3xl mx-auto mb-12">
-            {[
-              { name: "VF 7", img: vf7DesatSilver, href: "/models/vf7", price: "₹21.89L*", badge: "Performance" },
-              { name: "VF 6", img: vf6DesatSilver, href: "/models/vf6", price: "₹17.29L*", badge: "Value" },
-            ].map((m, idx) => (
-              <motion.div
-                key={m.name}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="glass-card p-4 sm:p-6 text-center group"
-              >
-                <span className="inline-block text-xs font-semibold bg-primary/10 text-primary px-3 py-1 rounded-full mb-3">
-                  {m.badge}
-                </span>
-                <div className="rounded-xl overflow-hidden bg-[#F0F0F0] mb-4 aspect-[4/3]">
-                  <img
-                    src={m.img}
-                    alt={`VinFast ${m.name}`}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
-                  />
+          {/* Quick summary card — VF7 vs VF6 */}
+          <div className="max-w-3xl mx-auto mb-10 sm:mb-12 rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
+            <div className="relative grid grid-cols-2 gap-0 bg-muted/40 px-3 py-5 sm:px-8 sm:py-8">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+                <VsBadge />
+              </div>
+              <div className="flex justify-center pr-6 sm:pr-12 min-w-0">
+                <img
+                  src={compareModels.vf7.image}
+                  alt="VinFast VF 7"
+                  className="max-h-24 sm:max-h-32 md:max-h-36 w-full max-w-[min(100%,200px)] object-contain"
+                />
+              </div>
+              <div className="flex justify-center pl-6 sm:pl-12 min-w-0">
+                <img
+                  src={compareModels.vf6.image}
+                  alt="VinFast VF 6"
+                  className="max-h-24 sm:max-h-32 md:max-h-36 w-full max-w-[min(100%,200px)] object-contain"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-px bg-border/60 border-t border-border/60">
+              <div className="bg-card p-3 sm:p-6 text-center min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{compareModels.vf7.brand}</p>
+                <p className="font-display font-bold text-base sm:text-lg md:text-xl leading-tight">{compareModels.vf7.name}</p>
+                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹21.89 – 26.79 Lakh*</p>
+              </div>
+              <div className="bg-card p-3 sm:p-6 text-center min-w-0">
+                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{compareModels.vf6.brand}</p>
+                <p className="font-display font-bold text-base sm:text-lg md:text-xl leading-tight">{compareModels.vf6.name}</p>
+                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹17.29 – 19.19 Lakh*</p>
+              </div>
+            </div>
+            <div className="p-4 sm:p-5 border-t border-border/60">
+              <Button variant="outline" className="w-full border-primary/60 text-primary hover:bg-primary/5" asChild>
+                <Link to="#compare-tool">Build your comparison</Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="compare-tool" className="py-8 sm:py-10 lg:py-14 scroll-mt-20">
+        <div className="container mx-auto px-4 lg:px-8">
+          <h2 className="font-display font-bold text-lg sm:text-xl md:text-2xl mb-2 text-center md:text-left leading-snug break-words px-1 md:px-0">
+            {comparisonColumns.map((c, i) => (
+              <span key={i}>
+                {c.model.name} {c.variant?.label}
+                {i < comparisonColumns.length - 1 ? " vs " : ""}
+              </span>
+            ))}{" "}
+            comparison
+          </h2>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+            <div className="flex items-center gap-2">
+              <Checkbox id="hide-common" checked={hideCommon} onCheckedChange={(v) => setHideCommon(v === true)} />
+              <Label htmlFor="hide-common" className="text-sm font-normal cursor-pointer text-muted-foreground">
+                Hide common features
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground">*Indicative prices — ask Patliputra VinFast for on-road figures.</p>
+          </div>
+
+          {/* Selector row — CarDekho-style cards + optional third slot */}
+          <div className="flex flex-col lg:flex-row lg:items-stretch lg:justify-center lg:flex-wrap gap-4 lg:gap-0 mb-12">
+            {comparisonColumns.map((col, idx) => (
+              <Fragment key={`${col.sel.modelKey}-${col.sel.variantId}-${idx}`}>
+                {idx > 0 && (
+                  <div className="flex items-center justify-center py-2 lg:py-0 lg:w-12 lg:shrink-0">
+                    <VsBadge />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0 w-full max-w-md mx-auto lg:mx-0 lg:max-w-[280px] xl:max-w-[320px] rounded-2xl border border-border/70 bg-card p-4 sm:p-5 shadow-sm relative">
+                  <div className="flex justify-between items-start gap-2 mb-3">
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Vehicle {idx + 1}</span>
+                    {idx === 2 && (
+                      <button
+                        type="button"
+                        onClick={() => updateSlot(2, null)}
+                        className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        aria-label="Remove third vehicle"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  <div className="rounded-xl bg-[#ECECEA] dark:bg-muted/50 mb-4 h-32 sm:h-36 flex items-center justify-center overflow-hidden">
+                    <img src={col.model.image} alt="" className="max-h-full w-auto object-contain" />
+                  </div>
+                  <p className="font-display font-bold text-lg mb-3">
+                    {col.model.brand} {col.model.name}
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Model</Label>
+                      <Select
+                        value={col.sel.modelKey}
+                        onValueChange={(v) =>
+                          updateSlot(idx as 0 | 1 | 2, {
+                            modelKey: v as "vf6" | "vf7",
+                            variantId: compareModels[v as "vf6" | "vf7"].variants[0].id,
+                          })
+                        }
+                      >
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="vf6">VinFast VF 6</SelectItem>
+                          <SelectItem value="vf7">VinFast VF 7</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs text-muted-foreground">Variant</Label>
+                      <Select value={col.sel.variantId} onValueChange={(v) => updateSlot(idx as 0 | 1 | 2, { variantId: v })}>
+                        <SelectTrigger className="mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {col.model.variants.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              {v.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <p className="mt-4 font-display font-bold text-lg tabular-nums">{col.variant?.price}</p>
+                  <div className="mt-4 flex flex-col gap-2">
+                    <Button variant="outline" size="sm" className="w-full border-primary/50 text-primary" asChild>
+                      <Link to="/contact">View offers</Link>
+                    </Button>
+                    <Button variant="ghost" size="sm" className="w-full text-muted-foreground" asChild>
+                      <Link to={col.model.route}>Model page</Link>
+                    </Button>
+                  </div>
                 </div>
-                <h3 className="font-display font-bold text-xl mb-1">VinFast {m.name}</h3>
-                <p className="text-primary font-semibold text-lg mb-4">{m.price}</p>
-                <Link to={m.href}>
-                  <Button variant="outline" size="sm" className="w-full">View Details</Button>
-                </Link>
-              </motion.div>
+              </Fragment>
             ))}
-          </div>
 
-          {/* Visual Comparison Bars */}
-          <div className="max-w-3xl mx-auto glass-card p-6 sm:p-8 mb-4">
-            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-6">At a Glance</p>
-            <div className="space-y-5">
-              {barSpecs.map((spec) => (
-                <div key={spec.label}>
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="text-sm text-muted-foreground">{spec.label}</span>
-                    <div className="flex gap-4 text-xs font-semibold tabular-nums">
-                      <span className="text-primary">VF 7: {spec.vf7} {spec.unit}</span>
-                      <span className="text-foreground/50">VF 6: {spec.vf6} {spec.unit}</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5">
-                    <div className="h-2 rounded-full bg-foreground/[0.06] overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${(spec.vf7 / spec.max) * 100}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, ease: "easeOut" }}
-                        className="h-full rounded-full bg-primary"
-                      />
-                    </div>
-                    <div className="h-2 rounded-full bg-foreground/[0.06] overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        whileInView={{ width: `${(spec.vf6 / spec.max) * 100}%` }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
-                        className="h-full rounded-full bg-foreground/30"
-                      />
-                    </div>
-                  </div>
+            {slots[2] === null && (
+              <>
+                <div className="flex items-center justify-center py-2 lg:py-0 lg:w-12 lg:shrink-0">
+                  <VsBadge />
                 </div>
-              ))}
-              <div className="flex items-center gap-6 pt-2">
-                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-primary inline-block" /><span className="text-xs text-muted-foreground">VF 7</span></div>
-                <div className="flex items-center gap-2"><span className="w-3 h-3 rounded-full bg-foreground/30 inline-block" /><span className="text-xs text-muted-foreground">VF 6</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Detailed Spec Table */}
-      <section className="py-16 section-dark">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="max-w-3xl mx-auto">
-            <div className="text-center mb-8">
-              <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">Deep Dive</p>
-              <h2 className="font-display font-bold text-2xl md:text-3xl">Detailed Specifications</h2>
-            </div>
-
-            {/* Category Tabs */}
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
-                  className={`flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium transition-all ${
-                    activeCategory === cat.id
-                      ? "bg-primary text-primary-foreground shadow-glow-red"
-                      : "bg-foreground/5 text-muted-foreground hover:text-foreground hover:bg-foreground/10"
-                  }`}
-                >
-                  {cat.icon}
-                  <span>{cat.label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Spec Table */}
-            <motion.div
-              key={activeCategory}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="glass-card overflow-x-auto"
-            >
-              {/* Table Header */}
-              <div className="grid grid-cols-3 gap-2 px-4 sm:px-6 py-3 border-b border-foreground/[0.06] bg-foreground/[0.02] min-w-[640px]">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Spec</span>
-                <span className="text-center text-xs font-semibold text-primary uppercase tracking-widest">VF 7</span>
-                <span className="text-center text-xs font-semibold text-muted-foreground uppercase tracking-widest">VF 6</span>
-              </div>
-
-              {currentCat.specs.map((row, i) => {
-                const winner = getWinner(row);
-                return (
-                  <div
-                    key={row.label}
-                    className={`grid grid-cols-3 gap-2 items-center px-4 sm:px-6 py-4 min-w-[640px] ${
-                      i < currentCat.specs.length - 1 ? "border-b border-foreground/[0.04]" : ""
-                    } ${row.highlight ? "bg-primary/[0.03]" : i % 2 === 0 ? "bg-foreground/[0.01]" : ""}`}
-                  >
-                    <span className={`text-sm ${row.highlight ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
-                      {row.label}
-                    </span>
-                    <span className={`text-center font-display font-medium text-sm tabular-nums flex items-center justify-center flex-wrap ${winner === "vf7" ? "text-primary" : ""}`}>
-                      {renderValue(typeof row.vf7 === "number" ? `${row.vf7}${row.unit ? " " + row.unit : ""}` : row.vf7)}
-                      {winner === "vf7" && <span className="ml-1.5 text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold hidden sm:inline">Better</span>}
-                    </span>
-                    <span className={`text-center font-display font-medium text-sm tabular-nums flex items-center justify-center flex-wrap ${winner === "vf6" ? "text-emerald-500" : ""}`}>
-                      {renderValue(typeof row.vf6 === "number" ? `${row.vf6}${row.unit ? " " + row.unit : ""}` : row.vf6)}
-                      {winner === "vf6" && <span className="ml-1.5 text-[10px] bg-emerald-500/10 text-emerald-500 px-1.5 py-0.5 rounded-full font-semibold hidden sm:inline">Better</span>}
-                    </span>
-                  </div>
-                );
-              })}
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Which is right for you */}
-      <section className="py-20 section-surface">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12">
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Recommendation</p>
-            <h2 className="font-display font-bold text-3xl md:text-4xl">Which One is Right for You?</h2>
-          </div>
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {[
-              {
-                model: "VF 7",
-                img: vf7DesatSilver,
-                href: "/models/vf7",
-                tagline: "For the Performance Seeker",
-                color: "primary",
-                reasons: [
-                  "You want AWD & maximum power",
-                  "Long highway drives with 431 km range",
-                  "You prefer a larger, more premium cabin",
-                  "Tech features like 360° camera & Level 2+ ADAS",
-                  "Panoramic sunroof & ventilated seats matter to you",
-                ],
-              },
-              {
-                model: "VF 6",
-                img: vf6DesatSilver,
-                href: "/models/vf6",
-                tagline: "For the Smart City Driver",
-                color: "emerald",
-                reasons: [
-                  "Urban commuting & compact parking",
-                  "More budget-friendly starting price",
-                  "Faster home charging (9 hrs)",
-                  "Lighter weight, easier city maneuverability",
-                  "Still gets 5-Star safety & ADAS Level 2",
-                ],
-              },
-            ].map((card) => (
-              <motion.div
-                key={card.model}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="glass-card p-6 sm:p-8"
-              >
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#F0F0F0] flex-shrink-0">
-                    <img src={card.img} alt={card.model} className="w-full h-full object-contain" />
-                  </div>
-                  <div>
-                    <h3 className="font-display font-bold text-xl">VinFast {card.model}</h3>
-                    <p className={`text-sm font-medium ${card.color === "primary" ? "text-primary" : "text-emerald-500"}`}>
-                      {card.tagline}
+                <div className="flex-1 min-w-0 w-full max-w-md mx-auto lg:mx-0 lg:max-w-[280px] xl:max-w-[320px] rounded-2xl border border-dashed border-primary/40 bg-muted/20 p-4 sm:p-5">
+                  <div className="flex flex-col items-center text-center gap-3">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Plus className="h-6 w-6" />
+                    </div>
+                    <p className="font-display font-semibold text-sm">Add a third vehicle</p>
+                    <p className="text-xs text-muted-foreground max-w-xs">
+                      Compare another VF 6 or VF 7 trim (for example two VF 7 variants side by side).
                     </p>
+                    <div className="w-full space-y-2 text-left">
+                      <Label className="text-xs text-muted-foreground">Model</Label>
+                      <Select
+                        value={thirdModelDraft}
+                        onValueChange={(v) => {
+                          const mk = v as "vf6" | "vf7";
+                          setThirdModelDraft(mk);
+                          setThirdVariantDraft(compareModels[mk].variants[0].id);
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="vf6">VinFast VF 6</SelectItem>
+                          <SelectItem value="vf7">VinFast VF 7</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Label className="text-xs text-muted-foreground mt-2 block">
+                        Variant
+                      </Label>
+                      <Select value={thirdVariantDraft} onValueChange={setThirdVariantDraft}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {compareModels[thirdModelDraft].variants.map((v) => (
+                            <SelectItem key={v.id} value={v.id}>
+                              {v.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button className="w-full mt-2" onClick={addThirdVehicle}>
+                      Add to comparison
+                    </Button>
                   </div>
                 </div>
-                <ul className="space-y-3 mb-6">
-                  {card.reasons.map((r) => (
-                    <li key={r} className="flex items-start gap-3 text-sm text-foreground/80">
-                      <Check className={`w-4 h-4 mt-0.5 flex-shrink-0 ${card.color === "primary" ? "text-primary" : "text-emerald-500"}`} />
-                      {r}
-                    </li>
-                  ))}
-                </ul>
-                <Link to={card.href} className="block">
-                  <Button
-                    variant={card.color === "primary" ? "hero" : "outline"}
-                    size="lg"
-                    className="w-full"
+              </>
+            )}
+          </div>
+
+          {/* Spec tables — in-flow header + fixed duplicate under navbar while scrolling this block */}
+          <div ref={specRegionRef} className="max-w-6xl mx-auto">
+            <div
+              ref={tableScrollRef}
+              onScroll={() => syncHorizontalScroll("table")}
+              className="overflow-x-auto touch-pan-x rounded-2xl border border-border/70 bg-card/30 shadow-sm [-webkit-overflow-scrolling:touch]"
+            >
+              <div className="min-w-[720px] space-y-6 p-1 sm:p-2">
+                {/* In-flow header: invisible when pinned but same borders as fixed bar so widths / scroll match */}
+                <div className="rounded-xl border border-border/60 bg-muted/30 shadow-sm">
+                  <div
+                    className={
+                      pinnedSpecHeader
+                        ? "rounded-xl border border-border/50 bg-card/80 invisible pointer-events-none select-none"
+                        : "rounded-xl border border-border/50 bg-card/80"
+                    }
+                    aria-hidden={pinnedSpecHeader}
                   >
-                    Explore {card.model}
-                  </Button>
-                </Link>
-              </motion.div>
-            ))}
+                    {columnHeaderGrid}
+                  </div>
+                </div>
+
+                {tableSections.map((section) => (
+                  <div
+                    key={section.title}
+                    className="rounded-2xl border border-border/70 bg-card/50 overflow-hidden shadow-sm"
+                  >
+                    <div className="flex items-center gap-2 px-4 py-3 bg-muted/50 border-b border-border/60">
+                      <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+                      <h3 className="font-display font-semibold text-sm md:text-base">{section.title}</h3>
+                    </div>
+                    <div>
+                      {section.rows.map((row) => (
+                        <div
+                          key={row.key}
+                          className="grid gap-0 items-stretch border-b border-border/40 last:border-b-0"
+                          style={{ gridTemplateColumns: gridTemplate }}
+                        >
+                          <div className="px-4 py-3 text-sm text-muted-foreground bg-muted/20 font-medium">
+                            {row.label}
+                          </div>
+                          {row.values.map((val, vi) => (
+                            <div
+                              key={vi}
+                              className="px-3 sm:px-4 py-3 text-sm text-foreground/95 border-l border-border/40 bg-background/40"
+                            >
+                              {val}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-10 flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
+            <a href="/brochures/VF6-Brochure.pdf" download target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm">
+                VF 6 brochure
+              </Button>
+            </a>
+            <a href="/brochures/VF7-Brochure.pdf" download target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm">
+                VF 7 brochure
+              </Button>
+            </a>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 section-dark text-center">
-        <div className="container mx-auto px-4 lg:px-8">
-          <h2 className="font-display font-bold text-3xl md:text-4xl mb-4">Still Deciding?</h2>
-          <p className="text-muted-foreground mb-8 max-w-md mx-auto">
-            Book a test drive for either model and our EV advisor will help you pick the perfect one.
+      <section className="py-16 section-surface border-t border-border/60">
+        <div className="container mx-auto px-4 lg:px-8 text-center">
+          <h2 className="font-display font-bold text-2xl md:text-3xl mb-3">Still deciding?</h2>
+          <p className="text-muted-foreground mb-8 max-w-md mx-auto text-sm">
+            Book back-to-back test drives or ask our Patna team to walk through trims with you.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
-            <Link to="/test-drive"><Button variant="hero" size="lg">Book Test Drive</Button></Link>
-            <Link to="/contact"><Button variant="outline" size="lg">Talk to an Advisor</Button></Link>
+            <Link to="/test-drive">
+              <Button variant="hero" size="lg">
+                Book test drive
+              </Button>
+            </Link>
+            <Link to="/contact">
+              <Button variant="outline" size="lg">
+                Contact dealer
+              </Button>
+            </Link>
           </div>
         </div>
       </section>

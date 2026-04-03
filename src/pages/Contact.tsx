@@ -74,7 +74,7 @@ const ContactPage = () => {
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Contact Info */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
-              <div className="glass-card p-8">
+              <div className="glass-card p-5 sm:p-8">
                 <h3 className="font-display font-bold text-xl mb-6">Patna Showroom</h3>
                 <div className="space-y-4">
                   {[
@@ -133,7 +133,7 @@ const ContactPage = () => {
             {/* Form */}
             <motion.form
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-              onSubmit={handleSubmit} className="glass-card p-8"
+              onSubmit={handleSubmit} className="glass-card p-5 sm:p-8"
             >
               <h3 className="font-display font-bold text-xl mb-6">Send an Enquiry</h3>
               <div className="space-y-4">

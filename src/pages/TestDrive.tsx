@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -125,14 +126,18 @@ const TestDrivePage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-24 pb-20 lg:pt-32 lg:pb-32">
+      <div className="pt-24 pb-36 lg:pt-32 lg:pb-32">
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-16 items-start">
+          <div className="grid lg:grid-cols-2 gap-10 sm:gap-14 lg:gap-16 items-start">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
               <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Test Drive</p>
               <h1 className="font-display font-bold text-4xl md:text-5xl mb-6">Experience the Future</h1>
-              <p className="text-muted-foreground text-lg mb-10 max-w-lg">
-                Book a complimentary test drive of the VinFast VF 6 or VF 7. Feel the electric difference firsthand.
+              <p className="text-muted-foreground text-lg mb-6 max-w-lg">
+                Schedule a complimentary test drive with a date and time. For buying or reserving a vehicle, use{" "}
+                <Link to="/book-now" className="text-primary font-medium hover:underline">
+                  Book Now
+                </Link>
+                .
               </p>
               <div className="space-y-6">
                 {[
@@ -161,9 +166,10 @@ const TestDrivePage = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
               onSubmit={handleSubmit}
-              className="glass-card p-8"
+              className="glass-card p-5 sm:p-8 min-w-0"
             >
-              <h3 className="font-display font-bold text-xl mb-6">Book Your Test Drive</h3>
+              <h3 className="font-display font-bold text-xl mb-2">Schedule your test drive</h3>
+              <p className="text-muted-foreground text-sm mb-6">Date and time apply only to test drives.</p>
               <div className="space-y-4">
                 <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
                 <div className="flex flex-col gap-1">
@@ -216,6 +222,12 @@ const TestDrivePage = () => {
                   Confirm Test Drive
                 </Button>
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>
+                <p className="text-center text-muted-foreground text-xs pt-1">
+                  Ready to buy?{" "}
+                  <Link to="/book-now" className="text-primary font-medium hover:underline">
+                    Go to Book Now
+                  </Link>
+                </p>
               </div>
             </motion.form>
           </div>

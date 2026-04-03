@@ -47,8 +47,8 @@ const EMICalculator = () => {
             </p>
           </motion.div>
 
-          <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-8">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8">
+          <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-6 sm:gap-8">
+            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-5 sm:p-8 min-w-0">
               <h3 className="font-display font-bold text-lg mb-6">Customize Your Plan</h3>
               <div className="space-y-6">
                 <div>
@@ -160,7 +160,7 @@ const EMICalculator = () => {
               </div>
             </motion.div>
 
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-8 h-fit">
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-5 sm:p-8 h-fit min-w-0">
               <h3 className="font-display font-bold text-lg mb-6">Estimated EMI</h3>
 
               <div className="rounded-2xl bg-primary/5 border border-primary/20 p-6 text-center mb-6">

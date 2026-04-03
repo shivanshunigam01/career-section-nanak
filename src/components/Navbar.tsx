@@ -10,6 +10,7 @@ const navLinks = [
   { label: "VF 7", href: "/models/vf7" },
   { label: "VF 6", href: "/models/vf6" },
   { label: "Compare", href: "/compare" },
+  { label: "Book Now", href: "/book-now" },
   { label: "Test Drive", href: "/test-drive" },
   { label: "EMI Calculator", href: "/emi-calculator" },
   { label: "About", href: "/about" },
@@ -61,7 +62,7 @@ const Navbar = () => {
               <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground">
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <Link to="/test-drive">
+              <Link to="/book-now">
                 <Button variant="hero" size="sm">Book Now</Button>
               </Link>
             </div>
@@ -98,8 +99,11 @@ const Navbar = () => {
                 </Link>
               ))}
               <div className="mt-6 flex flex-col gap-3">
+                <Link to="/book-now">
+                  <Button variant="hero" size="lg" className="w-full">Book Now</Button>
+                </Link>
                 <Link to="/test-drive">
-                  <Button variant="hero" size="lg" className="w-full">Book Test Drive</Button>
+                  <Button variant="outline" size="lg" className="w-full">Book Test Drive</Button>
                 </Link>
                 <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer">
                   <Button variant="whatsapp" size="lg" className="w-full">

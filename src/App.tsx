@@ -6,6 +6,7 @@ import Index from "./pages/Index";
 import ModelVF7 from "./pages/ModelVF7";
 import ModelVF6 from "./pages/ModelVF6";
 import TestDrive from "./pages/TestDrive";
+import BookNow from "./pages/BookNow";
 import EMICalculator from "./pages/EMICalculator";
 import ComparePage from "./pages/Compare";
 import AboutPage from "./pages/About";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/models/vf7" element={<ModelVF7 />} />
           <Route path="/models/vf6" element={<ModelVF6 />} />
+          <Route path="/book-now" element={<BookNow />} />
           <Route path="/test-drive" element={<TestDrive />} />
           <Route path="/emi-calculator" element={<EMICalculator />} />
           <Route path="/compare" element={<ComparePage />} />

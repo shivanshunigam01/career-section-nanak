@@ -42,6 +42,7 @@ const Footer = () => {
                 { label: "VF 7", href: "/models/vf7" },
                 { label: "VF 6", href: "/models/vf6" },
                 { label: "Compare Models", href: "/compare" },
+                { label: "Book Now", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },
                 { label: "EMI Calculator", href: "/emi-calculator" },
               ].map((link) => (
@@ -85,7 +86,7 @@ const Footer = () => {
                   href={GOOGLE_MAPS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-muted-foreground hover:text-foreground transition-colors"
+                  className="min-w-0 text-muted-foreground hover:text-foreground transition-colors break-words"
                 >
                   {SHOWROOM_ADDRESS}
                 </a>

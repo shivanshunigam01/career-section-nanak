@@ -3,57 +3,65 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import slideVf7Driving from "@/assets/slide-vf7-driving.png";
-import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
-import slideVf6Lifestyle from "@/assets/slide-vf6-lifestyle.png";
-import slideVf7Interior from "@/assets/slide-vf7-interior.png";
-import slideVf7RearDetail from "@/assets/slide-vf7-rear-detail.png";
-import slideVf7Wheel from "@/assets/slide-vf7-wheel.png";
+import heroSlide01 from "@/assets/hero-slideshow/slide-01.png";
+import heroSlide02 from "@/assets/hero-slideshow/slide-02.png";
+import heroSlide03 from "@/assets/hero-slideshow/slide-03.png";
+import heroSlide04 from "@/assets/hero-slideshow/slide-04.png";
+import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
+import heroSlide06 from "@/assets/hero-slideshow/slide-06.png";
 
-const slides = [
+/** Homepage hero — Patliputra website slideshow (VF 6 / VF 7 campaign art). */
+const slides: {
+  image: string;
+  title: string;
+  sub?: string;
+  footnote?: string;
+  objectPosition: string;
+}[] = [
   {
-    image: slideVf7Driving,
-    subtitle: "Bihar's First Authorized VinFast Dealer — Book Your Test Drive Today",
-    objectPosition: "center 50%",
+    image: heroSlide01,
+    title: "VF 6 & VF 7",
+    sub: "Two electric SUVs, signature V lighting — experience them at Patliputra VinFast, Bihar's authorized dealer.",
+    objectPosition: "center 42%",
   },
   {
-    image: slideVf6Vf7Night,
-    subtitle: "VF 6 & VF 7 — Two Electric SUVs. One Bold Choice.",
-    objectPosition: "center 45%",
+    image: heroSlide02,
+    title: "VinFast VF 7",
+    sub: "Urban performance and electric sophistication — crafted for highways, city streets, and everything between.",
+    objectPosition: "center 48%",
   },
   {
-    image: slideVf6Lifestyle,
-    subtitle: "VinFast VF 6 — Smart, Safe & Built for Every Family",
+    image: heroSlide03,
+    title: "Precision in every detail",
+    sub: "Aerodynamic alloys, bold red and black — the unmistakable VF design language.",
     objectPosition: "center 55%",
   },
   {
-    image: slideVf7Interior,
-    subtitle: "Premium Interior. 12.9\" Infotainment. Ventilated Seats.",
-    objectPosition: "center 40%",
+    image: heroSlide04,
+    title: "Signature LED presence",
+    sub: "Sleek light bar, floating roof lines, and a rear profile that turns every head.",
+    objectPosition: "center 45%",
   },
   {
-    image: slideVf7RearDetail,
-    subtitle: "Bold Design. Distinctive Style. Made to Turn Heads.",
+    image: heroSlide05,
+    title: "Premium VF 6 cabin",
+    sub: "Large touchscreen, minimalist dash, and a driver-centric cockpit built for comfort and connectivity.",
     objectPosition: "center 50%",
   },
   {
-    image: slideVf7Wheel,
-    subtitle: "VinFast VF 7 — 349 HP · 431 km Range · Level 2+ ADAS",
-    objectPosition: "center 60%",
+    image: heroSlide06,
+    title: "Built for your family",
+    sub: "VF 6 — space, safety, and zero-emission drives from Patna to the open road.",
+    footnote: "*Images shown are for illustrative purposes only. Features and specification may vary as per trim.",
+    objectPosition: "center 45%",
   },
 ];
 
 const HeroSection = () => {
   const [current, setCurrent] = useState(0);
 
-  const next = useCallback(
-    () => setCurrent((c) => (c + 1) % slides.length),
-    []
-  );
-  const prev = useCallback(
-    () => setCurrent((c) => (c - 1 + slides.length) % slides.length),
-    []
-  );
+  const next = useCallback(() => setCurrent((c) => (c + 1) % slides.length), []);
+  const prev = useCallback(() => setCurrent((c) => (c - 1 + slides.length) % slides.length), []);
 
   useEffect(() => {
     const timer = setInterval(next, 6000);
@@ -61,29 +69,31 @@ const HeroSection = () => {
   }, [next]);
 
   return (
-    <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[1000px] flex items-end pb-6 sm:pb-12 lg:pb-28 pt-16 lg:pt-0 overflow-hidden">
-      {/* Slides — CSS opacity crossfade (no Framer GPU layer, preserves image sharpness) */}
+    <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[min(100vh,1280px)] flex items-end pb-6 sm:pb-12 lg:pb-28 pt-16 lg:pt-0 overflow-hidden bg-zinc-950">
       {slides.map((slide, i) => (
         <div
-          key={i}
+          key={slide.image}
           className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
           style={{
             opacity: i === current ? 1 : 0,
             zIndex: i === current ? 1 : 0,
           }}
+          aria-hidden={i !== current}
         >
           <img
             src={slide.image}
-            alt={slide.subtitle}
-            className="w-full h-full object-cover"
+            alt={`${slide.title} — VinFast hero`}
+            className="image-high-quality h-full w-full object-cover"
             style={{ objectPosition: slide.objectPosition }}
-            loading="eager"
-            decoding="sync"
+            sizes="100vw"
+            loading={i === 0 ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={i === 0 ? "high" : "low"}
           />
         </div>
       ))}
+      <div className="absolute inset-0 z-[2] bg-gradient-to-t from-black/80 via-black/35 to-black/15 pointer-events-none" />
 
-      {/* Content */}
       <div className="relative container mx-auto px-4 lg:px-8 z-10">
         <AnimatePresence mode="wait">
           <motion.div
@@ -91,12 +101,24 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -15 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="max-w-lg lg:max-w-2xl"
+            transition={{ duration: 0.45, delay: 0.1 }}
+            className="max-w-xl sm:max-w-2xl lg:max-w-3xl"
           >
-            <p className="text-white font-display font-semibold text-sm sm:text-base lg:text-xl max-w-sm sm:max-w-xl mb-4 sm:mb-6 leading-relaxed [text-shadow:0_2px_4px_rgba(0,0,0,0.9),0_4px_24px_rgba(0,0,0,0.75)]">
-              {slides[current].subtitle}
+            <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2 [text-shadow:0_1px_4px_rgba(0,0,0,0.9)]">
+              Patliputra VinFast · Patna
             </p>
+            <h2 className="text-white font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-3 sm:mb-4 [text-shadow:0_2px_8px_rgba(0,0,0,0.85)]">
+              {slides[current].title}
+            </h2>
+            {slides[current].sub && (
+              <p className="text-white/90 font-medium text-sm sm:text-base md:text-lg leading-relaxed max-w-prose [text-shadow:0_1px_4px_rgba(0,0,0,0.8)]">
+                {slides[current].sub}
+              </p>
+            )}
+            {slides[current].footnote && (
+              <p className="text-white/55 text-[11px] sm:text-xs leading-snug max-w-prose mt-3">{slides[current].footnote}</p>
+            )}
+            <div className="h-4 sm:h-5" />
             <div className="flex flex-wrap gap-3 sm:gap-4">
               <Link to="/test-drive">
                 <Button variant="hero" size="lg" className="sm:!px-8 sm:!py-5 sm:!text-base">
@@ -104,7 +126,7 @@ const HeroSection = () => {
                 </Button>
               </Link>
               <Link to="/contact">
-                <Button variant="heroOutline" size="lg" className="sm:!px-8 sm:!py-5 sm:!text-base">
+                <Button variant="heroWhite" size="lg" className="sm:!px-8 sm:!py-5 sm:!text-base">
                   Get Best Offer
                 </Button>
               </Link>
@@ -112,34 +134,38 @@ const HeroSection = () => {
           </motion.div>
         </AnimatePresence>
 
-        {/* Slide controls */}
         <div className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12">
           <button
+            type="button"
             onClick={prev}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105 shrink-0"
+            aria-label="Previous slide"
           >
             <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2 flex-1 min-w-0 overflow-x-auto py-1 scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
             {slides.map((_, i) => (
               <button
                 key={i}
+                type="button"
                 onClick={() => setCurrent(i)}
-                className={`h-1.5 rounded-full transition-all duration-500 ${
-                  i === current ? "w-8 sm:w-10 bg-primary shadow-glow-red" : "w-3 sm:w-4 bg-black/25 hover:bg-black/40"
+                aria-label={`Go to slide ${i + 1}`}
+                className={`h-1.5 shrink-0 rounded-full transition-all duration-500 ${
+                  i === current ? "w-7 sm:w-9 bg-primary shadow-glow-red" : "w-2.5 sm:w-3 bg-white/35 hover:bg-white/55"
                 }`}
               />
             ))}
           </div>
           <button
+            type="button"
             onClick={next}
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105"
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-white/95 hover:bg-white border border-gray-200 flex items-center justify-center text-gray-900 transition-all duration-300 shadow-md hover:scale-105 shrink-0"
+            aria-label="Next slide"
           >
             <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
 
-        {/* Quick link pills */}
         <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-6 lg:mt-8 flex-wrap">
           <Link
             to="/models/vf7"
