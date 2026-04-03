@@ -393,27 +393,8 @@ const ModelVF6 = () => {
             <h1 className="font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-2 text-white leading-[1.05]">
               VF 6
             </h1>
-            <p className="text-white/70 text-xs sm:text-sm uppercase tracking-wider mb-4">Earth · Wind · Wind Infinity</p>
-            <p className="text-white/85 text-base sm:text-lg max-w-xl mb-6 leading-relaxed">{vMeta.description}</p>
 
-            <div className="flex flex-wrap gap-2 mb-8">
-              {vf6Variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariant(v.id)}
-                  className={`rounded-full px-4 py-2 text-sm font-semibold transition-all border ${
-                    variant === v.id
-                      ? "bg-white text-gray-900 border-white shadow-lg"
-                      : "bg-white/10 text-white border-white/40 hover:bg-white/20"
-                  }`}
-                >
-                  {v.shortLabel}
-                </button>
-              ))}
-            </div>
-
-            <div className="flex flex-wrap items-center gap-6 mb-8">
+            <div className="flex flex-wrap items-center gap-6 mb-6">
               {[
                 { val: "₹17.29L*", label: "Indicative ex-showroom*" },
                 { val: stats.range, label: "Range (MIDC)" },
@@ -429,6 +410,26 @@ const ModelVF6 = () => {
                 </div>
               ))}
             </div>
+
+            <p className="text-white/85 text-base sm:text-lg max-w-xl mb-8 leading-relaxed">{vMeta.description}</p>
+
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-4 w-full max-w-2xl">
+              {vf6Variants.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setVariant(v.id)}
+                  className={`rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-semibold transition-all border text-center leading-tight whitespace-nowrap shrink-0 ${
+                    variant === v.id
+                      ? "bg-white text-gray-900 border-white shadow-md"
+                      : "bg-white/10 text-white border-white/40 hover:bg-white/20"
+                  }`}
+                >
+                  {v.shortLabel}
+                </button>
+              ))}
+            </div>
+
             <p className="text-white/50 text-xs max-w-xl mb-6">*Contact Patliputra VinFast Patna for variant-wise on-road price and offers.</p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-3xl">
               <Link to="/test-drive" className="w-full">
@@ -606,7 +607,36 @@ const ModelVF6 = () => {
                   <Link to="/contact">On-road price</Link>
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">*Contact Patliputra VinFast Patna for variant-wise pricing and offers.</p>
+
+              <div
+                className="rounded-xl border border-border/60 bg-muted/30 p-4 sm:p-5 mt-4"
+                role="group"
+                aria-label="Choose trim for on-road price and offers"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                  Trim for on-road price &amp; offers
+                </p>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-2 w-full max-w-2xl">
+                  {vf6Variants.map((v) => (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => setVariant(v.id)}
+                      className={`rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-semibold transition-all border text-center leading-tight whitespace-nowrap shrink-0 ${
+                        variant === v.id
+                          ? "bg-foreground text-background border-foreground shadow-sm"
+                          : "bg-background/90 text-foreground border-border/80 hover:bg-muted"
+                      }`}
+                    >
+                      {v.shortLabel}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground mt-3">
+                *Contact Patliputra VinFast Patna for variant-wise pricing and offers.
+              </p>
             </div>
           </div>
 
