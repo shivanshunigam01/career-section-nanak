@@ -440,56 +440,59 @@ const ModelVF7 = () => {
         <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 lg:pt-28">
           <div className="min-h-0 flex-1" aria-hidden />
           <div className="container mx-auto w-full shrink-0 px-4 pb-16 lg:px-8 lg:pb-24">
-            <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-              <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">Premium Electric SUV</p>
-              <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-2 leading-[1.05]">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
+              className="text-left max-w-3xl"
+            >
+              <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2">Premium Electric SUV</p>
+              <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-5 sm:mb-6 leading-[1.05]">
                 VF 7
               </h1>
 
-              <div className="flex flex-col gap-3 sm:gap-4 mb-6 w-full max-w-3xl">
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+              <div className="flex flex-col gap-2 sm:gap-2.5 mb-3 w-full max-w-3xl">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                   {[
                     { val: "₹21.89L*", label: "Indicative ex-showroom*" },
                     { val: stats.range, label: "Range (MIDC)" },
                   ].map((s, i) => (
-                    <div key={s.label} className="flex items-center gap-4 sm:gap-6">
+                    <div key={s.label} className="flex items-center gap-3 sm:gap-4">
                       {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
-                      <div className="text-center sm:text-left">
-                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl">{s.val}</p>
-                        <p className="text-on-image-ghost text-xs">{s.label}</p>
+                      <div className="text-left">
+                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums">{s.val}</p>
+                        <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">{s.label}</p>
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
+                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
                   {[
                     { val: stats.accel, label: "0–100 km/h" },
                     { val: stats.power, label: "Max. power" },
                     { val: stats.driveline, label: "Driveline" },
                   ].map((s, i) => (
-                    <div key={s.label} className="flex items-center gap-4 sm:gap-6">
+                    <div key={s.label} className="flex items-center gap-3 sm:gap-4">
                       {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
-                      <div className="text-center sm:text-left">
-                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl">{s.val}</p>
-                        <p className="text-on-image-ghost text-xs">{s.label}</p>
+                      <div className="text-left">
+                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums">{s.val}</p>
+                        <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">{s.label}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <p className="text-on-image-soft text-base sm:text-lg max-w-xl mb-8 leading-relaxed">{vMeta.description}</p>
-
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 sm:gap-x-2 mb-4 w-full max-w-3xl">
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 sm:gap-x-2 mb-4 w-full">
                 {vf7Variants.map((v) => (
                   <button
                     key={v.id}
                     type="button"
                     onClick={() => setVariant(v.id)}
-                    className={`rounded-full px-2 py-1 text-[10px] sm:text-xs font-semibold transition-all border text-center leading-tight whitespace-nowrap shrink-0 sm:px-2.5 ${
+                    className={`rounded-full px-2 py-1.5 text-[10px] sm:text-xs font-semibold transition-all border text-center leading-tight whitespace-nowrap shrink-0 sm:px-2.5 ${
                       variant === v.id
                         ? "bg-white text-gray-900 border-white shadow-md"
-                        : "bg-white/10 text-white border-white/40 hover:bg-white/20"
+                        : "bg-black/25 text-white border-white/45 hover:bg-black/35 backdrop-blur-[2px]"
                     }`}
                   >
                     {v.shortLabel}
@@ -497,29 +500,38 @@ const ModelVF7 = () => {
                 ))}
               </div>
 
-              <p className="text-on-image-ghost text-xs max-w-xl mb-6">*Contact Patliputra VinFast Patna for variant-wise on-road price and offers.</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-3xl">
+              <p className="text-on-image-ghost text-[11px] sm:text-xs max-w-xl mb-5 leading-snug">
+                *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl sm:max-w-2xl">
                 <Link to="/test-drive" className="w-full">
-                  <Button variant="hero" size="lg" className="w-full">
+                  <Button variant="hero" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                     Book Test Drive
                   </Button>
                 </Link>
                 <Link to="/book-now" className="w-full">
-                  <Button variant="heroWhite" size="lg" className="w-full">
+                  <Button variant="heroWhite" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                     Book Now
                   </Button>
                 </Link>
                 <Link to="/contact" className="w-full">
-                  <Button variant="heroOutline" size="lg" className="w-full">
+                  <Button variant="heroOutline" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/25 border-white/40 text-white hover:bg-black/35 backdrop-blur-[2px]">
                     Get On-Road Price
                   </Button>
                 </Link>
                 <Link to="/emi-calculator" className="w-full">
-                  <Button variant="outline" size="lg" className="w-full bg-white/10 border-white/30 text-white hover:bg-white/20">
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/25 border-white/40 text-white hover:bg-black/35 backdrop-blur-[2px]"
+                  >
                     EMI Calculator
                   </Button>
                 </Link>
               </div>
+
+              <p className="text-on-image-soft text-base sm:text-lg max-w-xl mt-6 sm:mt-8 leading-relaxed">{vMeta.description}</p>
             </motion.div>
           </div>
         </div>
