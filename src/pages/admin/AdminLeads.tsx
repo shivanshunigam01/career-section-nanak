@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { mockLeads, LEAD_STATUSES, type Lead, type LeadStatus } from "@/data/mockData";
 import {
   getLeads,
@@ -7,6 +7,10 @@ import {
   subscribeVfStorage,
   VF_STORAGE_KEYS,
 } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGet, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import { leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +23,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Edit2, Trash2, Phone, Mail, Download, FileText, MessageCircle } from "lucide-react";
 
 const AdminLeads = () => {
+  const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
   const [leads, setLeads] = useState<Lead[]>(mockLeads);
   const [search, setSearch] = useState("");
@@ -26,19 +31,52 @@ const AdminLeads = () => {
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [showForm, setShowForm] = useState(false);
 
-  const emptyLead: Lead = { id: "", name: "", mobile: "", email: "", city: "", model: "VF 7", source: "Website", status: "New Lead", assignedTo: "", createdAt: new Date().toISOString().split("T")[0], nextFollowUp: "", remarks: "", financeNeeded: false, exchangeNeeded: false };
+  const emptyLead: Lead = {
+    id: "",
+    name: "",
+    mobile: "",
+    email: "",
+    city: "",
+    otherCity: "",
+    model: "VF 7",
+    source: "Website",
+    status: "New Lead",
+    assignedTo: "",
+    createdAt: new Date().toISOString().split("T")[0],
+    nextFollowUp: "",
+    remarks: "",
+    financeNeeded: false,
+    exchangeNeeded: false,
+  };
+
+  const refreshFromApi = useCallback(async () => {
+    const { data } = await adminGet<unknown[]>("/admin/leads?limit=500&page=1");
+    setLeads((data as Record<string, unknown>[]).map((d) => leadFromApi(d)));
+  }, []);
 
   useEffect(() => {
+    if (useRemote) {
+      (async () => {
+        try {
+          await refreshFromApi();
+        } catch (e) {
+          toast.error(formatApiErrors(e));
+        } finally {
+          setHydrated(true);
+        }
+      })();
+      return;
+    }
     const { seedMock, leads: initial } = getLeadsAdminInitial();
     setLeads(seedMock ? mockLeads : initial);
     setHydrated(true);
     return subscribeVfStorage(VF_STORAGE_KEYS.leads, () => setLeads(getLeads()));
-  }, []);
+  }, [useRemote, refreshFromApi]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || useRemote) return;
     setLeadsToStorage(leads);
-  }, [leads, hydrated]);
+  }, [leads, hydrated, useRemote]);
 
   const filtered = leads.filter(l => {
     const matchSearch = l.name.toLowerCase().includes(search.toLowerCase()) || l.mobile.includes(search) || l.email.toLowerCase().includes(search.toLowerCase());
@@ -123,18 +161,48 @@ const AdminLeads = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  const handleSave = (lead: Lead) => {
+  const handleSave = async (lead: Lead) => {
+    if (useRemote) {
+      try {
+        const payload = leadToApiPayload(lead);
+        if (lead.id) {
+          const updated = await adminPutJson<Record<string, unknown>>(`/admin/leads/${lead.id}`, payload);
+          const mapped = leadFromApi(updated);
+          setLeads((prev) => prev.map((l) => (l.id === lead.id ? mapped : l)));
+        } else {
+          const created = await adminPostJson<Record<string, unknown>>("/admin/leads", payload);
+          const mapped = leadFromApi(created);
+          setLeads((prev) => [mapped, ...prev]);
+        }
+        toast.success("Lead saved");
+        setShowForm(false);
+        setEditLead(null);
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
     if (lead.id) {
-      setLeads(prev => prev.map(l => l.id === lead.id ? lead : l));
+      setLeads((prev) => prev.map((l) => (l.id === lead.id ? lead : l)));
     } else {
-      setLeads(prev => [...prev, { ...lead, id: `L${String(prev.length + 1).padStart(3, "0")}` }]);
+      setLeads((prev) => [...prev, { ...lead, id: `L${String(prev.length + 1).padStart(3, "0")}` }]);
     }
     setShowForm(false);
     setEditLead(null);
   };
 
-  const handleDelete = (id: string) => {
-    setLeads(prev => prev.filter(l => l.id !== id));
+  const handleDelete = async (id: string) => {
+    if (useRemote) {
+      try {
+        await adminDeleteJson(`/admin/leads/${id}`);
+        setLeads((prev) => prev.filter((l) => l.id !== id));
+        toast.success("Lead deleted");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setLeads((prev) => prev.filter((l) => l.id !== id));
   };
 
   return (

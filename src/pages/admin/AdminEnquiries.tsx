@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { mockEnquiries, type Enquiry } from "@/data/mockData";
 import {
   getEnquiries,
@@ -7,6 +7,10 @@ import {
   subscribeVfStorage,
   VF_STORAGE_KEYS,
 } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminGet, adminPutJson, formatApiErrors } from "@/lib/api";
+import { enquiryFromApi, enquiryStatusPayload } from "@/lib/apiMappers";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,27 +19,46 @@ import { Search, Phone, Mail, CheckCircle, MessageSquare, Archive, Download, Fil
 
 const statusColors: Record<string, string> = {
   Open: "bg-amber-400/10 text-amber-400",
+  "In Progress": "bg-blue-400/10 text-blue-400",
   Responded: "bg-green-400/10 text-green-400",
   Closed: "bg-muted text-muted-foreground",
 };
 
 const AdminEnquiries = () => {
+  const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
   const [enquiries, setEnquiries] = useState<Enquiry[]>(mockEnquiries);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
+  const refreshFromApi = useCallback(async () => {
+    const { data } = await adminGet<unknown[]>("/admin/enquiries?limit=500&page=1");
+    setEnquiries((data as Record<string, unknown>[]).map((d) => enquiryFromApi(d)));
+  }, []);
+
   useEffect(() => {
+    if (useRemote) {
+      (async () => {
+        try {
+          await refreshFromApi();
+        } catch (e) {
+          toast.error(formatApiErrors(e));
+        } finally {
+          setHydrated(true);
+        }
+      })();
+      return;
+    }
     const { seedMock, enquiries: initial } = getEnquiriesAdminInitial();
     setEnquiries(seedMock ? mockEnquiries : initial);
     setHydrated(true);
     return subscribeVfStorage(VF_STORAGE_KEYS.enquiries, () => setEnquiries(getEnquiries()));
-  }, []);
+  }, [useRemote, refreshFromApi]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || useRemote) return;
     setEnquiriesToStorage(enquiries);
-  }, [enquiries, hydrated]);
+  }, [enquiries, hydrated, useRemote]);
 
   const filtered = enquiries.filter(e => {
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase()) || e.mobile.includes(search);
@@ -43,8 +66,19 @@ const AdminEnquiries = () => {
     return matchSearch && matchStatus;
   });
 
-  const updateStatus = (id: string, status: Enquiry["status"]) => {
-    setEnquiries(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+  const updateStatus = async (id: string, status: Enquiry["status"]) => {
+    if (useRemote) {
+      try {
+        const updated = await adminPutJson<Record<string, unknown>>(`/admin/enquiries/${id}`, enquiryStatusPayload(status));
+        const mapped = enquiryFromApi(updated);
+        setEnquiries((prev) => prev.map((e) => (e.id === id ? mapped : e)));
+        toast.success("Enquiry updated");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
   };
 
   const escapeCsv = (value: unknown) => {
@@ -148,6 +182,7 @@ const AdminEnquiries = () => {
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
             <SelectItem value="Open">Open</SelectItem>
+            <SelectItem value="In Progress">In Progress</SelectItem>
             <SelectItem value="Responded">Responded</SelectItem>
             <SelectItem value="Closed">Closed</SelectItem>
           </SelectContent>
@@ -161,7 +196,7 @@ const AdminEnquiries = () => {
               <div className="flex-1 space-y-1">
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="font-medium text-foreground">{enq.name}</p>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[enq.status]}`}>{enq.status}</span>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${statusColors[enq.status] ?? "bg-secondary text-muted-foreground"}`}>{enq.status}</span>
                   <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary text-muted-foreground">{enq.type}</span>
                 </div>
                 <p className="text-sm text-muted-foreground">{enq.message}</p>

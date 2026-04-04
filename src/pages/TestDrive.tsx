@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { CalendarDays, MapPin, Car } from "lucide-react";
 import { addLead, addTestDriveBooking } from "@/lib/vfLocalStorage";
 import type { Lead, TestDriveBooking } from "@/data/mockData";
+import { hasApi } from "@/lib/apiConfig";
+import { formatApiErrors } from "@/lib/api";
+import { submitPublicTestDrive } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
@@ -45,7 +48,7 @@ const TestDrivePage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       toast.error("Please enter your full name.");
@@ -76,6 +79,31 @@ const TestDrivePage = () => {
     }
 
     const modelLine = leadModelLabel(formData.model, formData.variant);
+
+    if (hasApi()) {
+      try {
+        await submitPublicTestDrive({
+          customerName: formData.name.trim(),
+          mobile: formData.mobile,
+          email: formData.email.trim(),
+          city: formData.city,
+          model: formData.model,
+          variant: formData.variant,
+          preferredDate: formData.date,
+          preferredTime: formData.time,
+          branch: "Patna Showroom",
+          remarks: formData.remarks?.trim() ? formData.remarks.trim() : `Preferred: ${formData.date} ${formData.time}`,
+          pageSource: "Test Drive Page",
+        });
+      } catch (err) {
+        toast.error(formatApiErrors(err));
+        return;
+      }
+      toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
+      setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, date: "", time: "", remarks: "" });
+      setMobileError("");
+      return;
+    }
 
     try {
       const leadId = `WL_${Date.now()}`;

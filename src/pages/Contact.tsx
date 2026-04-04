@@ -8,6 +8,9 @@ import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { addEnquiry, addLead } from "@/lib/vfLocalStorage";
 import type { Enquiry, Lead } from "@/data/mockData";
+import { hasApi } from "@/lib/apiConfig";
+import { formatApiErrors } from "@/lib/api";
+import { submitPublicEnquiry, submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
@@ -29,10 +32,41 @@ const ContactPage = () => {
     interest: "General Enquiry", message: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.mobile) {
       toast.error("Please fill name and mobile number.");
+      return;
+    }
+
+    if (hasApi()) {
+      try {
+        await submitPublicEnquiry({
+          name: formData.name,
+          mobile: formData.mobile.replace(/\D/g, "").slice(0, 10),
+          email: formData.email,
+          city: formData.city,
+          model: formData.model,
+          variant: formData.variant,
+          interest: formData.interest,
+          message: formData.message,
+        });
+        await submitPublicLead({
+          name: formData.name,
+          mobile: formData.mobile.replace(/\D/g, "").slice(0, 10),
+          city: formData.city,
+          modelDisplay: leadModelLabel(formData.model, formData.variant),
+          source: `Contact: ${formData.interest}`,
+          email: formData.email,
+          remarks: formData.message.trim() || `Interest: ${formData.interest}`,
+          pageSource: "Contact Page",
+        });
+      } catch (err) {
+        toast.error(formatApiErrors(err));
+        return;
+      }
+      toast.success("Thank you! Our team will contact you within 10 minutes.");
+      setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "General Enquiry", message: "" });
       return;
     }
 
@@ -180,7 +214,7 @@ const ContactPage = () => {
                   <option value="Get On-Road Price">Get On-Road Price</option>
                   <option value="Book Test Drive">Book Test Drive</option>
                   <option value="Finance Support">Finance Support</option>
-                  <option value="Exchange Car">Exchange My Car</option>
+                  <option value="Exchange Car">Exchange Car</option>
                   <option value="Corporate/Fleet">Corporate / Fleet</option>
                   <option value="Service">Service & Support</option>
                 </select>

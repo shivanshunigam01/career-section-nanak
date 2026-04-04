@@ -5,6 +5,8 @@ import {
   TestTube, MessageSquare, Tag, Bell, Home, Image
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
+import { hasApi } from "@/lib/apiConfig";
+import { clearAdminSession, getAdminToken, getAdminUser } from "@/lib/adminAuth";
 
 const navItems = [
   { label: "Dashboard",   icon: LayoutDashboard, path: "/admin/dashboard" },
@@ -25,14 +27,25 @@ const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const isLoggedIn = localStorage.getItem("admin_logged_in");
-    if (!isLoggedIn) navigate("/admin/login");
+    const api = hasApi();
+    const tokenOk = api ? Boolean(getAdminToken()) : localStorage.getItem("admin_logged_in") === "true";
+    if (!tokenOk) navigate("/admin/login");
   }, [navigate]);
 
   const handleLogout = () => {
-    localStorage.removeItem("admin_logged_in");
+    clearAdminSession();
     navigate("/admin/login");
   };
+
+  const adminUser = getAdminUser();
+  const avatarLabel = adminUser?.name
+    ? adminUser.name
+        .split(/\s+/)
+        .map((w) => w[0])
+        .join("")
+        .slice(0, 2)
+        .toUpperCase()
+    : "PA";
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -101,8 +114,8 @@ const AdminLayout = () => {
             <Bell className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary rounded-full text-[9px] text-primary-foreground flex items-center justify-center font-bold">3</span>
           </button>
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">
-            PA
+          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary" title={adminUser?.email ?? ""}>
+            {avatarLabel}
           </div>
         </header>
 

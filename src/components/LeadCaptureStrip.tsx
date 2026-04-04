@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
+import { hasApi } from "@/lib/apiConfig";
+import { formatApiErrors } from "@/lib/api";
+import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
@@ -46,7 +49,7 @@ const LeadCaptureStrip = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       toast.error("Please enter your name.");
@@ -58,6 +61,30 @@ const LeadCaptureStrip = () => {
     }
     if (!MOBILE_REGEX.test(formData.mobile)) {
       toast.error("Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+
+    if (hasApi()) {
+      const cityVal = formData.city === "Other" ? "Other" : formData.city;
+      try {
+        await submitPublicLead({
+          name: formData.name,
+          mobile: formData.mobile,
+          city: cityVal,
+          otherCity: formData.city === "Other" ? formData.otherCity : "",
+          modelDisplay: leadModelLabel(formData.model, formData.variant),
+          source: "Website",
+          interest: formData.interest,
+          remarks: `Interest: ${formData.interest}`,
+          pageSource: "Homepage Lead Strip",
+        });
+      } catch (err) {
+        toast.error(formatApiErrors(err));
+        return;
+      }
+      toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
+      setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
+      setMobileError("");
       return;
     }
 

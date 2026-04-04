@@ -6,6 +6,8 @@ export interface Lead {
   mobile: string;
   email: string;
   city: string;
+  /** When `city` is `Other`, backend expects this field. */
+  otherCity?: string;
   model: string;
   source: string;
   status: LeadStatus;
@@ -17,6 +19,9 @@ export interface Lead {
   exchangeNeeded: boolean;
 }
 
+/** Matches backend `testDriveStatuses` (legacy mock values normalized in admin when using API). */
+export type TestDriveStatus = "Pending" | "Scheduled" | "Completed" | "Cancelled" | "No Show";
+
 export interface TestDriveBooking {
   id: string;
   leadId: string;
@@ -26,7 +31,7 @@ export interface TestDriveBooking {
   preferredDate: string;
   preferredTime: string;
   branch: string;
-  status: "Pending" | "Confirmed" | "Completed" | "Cancelled" | "Rescheduled";
+  status: TestDriveStatus;
   assignedExecutive: string;
   feedback: string;
   createdAt: string;
@@ -39,7 +44,7 @@ export interface Enquiry {
   email: string;
   type: string;
   message: string;
-  status: "Open" | "Responded" | "Closed";
+  status: "Open" | "In Progress" | "Responded" | "Closed";
   createdAt: string;
 }
 
@@ -57,7 +62,7 @@ export const mockLeads: Lead[] = [
 ];
 
 export const mockTestDrives: TestDriveBooking[] = [
-  { id: "TD001", leadId: "L003", customerName: "Vikram Thakur", mobile: "9876543212", model: "VF 7", preferredDate: "2026-03-19", preferredTime: "10:00 AM", branch: "Patna Showroom", status: "Confirmed", assignedExecutive: "Amit", feedback: "", createdAt: "2026-03-13" },
+  { id: "TD001", leadId: "L003", customerName: "Vikram Thakur", mobile: "9876543212", model: "VF 7", preferredDate: "2026-03-19", preferredTime: "10:00 AM", branch: "Patna Showroom", status: "Scheduled", assignedExecutive: "Amit", feedback: "", createdAt: "2026-03-13" },
   { id: "TD002", leadId: "L001", customerName: "Rahul Kumar", mobile: "9876543210", model: "VF 7", preferredDate: "2026-03-20", preferredTime: "2:00 PM", branch: "Patna Showroom", status: "Pending", assignedExecutive: "", feedback: "", createdAt: "2026-03-15" },
   { id: "TD003", leadId: "L005", customerName: "Sanjay Gupta", mobile: "9876543214", model: "VF 7", preferredDate: "2026-03-12", preferredTime: "11:00 AM", branch: "Patna Showroom", status: "Completed", assignedExecutive: "Suresh", feedback: "Loved the car, wants to book", createdAt: "2026-03-08" },
   { id: "TD004", leadId: "L002", customerName: "Priya Singh", mobile: "9876543211", model: "VF 6", preferredDate: "2026-03-21", preferredTime: "4:00 PM", branch: "Patna Showroom", status: "Pending", assignedExecutive: "Suresh", feedback: "", createdAt: "2026-03-14" },

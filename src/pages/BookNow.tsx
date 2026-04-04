@@ -9,6 +9,9 @@ import { toast } from "sonner";
 import { Car, CreditCard, Headphones, CalendarDays } from "lucide-react";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
+import { hasApi } from "@/lib/apiConfig";
+import { formatApiErrors } from "@/lib/api";
+import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import vf7Real from "@/assets/vf7-real.png";
@@ -55,7 +58,7 @@ const BookNowPage = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name.trim()) {
       toast.error("Please enter your full name.");
@@ -76,6 +79,41 @@ const BookNowPage = () => {
     ]
       .filter(Boolean)
       .join(" ");
+
+    if (hasApi()) {
+      try {
+        await submitPublicLead({
+          name: formData.name.trim(),
+          mobile: formData.mobile,
+          city: formData.city,
+          modelDisplay: leadModelLabel(formData.model, formData.variant),
+          source: "Book Now",
+          email: formData.email.trim(),
+          remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Book Now enquiry",
+          interest: "Book Now",
+          financeNeeded: formData.financeNeeded,
+          exchangeNeeded: formData.exchangeNeeded,
+          pageSource: "Book Now Page",
+        });
+      } catch (err) {
+        toast.error(formatApiErrors(err));
+        return;
+      }
+      toast.success("Request received! Our team will call you shortly to complete your booking.");
+      setFormData({
+        name: "",
+        mobile: "",
+        email: "",
+        city: "Patna",
+        model: "VF 7",
+        variant: DEFAULT_VF7_TRIM,
+        remarks: "",
+        financeNeeded: false,
+        exchangeNeeded: false,
+      });
+      setMobileError("");
+      return;
+    }
 
     try {
       const lead: Lead = {

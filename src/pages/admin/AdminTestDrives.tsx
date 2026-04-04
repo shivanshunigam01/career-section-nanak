@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { mockTestDrives, type TestDriveBooking } from "@/data/mockData";
 import {
   getTestDriveBookings,
@@ -7,6 +7,9 @@ import {
   subscribeVfStorage,
   VF_STORAGE_KEYS,
 } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGet, adminPutJson, formatApiErrors, publicPost } from "@/lib/api";
+import { normalizeTestDriveModel, testDriveFromApi, testDriveToApiPayload } from "@/lib/apiMappers";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,10 +24,10 @@ import { toast } from "sonner";
 
 const statusColors: Record<string, string> = {
   Pending: "bg-amber-400/10 text-amber-400",
-  Confirmed: "bg-green-400/10 text-green-400",
+  Scheduled: "bg-green-400/10 text-green-400",
   Completed: "bg-primary/10 text-primary",
   Cancelled: "bg-destructive/10 text-destructive",
-  Rescheduled: "bg-purple-400/10 text-purple-400",
+  "No Show": "bg-muted text-muted-foreground",
 };
 
 const getLocalISODate = () => {
@@ -37,6 +40,7 @@ const getLocalISODate = () => {
 };
 
 const AdminTestDrives = () => {
+  const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
   const [bookings, setBookings] = useState<TestDriveBooking[]>(mockTestDrives);
   const [search, setSearch] = useState("");
@@ -45,19 +49,49 @@ const AdminTestDrives = () => {
   const [showForm, setShowForm] = useState(false);
   const todayStr = getLocalISODate();
 
-  const emptyBooking: TestDriveBooking = { id: "", leadId: "", customerName: "", mobile: "", model: "VF 7", preferredDate: "", preferredTime: "", branch: "Patna Showroom", status: "Pending", assignedExecutive: "", feedback: "", createdAt: new Date().toISOString().split("T")[0] };
+  const emptyBooking: TestDriveBooking = {
+    id: "",
+    leadId: "",
+    customerName: "",
+    mobile: "",
+    model: "VF 7",
+    preferredDate: "",
+    preferredTime: "",
+    branch: "Patna Showroom",
+    status: "Pending",
+    assignedExecutive: "",
+    feedback: "",
+    createdAt: new Date().toISOString().split("T")[0],
+  };
+
+  const refreshFromApi = useCallback(async () => {
+    const { data } = await adminGet<unknown[]>("/admin/test-drives?limit=500&page=1");
+    setBookings((data as Record<string, unknown>[]).map((d) => testDriveFromApi(d)));
+  }, []);
 
   useEffect(() => {
+    if (useRemote) {
+      (async () => {
+        try {
+          await refreshFromApi();
+        } catch (e) {
+          toast.error(formatApiErrors(e));
+        } finally {
+          setHydrated(true);
+        }
+      })();
+      return;
+    }
     const { seedMock, bookings: initial } = getTestDrivesAdminInitial();
     setBookings(seedMock ? mockTestDrives : initial);
     setHydrated(true);
     return subscribeVfStorage(VF_STORAGE_KEYS.testDrives, () => setBookings(getTestDriveBookings()));
-  }, []);
+  }, [useRemote, refreshFromApi]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || useRemote) return;
     setTestDrivesToStorage(bookings);
-  }, [bookings, hydrated]);
+  }, [bookings, hydrated, useRemote]);
 
   const filtered = bookings.filter(b => {
     const matchSearch = b.customerName.toLowerCase().includes(search.toLowerCase()) || b.mobile.includes(search);
@@ -140,20 +174,72 @@ const AdminTestDrives = () => {
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  const handleSave = (booking: TestDriveBooking) => {
+  const handleSave = async (booking: TestDriveBooking) => {
+    if (useRemote) {
+      try {
+        if (booking.id) {
+          const payload = testDriveToApiPayload(booking);
+          const updated = await adminPutJson<Record<string, unknown>>(`/admin/test-drives/${booking.id}`, payload);
+          const mapped = testDriveFromApi(updated);
+          setBookings((prev) => prev.map((b) => (b.id === booking.id ? mapped : b)));
+        } else {
+          await publicPost("/test-drives", {
+            customerName: booking.customerName.trim(),
+            mobile: booking.mobile.trim(),
+            model: normalizeTestDriveModel(booking.model),
+            preferredDate: booking.preferredDate,
+            preferredTime: booking.preferredTime?.trim() || undefined,
+            branch: booking.branch?.trim() || undefined,
+            remarks: booking.feedback?.trim() || undefined,
+          });
+          await refreshFromApi();
+        }
+        toast.success(booking.id ? "Booking updated" : "Booking created");
+        setShowForm(false);
+        setEditBooking(null);
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
     if (booking.id) {
-      setBookings(prev => prev.map(b => b.id === booking.id ? booking : b));
+      setBookings((prev) => prev.map((b) => (b.id === booking.id ? booking : b)));
     } else {
-      setBookings(prev => [...prev, { ...booking, id: `TD${String(prev.length + 1).padStart(3, "0")}` }]);
+      setBookings((prev) => [...prev, { ...booking, id: `TD${String(prev.length + 1).padStart(3, "0")}` }]);
     }
     setShowForm(false);
     setEditBooking(null);
   };
 
-  const handleDelete = (id: string) => setBookings(prev => prev.filter(b => b.id !== id));
+  const handleDelete = async (id: string) => {
+    if (useRemote) {
+      try {
+        await adminDeleteJson(`/admin/test-drives/${id}`);
+        setBookings((prev) => prev.filter((b) => b.id !== id));
+        toast.success("Booking removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setBookings((prev) => prev.filter((b) => b.id !== id));
+  };
 
-  const quickStatus = (id: string, status: TestDriveBooking["status"]) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b));
+  const quickStatus = async (id: string, status: TestDriveBooking["status"]) => {
+    if (useRemote) {
+      const b = bookings.find((x) => x.id === id);
+      if (!b) return;
+      try {
+        const payload = testDriveToApiPayload({ ...b, status });
+        const updated = await adminPutJson<Record<string, unknown>>(`/admin/test-drives/${id}`, payload);
+        const mapped = testDriveFromApi(updated);
+        setBookings((prev) => prev.map((x) => (x.id === id ? mapped : x)));
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setBookings((prev) => prev.map((x) => (x.id === id ? { ...x, status } : x)));
   };
 
   return (
@@ -188,7 +274,7 @@ const AdminTestDrives = () => {
           <SelectTrigger className="w-full sm:w-48 bg-secondary/50"><SelectValue placeholder="Status" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
-            {["Pending", "Confirmed", "Completed", "Cancelled", "Rescheduled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+            {["Pending", "Scheduled", "Completed", "Cancelled", "No Show"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
       </div>
@@ -202,7 +288,7 @@ const AdminTestDrives = () => {
                 <p className="font-medium text-foreground">{td.customerName}</p>
                 <p className="text-xs text-muted-foreground">{td.mobile}</p>
               </div>
-              <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${statusColors[td.status]}`}>{td.status}</span>
+              <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${statusColors[td.status] ?? "bg-secondary text-muted-foreground"}`}>{td.status}</span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
               <div><span className="text-muted-foreground">Model:</span> <span className="text-foreground">{td.model}</span></div>
@@ -213,7 +299,7 @@ const AdminTestDrives = () => {
             </div>
             {td.feedback && <p className="text-xs text-muted-foreground italic border-t border-border/30 pt-2">"{td.feedback}"</p>}
             <div className="flex items-center gap-1 pt-1 border-t border-border/30">
-              <button onClick={() => quickStatus(td.id, "Confirmed")} title="Confirm" className="p-1.5 rounded hover:bg-green-400/10 text-muted-foreground hover:text-green-400"><CheckCircle className="w-3.5 h-3.5" /></button>
+              <button onClick={() => quickStatus(td.id, "Scheduled")} title="Mark scheduled" className="p-1.5 rounded hover:bg-green-400/10 text-muted-foreground hover:text-green-400"><CheckCircle className="w-3.5 h-3.5" /></button>
               <button onClick={() => quickStatus(td.id, "Completed")} title="Complete" className="p-1.5 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary"><Clock className="w-3.5 h-3.5" /></button>
               <button onClick={() => quickStatus(td.id, "Cancelled")} title="Cancel" className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><XCircle className="w-3.5 h-3.5" /></button>
               <div className="flex-1" />
@@ -271,7 +357,7 @@ const TestDriveForm = ({
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Status</Label>
-          <Select value={form.status} onValueChange={v => update("status", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent>{["Pending", "Confirmed", "Completed", "Cancelled", "Rescheduled"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+            <Select value={form.status} onValueChange={v => update("status", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent>{["Pending", "Scheduled", "Completed", "Cancelled", "No Show"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Date</Label>
@@ -291,7 +377,7 @@ const TestDriveForm = ({
       <div className="flex gap-3 pt-2">
         <Button
           onClick={() => {
-            const isUpcoming = ["Pending", "Confirmed", "Rescheduled"].includes(form.status);
+            const isUpcoming = ["Pending", "Scheduled"].includes(form.status);
             if (isUpcoming && form.preferredDate) {
               const selected = new Date(`${form.preferredDate}T00:00:00`);
               const today = new Date(`${todayStr}T00:00:00`);
