@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { CalendarDays, MapPin, Car } from "lucide-react";
 import { addLead, addTestDriveBooking } from "@/lib/vfLocalStorage";
 import type { Lead, TestDriveBooking } from "@/data/mockData";
-import { leadModelLabel } from "@/data/vinfastModels";
+import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
