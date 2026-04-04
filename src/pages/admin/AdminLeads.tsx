@@ -307,14 +307,14 @@ const AdminLeads = () => {
           <DialogHeader>
             <DialogTitle className="font-display">{editLead?.id ? "Edit Lead" : "Add Lead"}</DialogTitle>
           </DialogHeader>
-          {editLead && <LeadForm lead={editLead} onSave={handleSave} onCancel={() => { setShowForm(false); setEditLead(null); }} />}
+          {editLead && <LeadForm lead={editLead} onSave={(l) => void handleSave(l)} onCancel={() => { setShowForm(false); setEditLead(null); }} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 };
 
-const LeadForm = ({ lead, onSave, onCancel }: { lead: Lead; onSave: (l: Lead) => void; onCancel: () => void }) => {
+const LeadForm = ({ lead, onSave, onCancel }: { lead: Lead; onSave: (l: Lead) => void | Promise<void>; onCancel: () => void }) => {
   const [form, setForm] = useState(lead);
   const update = (key: keyof Lead, value: string | boolean) => setForm(prev => ({ ...prev, [key]: value }));
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit2, Trash2, Plus, MessageCircle, Home } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGetData, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import { isMongoId } from "@/lib/apiMappers";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "vf_admin_homepage";
 
@@ -69,42 +73,175 @@ const emptySlide: HeroSlide = {
   ctaSecondary: "Learn More", ctaSecondaryLink: "/", bgImage: "", active: true, order: 99,
 };
 
+function slideFromApi(doc: Record<string, unknown>): HeroSlide {
+  return {
+    id: String(doc._id ?? ""),
+    title: String(doc.title ?? ""),
+    subtitle: String(doc.subtitle ?? ""),
+    badge: String(doc.badge ?? ""),
+    ctaPrimary: String(doc.ctaPrimary ?? ""),
+    ctaPrimaryLink: String(doc.ctaPrimaryLink ?? ""),
+    ctaSecondary: String(doc.ctaSecondary ?? ""),
+    ctaSecondaryLink: String(doc.ctaSecondaryLink ?? ""),
+    bgImage: String(doc.bgImage ?? ""),
+    active: doc.active !== false,
+    order: Number(doc.order ?? 0),
+  };
+}
+
+function slideToPayload(s: HeroSlide): Record<string, unknown> {
+  return {
+    title: s.title,
+    subtitle: s.subtitle,
+    badge: s.badge,
+    ctaPrimary: s.ctaPrimary,
+    ctaPrimaryLink: s.ctaPrimaryLink,
+    ctaSecondary: s.ctaSecondary,
+    ctaSecondaryLink: s.ctaSecondaryLink,
+    bgImage: s.bgImage,
+    active: s.active,
+    order: s.order,
+  };
+}
+
+function siteConfigFromApi(doc: Record<string, unknown>): SiteConfig {
+  return {
+    whatsappNumber: String(doc.whatsappNumber ?? initialConfig.whatsappNumber),
+    phoneNumber: String(doc.phoneNumber ?? initialConfig.phoneNumber),
+    heroTagline: String(doc.heroTagline ?? initialConfig.heroTagline),
+    leadStripTitle: String(doc.leadStripTitle ?? initialConfig.leadStripTitle),
+    leadStripSubtitle: String(doc.leadStripSubtitle ?? initialConfig.leadStripSubtitle),
+    vf7Price: String(doc.vf7Price ?? initialConfig.vf7Price),
+    vf6Price: String(doc.vf6Price ?? initialConfig.vf6Price),
+    vf7Range: String(doc.vf7Range ?? initialConfig.vf7Range),
+    vf6Range: String(doc.vf6Range ?? initialConfig.vf6Range),
+  };
+}
+
 const AdminHomepage = () => {
+  const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
   const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
   const [config, setConfig] = useState<SiteConfig>(initialConfig);
   const [editSlide, setEditSlide] = useState<HeroSlide | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [savingSlide, setSavingSlide] = useState(false);
+
+  const refreshSlides = useCallback(async () => {
+    const raw = await adminGetData<unknown[]>("/admin/homepage/slides?limit=100&page=1");
+    setSlides((raw as Record<string, unknown>[]).map(slideFromApi));
+  }, []);
+
+  const refreshSiteConfig = useCallback(async () => {
+    const doc = (await adminGetData<Record<string, unknown>>("/admin/homepage/site-config")) ?? {};
+    setConfig(siteConfigFromApi(doc));
+  }, []);
 
   useEffect(() => {
+    if (useRemote) {
+      (async () => {
+        try {
+          await Promise.all([refreshSlides(), refreshSiteConfig()]);
+        } catch (e) {
+          toast.error(formatApiErrors(e));
+        } finally {
+          setHydrated(true);
+        }
+      })();
+      return;
+    }
     const stored = getStoredState<{ slides: HeroSlide[]; config: SiteConfig } | null>(STORAGE_KEY, null);
     if (stored) {
       setSlides(stored.slides ?? initialSlides);
       setConfig(stored.config ?? initialConfig);
     }
     setHydrated(true);
-  }, []);
+  }, [useRemote, refreshSlides, refreshSiteConfig]);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (!hydrated || useRemote) return;
     setStoredState(STORAGE_KEY, { slides, config });
-  }, [slides, config, hydrated]);
+  }, [slides, config, hydrated, useRemote]);
 
-  const handleSaveSlide = (slide: HeroSlide) => {
+  const handleSaveSlide = async (slide: HeroSlide) => {
+    if (useRemote) {
+      if (!slide.bgImage?.trim()) {
+        toast.error("Background image is required for hero slides on the server.");
+        return;
+      }
+      setSavingSlide(true);
+      try {
+        const payload = slideToPayload(slide);
+        if (slide.id && isMongoId(slide.id)) {
+          const updated = await adminPutJson<Record<string, unknown>>(`/admin/homepage/slides/${slide.id}`, payload);
+          const mapped = slideFromApi(updated);
+          setSlides((prev) => prev.map((s) => (s.id === slide.id ? mapped : s)));
+        } else {
+          const created = await adminPostJson<Record<string, unknown>>("/admin/homepage/slides", payload);
+          const mapped = slideFromApi(created);
+          setSlides((prev) => [...prev, mapped]);
+        }
+        toast.success("Slide saved");
+        setShowForm(false);
+        setEditSlide(null);
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      } finally {
+        setSavingSlide(false);
+      }
+      return;
+    }
     if (slide.id) {
-      setSlides(prev => prev.map(s => s.id === slide.id ? slide : s));
+      setSlides((prev) => prev.map((s) => (s.id === slide.id ? slide : s)));
     } else {
-      setSlides(prev => [...prev, { ...slide, id: `S${prev.length + 1}`, order: prev.length + 1 }]);
+      setSlides((prev) => [...prev, { ...slide, id: `S${prev.length + 1}`, order: prev.length + 1 }]);
     }
     setShowForm(false);
     setEditSlide(null);
   };
 
-  const handleDeleteSlide = (id: string) => setSlides(prev => prev.filter(s => s.id !== id));
-  const toggleSlide = (id: string) => setSlides(prev => prev.map(s => s.id === id ? { ...s, active: !s.active } : s));
+  const handleDeleteSlide = async (id: string) => {
+    if (useRemote) {
+      try {
+        await adminDeleteJson(`/admin/homepage/slides/${id}`);
+        setSlides((prev) => prev.filter((s) => s.id !== id));
+        toast.success("Slide removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setSlides((prev) => prev.filter((s) => s.id !== id));
+  };
 
-  const handleSaveConfig = () => {
+  const toggleSlide = async (id: string) => {
+    const target = slides.find((s) => s.id === id);
+    if (!target) return;
+    const next = { ...target, active: !target.active };
+    if (useRemote && isMongoId(id)) {
+      try {
+        const updated = await adminPutJson<Record<string, unknown>>(`/admin/homepage/slides/${id}`, slideToPayload(next));
+        const mapped = slideFromApi(updated);
+        setSlides((prev) => prev.map((s) => (s.id === id ? mapped : s)));
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setSlides((prev) => prev.map((s) => (s.id === id ? next : s)));
+  };
+
+  const handleSaveConfig = async () => {
+    if (useRemote) {
+      try {
+        await adminPutJson("/admin/homepage/site-config", config);
+        toast.success("Site configuration saved");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+        return;
+      }
+    }
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -120,7 +257,10 @@ const AdminHomepage = () => {
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
             <Home className="w-6 h-6 text-primary" /> Homepage Manager
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Control hero slides, pricing display, and site-wide config</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Control hero slides, pricing display, and site-wide config
+            {useRemote ? " · synced with API" : ""}
+          </p>
         </div>
       </div>
 
@@ -212,7 +352,7 @@ const AdminHomepage = () => {
               </div>
             </div>
           </Card>
-          <Button onClick={handleSaveConfig} className="bg-primary text-primary-foreground">
+          <Button onClick={() => void handleSaveConfig()} className="bg-primary text-primary-foreground">
             {saved ? "✓ Saved!" : "Save Configuration"}
           </Button>
         </TabsContent>
@@ -235,7 +375,7 @@ const AdminHomepage = () => {
                 <Input value={config.phoneNumber} onChange={e => updateConfig("phoneNumber", e.target.value)} className="bg-secondary/50" placeholder="+91 9231445060" />
               </div>
             </div>
-            <Button onClick={handleSaveConfig} className="bg-primary text-primary-foreground">
+            <Button onClick={() => void handleSaveConfig()} className="bg-primary text-primary-foreground">
               {saved ? "✓ Saved!" : "Save"}
             </Button>
           </Card>
@@ -249,7 +389,12 @@ const AdminHomepage = () => {
             <DialogTitle className="font-display">{editSlide?.id ? "Edit Slide" : "Add Slide"}</DialogTitle>
           </DialogHeader>
           {editSlide && (
-            <SlideForm slide={editSlide} onSave={handleSaveSlide} onCancel={() => { setShowForm(false); setEditSlide(null); }} />
+            <SlideForm
+              slide={editSlide}
+              onSave={(s) => void handleSaveSlide(s)}
+              saving={savingSlide}
+              onCancel={() => { setShowForm(false); setEditSlide(null); }}
+            />
           )}
         </DialogContent>
       </Dialog>
@@ -257,7 +402,17 @@ const AdminHomepage = () => {
   );
 };
 
-const SlideForm = ({ slide, onSave, onCancel }: { slide: HeroSlide; onSave: (s: HeroSlide) => void; onCancel: () => void }) => {
+const SlideForm = ({
+  slide,
+  onSave,
+  onCancel,
+  saving,
+}: {
+  slide: HeroSlide;
+  onSave: (s: HeroSlide) => void | Promise<void>;
+  onCancel: () => void;
+  saving?: boolean;
+}) => {
   const [form, setForm] = useState(slide);
   const update = (key: keyof HeroSlide, value: string | boolean | number) =>
     setForm(prev => ({ ...prev, [key]: value }));
@@ -307,7 +462,9 @@ const SlideForm = ({ slide, onSave, onCancel }: { slide: HeroSlide; onSave: (s: 
         </div>
       </div>
       <div className="flex gap-3 pt-2">
-        <Button onClick={() => onSave(form)} className="bg-primary text-primary-foreground flex-1">Save Slide</Button>
+        <Button disabled={saving} onClick={() => onSave(form)} className="bg-primary text-primary-foreground flex-1">
+          {saving ? "Saving…" : "Save Slide"}
+        </Button>
         <Button onClick={onCancel} variant="outline" className="flex-1">Cancel</Button>
       </div>
     </div>

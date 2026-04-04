@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Trash2, Copy, Check, Search, ImageIcon, Upload } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGetData, adminPostJson, formatApiErrors } from "@/lib/api";
+import { toast } from "sonner";
 
 interface MediaItem {
   id: string;
@@ -20,7 +23,19 @@ const initialMedia: MediaItem[] = [
 
 const TAGS = ["All", "VF 7", "VF 6", "Banner", "Interior", "Exterior", "Colour", "Other"];
 
+function mediaFromApi(doc: Record<string, unknown>): MediaItem {
+  const created = doc.createdAt ? new Date(String(doc.createdAt)).toISOString().slice(0, 10) : "";
+  return {
+    id: String(doc._id ?? ""),
+    url: String(doc.url ?? ""),
+    name: String(doc.name ?? ""),
+    tag: String(doc.tag ?? "Other"),
+    uploadedAt: created,
+  };
+}
+
 const AdminMedia = () => {
+  const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
   const [media, setMedia] = useState<MediaItem[]>(initialMedia);
   const [search, setSearch] = useState("");
@@ -30,16 +45,33 @@ const AdminMedia = () => {
   const [newTag, setNewTag] = useState("Other");
   const STORAGE_KEY = "vf_admin_media";
 
-  useEffect(() => {
-    const stored = getStoredState<MediaItem[] | null>(STORAGE_KEY, null);
-    if (stored && stored.length > 0) setMedia(stored);
-    setHydrated(true);
+  const refreshFromApi = useCallback(async () => {
+    const raw = await adminGetData<unknown[]>("/admin/media?limit=200&page=1");
+    setMedia((raw as Record<string, unknown>[]).map(mediaFromApi));
   }, []);
 
   useEffect(() => {
-    if (!hydrated) return;
+    if (useRemote) {
+      (async () => {
+        try {
+          await refreshFromApi();
+        } catch (e) {
+          toast.error(formatApiErrors(e));
+        } finally {
+          setHydrated(true);
+        }
+      })();
+      return;
+    }
+    const stored = getStoredState<MediaItem[] | null>(STORAGE_KEY, null);
+    if (stored && stored.length > 0) setMedia(stored);
+    setHydrated(true);
+  }, [useRemote, refreshFromApi]);
+
+  useEffect(() => {
+    if (!hydrated || useRemote) return;
     setStoredState(STORAGE_KEY, media);
-  }, [media, hydrated]);
+  }, [media, hydrated, useRemote]);
 
   const filtered = media.filter(m => {
     const matchSearch = m.name.toLowerCase().includes(search.toLowerCase());
@@ -47,20 +79,49 @@ const AdminMedia = () => {
     return matchSearch && matchTag && m.url;
   });
 
-  const handleUpload = (url: string) => {
+  const handleUpload = async (url: string) => {
     if (!url) return;
+    const name = newName || `Image ${media.length + 1}`;
+    if (useRemote) {
+      try {
+        const created = await adminPostJson<Record<string, unknown>>("/admin/media", {
+          name,
+          url,
+          tag: newTag,
+          resourceType: "image",
+        });
+        setMedia((prev) => [mediaFromApi(created), ...prev]);
+        toast.success("Uploaded to library");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      setNewName("");
+      return;
+    }
     const item: MediaItem = {
       id: `M${Date.now()}`,
       url,
-      name: newName || `Image ${media.length + 1}`,
+      name,
       tag: newTag,
       uploadedAt: new Date().toISOString().split("T")[0],
     };
-    setMedia(prev => [item, ...prev]);
+    setMedia((prev) => [item, ...prev]);
     setNewName("");
   };
 
-  const handleDelete = (id: string) => setMedia(prev => prev.filter(m => m.id !== id));
+  const handleDelete = async (id: string) => {
+    if (useRemote) {
+      try {
+        await adminDeleteJson(`/admin/media/${id}`);
+        setMedia((prev) => prev.filter((m) => m.id !== id));
+        toast.success("Removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setMedia((prev) => prev.filter((m) => m.id !== id));
+  };
 
   const copyUrl = (id: string, url: string) => {
     navigator.clipboard.writeText(url);
@@ -74,7 +135,9 @@ const AdminMedia = () => {
         <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
           <ImageIcon className="w-6 h-6 text-primary" /> Media Library
         </h1>
-        <p className="text-muted-foreground text-sm mt-1">Upload and manage all images via Cloudinary</p>
+        <p className="text-muted-foreground text-sm mt-1">
+          Upload and manage images via Cloudinary{useRemote ? " · records synced to API" : ""}
+        </p>
       </div>
 
       {/* Upload New */}

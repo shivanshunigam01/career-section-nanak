@@ -314,7 +314,7 @@ const AdminTestDrives = () => {
       <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditBooking(null); }}>
         <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle className="font-display">{editBooking?.id ? "Edit Booking" : "New Booking"}</DialogTitle></DialogHeader>
-          {editBooking && <TestDriveForm booking={editBooking} onSave={handleSave} onCancel={() => { setShowForm(false); setEditBooking(null); }} todayStr={todayStr} />}
+          {editBooking && <TestDriveForm booking={editBooking} onSave={(b) => void handleSave(b)} onCancel={() => { setShowForm(false); setEditBooking(null); }} todayStr={todayStr} />}
         </DialogContent>
       </Dialog>
     </div>
@@ -328,7 +328,7 @@ const TestDriveForm = ({
   todayStr,
 }: {
   booking: TestDriveBooking;
-  onSave: (b: TestDriveBooking) => void;
+  onSave: (b: TestDriveBooking) => void | Promise<void>;
   onCancel: () => void;
   todayStr: string;
 }) => {

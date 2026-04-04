@@ -17,6 +17,8 @@ import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
 const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
 
+const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
 const getLocalISODate = () => {
   // Returns YYYY-MM-DD in the user's local timezone.
   const d = new Date();
@@ -38,12 +40,17 @@ const ContactPage = () => {
       toast.error("Please fill name and mobile number.");
       return;
     }
+    const mobileDigits = formData.mobile.replace(/\D/g, "").slice(0, 10);
+    if (hasApi() && !MOBILE_REGEX.test(mobileDigits)) {
+      toast.error("Please enter a valid 10-digit Indian mobile number.");
+      return;
+    }
 
     if (hasApi()) {
       try {
         await submitPublicEnquiry({
           name: formData.name,
-          mobile: formData.mobile.replace(/\D/g, "").slice(0, 10),
+          mobile: mobileDigits,
           email: formData.email,
           city: formData.city,
           model: formData.model,
@@ -53,7 +60,7 @@ const ContactPage = () => {
         });
         await submitPublicLead({
           name: formData.name,
-          mobile: formData.mobile.replace(/\D/g, "").slice(0, 10),
+          mobile: mobileDigits,
           city: formData.city,
           modelDisplay: leadModelLabel(formData.model, formData.variant),
           source: `Contact: ${formData.interest}`,
