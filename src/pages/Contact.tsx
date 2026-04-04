@@ -6,8 +6,10 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
-import { addEnquiry } from "@/lib/vfLocalStorage";
-import type { Enquiry } from "@/data/mockData";
+import { addEnquiry, addLead } from "@/lib/vfLocalStorage";
+import type { Enquiry, Lead } from "@/data/mockData";
+import { leadModelLabel } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
 const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
@@ -23,7 +25,7 @@ const getLocalISODate = () => {
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
-    name: "", mobile: "", email: "", city: "Patna", model: "VF 7",
+    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "",
     interest: "General Enquiry", message: "",
   });
 
@@ -36,8 +38,9 @@ const ContactPage = () => {
 
     try {
       const todayStr = getLocalISODate();
+      const ts = Date.now();
       const enquiry: Enquiry = {
-        id: `WE_${Date.now()}`,
+        id: `WE_${ts}`,
         name: formData.name.trim(),
         mobile: formData.mobile.trim(),
         email: formData.email.trim(),
@@ -47,12 +50,30 @@ const ContactPage = () => {
         createdAt: todayStr,
       };
       addEnquiry(enquiry);
+      const lead: Lead = {
+        id: `WL_${ts}`,
+        name: formData.name.trim(),
+        mobile: formData.mobile.trim(),
+        email: formData.email.trim(),
+        city: formData.city,
+        model: leadModelLabel(formData.model, formData.variant),
+        source: `Contact: ${formData.interest}`,
+        status: "New Lead",
+        assignedTo: "",
+        createdAt: todayStr,
+        nextFollowUp: "",
+        remarks: formData.message.trim() || `Interest: ${formData.interest}`,
+        financeNeeded: false,
+        exchangeNeeded: false,
+      };
+      addLead(lead);
     } catch {
-      // localStorage failures shouldn't block form submission UX
+      toast.error("Could not save your enquiry (storage blocked or full). Please call or WhatsApp us.");
+      return;
     }
 
     toast.success("Thank you! Our team will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", interest: "General Enquiry", message: "" });
+    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "", interest: "General Enquiry", message: "" });
   };
 
   const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });
@@ -140,12 +161,14 @@ const ContactPage = () => {
                 <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
                 <input type="tel" placeholder="Mobile Number *" value={formData.mobile} onChange={(e) => update("mobile", e.target.value)} className={inputClass} />
                 <input type="email" placeholder="Email (Optional)" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} />
-                <div className="grid grid-cols-2 gap-4">
-                  <select value={formData.model} onChange={(e) => update("model", e.target.value)} className={inputClass}>
-                    <option value="VF 7">VF 7</option>
-                    <option value="VF 6">VF 6</option>
-                    <option value="Both">Not Sure</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ModelTrimSelect
+                    model={formData.model}
+                    variant={formData.variant}
+                    onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
+                    className={inputClass}
+                    includeNotSureBoth
+                  />
                   <select value={formData.city} onChange={(e) => update("city", e.target.value)} className={inputClass}>
                     <option value="Patna">Patna</option>
                     <option value="Muzaffarpur">Muzaffarpur</option>

@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { CalendarDays, MapPin, Car } from "lucide-react";
 import { addLead, addTestDriveBooking } from "@/lib/vfLocalStorage";
 import type { Lead, TestDriveBooking } from "@/data/mockData";
+import { leadModelLabel } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -23,7 +25,7 @@ const getLocalISODate = () => {
 
 const TestDrivePage = () => {
   const [formData, setFormData] = useState({
-    name: "", mobile: "", email: "", city: "Patna", model: "VF 7",
+    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "",
     date: "", time: "", remarks: "",
   });
   const [mobileError, setMobileError] = useState("");
@@ -73,6 +75,8 @@ const TestDrivePage = () => {
       return;
     }
 
+    const modelLine = leadModelLabel(formData.model, formData.variant);
+
     try {
       const leadId = `WL_${Date.now()}`;
       const lead: Lead = {
@@ -81,8 +85,8 @@ const TestDrivePage = () => {
         mobile: formData.mobile,
         email: formData.email.trim(),
         city: formData.city,
-        model: formData.model,
-        source: "Website",
+        model: modelLine,
+        source: "Test Drive",
         status: "Test Drive Scheduled",
         assignedTo: "",
         createdAt: todayStr,
@@ -92,14 +96,12 @@ const TestDrivePage = () => {
         exchangeNeeded: false,
       };
 
-      addLead(lead);
-
       const booking: TestDriveBooking = {
         id: `WTD_${Date.now()}`,
         leadId,
         customerName: formData.name.trim(),
         mobile: formData.mobile,
-        model: formData.model,
+        model: modelLine,
         preferredDate: formData.date,
         preferredTime: formData.time,
         branch: "Patna Showroom",
@@ -109,13 +111,15 @@ const TestDrivePage = () => {
         createdAt: todayStr,
       };
 
+      addLead(lead);
       addTestDriveBooking(booking);
     } catch {
-      // If localStorage is blocked, we still allow the form submission UX.
+      toast.error("Could not save your booking (storage blocked or full). Please call or WhatsApp us.");
+      return;
     }
 
     toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
-    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", date: "", time: "", remarks: "" });
+    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "", date: "", time: "", remarks: "" });
     setMobileError("");
   };
 
@@ -187,11 +191,13 @@ const TestDrivePage = () => {
                   )}
                 </div>
                 <input type="email" placeholder="Email (Optional)" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} />
-                <div className="grid grid-cols-2 gap-4">
-                  <select value={formData.model} onChange={(e) => update("model", e.target.value)} className={inputClass}>
-                    <option value="VF 7">VF 7</option>
-                    <option value="VF 6">VF 6</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ModelTrimSelect
+                    model={formData.model}
+                    variant={formData.variant}
+                    onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
+                    className={inputClass}
+                  />
                   <select value={formData.city} onChange={(e) => update("city", e.target.value)} className={inputClass}>
                     <option value="Patna">Patna</option>
                     <option value="Muzaffarpur">Muzaffarpur</option>

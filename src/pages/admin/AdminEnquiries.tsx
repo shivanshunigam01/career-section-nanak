@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import { mockEnquiries, type Enquiry } from "@/data/mockData";
-import { getEnquiries, setEnquiries as setEnquiriesToStorage } from "@/lib/vfLocalStorage";
+import {
+  getEnquiries,
+  setEnquiries as setEnquiriesToStorage,
+  getEnquiriesAdminInitial,
+  subscribeVfStorage,
+  VF_STORAGE_KEYS,
+} from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,10 +26,10 @@ const AdminEnquiries = () => {
   const [filterStatus, setFilterStatus] = useState("all");
 
   useEffect(() => {
-    const stored = getEnquiries();
-    if (stored.length > 0) setEnquiries(stored);
-    else setEnquiries(mockEnquiries);
+    const { seedMock, enquiries: initial } = getEnquiriesAdminInitial();
+    setEnquiries(seedMock ? mockEnquiries : initial);
     setHydrated(true);
+    return subscribeVfStorage(VF_STORAGE_KEYS.enquiries, () => setEnquiries(getEnquiries()));
   }, []);
 
   useEffect(() => {

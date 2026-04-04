@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { mockLeads, LEAD_STATUSES, type Lead, type LeadStatus } from "@/data/mockData";
-import { getLeads, setLeads as setLeadsToStorage } from "@/lib/vfLocalStorage";
+import {
+  getLeads,
+  setLeads as setLeadsToStorage,
+  getLeadsAdminInitial,
+  subscribeVfStorage,
+  VF_STORAGE_KEYS,
+} from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Edit2, Trash2, Phone, Mail, Download, FileText, MessageCircle } from "lucide-react";
 
@@ -21,10 +29,10 @@ const AdminLeads = () => {
   const emptyLead: Lead = { id: "", name: "", mobile: "", email: "", city: "", model: "VF 7", source: "Website", status: "New Lead", assignedTo: "", createdAt: new Date().toISOString().split("T")[0], nextFollowUp: "", remarks: "", financeNeeded: false, exchangeNeeded: false };
 
   useEffect(() => {
-    const stored = getLeads();
-    if (stored.length > 0) setLeads(stored);
-    else setLeads(mockLeads);
+    const { seedMock, leads: initial } = getLeadsAdminInitial();
+    setLeads(seedMock ? mockLeads : initial);
     setHydrated(true);
+    return subscribeVfStorage(VF_STORAGE_KEYS.leads, () => setLeads(getLeads()));
   }, []);
 
   useEffect(() => {
@@ -249,9 +257,20 @@ const LeadForm = ({ lead, onSave, onCancel }: { lead: Lead; onSave: (l: Lead) =>
         <div className="space-y-1.5"><Label className="text-xs">Mobile</Label><Input value={form.mobile} onChange={e => update("mobile", e.target.value)} className="bg-secondary/50" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Email</Label><Input value={form.email} onChange={e => update("email", e.target.value)} className="bg-secondary/50" /></div>
         <div className="space-y-1.5"><Label className="text-xs">City</Label><Input value={form.city} onChange={e => update("city", e.target.value)} className="bg-secondary/50" /></div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Model</Label>
-          <Select value={form.model} onValueChange={v => update("model", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent></Select>
+        <div className="space-y-1.5 col-span-2">
+          <Label className="text-xs">Model &amp; trim</Label>
+          {(() => {
+            const { model: tm, variant: tv } = parseStoredModelLine(form.model);
+            return (
+              <ModelTrimSelect
+                model={tm}
+                variant={tv}
+                onChange={(m, v) => update("model", leadModelLabel(m, v))}
+                includeNotSureBoth
+                className="h-10 w-full px-3 rounded-lg bg-secondary/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            );
+          })()}
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Source</Label>

@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Car, CreditCard, Headphones, CalendarDays } from "lucide-react";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
+import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Banner from "@/assets/vf6-banner.webp";
 import interiorImg from "@/assets/interior.jpg";
@@ -31,7 +33,7 @@ const BookNowPage = () => {
     email: "",
     city: "Patna",
     model: "VF 7",
-    variant: "",
+    variant: DEFAULT_VF7_TRIM,
     remarks: "",
     financeNeeded: false,
     exchangeNeeded: false,
@@ -68,7 +70,6 @@ const BookNowPage = () => {
       return;
     }
 
-    const variantNote = formData.variant ? `Preferred variant: ${formData.variant}. ` : "";
     const extras = [
       formData.financeNeeded ? "Finance assistance requested." : "",
       formData.exchangeNeeded ? "Exchange / trade-in interest." : "",
@@ -83,19 +84,20 @@ const BookNowPage = () => {
         mobile: formData.mobile,
         email: formData.email.trim(),
         city: formData.city,
-        model: formData.model,
+        model: leadModelLabel(formData.model, formData.variant),
         source: "Book Now",
         status: "Interested",
         assignedTo: "",
         createdAt: todayStr,
         nextFollowUp: "",
-        remarks: [variantNote, extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Book Now enquiry",
+        remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Book Now enquiry",
         financeNeeded: formData.financeNeeded,
         exchangeNeeded: formData.exchangeNeeded,
       };
       addLead(lead);
     } catch {
-      /* localStorage blocked */
+      toast.error("Could not save your request (storage blocked or full). Please call or WhatsApp us.");
+      return;
     }
 
     toast.success("Request received! Our team will call you shortly to complete your booking.");
@@ -105,7 +107,7 @@ const BookNowPage = () => {
       email: "",
       city: "Patna",
       model: "VF 7",
-      variant: "",
+      variant: DEFAULT_VF7_TRIM,
       remarks: "",
       financeNeeded: false,
       exchangeNeeded: false,
@@ -181,7 +183,7 @@ const BookNowPage = () => {
                   {
                     icon: Car,
                     title: "Pick your model",
-                    desc: "Choose VF 6 or VF 7 and optional Eco / Plus variant.",
+                    desc: "Choose VinFast VF 6 or VF 7 and optional trim — Earth, Wind, Wind Infinity, or Sky / Sky Infinity on VF 7.",
                   },
                   {
                     icon: CreditCard,
@@ -257,31 +259,35 @@ const BookNowPage = () => {
                   onChange={(e) => update("email", e.target.value)}
                   className={inputClass}
                 />
-                <div className="grid grid-cols-2 gap-4">
-                  <select value={formData.model} onChange={(e) => update("model", e.target.value)} className={inputClass}>
-                    <option value="VF 7">VF 7</option>
-                    <option value="VF 6">VF 6</option>
-                  </select>
-                  <select value={formData.city} onChange={(e) => update("city", e.target.value)} className={inputClass}>
-                    <option value="Patna">Patna</option>
-                    <option value="Muzaffarpur">Muzaffarpur</option>
-                    <option value="Other">Other</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 min-w-0">
+                    <label htmlFor="booknow-model-trim" className="text-xs font-medium text-muted-foreground">
+                      Model &amp; trim
+                    </label>
+                    <ModelTrimSelect
+                      id="booknow-model-trim"
+                      model={formData.model}
+                      variant={formData.variant}
+                      onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
+                      className={inputClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5 min-w-0">
+                    <label htmlFor="booknow-city" className="text-xs font-medium text-muted-foreground">
+                      City
+                    </label>
+                    <select
+                      id="booknow-city"
+                      value={formData.city}
+                      onChange={(e) => update("city", e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="Patna">Patna</option>
+                      <option value="Muzaffarpur">Muzaffarpur</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
                 </div>
-                <select value={formData.variant} onChange={(e) => update("variant", e.target.value)} className={inputClass}>
-                  <option value="">Variant preference (optional)</option>
-                  {formData.model === "VF 7" ? (
-                    <>
-                      <option value="Eco">VF 7 Eco</option>
-                      <option value="Plus">VF 7 Plus</option>
-                    </>
-                  ) : (
-                    <>
-                      <option value="Eco">VF 6 Eco</option>
-                      <option value="Plus">VF 6 Plus</option>
-                    </>
-                  )}
-                </select>
                 <div className="flex flex-col gap-3 pt-1">
                   <label className="flex items-center gap-3 text-sm cursor-pointer">
                     <input

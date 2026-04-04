@@ -437,53 +437,49 @@ const ModelVF7 = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
         </div>
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 lg:pt-28">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
           <div className="min-h-0 flex-1" aria-hidden />
-          <div className="container mx-auto w-full shrink-0 px-4 pb-16 lg:px-8 lg:pb-24">
+          <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
               className="text-left max-w-3xl"
             >
-              <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2">Premium Electric SUV</p>
-              <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-5 sm:mb-6 leading-[1.05]">
+              <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2 mt-px">Premium Electric SUV</p>
+              <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 sm:mb-5 leading-[1.05]">
                 VF 7
               </h1>
 
-              <div className="flex flex-col gap-2 sm:gap-2.5 mb-3 w-full max-w-3xl">
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                  {[
-                    { val: "₹21.89L*", label: "Indicative ex-showroom*" },
-                    { val: stats.range, label: "Range (MIDC)" },
-                  ].map((s, i) => (
-                    <div key={s.label} className="flex items-center gap-3 sm:gap-4">
-                      {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
-                      <div className="text-left">
-                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums">{s.val}</p>
-                        <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">{s.label}</p>
-                      </div>
-                    </div>
-                  ))}
+              <div className="mb-1.5 flex w-max max-w-full gap-4 sm:gap-5">
+                <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/25">
+                  <div>
+                    <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
+                    <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
+                  </div>
+                  <div>
+                    <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
+                    <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Max. power</p>
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                  {[
-                    { val: stats.accel, label: "0–100 km/h" },
-                    { val: stats.power, label: "Max. power" },
-                    { val: stats.driveline, label: "Driveline" },
-                  ].map((s, i) => (
-                    <div key={s.label} className="flex items-center gap-3 sm:gap-4">
-                      {i > 0 && <div className="w-px h-10 bg-white/25 hidden sm:block" />}
-                      <div className="text-left">
-                        <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums">{s.val}</p>
-                        <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">{s.label}</p>
-                      </div>
-                    </div>
-                  ))}
+                <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 min-w-0">
+                  <div>
+                    <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
+                    <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
+                  </div>
+                  <div>
+                    <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
+                    <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Driveline</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-2 sm:gap-x-2 mb-4 w-full">
+              <div className="mb-2">
+                <p className="text-on-image-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">₹21.89L*</p>
+                <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
                 {vf7Variants.map((v) => (
                   <button
                     key={v.id}
@@ -500,11 +496,11 @@ const ModelVF7 = () => {
                 ))}
               </div>
 
-              <p className="text-on-image-ghost text-[11px] sm:text-xs max-w-xl mb-5 leading-snug">
+              <p className="text-on-image-ghost text-[11px] sm:text-xs max-w-xl mb-3 leading-snug">
                 *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
               </p>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl sm:max-w-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
                 <Link to="/test-drive" className="w-full">
                   <Button variant="hero" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                     Book Test Drive
@@ -531,7 +527,11 @@ const ModelVF7 = () => {
                 </Link>
               </div>
 
-              <p className="text-on-image-soft text-base sm:text-lg max-w-xl mt-6 sm:mt-8 leading-relaxed">{vMeta.description}</p>
+              <div className="mt-4 sm:mt-5 w-full min-w-0">
+                <p className="text-on-image-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
+                  {vMeta.description}
+                </p>
+              </div>
             </motion.div>
           </div>
         </div>

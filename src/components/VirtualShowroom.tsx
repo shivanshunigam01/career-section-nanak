@@ -46,12 +46,16 @@ const VirtualShowroom = () => {
               <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 & VF 7</p>
               <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Two bold electric SUVs. One authorised dealer in Bihar.</p>
             </div>
-            <div className="flex flex-wrap gap-2 md:gap-3">
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
               <Link to="/models/vf6">
-                <Button variant="outline" size="sm" className="w-full sm:w-auto">Explore VF 6</Button>
+                <Button variant="heroWhite" size="sm" className="w-full sm:w-auto shadow-md">
+                  Explore VF 6
+                </Button>
               </Link>
               <Link to="/models/vf7">
-                <Button variant="hero" size="sm" className="w-full sm:w-auto">Explore VF 7</Button>
+                <Button variant="hero" size="sm" className="w-full sm:w-auto shadow-md">
+                  Explore VF 7
+                </Button>
               </Link>
             </div>
           </div>

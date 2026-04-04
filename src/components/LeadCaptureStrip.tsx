@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
+import { leadModelLabel } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -23,6 +25,7 @@ const LeadCaptureStrip = () => {
     city: "Patna",
     otherCity: "",
     model: "VF 7",
+    variant: "",
     interest: "Test Drive",
   });
   const [mobileError, setMobileError] = useState("");
@@ -67,8 +70,8 @@ const LeadCaptureStrip = () => {
         mobile: formData.mobile,
         email: "",
         city,
-        model: formData.model,
-        source: "Website",
+        model: leadModelLabel(formData.model, formData.variant),
+        source: `Homepage: ${formData.interest}`,
         status: "New Lead",
         assignedTo: "",
         createdAt: todayStr,
@@ -79,11 +82,12 @@ const LeadCaptureStrip = () => {
       };
       addLead(lead);
     } catch {
-      // Ignore localStorage failures; keep UX intact.
+      toast.error("Could not save your details (storage blocked or full). Please call or WhatsApp us.");
+      return;
     }
 
     toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", interest: "Test Drive" });
+    setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", variant: "", interest: "Test Drive" });
     setMobileError("");
   };
 
@@ -158,14 +162,12 @@ const LeadCaptureStrip = () => {
                 />
               )}
             </div>
-            <select
-              value={formData.model}
-              onChange={(e) => setFormData({ ...formData, model: e.target.value })}
+            <ModelTrimSelect
+              model={formData.model}
+              variant={formData.variant}
+              onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
               className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="VF 7">VF 7</option>
-              <option value="VF 6">VF 6</option>
-            </select>
+            />
             <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0">
               Get in Touch
             </Button>

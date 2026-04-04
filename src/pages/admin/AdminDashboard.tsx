@@ -1,22 +1,43 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { mockLeads, mockTestDrives, mockEnquiries, LEAD_STATUSES } from "@/data/mockData";
-import { getEnquiries, getLeads, getTestDriveBookings } from "@/lib/vfLocalStorage";
+import {
+  getEnquiriesAdminInitial,
+  getLeadsAdminInitial,
+  getTestDrivesAdminInitial,
+  subscribeVfStorage,
+  VF_STORAGE_KEYS,
+} from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Users, Car, TestTube, MessageSquare, TrendingUp, Clock, Phone, CalendarCheck } from "lucide-react";
 
 const AdminDashboard = () => {
+  const [storageRev, setStorageRev] = useState(0);
+
+  useEffect(() => {
+    const u1 = subscribeVfStorage(VF_STORAGE_KEYS.leads, () => setStorageRev((r) => r + 1));
+    const u2 = subscribeVfStorage(VF_STORAGE_KEYS.testDrives, () => setStorageRev((r) => r + 1));
+    const u3 = subscribeVfStorage(VF_STORAGE_KEYS.enquiries, () => setStorageRev((r) => r + 1));
+    return () => {
+      u1();
+      u2();
+      u3();
+    };
+  }, []);
+
   const leads = useMemo(() => {
-    const stored = getLeads();
-    return stored.length > 0 ? stored : mockLeads;
-  }, []);
+    const { seedMock, leads: L } = getLeadsAdminInitial();
+    return seedMock ? mockLeads : L;
+  }, [storageRev]);
+
   const testDrives = useMemo(() => {
-    const stored = getTestDriveBookings();
-    return stored.length > 0 ? stored : mockTestDrives;
-  }, []);
+    const { seedMock, bookings } = getTestDrivesAdminInitial();
+    return seedMock ? mockTestDrives : bookings;
+  }, [storageRev]);
+
   const enquiries = useMemo(() => {
-    const stored = getEnquiries();
-    return stored.length > 0 ? stored : mockEnquiries;
-  }, []);
+    const { seedMock, enquiries: E } = getEnquiriesAdminInitial();
+    return seedMock ? mockEnquiries : E;
+  }, [storageRev]);
 
   const statCards = [
     { label: "Total Leads", value: leads.length, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
@@ -125,7 +146,7 @@ const AdminDashboard = () => {
       <Card className="bg-card border-border/50 p-5">
         <h3 className="font-display font-semibold text-foreground mb-4">Lead Sources</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {["Google Ads", "Website", "WhatsApp", "Meta Ads", "Walk-in", "Referral"].map((source) => {
+          {["Google Ads", "Website", "WhatsApp", "Meta Ads", "Walk-in", "Referral", "Book Now", "Test Drive"].map((source) => {
             const count = leads.filter(l => l.source === source).length;
             return (
               <div key={source} className="text-center p-3 rounded-lg bg-secondary/30">

@@ -67,11 +67,11 @@ const vf6Variants: {
 
 const variantHeroStats: Record<
   VariantId,
-  { range: string; accel: string; power: string }
+  { range: string; accel: string; power: string; driveline: string }
 > = {
-  earth: { range: "468 km", accel: "10.4 s", power: "177 PS" },
-  wind: { range: "463 km", accel: "8.9 s", power: "204 PS" },
-  infinity: { range: "463 km", accel: "8.9 s", power: "204 PS" },
+  earth: { range: "468 km", accel: "10.4 s", power: "177 PS", driveline: "FWD" },
+  wind: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
+  infinity: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
 };
 
 /** Dense facts for the selected-variant column (synced with spec tables) */
@@ -385,40 +385,49 @@ const ModelVF6 = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
         </div>
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 lg:pt-28">
+        <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
           <div className="min-h-0 flex-1" aria-hidden />
-          <div className="container mx-auto w-full shrink-0 px-4 pb-16 lg:px-8 lg:pb-24">
+          <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7 }}
             className="text-left max-w-3xl"
           >
-            <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2">Compact Electric SUV</p>
-            <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-5 sm:mb-6 leading-[1.05]">
+            <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2 mt-px">Compact Electric SUV</p>
+            <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 sm:mb-5 leading-[1.05]">
               VF 6
             </h1>
 
-            <div className="grid w-max max-w-full grid-flow-row gap-x-2.5 gap-y-1 sm:gap-x-3 sm:gap-y-1 mb-3 [grid-template-columns:auto_auto]">
-              <div className="min-w-0">
-                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl tabular-nums leading-tight">₹17.29L*</p>
-                <p className="text-on-image-ghost text-[10px] sm:text-[11px] mt-0.5 leading-snug">Indicative ex-showroom*</p>
+            <div className="mb-1.5 flex w-max max-w-full gap-4 sm:gap-5">
+              <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/25">
+                <div>
+                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
+                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
+                </div>
+                <div>
+                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
+                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Max. power</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl tabular-nums leading-tight">{stats.range}</p>
-                <p className="text-on-image-ghost text-[10px] sm:text-[11px] mt-0.5 leading-snug">Range (MIDC)</p>
-              </div>
-              <div className="min-w-0">
-                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl tabular-nums leading-tight">{stats.accel}</p>
-                <p className="text-on-image-ghost text-[10px] sm:text-[11px] mt-0.5 leading-snug">0–100 km/h</p>
-              </div>
-              <div className="min-w-0">
-                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl tabular-nums leading-tight">{stats.power}</p>
-                <p className="text-on-image-ghost text-[10px] sm:text-[11px] mt-0.5 leading-snug">Max. power</p>
+              <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 min-w-0">
+                <div>
+                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
+                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
+                </div>
+                <div>
+                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
+                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Driveline</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-4 w-full">
+            <div className="mb-2">
+              <p className="text-on-image-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">₹17.29L*</p>
+              <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
               {vf6Variants.map((v) => (
                 <button
                   key={v.id}
@@ -435,11 +444,11 @@ const ModelVF6 = () => {
               ))}
             </div>
 
-            <p className="text-on-image-ghost text-[11px] sm:text-xs max-w-xl mb-5 leading-snug">
+            <p className="text-on-image-ghost text-[11px] sm:text-xs max-w-xl mb-3 leading-snug">
               *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-xl sm:max-w-2xl">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
               <Link to="/test-drive" className="w-full">
                 <Button variant="hero" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                   Book Test Drive
@@ -466,7 +475,11 @@ const ModelVF6 = () => {
               </Link>
             </div>
 
-            <p className="text-on-image-soft text-base sm:text-lg max-w-xl mt-6 sm:mt-8 leading-relaxed">{vMeta.description}</p>
+            <div className="mt-4 sm:mt-5 w-full min-w-0">
+              <p className="text-on-image-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
+                {vMeta.description}
+              </p>
+            </div>
           </motion.div>
           </div>
         </div>

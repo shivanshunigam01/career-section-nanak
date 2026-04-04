@@ -1,12 +1,20 @@
 import { useEffect, useState } from "react";
 import { mockTestDrives, type TestDriveBooking } from "@/data/mockData";
-import { getTestDriveBookings, setTestDriveBookings as setTestDrivesToStorage } from "@/lib/vfLocalStorage";
+import {
+  getTestDriveBookings,
+  setTestDriveBookings as setTestDrivesToStorage,
+  getTestDrivesAdminInitial,
+  subscribeVfStorage,
+  VF_STORAGE_KEYS,
+} from "@/lib/vfLocalStorage";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Clock, Download, FileText, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
@@ -40,10 +48,10 @@ const AdminTestDrives = () => {
   const emptyBooking: TestDriveBooking = { id: "", leadId: "", customerName: "", mobile: "", model: "VF 7", preferredDate: "", preferredTime: "", branch: "Patna Showroom", status: "Pending", assignedExecutive: "", feedback: "", createdAt: new Date().toISOString().split("T")[0] };
 
   useEffect(() => {
-    const stored = getTestDriveBookings();
-    if (stored.length > 0) setBookings(stored);
-    else setBookings(mockTestDrives);
+    const { seedMock, bookings: initial } = getTestDrivesAdminInitial();
+    setBookings(seedMock ? mockTestDrives : initial);
     setHydrated(true);
+    return subscribeVfStorage(VF_STORAGE_KEYS.testDrives, () => setBookings(getTestDriveBookings()));
   }, []);
 
   useEffect(() => {
@@ -246,9 +254,20 @@ const TestDriveForm = ({
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1.5"><Label className="text-xs">Customer Name</Label><Input value={form.customerName} onChange={e => update("customerName", e.target.value)} className="bg-secondary/50" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Mobile</Label><Input value={form.mobile} onChange={e => update("mobile", e.target.value)} className="bg-secondary/50" /></div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Model</Label>
-          <Select value={form.model} onValueChange={v => update("model", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent></Select>
+        <div className="space-y-1.5 col-span-2">
+          <Label className="text-xs">Model &amp; trim</Label>
+          {(() => {
+            const { model: tm, variant: tv } = parseStoredModelLine(form.model);
+            return (
+              <ModelTrimSelect
+                model={tm}
+                variant={tv}
+                onChange={(m, v) => update("model", leadModelLabel(m, v))}
+                includeNotSureBoth
+                className="h-10 w-full px-3 rounded-lg bg-secondary/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            );
+          })()}
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Status</Label>

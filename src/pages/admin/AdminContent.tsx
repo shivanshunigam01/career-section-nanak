@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Edit2, Trash2, Plus, Image, FileText, Star } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const STORAGE_KEY = "vf_admin_content";
 
@@ -251,11 +253,24 @@ const AdminContent = () => {
                 <div className="space-y-1.5"><Label className="text-xs">Name</Label><Input value={editTestimonial.name} onChange={e => setEditTestimonial({ ...editTestimonial, name: e.target.value })} className="bg-secondary/50" /></div>
                 <div className="space-y-1.5"><Label className="text-xs">City</Label><Input value={editTestimonial.city} onChange={e => setEditTestimonial({ ...editTestimonial, city: e.target.value })} className="bg-secondary/50" /></div>
                 <div className="space-y-1.5">
-                  <Label className="text-xs">Model</Label>
-                  <select value={editTestimonial.model} onChange={e => setEditTestimonial({ ...editTestimonial, model: e.target.value })} className="h-10 w-full px-3 rounded-lg bg-secondary/50 border border-border text-foreground text-sm focus:outline-none">
-                    <option value="VF 7">VF 7</option>
-                    <option value="VF 6">VF 6</option>
-                  </select>
+                  <Label className="text-xs">Model &amp; trim</Label>
+                  {(() => {
+                    const { model: tm, variant: tv } = parseStoredModelLine(editTestimonial.model);
+                    return (
+                      <ModelTrimSelect
+                        model={tm}
+                        variant={tv}
+                        onChange={(m, v) =>
+                          setEditTestimonial({
+                            ...editTestimonial,
+                            model: leadModelLabel(m, v),
+                          })
+                        }
+                        includeNotSureBoth
+                        className="h-10 w-full px-3 rounded-lg bg-secondary/50 border border-border text-foreground text-sm focus:outline-none"
+                      />
+                    );
+                  })()}
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs">Rating</Label>
