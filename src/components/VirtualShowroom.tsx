@@ -27,7 +27,7 @@ const VirtualShowroom = () => {
           </p>
         </motion.div>
 
-        {/* VF 6 & VF 7 together — hero banner */}
+        {/* Premium Interior */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -35,29 +35,15 @@ const VirtualShowroom = () => {
           className="relative rounded-3xl overflow-hidden shadow-luxury mb-8"
         >
           <img
-            src={slideVf6Vf7Night}
-            alt="VinFast VF 6 and VF 7"
+            src={interiorImg}
+            alt="VinFast Premium Interior"
             className="w-full aspect-[5/4] sm:aspect-[16/9] md:aspect-[21/9] object-cover min-h-[200px] sm:min-h-0"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 & VF 7</p>
-              <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Two bold electric SUVs. One authorised dealer in Bihar.</p>
-            </div>
-            <div className="flex flex-wrap gap-1.5 md:gap-2">
-              <Link to="/models/vf6">
-                <Button variant="heroWhite" size="sm" className="w-full sm:w-auto shadow-md">
-                  Explore VF 6
-                </Button>
-              </Link>
-              <Link to="/models/vf7">
-                <Button variant="hero" size="sm" className="w-full sm:w-auto shadow-md">
-                  Explore VF 7
-                </Button>
-              </Link>
-            </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10">
+            <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-2xl">Premium Interior</p>
+            <p className="text-on-image-soft text-xs sm:text-sm mt-1">Handcrafted luxury meets intelligent design</p>
           </div>
         </motion.div>
 
@@ -114,7 +100,7 @@ const VirtualShowroom = () => {
           </motion.div>
         </div>
 
-        {/* Interior banner */}
+        {/* VF 6 & VF 7 — dual banner */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -122,15 +108,29 @@ const VirtualShowroom = () => {
           className="relative rounded-3xl overflow-hidden shadow-luxury"
         >
           <img
-            src={interiorImg}
-            alt="VinFast Premium Interior"
+            src={slideVf6Vf7Night}
+            alt="VinFast VF 6 and VF 7"
             className="w-full aspect-[5/4] sm:aspect-[16/9] md:aspect-[21/9] object-cover min-h-[200px] sm:min-h-0"
             loading="lazy"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10">
-            <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-2xl">Premium Interior</p>
-            <p className="text-on-image-soft text-xs sm:text-sm mt-1">Handcrafted luxury meets intelligent design</p>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 & VF 7</p>
+              <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Two bold electric SUVs. One authorised dealer in Bihar.</p>
+            </div>
+            <div className="flex flex-wrap gap-1.5 md:gap-2">
+              <Link to="/models/vf6">
+                <Button variant="heroWhite" size="sm" className="w-full sm:w-auto shadow-md">
+                  Explore VF 6
+                </Button>
+              </Link>
+              <Link to="/models/vf7">
+                <Button variant="hero" size="sm" className="w-full sm:w-auto shadow-md">
+                  Explore VF 7
+                </Button>
+              </Link>
+            </div>
           </div>
         </motion.div>
       </div>

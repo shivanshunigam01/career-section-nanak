@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { addEnquiry, addLead } from "@/lib/vfLocalStorage";
 import type { Enquiry, Lead } from "@/data/mockData";
-import { leadModelLabel } from "@/data/vinfastModels";
+import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
@@ -25,7 +25,7 @@ const getLocalISODate = () => {
 
 const ContactPage = () => {
   const [formData, setFormData] = useState({
-    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "",
+    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM,
     interest: "General Enquiry", message: "",
   });
 
@@ -73,7 +73,7 @@ const ContactPage = () => {
     }
 
     toast.success("Thank you! Our team will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "", interest: "General Enquiry", message: "" });
+    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "General Enquiry", message: "" });
   };
 
   const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });

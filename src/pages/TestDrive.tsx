@@ -25,7 +25,7 @@ const getLocalISODate = () => {
 
 const TestDrivePage = () => {
   const [formData, setFormData] = useState({
-    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "",
+    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM,
     date: "", time: "", remarks: "",
   });
   const [mobileError, setMobileError] = useState("");
@@ -119,7 +119,7 @@ const TestDrivePage = () => {
     }
 
     toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
-    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: "", date: "", time: "", remarks: "" });
+    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, date: "", time: "", remarks: "" });
     setMobileError("");
   };
 

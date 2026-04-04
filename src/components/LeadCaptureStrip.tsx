@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
-import { leadModelLabel } from "@/data/vinfastModels";
+import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -25,7 +25,7 @@ const LeadCaptureStrip = () => {
     city: "Patna",
     otherCity: "",
     model: "VF 7",
-    variant: "",
+    variant: DEFAULT_VF7_TRIM,
     interest: "Test Drive",
   });
   const [mobileError, setMobileError] = useState("");
@@ -87,7 +87,7 @@ const LeadCaptureStrip = () => {
     }
 
     toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", variant: "", interest: "Test Drive" });
+    setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
     setMobileError("");
   };
 
