@@ -186,7 +186,7 @@ const ComparePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
       {/* Fixed column legend — sits flush under navbar while spec block is on screen */}
@@ -503,7 +503,7 @@ const ComparePage = () => {
           <p className="text-muted-foreground mb-8 max-w-md mx-auto text-sm">
             Book back-to-back test drives or ask our Patna team to walk through trims with you.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="hidden lg:flex flex-wrap justify-center gap-4">
             <Link to="/test-drive">
               <Button variant="hero" size="lg">
                 Book test drive

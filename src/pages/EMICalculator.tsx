@@ -35,7 +35,7 @@ const EMICalculator = () => {
   const inputCls = "w-28 text-right text-sm font-semibold tabular-nums bg-background/60 border border-border/60 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
       <div className="pt-24 pb-20 lg:pt-32 lg:pb-32">
         <div className="container mx-auto px-4 lg:px-8">

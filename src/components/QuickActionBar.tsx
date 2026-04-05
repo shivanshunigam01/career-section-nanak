@@ -14,7 +14,7 @@ const actions = [
 
 const QuickActionBar = () => {
   return (
-    <section className="relative z-10 -mt-12 lg:-mt-16">
+    <section className="relative z-10 -mt-12 lg:-mt-16 hidden lg:block">
       <div className="container mx-auto px-4 lg:px-8">
         <div className="rounded-3xl border border-border bg-background px-4 py-4 lg:px-8 lg:py-5 overflow-x-auto sm:overflow-visible">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 lg:gap-4 sm:min-w-max lg:justify-center">

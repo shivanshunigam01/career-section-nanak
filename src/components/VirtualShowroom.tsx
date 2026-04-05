@@ -145,7 +145,7 @@ const VirtualShowroom = () => {
               <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 · VF 7 · VF MPV 7</p>
               <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Electric SUVs and a seven-seat MPV. One authorised dealer in Bihar.</p>
             </div>
-            <div className="flex flex-wrap gap-1.5 md:gap-2">
+            <div className="hidden lg:flex flex-wrap gap-1.5 md:gap-2">
               <Link to="/models/vf6">
                 <Button variant="heroWhite" size="sm" className="w-full sm:w-auto shadow-md">
                   Explore VF 6

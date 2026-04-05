@@ -38,19 +38,19 @@ const Navbar = () => {
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white border-b border-gray-200 py-0 shadow-sm"
       >
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logos: VinFast lockup + Patliputra outline (outline slightly smaller) */}
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+          <div className="flex items-center justify-between min-h-[4.25rem] h-[4.25rem] lg:h-20 lg:min-h-0">
+            {/* Logos: VinFast lockup + Patliputra outline (outline slightly smaller); larger on small screens */}
+            <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
               <img
                 src={vinfastLogo}
                 alt="Patliputra VinFast"
-                className="h-10 sm:h-12 lg:h-16 w-auto max-h-full object-contain object-left"
+                className="h-[3.25rem] sm:h-14 lg:h-16 w-auto max-h-full object-contain object-left"
               />
-              <span className="hidden sm:block w-px h-4 sm:h-5 lg:h-7 self-center bg-border shrink-0" aria-hidden />
+              <span className="w-px h-7 sm:h-8 lg:h-8 self-center bg-border shrink-0" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra"
-                className="h-4 sm:h-5 lg:h-8 w-auto max-h-full object-contain object-left"
+                className="h-7 sm:h-8 lg:h-8 w-auto max-h-full object-contain object-left"
               />
             </Link>
 

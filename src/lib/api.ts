@@ -37,6 +37,9 @@ export async function publicGet<T>(path: string): Promise<T | null> {
 
 /** Public (unauthenticated) POST — paths like `/leads`, `/test-drives`. */
 export async function publicPost(path: string, body: unknown): Promise<{ data: unknown; message?: string }> {
+  if (!API_BASE) {
+    throw new ApiRequestError("API is not configured. Set VITE_API_URL (e.g. http://localhost:5000/api/v1).", 0);
+  }
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

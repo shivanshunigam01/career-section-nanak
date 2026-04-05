@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Local form capture (dev API)
+server/data/*.jsonl
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
