@@ -18,7 +18,8 @@ import { waMeUrl } from "@/lib/contactLinks";
 export type HeroSlideView = {
   image: string;
   title: string;
-  sub?: string;
+  /** Three subtitle lines under the title (CMS / API subtitles are split automatically). */
+  subLines?: readonly [string, string, string];
   footnote?: string;
   objectPosition: string;
   badge?: string;
@@ -28,68 +29,140 @@ export type HeroSlideView = {
   ctaSecondaryLink?: string;
 };
 
+function subtitleToThreeLines(raw: string): readonly [string, string, string] {
+  const t = raw.trim();
+  if (!t) return ["", "", ""];
+  const byNl = t.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  if (byNl.length >= 3) return [byNl[0], byNl[1], byNl.slice(2).join(" ")];
+  if (byNl.length === 2) return [byNl[0], byNl[1], ""];
+  const sentences =
+    t.match(/[^.!?]+(?:[.!?]+|$)/g)?.map((s) => s.trim()).filter(Boolean) ?? [t];
+  if (sentences.length >= 3) return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+  if (sentences.length === 2) return [sentences[0], sentences[1], ""];
+  const dashParts = t.split(/\s*[—–]\s*/).map((s) => s.trim()).filter(Boolean);
+  if (dashParts.length >= 3) return [dashParts[0], dashParts[1], dashParts.slice(2).join(" — ")];
+  if (dashParts.length === 2) return [dashParts[0], dashParts[1], ""];
+  const commaParts = t.split(/,\s+/);
+  if (commaParts.length >= 3) {
+    const a = Math.ceil(commaParts.length / 3);
+    const b = Math.ceil((2 * commaParts.length) / 3);
+    return [commaParts.slice(0, a).join(", "), commaParts.slice(a, b).join(", "), commaParts.slice(b).join(", ")];
+  }
+  const words = t.split(/\s+/);
+  if (words.length >= 6) {
+    const n = Math.ceil(words.length / 3);
+    return [
+      words.slice(0, n).join(" "),
+      words.slice(n, 2 * n).join(" "),
+      words.slice(2 * n).join(" "),
+    ];
+  }
+  return [t, "", ""];
+}
+
+/** New launch — always first in the home hero rotation (fallback + merged API slides). */
+const MPV7_LAUNCH_SLIDE: HeroSlideView = {
+  image: heroMpv7,
+  badge: "Brand new",
+  title: "The all-new VF MPV 7",
+  subLines: [
+    "Seven-seat electric MPV",
+    "450 km (NEDC), 75.3 kWh battery",
+    "Bookings open at Patliputra VinFast.",
+  ],
+  footnote: "*Images shown are for illustrative purposes only. Specifications may vary; confirm with dealer.",
+  objectPosition: "center 48%",
+  ctaPrimary: "Register for pre-booking",
+  ctaPrimaryLink: "/models/mpv7#mpv7-prebook",
+  ctaSecondary: "Get on-road price",
+  ctaSecondaryLink: "/contact",
+};
+
 const FALLBACK_SLIDES: HeroSlideView[] = [
+  MPV7_LAUNCH_SLIDE,
   {
     image: heroSlide01,
     title: "VF 6, VF 7 & VF MPV 7",
-    sub: "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7. Experience the revolution in motion, exclusively at Patliputra VinFast, Bihar's only authorized dealer.",
+    subLines: [
+      "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7.",
+      "Experience the revolution in motion, exclusively at Patliputra VinFast,",
+      "Bihar's only authorized dealer.",
+    ],
     objectPosition: "28% 48%",
   },
   {
     image: heroSlide02,
     title: "VinFast VF 7",
-    sub: "Urban performance and electric sophistication — crafted for highways, city streets, and everything between.",
+    subLines: [
+      "Urban performance and electric sophistication —",
+      "crafted for highways, city streets,",
+      "and everything between.",
+    ],
     objectPosition: "center 48%",
   },
   {
     image: heroSlide03,
     title: "Precision in every detail",
-    sub: "Aerodynamic alloys, bold red and black — the unmistakable VF design language.",
+    subLines: [
+      "Aerodynamic alloys,",
+      "bold red and black —",
+      "the unmistakable VF design language.",
+    ],
     objectPosition: "center 55%",
   },
   {
     image: heroVf7LedHighway,
     title: "Signature LED presence",
-    sub: "Full-width rear LED light bar with the centred V dip — the same identity as the front, unmistakable after dark.",
+    subLines: [
+      "Full-width rear LED light bar with the centred V dip —",
+      "the same identity as the front,",
+      "unmistakable after dark.",
+    ],
     objectPosition: "center 50%",
   },
   {
     image: heroVf7Cockpit,
     title: "Your command centre",
-    sub: "Landscape touchscreen, connected services, and a leather-wrapped cabin centred on the VinFast V.",
+    subLines: [
+      "Landscape touchscreen, connected services,",
+      "and a leather-wrapped cabin",
+      "centred on the VinFast V.",
+    ],
     objectPosition: "center 48%",
   },
   {
     image: heroSlide05,
     title: "Premium VF 6 cabin",
-    sub: "Large touchscreen, minimalist dash, and a driver-centric cockpit built for comfort and connectivity.",
+    subLines: [
+      "Large touchscreen, minimalist dash,",
+      "and a driver-centric cockpit",
+      "built for comfort and connectivity.",
+    ],
     objectPosition: "center 50%",
   },
   {
     image: heroSlide06,
     title: "Built for your family",
-    sub: "VF 6 — space, safety, and zero-emission drives from Patna to the open road.",
+    subLines: [
+      "VF 6 — space, safety,",
+      "and zero-emission drives",
+      "from Patna to the open road.",
+    ],
     footnote: "*Images shown are for illustrative purposes only. Features and specification may vary as per trim.",
     objectPosition: "28% 45%",
-  },
-  {
-    image: heroMpv7,
-    title: "The all-new VF MPV 7",
-    sub: "Seven-seat electric MPV — 450 km (NEDC), 75.3 kWh battery, bookings open at Patliputra VinFast.",
-    footnote: "*Images shown are for illustrative purposes only. Specifications may vary; confirm with dealer.",
-    objectPosition: "center 42%",
-    ctaSecondary: "Explore VF MPV 7",
-    ctaSecondaryLink: "/models/mpv7",
   },
 ];
 
 function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
   const img = String(doc.bgImage ?? "").trim();
   if (!img) return null;
+  const subtitle = String(doc.subtitle ?? "").trim();
+  const triplet = subtitle ? subtitleToThreeLines(subtitle) : undefined;
+  const subLines = triplet?.some((l) => l.trim()) ? triplet : undefined;
   return {
     image: img,
     title: String(doc.title ?? "VinFast"),
-    sub: String(doc.subtitle ?? "") || undefined,
+    subLines,
     objectPosition: String(doc.objectPosition ?? "center 50%"),
     badge: String(doc.badge ?? "").trim() || undefined,
     ctaPrimary: String(doc.ctaPrimary ?? "").trim() || undefined,
@@ -142,7 +215,10 @@ const HeroSection = () => {
       const raw = await publicGet<unknown[]>("/public/hero-slides");
       if (cancelled || !Array.isArray(raw) || raw.length === 0) return;
       const mapped = (raw as Record<string, unknown>[]).map(mapHeroFromApi).filter(Boolean) as HeroSlideView[];
-      if (mapped.length > 0) setSlides(mapped);
+      if (mapped.length > 0) {
+        const withoutDuplicateMpv7 = mapped.filter((s) => s.image !== heroMpv7);
+        setSlides([MPV7_LAUNCH_SLIDE, ...withoutDuplicateMpv7]);
+      }
     })();
     return () => {
       cancelled = true;
@@ -174,7 +250,7 @@ const HeroSection = () => {
       {slides.map((s, i) => (
         <div
           key={`${s.image}-${i}`}
-          className="absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
+          className="hero-media-scrim absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
           style={{
             opacity: i === current ? 1 : 0,
             zIndex: i === current ? 1 : 0,
@@ -202,10 +278,17 @@ const HeroSection = () => {
             <h2 className="text-hero-plain-lg font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-3 sm:mb-4">
               {slide.title}
             </h2>
-            {slide.sub && (
-              <p className="text-hero-plain-soft font-medium text-sm sm:text-base md:text-lg leading-relaxed max-w-prose">
-                {slide.sub}
-              </p>
+            {slide.subLines?.some((l) => l.trim()) && (
+              <div className="text-hero-plain-soft font-medium text-sm sm:text-base md:text-lg leading-relaxed max-w-prose space-y-0.5">
+                {slide.subLines.map(
+                  (line, i) =>
+                    line.trim() && (
+                      <p key={i} className="block">
+                        {line}
+                      </p>
+                    ),
+                )}
+              </div>
             )}
             {slide.footnote && (
               <p className="text-hero-plain-muted text-[11px] sm:text-xs leading-snug max-w-prose mt-3">{slide.footnote}</p>
@@ -274,6 +357,12 @@ const HeroSection = () => {
 
         <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-6 lg:mt-8 flex-wrap">
           <Link
+            to="/models/mpv7"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
+          >
+            Explore VF MPV 7 <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+          <Link
             to="/models/vf7"
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
           >
@@ -284,12 +373,6 @@ const HeroSection = () => {
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
           >
             Explore VF 6 <ChevronRight className="w-3.5 h-3.5" />
-          </Link>
-          <Link
-            to="/models/mpv7"
-            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
-          >
-            Explore VF MPV 7 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <a
             href={waUrl}
