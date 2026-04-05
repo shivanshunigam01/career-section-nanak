@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -12,7 +12,7 @@ import type { Lead } from "@/data/mockData";
 import { hasApi } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
-import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
+import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
@@ -30,6 +30,7 @@ const getLocalISODate = () => {
 };
 
 const BookNowPage = () => {
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -43,6 +44,14 @@ const BookNowPage = () => {
   });
   const [mobileError, setMobileError] = useState("");
   const todayStr = getLocalISODate();
+
+  useEffect(() => {
+    const raw = searchParams.get("model")?.trim() ?? "";
+    const norm = raw.toLowerCase().replace(/\s+/g, " ");
+    if (norm === "vf mpv 7" || norm === "mpv7" || raw === "VF MPV 7") {
+      setFormData((f) => ({ ...f, model: "VF MPV 7", variant: DEFAULT_MPV7_TRIM }));
+    }
+  }, [searchParams]);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);

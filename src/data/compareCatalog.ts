@@ -1,6 +1,6 @@
 import vf6DesatSilver from "@/assets/vf6-desat-silver.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
-import mpv7CompareCutout from "@/assets/mpv7-gallery/mpv7-compare-cutout.png";
+import mpv7Listing from "@/assets/mpv7-gallery/mpv7-hero.png";
 
 export type CompareModelKey = "vf6" | "vf7" | "mpv7";
 
@@ -346,7 +346,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
     brand: "VinFast",
     name: "VF MPV 7",
     route: "/models/mpv7",
-    image: mpv7CompareCutout,
+    image: mpv7Listing,
     variants: [
       {
         id: "standard",

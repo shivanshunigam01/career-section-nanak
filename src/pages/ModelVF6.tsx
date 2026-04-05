@@ -346,7 +346,7 @@ const ModelVF6 = () => {
 
       {/* Hero — top inset clears fixed navbar (h-16 lg:h-20); flex spacer keeps copy bottom-aligned without clipping under nav */}
       <section className="relative flex min-h-[85vh] flex-col">
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf6Hero}
             alt="Silver VinFast VF 6 electric SUV beside a sunlit field with a family in the background"

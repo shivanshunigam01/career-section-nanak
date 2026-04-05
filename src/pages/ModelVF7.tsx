@@ -454,7 +454,7 @@ const ModelVF7 = () => {
       <Navbar />
 
       <section className="relative flex min-h-[85vh] flex-col">
-        <div className="absolute inset-0 overflow-hidden">
+        <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf7Street}
             alt="VinFast VF 7"

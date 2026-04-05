@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Battery, Gauge, Shield, Users, Zap } from "lucide-react";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Card from "@/assets/vf6-banner.png";
-import mpv7Card from "@/assets/mpv7-gallery/mpv7-01.png";
+import mpv7Card from "@/assets/mpv7-gallery/mpv7-hero.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";

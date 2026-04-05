@@ -110,7 +110,7 @@ const VirtualShowroom = () => {
             <img
               src={mpv7Hero}
               alt="VinFast VF MPV 7"
-              className="w-full aspect-[16/10] object-cover object-[center_42%] transition-[filter] duration-500 group-hover:brightness-[1.06]"
+              className="w-full aspect-[16/10] object-cover object-[center_48%] transition-[filter] duration-500 group-hover:brightness-[1.06]"
               loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
