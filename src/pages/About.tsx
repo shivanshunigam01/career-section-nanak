@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import FaqSection from "@/components/FaqSection";
 import { Award, Users, Target, Globe } from "lucide-react";
 import patliputraVinfastHero from "@/assets/patliputra-vinfast-about-hero.png";
 import vf8Convoy from "@/assets/vf8-convoy.jpg";
@@ -102,6 +103,9 @@ const AboutPage = () => {
           </div>
         </div>
       </div>
+
+      <FaqSection className="section-surface border-t border-border/40" />
+
       <Footer />
       <StickyMobileCTA />
     </div>

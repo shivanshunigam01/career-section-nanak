@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import interiorImg from "@/assets/interior.jpg";
 import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
 import vf7Real from "@/assets/vf7-real.png";
-import vf6Banner from "@/assets/vf6-banner.webp";
+import vf6Card from "@/assets/vf6-banner.webp";
 
 const VirtualShowroom = () => {
   return (
@@ -82,7 +82,7 @@ const VirtualShowroom = () => {
             className="relative rounded-3xl overflow-hidden shadow-luxury group"
           >
             <img
-              src={vf6Banner}
+              src={vf6Card}
               alt="VinFast VF 6"
               className="w-full aspect-[16/10] object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]"
               loading="lazy"

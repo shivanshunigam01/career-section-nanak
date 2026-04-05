@@ -22,6 +22,19 @@ async function parseJson(res: Response): Promise<Record<string, unknown>> {
   }
 }
 
+/** Public GET — returns `null` on error, missing base, or non-OK (caller keeps UI fallback). */
+export async function publicGet<T>(path: string): Promise<T | null> {
+  if (!API_BASE) return null;
+  try {
+    const res = await fetch(`${API_BASE}${path}`);
+    const json = await parseJson(res);
+    if (!res.ok || json.success === false) return null;
+    return json.data as T;
+  } catch {
+    return null;
+  }
+}
+
 /** Public (unauthenticated) POST — paths like `/leads`, `/test-drives`. */
 export async function publicPost(path: string, body: unknown): Promise<{ data: unknown; message?: string }> {
   const res = await fetch(`${API_BASE}${path}`, {

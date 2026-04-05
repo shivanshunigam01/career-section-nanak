@@ -8,16 +8,17 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Switch } from "@/components/ui/switch";
 import { Edit2, Trash2, Plus, Tag } from "lucide-react";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGetData, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import {
+  adminOfferFromApi,
+  adminOfferToApiPayload,
+  isMongoId,
+  type AdminOfferRow,
+} from "@/lib/adminCmsMappers";
+import { toast } from "sonner";
 
-interface Offer {
-  id: string;
-  title: string;
-  description: string;
-  model: string;
-  validTill: string;
-  active: boolean;
-  type: string;
-}
+type Offer = AdminOfferRow;
 
 const initialOffers: Offer[] = [
   { id: "O1", title: "Launch Bonus — ₹2 Lakh Off", description: "Exclusive launch discount on VF 7 Plus variant for first 50 customers", model: "VF 7", validTill: "2026-04-30", active: true, type: "Launch" },
@@ -33,31 +34,111 @@ const AdminOffers = () => {
   const [showForm, setShowForm] = useState(false);
   const STORAGE_KEY = "vf_admin_offers";
 
-  const emptyOffer: Offer = { id: "", title: "", description: "", model: "All Models", validTill: "", active: true, type: "Launch" };
+  const emptyOffer: Offer = {
+    id: "",
+    title: "",
+    description: "",
+    model: "All Models",
+    validTill: "",
+    active: true,
+    type: "Launch",
+    imageUrl: "",
+  };
 
   useEffect(() => {
-    const stored = getStoredState<Offer[] | null>(STORAGE_KEY, null);
-    if (stored && stored.length > 0) setOffers(stored);
-    setHydrated(true);
+    let cancelled = false;
+    (async () => {
+      if (hasApi()) {
+        try {
+          const data = await adminGetData<unknown[]>("/admin/offers?limit=200&page=1");
+          if (!cancelled && Array.isArray(data) && data.length > 0) {
+            setOffers(data.map((doc) => adminOfferFromApi(doc as Record<string, unknown>)));
+            setHydrated(true);
+            return;
+          }
+        } catch {
+          /* fallback */
+        }
+        if (!cancelled) {
+          const stored = getStoredState<Offer[] | null>(STORAGE_KEY, null);
+          setOffers(stored && stored.length > 0 ? stored : initialOffers);
+        }
+      } else {
+        const stored = getStoredState<Offer[] | null>(STORAGE_KEY, null);
+        if (!cancelled && stored && stored.length > 0) setOffers(stored);
+      }
+      if (!cancelled) setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
+    if (hasApi()) return;
     setStoredState(STORAGE_KEY, offers);
   }, [offers, hydrated]);
 
-  const handleSave = (offer: Offer) => {
-    if (offer.id) {
-      setOffers(prev => prev.map(o => o.id === offer.id ? offer : o));
+  const handleSave = async (offer: Offer) => {
+    if (hasApi()) {
+      try {
+        const payload = adminOfferToApiPayload(offer);
+        if (isMongoId(offer.id)) {
+          const raw = await adminPutJson<Record<string, unknown>>(`/admin/offers/${offer.id}`, payload);
+          const mapped = adminOfferFromApi(raw);
+          setOffers((prev) => prev.map((o) => (o.id === offer.id ? mapped : o)));
+        } else {
+          const raw = await adminPostJson<Record<string, unknown>>("/admin/offers", payload);
+          const mapped = adminOfferFromApi(raw);
+          setOffers((prev) => {
+            const filtered = offer.id ? prev.filter((o) => o.id !== offer.id) : prev;
+            return [...filtered, mapped];
+          });
+        }
+        toast.success("Offer saved");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+        return;
+      }
+    } else if (offer.id) {
+      setOffers((prev) => prev.map((o) => (o.id === offer.id ? offer : o)));
     } else {
-      setOffers(prev => [...prev, { ...offer, id: `O${prev.length + 1}` }]);
+      setOffers((prev) => [...prev, { ...offer, id: `O${prev.length + 1}` }]);
     }
     setShowForm(false);
     setEditOffer(null);
   };
 
-  const toggleActive = (id: string) => setOffers(prev => prev.map(o => o.id === id ? { ...o, active: !o.active } : o));
-  const handleDelete = (id: string) => setOffers(prev => prev.filter(o => o.id !== id));
+  const toggleActive = async (id: string) => {
+    const o = offers.find((x) => x.id === id);
+    if (!o) return;
+    const next = { ...o, active: !o.active };
+    if (hasApi() && isMongoId(id)) {
+      try {
+        const raw = await adminPutJson<Record<string, unknown>>(`/admin/offers/${id}`, adminOfferToApiPayload(next));
+        setOffers((prev) => prev.map((x) => (x.id === id ? adminOfferFromApi(raw) : x)));
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setOffers((prev) => prev.map((x) => (x.id === id ? next : x)));
+  };
+
+  const handleDelete = async (id: string) => {
+    if (hasApi() && isMongoId(id)) {
+      try {
+        await adminDeleteJson(`/admin/offers/${id}`);
+        setOffers((prev) => prev.filter((o) => o.id !== id));
+        toast.success("Offer removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setOffers((prev) => prev.filter((o) => o.id !== id));
+  };
 
   return (
     <div className="space-y-6">

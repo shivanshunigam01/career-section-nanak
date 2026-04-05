@@ -1,15 +1,29 @@
+import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Battery, Gauge, Shield, Zap } from "lucide-react";
 import vf7Real from "@/assets/vf7-real.png";
-import vf6Banner from "@/assets/vf6-banner.webp";
+import vf6Card from "@/assets/vf6-banner.webp";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { hasApi } from "@/lib/apiConfig";
+import { publicGet } from "@/lib/api";
 
-const models = [
+type Spec = { icon: typeof Battery; label: string; value: string };
+
+type ModelCard = {
+  name: string;
+  tagline: string;
+  price: string;
+  image: string;
+  href: string;
+  specs: Spec[];
+};
+
+const BASE_MODELS: Omit<ModelCard, "price">[] = [
   {
     name: "VF 7",
     tagline: "Bold. Intelligent. Unstoppable.",
-    price: "₹21.89 Lakh*",
     image: vf7Real,
     href: "/models/vf7",
     specs: [
@@ -22,8 +36,7 @@ const models = [
   {
     name: "VF 6",
     tagline: "Compact. Smart. Electrifying.",
-    price: "₹17.29 Lakh*",
-    image: vf6Banner,
+    image: vf6Card,
     href: "/models/vf6",
     specs: [
       { icon: Battery, label: "Battery", value: "59.6 kWh" },
@@ -34,7 +47,67 @@ const models = [
   },
 ];
 
+function slugMatchesHref(href: string, slug: string): boolean {
+  const s = slug.toLowerCase();
+  if (href.includes("vf7")) return s.includes("vf7") || s === "vf-7" || s.endsWith("vf7");
+  if (href.includes("vf6")) return s.includes("vf6") || s === "vf-6" || s.endsWith("vf6");
+  return false;
+}
+
+function mergeModels(
+  base: Omit<ModelCard, "price">[],
+  apiList: Record<string, unknown>[] | null,
+  site: { vf7Price: string; vf6Price: string; vf7Range: string; vf6Range: string },
+): ModelCard[] {
+  return base.map((m) => {
+    const api = apiList?.find((p) => slugMatchesHref(m.href, String(p.slug ?? "")));
+    const sitePrice = m.href.includes("vf7") ? site.vf7Price : site.vf6Price;
+    const siteRange = m.href.includes("vf7") ? site.vf7Range : site.vf6Range;
+    const price = api?.priceFrom ? String(api.priceFrom) : sitePrice;
+    const image =
+      api?.heroImage && String(api.heroImage).trim() ? String(api.heroImage) : m.image;
+    const tagline = api?.tagline ? String(api.tagline) : m.tagline;
+    const displayName = api?.name
+      ? String(api.name).replace(/^VinFast\s*/i, "").trim() || m.name
+      : m.name;
+    const specs = m.specs.map((spec) =>
+      spec.label === "Range" ? { ...spec, value: siteRange || spec.value } : spec,
+    );
+    return {
+      ...m,
+      name: displayName,
+      tagline,
+      price,
+      image,
+      specs,
+    };
+  });
+}
+
 const ModelDiscovery = () => {
+  const { siteConfig } = usePublicSite();
+  const [apiProducts, setApiProducts] = useState<Record<string, unknown>[] | null>(null);
+
+  useEffect(() => {
+    if (!hasApi()) return;
+    let cancelled = false;
+    (async () => {
+      const data = await publicGet<unknown[]>("/public/products");
+      if (cancelled) return;
+      if (Array.isArray(data) && data.length > 0) {
+        setApiProducts(data as Record<string, unknown>[]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const models = useMemo(
+    () => mergeModels(BASE_MODELS, apiProducts, siteConfig),
+    [apiProducts, siteConfig],
+  );
+
   return (
     <section className="py-16 sm:py-24 lg:py-32 section-dark">
       <div className="container mx-auto px-4 lg:px-8">
@@ -55,7 +128,7 @@ const ModelDiscovery = () => {
         <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
           {models.map((model, i) => (
             <motion.div
-              key={model.name}
+              key={model.href}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}

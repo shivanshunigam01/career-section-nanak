@@ -8,41 +8,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Edit2, Trash2, Plus, Palette, X } from "lucide-react";
 import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGetData, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import {
+  adminProductFromApi,
+  adminProductToApiPayload,
+  slugifyFromName,
+  isMongoId,
+  type AdminProductRow,
+} from "@/lib/adminCmsMappers";
+import { toast } from "sonner";
 
-interface ColorVariant {
-  name: string;
-  hex: string;
-  image: string;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  tagline: string;
-  priceFrom: string;
-  range: string;
-  battery: string;
-  power: string;
-  torque: string;
-  topSpeed: string;
-  driveType: string;
-  fastCharge: string;
-  homeCharge: string;
-  safety: string;
-  airbags: string;
-  adas: string;
-  touchscreen: string;
-  variants: string;
-  heroImage: string;
-  galleryImages: string[];
-  colorVariants: ColorVariant[];
-  brochureUrl: string;
-  active: boolean;
-}
+type Product = AdminProductRow;
+type ColorVariant = Product["colorVariants"][number];
 
 const initialProducts: Product[] = [
   {
-    id: "P1", name: "VinFast VF 7", tagline: "Bold. Intelligent. Unstoppable.",
+    id: "P1", slug: "vf-7", name: "VinFast VF 7", tagline: "Bold. Intelligent. Unstoppable.",
     priceFrom: "₹21.89 Lakh*", range: "431 km", battery: "75.3 kWh", power: "349 HP",
     torque: "500 Nm", topSpeed: "200 km/h", driveType: "AWD", fastCharge: "10-70% in 24 min",
     homeCharge: "0-100% in 11 hrs", safety: "5-Star NCAP", airbags: "6 Airbags",
@@ -58,7 +40,7 @@ const initialProducts: Product[] = [
     ],
   },
   {
-    id: "P2", name: "VinFast VF 6", tagline: "Urban. Smart. Agile.",
+    id: "P2", slug: "vf-6", name: "VinFast VF 6", tagline: "Urban. Smart. Agile.",
     priceFrom: "₹17.29 Lakh*", range: "381 km", battery: "59.6 kWh", power: "201 HP",
     torque: "310 Nm", topSpeed: "175 km/h", driveType: "FWD", fastCharge: "10-70% in 26 min",
     homeCharge: "0-100% in 9 hrs", safety: "5-Star NCAP", airbags: "6 Airbags",
@@ -76,7 +58,7 @@ const initialProducts: Product[] = [
 ];
 
 const emptyProduct: Product = {
-  id: "", name: "", tagline: "", priceFrom: "", range: "", battery: "", power: "",
+  id: "", slug: "", name: "", tagline: "", priceFrom: "", range: "", battery: "", power: "",
   torque: "", topSpeed: "", driveType: "", fastCharge: "", homeCharge: "",
   safety: "5-Star NCAP", airbags: "6 Airbags", adas: "", touchscreen: "",
   variants: "", heroImage: "", galleryImages: [], colorVariants: [], brochureUrl: "", active: true,
@@ -90,27 +72,87 @@ const AdminProducts = () => {
   const STORAGE_KEY = "vf_admin_products";
 
   useEffect(() => {
-    const stored = getStoredState<Product[] | null>(STORAGE_KEY, null);
-    if (stored && stored.length > 0) setProducts(stored);
-    setHydrated(true);
+    let cancelled = false;
+    (async () => {
+      if (hasApi()) {
+        try {
+          const data = await adminGetData<unknown[]>("/admin/products?limit=200&page=1");
+          if (!cancelled && Array.isArray(data) && data.length > 0) {
+            setProducts(data.map((doc) => adminProductFromApi(doc as Record<string, unknown>)));
+            setHydrated(true);
+            return;
+          }
+        } catch {
+          /* fallback below */
+        }
+        if (!cancelled) {
+          const stored = getStoredState<Product[] | null>(STORAGE_KEY, null);
+          setProducts(stored && stored.length > 0 ? stored : initialProducts);
+        }
+      } else {
+        const stored = getStoredState<Product[] | null>(STORAGE_KEY, null);
+        if (!cancelled && stored && stored.length > 0) setProducts(stored);
+      }
+      if (!cancelled) setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
+    if (hasApi()) return;
     setStoredState(STORAGE_KEY, products);
   }, [products, hydrated]);
 
-  const handleSave = (product: Product) => {
-    if (product.id) {
-      setProducts(prev => prev.map(p => p.id === product.id ? product : p));
+  const handleSave = async (product: Product) => {
+    const row: Product = {
+      ...product,
+      slug: (product.slug?.trim() || slugifyFromName(product.name)).toLowerCase(),
+    };
+    if (hasApi()) {
+      try {
+        const payload = adminProductToApiPayload(row);
+        if (isMongoId(row.id)) {
+          const raw = await adminPutJson<Record<string, unknown>>(`/admin/products/${row.id}`, payload);
+          const mapped = adminProductFromApi(raw);
+          setProducts((prev) => prev.map((p) => (p.id === row.id ? mapped : p)));
+        } else {
+          const raw = await adminPostJson<Record<string, unknown>>("/admin/products", payload);
+          const mapped = adminProductFromApi(raw);
+          setProducts((prev) => {
+            const filtered = row.id ? prev.filter((p) => p.id !== row.id) : prev;
+            return [...filtered, mapped];
+          });
+        }
+        toast.success("Product saved");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+        return;
+      }
+    } else if (row.id) {
+      setProducts((prev) => prev.map((p) => (p.id === row.id ? row : p)));
     } else {
-      setProducts(prev => [...prev, { ...product, id: `P${prev.length + 1}` }]);
+      setProducts((prev) => [...prev, { ...row, id: `P${prev.length + 1}` }]);
     }
     setShowForm(false);
     setEditProduct(null);
   };
 
-  const handleDelete = (id: string) => setProducts(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    if (hasApi() && isMongoId(id)) {
+      try {
+        await adminDeleteJson(`/admin/products/${id}`);
+        setProducts((prev) => prev.filter((p) => p.id !== id));
+        toast.success("Product removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
 
   return (
     <div className="space-y-6">
@@ -184,8 +226,11 @@ const AdminProducts = () => {
   );
 };
 
-const ProductForm = ({ product, onSave, onCancel }: { product: Product; onSave: (p: Product) => void; onCancel: () => void }) => {
+const ProductForm = ({ product, onSave, onCancel }: { product: Product; onSave: (p: Product) => void | Promise<void>; onCancel: () => void }) => {
   const [form, setForm] = useState<Product>(product);
+  useEffect(() => {
+    setForm(product);
+  }, [product]);
   const update = <K extends keyof Product>(key: K, value: Product[K]) =>
     setForm(prev => ({ ...prev, [key]: value }));
 
@@ -215,6 +260,10 @@ const ProductForm = ({ product, onSave, onCancel }: { product: Product; onSave: 
           <div className="col-span-2 space-y-1.5">
             <Label className="text-xs">Model Name</Label>
             <Input value={form.name} onChange={e => update("name", e.target.value)} className="bg-secondary/50" placeholder="VinFast VF 7" />
+          </div>
+          <div className="col-span-2 space-y-1.5">
+            <Label className="text-xs">URL slug</Label>
+            <Input value={form.slug} onChange={e => update("slug", e.target.value)} className="bg-secondary/50 font-mono text-xs" placeholder="vf-7 (auto from name if empty)" />
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label className="text-xs">Tagline</Label>

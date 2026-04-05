@@ -1,9 +1,21 @@
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Gift, Repeat, Sparkles, Tag } from "lucide-react";
+import { Gift, Repeat, Sparkles, Tag, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { hasApi } from "@/lib/apiConfig";
+import { publicGet } from "@/lib/api";
 
-const offers = [
+const ICONS: LucideIcon[] = [Sparkles, Repeat, Tag, Gift];
+
+type OfferCard = {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  badge: string | null;
+};
+
+const FALLBACK_OFFERS: OfferCard[] = [
   {
     icon: Sparkles,
     title: "Bihar Launch Offer",
@@ -30,7 +42,33 @@ const offers = [
   },
 ];
 
+function mapOffersFromApi(raw: Record<string, unknown>[]): OfferCard[] {
+  return raw.map((o, i) => ({
+    icon: ICONS[i % ICONS.length],
+    title: String(o.title ?? "Offer"),
+    description: String(o.description ?? ""),
+    badge: o.type ? String(o.type) : null,
+  }));
+}
+
 const OffersSection = () => {
+  const [offers, setOffers] = useState<OfferCard[]>(FALLBACK_OFFERS);
+
+  useEffect(() => {
+    if (!hasApi()) return;
+    let cancelled = false;
+    (async () => {
+      const data = await publicGet<unknown[]>("/public/offers");
+      if (cancelled || !Array.isArray(data) || data.length === 0) return;
+      setOffers(mapOffersFromApi(data as Record<string, unknown>[]));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const list = useMemo(() => (offers.length ? offers : FALLBACK_OFFERS), [offers]);
+
   return (
     <section className="py-16 sm:py-24 lg:py-32 section-dark">
       <div className="container mx-auto px-4 lg:px-8">
@@ -49,11 +87,11 @@ const OffersSection = () => {
         </motion.div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {offers.map((offer, i) => {
+          {list.map((offer, i) => {
             const Icon = offer.icon;
             return (
               <motion.div
-                key={offer.title}
+                key={`${offer.title}-${i}`}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}

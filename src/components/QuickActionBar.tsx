@@ -16,13 +16,13 @@ const QuickActionBar = () => {
   return (
     <section className="relative z-10 -mt-12 lg:-mt-16">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="glass-card px-4 py-4 lg:px-8 lg:py-5 overflow-x-auto sm:overflow-visible">
+        <div className="rounded-3xl border border-border bg-background px-4 py-4 lg:px-8 lg:py-5 overflow-x-auto sm:overflow-visible">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 lg:gap-4 sm:min-w-max lg:justify-center">
             {actions.map((action) => {
               const Icon = action.icon;
               const content = (
-                <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl hover:bg-foreground/5 transition-all cursor-pointer group">
-                  <Icon className="w-4 h-4 text-primary group-hover:scale-110 transition-transform" />
+                <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl hover:bg-foreground/5 cursor-pointer group">
+                  <Icon className="w-4 h-4 text-primary" />
                   <span className="text-xs sm:text-sm font-medium text-foreground/80 group-hover:text-foreground whitespace-nowrap">
                     {action.label}
                   </span>

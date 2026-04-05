@@ -4,6 +4,8 @@ import { Menu, X, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { telHref, waMeUrl } from "@/lib/contactLinks";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -18,8 +20,11 @@ const navLinks = [
 ];
 
 const Navbar = () => {
+  const { dealer, siteConfig } = usePublicSite();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const location = useLocation();
+  const tel = telHref(siteConfig.phoneNumber || dealer.phone);
+  const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -56,10 +61,10 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-3">
-              <a href="tel:+919231445060" className="transition-colors text-foreground/60 hover:text-foreground">
+              <a href={tel} className="transition-colors text-foreground/60 hover:text-foreground">
                 <Phone className="w-4 h-4" />
               </a>
-              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground">
+              <a href={wa} target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground">
                 <MessageCircle className="w-4 h-4" />
               </a>
               <Link to="/book-now">
@@ -105,7 +110,7 @@ const Navbar = () => {
                 <Link to="/test-drive">
                   <Button variant="outline" size="lg" className="w-full">Book Test Drive</Button>
                 </Link>
-                <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer">
+                <a href={wa} target="_blank" rel="noopener noreferrer">
                   <Button variant="whatsapp" size="lg" className="w-full">
                     <MessageCircle className="w-5 h-5" /> WhatsApp
                   </Button>

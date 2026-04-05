@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +6,7 @@ import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf6Banner from "@/assets/vf6-banner.webp";
+import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import interiorImg from "@/assets/interior.jpg";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
@@ -375,56 +374,49 @@ const ModelVF6 = () => {
       <section className="relative flex min-h-[85vh] flex-col">
         <div className="absolute inset-0 overflow-hidden">
           <img
-            src={vf6Banner}
-            alt="VinFast VF 6"
-            className="image-high-quality h-full w-full object-cover object-[20%_50%] scale-[1.32] origin-[24%_48%] motion-reduce:scale-100 motion-reduce:object-center max-md:scale-[1.2] max-md:object-[18%_52%]"
+            src={vf6Hero}
+            alt="Silver VinFast VF 6 electric SUV beside a sunlit field with a family in the background"
+            className="h-full w-full object-cover object-[22%_50%]"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
         </div>
         <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
           <div className="min-h-0 flex-1" aria-hidden />
           <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7 }}
-            className="text-left max-w-3xl"
-          >
-            <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2 mt-px">Compact Electric SUV</p>
-            <h1 className="text-on-image-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 sm:mb-5 leading-[1.05]">
+          <div className="text-left max-w-3xl">
+            <p className="text-hero-plain font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2 mt-px">Compact Electric SUV</p>
+            <h1 className="text-hero-plain-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 sm:mb-5 leading-[1.05]">
               VF 6
             </h1>
 
             <div className="mb-1.5 flex w-max max-w-full gap-4 sm:gap-5">
-              <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/25">
+              <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/30">
                 <div>
-                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
-                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
                 </div>
                 <div>
-                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
-                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Max. power</p>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
                 </div>
               </div>
               <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 min-w-0">
                 <div>
-                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
-                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
                 </div>
                 <div>
-                  <p className="text-on-image-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
-                  <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Driveline</p>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Driveline</p>
                 </div>
               </div>
             </div>
 
             <div className="mb-2">
-              <p className="text-on-image-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">₹17.29L*</p>
-              <p className="text-on-image-ghost text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
+              <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">₹17.29L*</p>
+              <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
@@ -433,10 +425,10 @@ const ModelVF6 = () => {
                   key={v.id}
                   type="button"
                   onClick={() => setVariant(v.id)}
-                  className={`rounded-full px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold transition-all border text-center leading-tight whitespace-nowrap shrink-0 ${
+                  className={`rounded-full px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border text-center leading-tight whitespace-nowrap shrink-0 ${
                     variant === v.id
-                      ? "bg-white text-gray-900 border-white shadow-md"
-                      : "bg-black/25 text-white border-white/45 hover:bg-black/35 backdrop-blur-[2px]"
+                      ? "bg-white text-gray-900 border-white"
+                      : "bg-black/45 text-white border-white/50 hover:bg-black/55"
                   }`}
                 >
                   {v.shortLabel}
@@ -444,7 +436,7 @@ const ModelVF6 = () => {
               ))}
             </div>
 
-            <p className="text-on-image-ghost text-[11px] sm:text-xs max-w-xl mb-3 leading-snug">
+            <p className="text-hero-plain-muted text-[11px] sm:text-xs max-w-xl mb-3 leading-snug">
               *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
             </p>
 
@@ -460,7 +452,7 @@ const ModelVF6 = () => {
                 </Button>
               </Link>
               <Link to="/contact" className="w-full">
-                <Button variant="heroOutline" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/25 border-white/40 text-white hover:bg-black/35 backdrop-blur-[2px]">
+                <Button variant="heroOutline" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55">
                   Get On-Road Price
                 </Button>
               </Link>
@@ -468,7 +460,7 @@ const ModelVF6 = () => {
                 <Button
                   variant="outline"
                   size="lg"
-                  className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/25 border-white/40 text-white hover:bg-black/35 backdrop-blur-[2px]"
+                  className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55"
                 >
                   EMI Calculator
                 </Button>
@@ -476,11 +468,11 @@ const ModelVF6 = () => {
             </div>
 
             <div className="mt-4 sm:mt-5 w-full min-w-0">
-              <p className="text-on-image-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
+              <p className="text-hero-plain-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
                 {vMeta.description}
               </p>
             </div>
-          </motion.div>
+          </div>
           </div>
         </div>
       </section>

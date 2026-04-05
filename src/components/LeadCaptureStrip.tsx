@@ -9,6 +9,7 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { usePublicSite } from "@/context/PublicSiteContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -22,6 +23,7 @@ const getLocalISODate = () => {
 };
 
 const LeadCaptureStrip = () => {
+  const { siteConfig } = usePublicSite();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -129,10 +131,10 @@ const LeadCaptureStrip = () => {
           className="max-w-3xl mx-auto text-center mb-10"
         >
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-3">
-            Ready to Go Electric?
+            {siteConfig.leadStripTitle}
           </h2>
           <p className="text-muted-foreground">
-            Leave your details and our EV advisor will reach out in 10 minutes.
+            {siteConfig.leadStripSubtitle}
           </p>
         </motion.div>
 

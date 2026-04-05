@@ -12,50 +12,45 @@ import CloudinaryUpload from "@/components/admin/CloudinaryUpload";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
 import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { hasApi } from "@/lib/apiConfig";
+import { adminDeleteJson, adminGetData, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import {
+  adminBannerFromApi,
+  adminBannerToApiPayload,
+  adminFaqFromApi,
+  adminFaqToApiPayload,
+  adminTestimonialFromApi,
+  adminTestimonialToApiPayload,
+  isMongoId,
+  type AdminBannerRow,
+  type AdminFaqRow,
+  type AdminTestimonialRow,
+} from "@/lib/adminCmsMappers";
+import { toast } from "sonner";
 
 const STORAGE_KEY = "vf_admin_content";
 
-interface Banner {
-  id: string;
-  title: string;
-  subtitle: string;
-  imageUrl: string;
-  link: string;
-  active: boolean;
-}
-interface FAQ {
-  id: string;
-  question: string;
-  answer: string;
-  category: string;
-}
-interface Testimonial {
-  id: string;
-  name: string;
-  city: string;
-  model: string;
-  rating: number;
-  text: string;
-  photo: string;
-}
+type Banner = AdminBannerRow;
+type FAQ = AdminFaqRow;
+type Testimonial = AdminTestimonialRow;
 
 const initialBanners: Banner[] = [
-  { id: "B1", title: "VinFast Bihar Launch", subtitle: "Book your test drive today", imageUrl: "", link: "/test-drive", active: true },
-  { id: "B2", title: "VF Series — Design You Can Feel", subtitle: "Explore the lineup", imageUrl: "", link: "/models/vf7", active: true },
+  { id: "B1", title: "VinFast Bihar Launch", subtitle: "Book your test drive today", imageUrl: "", link: "/test-drive", active: true, order: 0 },
+  { id: "B2", title: "VF Series — Design You Can Feel", subtitle: "Explore the lineup", imageUrl: "", link: "/models/vf7", active: true, order: 1 },
 ];
 const initialFaqs: FAQ[] = [
-  { id: "F1", question: "What is the range of VF 7?", answer: "The VF 7 offers up to 431 km of range on a single charge.", category: "VF 7" },
-  { id: "F2", question: "Is home charging available?", answer: "Yes, VinFast provides a complimentary home charger installation with every purchase.", category: "Charging" },
-  { id: "F3", question: "What finance options are available?", answer: "We partner with leading banks to offer EMI options starting from ₹21,890/month.", category: "Finance" },
+  { id: "F1", question: "What is the range of VF 7?", answer: "The VF 7 offers up to 431 km of range on a single charge.", category: "VF 7", active: true, order: 0 },
+  { id: "F2", question: "Is home charging available?", answer: "Yes, VinFast provides a complimentary home charger installation with every purchase.", category: "Charging", active: true, order: 1 },
+  { id: "F3", question: "What finance options are available?", answer: "We partner with leading banks to offer EMI options starting from ₹21,890/month.", category: "Finance", active: true, order: 2 },
 ];
 const initialTestimonials: Testimonial[] = [
-  { id: "T1", name: "Rahul Kumar", city: "Patna", model: "VF 7", rating: 5, text: "Amazing car! The performance and tech features are unmatched at this price.", photo: "" },
-  { id: "T2", name: "Priya Singh", city: "Patna", model: "VF 6", rating: 4, text: "Perfect city SUV. Love the design and the 5-star safety gives me confidence.", photo: "" },
+  { id: "T1", name: "Rahul Kumar", city: "Patna", model: "VF 7", rating: 5, text: "Amazing car! The performance and tech features are unmatched at this price.", photo: "", active: true, order: 0 },
+  { id: "T2", name: "Priya Singh", city: "Patna", model: "VF 6", rating: 4, text: "Perfect city SUV. Love the design and the 5-star safety gives me confidence.", photo: "", active: true, order: 1 },
 ];
 
-const emptyBanner: Banner = { id: "", title: "", subtitle: "", imageUrl: "", link: "/", active: true };
-const emptyFaq: FAQ = { id: "", question: "", answer: "", category: "General" };
-const emptyTestimonial: Testimonial = { id: "", name: "", city: "", model: "VF 7", rating: 5, text: "", photo: "" };
+const emptyBanner: Banner = { id: "", title: "", subtitle: "", imageUrl: "", link: "/", active: true, order: 0 };
+const emptyFaq: FAQ = { id: "", question: "", answer: "", category: "General", active: true, order: 0 };
+const emptyTestimonial: Testimonial = { id: "", name: "", city: "", model: "VF 7", rating: 5, text: "", photo: "", active: true, order: 0 };
 
 const AdminContent = () => {
   const [hydrated, setHydrated] = useState(false);
@@ -68,34 +63,222 @@ const AdminContent = () => {
   const [editTestimonial, setEditTestimonial] = useState<Testimonial | null>(null);
 
   useEffect(() => {
-    const stored = getStoredState<{ banners: Banner[]; faqs: FAQ[]; testimonials: Testimonial[] } | null>(STORAGE_KEY, null);
-    if (stored) {
-      setBanners(stored.banners ?? initialBanners);
-      setFaqs(stored.faqs ?? initialFaqs);
-      setTestimonials(stored.testimonials ?? initialTestimonials);
-    }
-    setHydrated(true);
+    let cancelled = false;
+    let hadApiSuccess = false;
+    (async () => {
+      if (hasApi()) {
+        try {
+          const bRaw = await adminGetData<unknown[]>("/admin/banners?limit=200&page=1");
+          if (!cancelled && Array.isArray(bRaw)) {
+            hadApiSuccess = true;
+            if (bRaw.length > 0) setBanners(bRaw.map((doc) => adminBannerFromApi(doc as Record<string, unknown>)));
+            else setBanners(initialBanners);
+          }
+        } catch {
+          /* keep initial */
+        }
+        try {
+          const fRaw = await adminGetData<unknown[]>("/admin/faqs?limit=200&page=1");
+          if (!cancelled && Array.isArray(fRaw)) {
+            hadApiSuccess = true;
+            if (fRaw.length > 0) setFaqs(fRaw.map((doc) => adminFaqFromApi(doc as Record<string, unknown>)));
+            else setFaqs(initialFaqs);
+          }
+        } catch {
+          /* keep initial */
+        }
+        try {
+          const tRaw = await adminGetData<unknown[]>("/admin/testimonials?limit=200&page=1");
+          if (!cancelled && Array.isArray(tRaw)) {
+            hadApiSuccess = true;
+            if (tRaw.length > 0) setTestimonials(tRaw.map((doc) => adminTestimonialFromApi(doc as Record<string, unknown>)));
+            else setTestimonials(initialTestimonials);
+          }
+        } catch {
+          /* keep initial */
+        }
+        if (!cancelled && !hadApiSuccess) {
+          const stored = getStoredState<{ banners: Banner[]; faqs: FAQ[]; testimonials: Testimonial[] } | null>(STORAGE_KEY, null);
+          if (stored) {
+            setBanners(stored.banners ?? initialBanners);
+            setFaqs(stored.faqs ?? initialFaqs);
+            setTestimonials(stored.testimonials ?? initialTestimonials);
+          }
+        }
+      } else {
+        const stored = getStoredState<{ banners: Banner[]; faqs: FAQ[]; testimonials: Testimonial[] } | null>(STORAGE_KEY, null);
+        if (!cancelled && stored) {
+          setBanners(stored.banners ?? initialBanners);
+          setFaqs(stored.faqs ?? initialFaqs);
+          setTestimonials(stored.testimonials ?? initialTestimonials);
+        }
+      }
+      if (!cancelled) setHydrated(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!hydrated) return;
+    if (hasApi()) return;
     setStoredState(STORAGE_KEY, { banners, faqs, testimonials });
   }, [banners, faqs, testimonials, hydrated]);
 
-  const saveBanner = (b: Banner) => {
-    if (b.id) setBanners(p => p.map(x => x.id === b.id ? b : x));
-    else setBanners(p => [...p, { ...b, id: `B${p.length + 1}` }]);
+  const saveBanner = async (b: Banner) => {
+    const isNew = !b.id || !isMongoId(b.id);
+    const row: Banner = {
+      ...b,
+      order: Number.isFinite(b.order) ? b.order : isNew ? banners.length : 0,
+    };
+    if (hasApi()) {
+      try {
+        const payload = adminBannerToApiPayload(row);
+        if (isMongoId(row.id)) {
+          const raw = await adminPutJson<Record<string, unknown>>(`/admin/banners/${row.id}`, payload);
+          setBanners((p) => p.map((x) => (x.id === row.id ? adminBannerFromApi(raw) : x)));
+        } else {
+          const raw = await adminPostJson<Record<string, unknown>>("/admin/banners", payload);
+          const mapped = adminBannerFromApi(raw);
+          setBanners((p) => {
+            const filtered = row.id ? p.filter((x) => x.id !== row.id) : p;
+            return [...filtered, mapped];
+          });
+        }
+        toast.success("Banner saved");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+        return;
+      }
+    } else if (row.id) {
+      setBanners((p) => p.map((x) => (x.id === row.id ? row : x)));
+    } else {
+      setBanners((p) => [...p, { ...row, id: `B${p.length + 1}` }]);
+    }
     setEditBanner(null);
   };
-  const saveFaq = (f: FAQ) => {
-    if (f.id) setFaqs(p => p.map(x => x.id === f.id ? f : x));
-    else setFaqs(p => [...p, { ...f, id: `F${p.length + 1}` }]);
+
+  const saveFaq = async (f: FAQ) => {
+    const isNew = !f.id || !isMongoId(f.id);
+    const row: FAQ = {
+      ...f,
+      order: Number.isFinite(f.order) ? f.order : isNew ? faqs.length : 0,
+    };
+    if (hasApi()) {
+      try {
+        const payload = adminFaqToApiPayload(row);
+        if (isMongoId(row.id)) {
+          const raw = await adminPutJson<Record<string, unknown>>(`/admin/faqs/${row.id}`, payload);
+          setFaqs((p) => p.map((x) => (x.id === row.id ? adminFaqFromApi(raw) : x)));
+        } else {
+          const raw = await adminPostJson<Record<string, unknown>>("/admin/faqs", payload);
+          const mapped = adminFaqFromApi(raw);
+          setFaqs((p) => {
+            const filtered = row.id ? p.filter((x) => x.id !== row.id) : p;
+            return [...filtered, mapped];
+          });
+        }
+        toast.success("FAQ saved");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+        return;
+      }
+    } else if (row.id) {
+      setFaqs((p) => p.map((x) => (x.id === row.id ? row : x)));
+    } else {
+      setFaqs((p) => [...p, { ...row, id: `F${p.length + 1}` }]);
+    }
     setEditFaq(null);
   };
-  const saveTestimonial = (t: Testimonial) => {
-    if (t.id) setTestimonials(p => p.map(x => x.id === t.id ? t : x));
-    else setTestimonials(p => [...p, { ...t, id: `T${p.length + 1}` }]);
+
+  const saveTestimonial = async (t: Testimonial) => {
+    const isNew = !t.id || !isMongoId(t.id);
+    const row: Testimonial = {
+      ...t,
+      order: Number.isFinite(t.order) ? t.order : isNew ? testimonials.length : 0,
+    };
+    if (hasApi()) {
+      try {
+        const payload = adminTestimonialToApiPayload(row);
+        if (isMongoId(row.id)) {
+          const raw = await adminPutJson<Record<string, unknown>>(`/admin/testimonials/${row.id}`, payload);
+          setTestimonials((p) => p.map((x) => (x.id === row.id ? adminTestimonialFromApi(raw) : x)));
+        } else {
+          const raw = await adminPostJson<Record<string, unknown>>("/admin/testimonials", payload);
+          const mapped = adminTestimonialFromApi(raw);
+          setTestimonials((p) => {
+            const filtered = row.id ? p.filter((x) => x.id !== row.id) : p;
+            return [...filtered, mapped];
+          });
+        }
+        toast.success("Testimonial saved");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+        return;
+      }
+    } else if (row.id) {
+      setTestimonials((p) => p.map((x) => (x.id === row.id ? row : x)));
+    } else {
+      setTestimonials((p) => [...p, { ...row, id: `T${p.length + 1}` }]);
+    }
     setEditTestimonial(null);
+  };
+
+  const deleteBanner = async (id: string) => {
+    if (hasApi() && isMongoId(id)) {
+      try {
+        await adminDeleteJson(`/admin/banners/${id}`);
+        setBanners((p) => p.filter((x) => x.id !== id));
+        toast.success("Banner removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setBanners((p) => p.filter((x) => x.id !== id));
+  };
+
+  const deleteFaq = async (id: string) => {
+    if (hasApi() && isMongoId(id)) {
+      try {
+        await adminDeleteJson(`/admin/faqs/${id}`);
+        setFaqs((p) => p.filter((x) => x.id !== id));
+        toast.success("FAQ removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setFaqs((p) => p.filter((x) => x.id !== id));
+  };
+
+  const deleteTestimonial = async (id: string) => {
+    if (hasApi() && isMongoId(id)) {
+      try {
+        await adminDeleteJson(`/admin/testimonials/${id}`);
+        setTestimonials((p) => p.filter((x) => x.id !== id));
+        toast.success("Testimonial removed");
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setTestimonials((p) => p.filter((x) => x.id !== id));
+  };
+
+  const toggleBannerActive = async (b: Banner) => {
+    const next = { ...b, active: !b.active };
+    if (hasApi() && isMongoId(b.id)) {
+      try {
+        const raw = await adminPutJson<Record<string, unknown>>(`/admin/banners/${b.id}`, adminBannerToApiPayload(next));
+        setBanners((p) => p.map((x) => (x.id === b.id ? adminBannerFromApi(raw) : x)));
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      }
+      return;
+    }
+    setBanners((p) => p.map((x) => (x.id === b.id ? next : x)));
   };
 
   return (
@@ -132,9 +315,9 @@ const AdminContent = () => {
                   <p className="text-[10px] text-muted-foreground mt-1">→ {b.link}</p>
                 </div>
                 <div className="flex items-start gap-1 flex-shrink-0">
-                  <Switch checked={b.active} onCheckedChange={() => setBanners(p => p.map(x => x.id === b.id ? { ...x, active: !x.active } : x))} />
+                  <Switch checked={b.active} onCheckedChange={() => void toggleBannerActive(b)} />
                   <button onClick={() => setEditBanner(b)} className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setBanners(p => p.filter(x => x.id !== b.id))} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => void deleteBanner(b.id)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
             </Card>
@@ -158,7 +341,7 @@ const AdminContent = () => {
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button onClick={() => setEditFaq(f)} className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setFaqs(p => p.filter(x => x.id !== f.id))} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => void deleteFaq(f.id)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
             </Card>
@@ -189,7 +372,7 @@ const AdminContent = () => {
                 </div>
                 <div className="flex gap-1 flex-shrink-0">
                   <button onClick={() => setEditTestimonial(t)} className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
-                  <button onClick={() => setTestimonials(p => p.filter(x => x.id !== t.id))} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                  <button onClick={() => void deleteTestimonial(t.id)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
                 </div>
               </div>
             </Card>

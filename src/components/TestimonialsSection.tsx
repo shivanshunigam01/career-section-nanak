@@ -1,7 +1,18 @@
+import { useEffect, useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
+import { hasApi } from "@/lib/apiConfig";
+import { publicGet } from "@/lib/api";
 
-const testimonials = [
+type TestimonialView = {
+  name: string;
+  location: string;
+  rating: number;
+  text: string;
+  model: string;
+};
+
+const FALLBACK: TestimonialView[] = [
   {
     name: "Rajesh Kumar",
     location: "Patna, Bihar",
@@ -25,7 +36,40 @@ const testimonials = [
   },
 ];
 
+function mapFromApi(raw: Record<string, unknown>[]): TestimonialView[] {
+  return raw.map((doc) => {
+    const des = String(doc.designation ?? "");
+    const parts = des.split(" · ");
+    const location = parts[0]?.trim() || "Bihar";
+    const model = parts[1]?.trim() || "VinFast Owner";
+    return {
+      name: String(doc.name ?? "Customer"),
+      location,
+      rating: Math.min(5, Math.max(1, Number(doc.rating ?? 5))),
+      text: String(doc.quote ?? ""),
+      model,
+    };
+  });
+}
+
 const TestimonialsSection = () => {
+  const [items, setItems] = useState<TestimonialView[]>(FALLBACK);
+
+  useEffect(() => {
+    if (!hasApi()) return;
+    let cancelled = false;
+    (async () => {
+      const data = await publicGet<unknown[]>("/public/testimonials");
+      if (cancelled || !Array.isArray(data) || data.length === 0) return;
+      setItems(mapFromApi(data as Record<string, unknown>[]));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const testimonials = useMemo(() => (items.length ? items : FALLBACK), [items]);
+
   return (
     <section className="py-16 sm:py-24 lg:py-32 section-surface">
       <div className="container mx-auto px-4 lg:px-8">
@@ -46,7 +90,7 @@ const TestimonialsSection = () => {
         <div className="grid gap-5 sm:grid-cols-2 md:grid-cols-3 sm:gap-6">
           {testimonials.map((t, i) => (
             <motion.div
-              key={t.name}
+              key={`${t.name}-${i}`}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
@@ -62,7 +106,9 @@ const TestimonialsSection = () => {
               <p className="text-foreground/90 text-sm leading-relaxed mb-6">"{t.text}"</p>
               <div>
                 <p className="font-display font-semibold">{t.name}</p>
-                <p className="text-muted-foreground text-xs">{t.model} · {t.location}</p>
+                <p className="text-muted-foreground text-xs">
+                  {t.model} · {t.location}
+                </p>
               </div>
             </motion.div>
           ))}

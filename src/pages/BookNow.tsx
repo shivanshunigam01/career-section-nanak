@@ -15,7 +15,7 @@ import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import vf7Real from "@/assets/vf7-real.png";
-import vf6Banner from "@/assets/vf6-banner.webp";
+import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import interiorImg from "@/assets/interior.jpg";
 import slideVf7Interior from "@/assets/slide-vf7-interior.png";
 
@@ -186,7 +186,7 @@ const BookNowPage = () => {
                 </div>
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border/60 shadow-sm">
                   <img
-                    src={vf6Banner}
+                    src={vf6Hero}
                     alt="VinFast VF 6"
                     className="image-high-quality absolute inset-0 h-full w-full object-cover"
                     sizes="(max-width: 1024px) 45vw, 320px"

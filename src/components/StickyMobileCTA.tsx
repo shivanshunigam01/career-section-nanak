@@ -1,20 +1,26 @@
 import { Link } from "react-router-dom";
 import { Phone, MessageCircle, CalendarDays, ShoppingBag } from "lucide-react";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { telHref, waMeUrl } from "@/lib/contactLinks";
 
 const StickyMobileCTA = () => {
+  const { dealer, siteConfig } = usePublicSite();
+  const tel = telHref(siteConfig.phoneNumber || dealer.phone);
+  const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
+
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-background border-t border-border/50 px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
       <div className="flex flex-col gap-2">
         <div className="flex items-center gap-2">
           <a
-            href="tel:+919231445060"
+            href={tel}
             className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-foreground/5 text-foreground text-xs font-medium"
           >
             <Phone className="w-3.5 h-3.5" />
             Call
           </a>
           <a
-            href="https://wa.me/919231445060"
+            href={wa}
             target="_blank"
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-[#25D366] text-primary-foreground text-xs font-medium"

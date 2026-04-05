@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { PublicSiteProvider } from "@/context/PublicSiteContext";
 import Index from "./pages/Index";
 import ModelVF7 from "./pages/ModelVF7";
 import ModelVF6 from "./pages/ModelVF6";
@@ -30,8 +32,10 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
+    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+      <TooltipProvider>
+        <Sonner />
+        <PublicSiteProvider>
       <BrowserRouter>
         <ScrollToTop />
         <Routes>
@@ -64,7 +68,9 @@ const App = () => (
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
-    </TooltipProvider>
+      </PublicSiteProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
