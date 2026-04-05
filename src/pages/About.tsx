@@ -17,7 +17,7 @@ const AboutPage = () => {
         <div className="absolute inset-0">
           <img
             src={patliputraVinfastHero}
-            alt="Patliputra Auto × VinFast"
+            alt="Patliputra VinFast"
             className="image-high-quality h-full w-full object-cover object-center"
             sizes="100vw"
             fetchPriority="high"
@@ -30,7 +30,7 @@ const AboutPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
             <h1 className="text-on-image-lg font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight mb-3">
-              Patliputra Auto<br className="hidden sm:block" /> × VinFast
+              Patliputra VinFast
             </h1>
             <p className="text-on-image-soft text-base md:text-lg max-w-xl">
               Bihar's first authorized VinFast dealer — bringing electric excellence to your doorstep.
@@ -88,9 +88,9 @@ const AboutPage = () => {
                 </p>
               </div>
               <div>
-                <h2 className="font-display font-bold text-2xl mb-4">About Patliputra Auto</h2>
+                <h2 className="font-display font-bold text-2xl mb-4">About Patliputra VinFast</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Patliputra Auto is Bihar's most trusted automotive group with 25+ years serving customers across the state with brands like JCB, Ashok Leyland, and Switch EV. As VinFast's authorized dealer for Bihar, we bring the same commitment to excellence and after-sales support.
+                  Patliputra VinFast builds on the Patliputra Group legacy — Bihar's trusted automotive partner for 25+ years with brands like JCB, Ashok Leyland, and Switch EV. As VinFast's authorized dealer for Bihar, we bring the same commitment to excellence and after-sales support.
                 </p>
               </div>
               <div>

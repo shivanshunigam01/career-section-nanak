@@ -5,7 +5,7 @@ const trustItems = [
   {
     icon: Award,
     title: "Authorized Dealer",
-    description: "Bihar's first and only authorized VinFast dealer — Patliputra Auto.",
+    description: "Bihar's first and only authorized VinFast dealer — Patliputra VinFast.",
   },
   {
     icon: Shield,

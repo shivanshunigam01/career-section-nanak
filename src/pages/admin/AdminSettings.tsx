@@ -23,7 +23,7 @@ type DealerForm = {
 };
 
 const defaultSettings: DealerForm = {
-  dealerName: "Patliputra Auto",
+  dealerName: "Patliputra VinFast",
   brand: "VinFast",
   phone: "+91 9231445060",
   email: "info@patliputraauto.com",

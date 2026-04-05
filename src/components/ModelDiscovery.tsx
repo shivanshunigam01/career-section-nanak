@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Battery, Gauge, Shield, Zap } from "lucide-react";
 import vf7Real from "@/assets/vf7-real.png";
-import vf6Card from "@/assets/vf6-banner.webp";
+import vf6Card from "@/assets/vf6-banner.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";

@@ -5,7 +5,8 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import heroSlide01 from "@/assets/hero-slideshow/slide-01.png";
 import heroSlide02 from "@/assets/hero-slideshow/slide-02.png";
 import heroSlide03 from "@/assets/hero-slideshow/slide-03.png";
-import heroSlide04 from "@/assets/hero-slideshow/hero-signature-led-rear.png";
+import heroVf7LedHighway from "@/assets/hero-slideshow/hero-vf7-led-highway.png";
+import heroVf7Cockpit from "@/assets/hero-slideshow/hero-vf7-cockpit.png";
 import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
 import heroSlide06 from "@/assets/vf6-earth-hero-family.png";
 import { hasApi } from "@/lib/apiConfig";
@@ -46,10 +47,16 @@ const FALLBACK_SLIDES: HeroSlideView[] = [
     objectPosition: "center 55%",
   },
   {
-    image: heroSlide04,
+    image: heroVf7LedHighway,
     title: "Signature LED presence",
-    sub: "Sleek light bar, floating roof lines, and a rear profile that turns every head.",
-    objectPosition: "center 50%",
+    sub: "Full-width V-shaped front lighting and the centred VinFast V — unmistakable presence, engineered to stand out day or night.",
+    objectPosition: "center 48%",
+  },
+  {
+    image: heroVf7Cockpit,
+    title: "Your command centre",
+    sub: "Landscape touchscreen, connected services, and a leather-wrapped cabin centred on the VinFast V.",
+    objectPosition: "center 48%",
   },
   {
     image: heroSlide05,
@@ -157,7 +164,7 @@ const HeroSection = () => {
       {slides.map((s, i) => (
         <div
           key={`${s.image}-${i}`}
-          className="absolute inset-0 transition-opacity duration-1000 ease-in-out"
+          className="absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
           style={{
             opacity: i === current ? 1 : 0,
             zIndex: i === current ? 1 : 0,
@@ -167,12 +174,12 @@ const HeroSection = () => {
           <img
             src={s.image}
             alt={`${s.title} — VinFast hero`}
-            className="h-full w-full object-cover"
+            className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
             style={{ objectPosition: s.objectPosition }}
-            sizes="100vw"
-            loading={i === 0 ? "eager" : "lazy"}
+            sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
+            loading={i <= 1 ? "eager" : "lazy"}
             decoding="async"
-            fetchPriority={i === 0 ? "high" : "low"}
+            fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
           />
         </div>
       ))}
@@ -237,8 +244,10 @@ const HeroSection = () => {
                 onClick={() => setCurrent(i)}
                 aria-label={`Go to slide ${i + 1}`}
                 aria-current={i === current ? "true" : undefined}
-                className={`h-1.5 shrink-0 rounded-full ${
-                  i === current ? "w-7 sm:w-9 bg-primary" : "w-2.5 sm:w-3 bg-white/50 hover:bg-white/70"
+                className={`shrink-0 rounded-full transition-[width,height,background-color] ${
+                  i === current
+                    ? "h-2.5 w-2.5 sm:h-3 sm:w-3 bg-primary ring-2 ring-primary/40"
+                    : "h-2 w-2 sm:h-2.5 sm:w-2.5 bg-white/45 hover:bg-white/70"
                 }`}
               />
             ))}

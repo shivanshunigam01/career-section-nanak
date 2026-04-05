@@ -17,14 +17,14 @@ const FALLBACK: TestimonialView[] = [
     name: "Rajesh Kumar",
     location: "Patna, Bihar",
     rating: 5,
-    text: "The VF 7 is a game changer. The safety features and range are incredible. Patliputra Auto made the entire buying experience seamless.",
+    text: "The VF 7 is a game changer. The safety features and range are incredible. Patliputra VinFast made the entire buying experience seamless.",
     model: "VF 7 Owner",
   },
   {
     name: "Priya Singh",
     location: "Muzaffarpur, Bihar",
     rating: 5,
-    text: "As a first-time EV buyer, I had many concerns. The team at Patliputra Auto addressed everything — from charging to finance. Absolutely love my VF 6!",
+    text: "As a first-time EV buyer, I had many concerns. The team at Patliputra VinFast addressed everything — from charging to finance. Absolutely love my VF 6!",
     model: "VF 6 Owner",
   },
   {

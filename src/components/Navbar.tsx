@@ -4,6 +4,7 @@ import { Menu, X, Phone, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
+import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 
@@ -37,9 +38,19 @@ const Navbar = () => {
       >
         <div className="container mx-auto px-4 lg:px-8">
           <div className="flex items-center justify-between h-16 lg:h-20">
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-3">
-              <img src={vinfastLogo} alt="Patliputra VinFast" className="h-10 sm:h-12 lg:h-16 w-auto object-contain" />
+            {/* Logos: VinFast lockup + Patliputra outline (outline slightly smaller) */}
+            <Link to="/" className="flex items-center gap-2 sm:gap-3 shrink-0 min-w-0">
+              <img
+                src={vinfastLogo}
+                alt="Patliputra VinFast"
+                className="h-10 sm:h-12 lg:h-16 w-auto max-h-full object-contain object-left"
+              />
+              <span className="hidden sm:block w-px h-4 sm:h-5 lg:h-7 self-center bg-border shrink-0" aria-hidden />
+              <img
+                src={patliputraOutlineLogo}
+                alt="Patliputra"
+                className="h-4 sm:h-5 lg:h-8 w-auto max-h-full object-contain object-left"
+              />
             </Link>
 
             {/* Desktop Nav */}

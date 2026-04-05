@@ -234,6 +234,17 @@
   .image-high-quality {
     image-rendering: high-quality;
   }
+
+  /**
+   * Full-bleed hero slider: best-effort sharp scaling + stable compositing
+   * (opacity crossfades) without filters on the photo itself.
+   */
+  .hero-slider-image {
+    image-rendering: high-quality;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
 }
 
 /* Smooth scrolling */

@@ -25,7 +25,7 @@ export type SiteConfigPublic = {
 };
 
 const DEFAULT_DEALER: DealerInfo = {
-  dealerName: "Patliputra Auto",
+  dealerName: "Patliputra VinFast",
   phone: "+91 9231445060",
   whatsapp: "919231445060",
   email: "info@patliputravinfast.com",

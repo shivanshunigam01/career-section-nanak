@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import interiorImg from "@/assets/interior.jpg";
 import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
 import vf7Real from "@/assets/vf7-real.png";
-import vf6Card from "@/assets/vf6-banner.webp";
+import vf6Card from "@/assets/vf6-banner.png";
 
 const VirtualShowroom = () => {
   return (

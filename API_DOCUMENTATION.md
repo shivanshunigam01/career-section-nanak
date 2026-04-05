@@ -1,9 +1,9 @@
-# Patliputra Auto × VinFast — API Documentation
+# Patliputra VinFast — API Documentation
 
 **Version:** 1.0.0  
 **Date:** March 2026  
 **Prepared for:** Backend Developer  
-**Project:** Patliputra Auto VinFast Dealer Website & Admin Panel  
+**Project:** Patliputra VinFast Dealer Website & Admin Panel  
 **Stack:** Node.js · Express.js · MongoDB · Mongoose · JWT · Cloudinary
 
 ---
@@ -30,7 +30,7 @@
 
 ## 1. Project Overview
 
-Patliputra Auto is Bihar's first authorized VinFast dealer. This backend API serves:
+Patliputra VinFast is Bihar's first authorized VinFast dealer. This backend API serves:
 
 - **Public Website** — Product pages, lead capture form, test drive booking, contact/enquiry form, hero slides, offers, FAQs, testimonials.
 - **Admin Panel** — Full CRM including leads, test drives, enquiries, product management (with Cloudinary image upload), offers, homepage/content management, media library, and dealer settings.
@@ -1629,5 +1629,5 @@ Replace these hardcoded values in the React frontend with API calls once the bac
 
 ---
 
-*End of API Documentation — Patliputra Auto × VinFast v1.0*  
+*End of API Documentation — Patliputra VinFast v1.0*  
 *For backend queries contact the frontend team for schema clarifications.*

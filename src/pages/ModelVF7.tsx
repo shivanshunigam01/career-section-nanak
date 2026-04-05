@@ -486,15 +486,15 @@ const ModelVF7 = () => {
                   >
                     {v.shortLabel}
                   </button>
-                ))}
-              </div>
+              ))}
+            </div>
 
               <p className="text-hero-plain-muted text-[11px] sm:text-xs max-w-xl mb-3 leading-snug">
                 *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
-                <Link to="/test-drive" className="w-full">
+              <Link to="/test-drive" className="w-full">
                   <Button variant="hero" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                     Book Test Drive
                   </Button>
@@ -503,13 +503,13 @@ const ModelVF7 = () => {
                   <Button variant="heroWhite" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                     Book Now
                   </Button>
-                </Link>
-                <Link to="/contact" className="w-full">
+              </Link>
+              <Link to="/contact" className="w-full">
                   <Button variant="heroOutline" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55">
                     Get On-Road Price
                   </Button>
-                </Link>
-                <Link to="/emi-calculator" className="w-full">
+              </Link>
+              <Link to="/emi-calculator" className="w-full">
                   <Button
                     variant="outline"
                     size="lg"
@@ -517,7 +517,7 @@ const ModelVF7 = () => {
                   >
                     EMI Calculator
                   </Button>
-                </Link>
+              </Link>
               </div>
 
               <div className="mt-4 sm:mt-5 w-full min-w-0">
@@ -861,7 +861,7 @@ const ModelVF7 = () => {
                 <li key={b}>{b}</li>
               ))}
             </ul>
-          </div>
+              </div>
 
           <SpecTable7 title="Connectivity & infotainment" rows={connectivityRows} />
 
