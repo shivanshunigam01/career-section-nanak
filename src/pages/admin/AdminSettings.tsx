@@ -4,7 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useCallback, useEffect, useState } from "react";
 import { getStoredState, setStoredState } from "@/lib/vfLocalStorage";
-import { hasApi } from "@/lib/apiConfig";
+import { API_BASE, hasApi, LIVE_API_BASE } from "@/lib/apiConfig";
 import { adminGetData, adminPutJson, formatApiErrors } from "@/lib/api";
 import { toast } from "sonner";
 
@@ -125,14 +125,13 @@ const AdminSettings = () => {
       <Card className="bg-card border-border/50 p-5 space-y-3">
         <h3 className="font-display font-semibold text-foreground">API Configuration</h3>
         <p className="text-sm text-muted-foreground">
-          Set <code className="text-xs bg-secondary px-1 rounded">VITE_API_URL</code> in{" "}
-          <code className="text-xs bg-secondary px-1 rounded">.env</code> (e.g.{" "}
-          <code className="text-xs bg-secondary px-1 rounded">http://localhost:5000/api/v1</code>
-          ) and restart the Vite dev server. Align backend{" "}
-          <code className="text-xs bg-secondary px-1 rounded">CLIENT_URL</code> with your site origin for CORS.
+          Production uses <code className="text-xs bg-secondary px-1 rounded">{LIVE_API_BASE}</code> unless{" "}
+          <code className="text-xs bg-secondary px-1 rounded">VITE_API_URL</code> is set. Restart Vite after
+          changing env. Backend <code className="text-xs bg-secondary px-1 rounded">CLIENT_URL</code> must
+          match your website origin for CORS.
         </p>
         <p className="text-xs text-muted-foreground">
-          Current: {useRemote ? `${import.meta.env.VITE_API_URL}` : "Not set — using local storage only"}
+          Resolved API base: {useRemote ? API_BASE : "Not set — using local storage only"}
         </p>
       </Card>
     </div>
