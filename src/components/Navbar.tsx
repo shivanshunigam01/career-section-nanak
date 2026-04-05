@@ -12,6 +12,7 @@ const navLinks = [
   { label: "Home", href: "/" },
   { label: "VF 7", href: "/models/vf7" },
   { label: "VF 6", href: "/models/vf6" },
+  { label: "VF MPV 7", href: "/models/mpv7" },
   { label: "Compare", href: "/compare" },
   { label: "Book Now", href: "/book-now" },
   { label: "Test Drive", href: "/test-drive" },

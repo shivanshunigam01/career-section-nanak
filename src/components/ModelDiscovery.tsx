@@ -2,14 +2,15 @@ import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Battery, Gauge, Shield, Zap } from "lucide-react";
+import { Battery, Gauge, Shield, Users, Zap } from "lucide-react";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Card from "@/assets/vf6-banner.png";
+import mpv7Card from "@/assets/mpv7-gallery/mpv7-01.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 
-type Spec = { icon: typeof Battery; label: string; value: string };
+type Spec = { icon: typeof Battery | typeof Users; label: string; value: string };
 
 type ModelCard = {
   name: string;
@@ -45,10 +46,23 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
       { icon: Shield, label: "Safety", value: "5-Star" },
     ],
   },
+  {
+    name: "VF MPV 7",
+    tagline: "Space. Seven seats. Electric.",
+    image: mpv7Card,
+    href: "/models/mpv7",
+    specs: [
+      { icon: Battery, label: "Battery", value: "75.3 kWh" },
+      { icon: Gauge, label: "Range", value: "450 km (NEDC)" },
+      { icon: Zap, label: "0–100", value: "8.3s" },
+      { icon: Users, label: "Seats", value: "7" },
+    ],
+  },
 ];
 
 function slugMatchesHref(href: string, slug: string): boolean {
   const s = slug.toLowerCase();
+  if (href.includes("mpv7")) return s.includes("mpv7") || s.includes("mpv") || s === "vf-mpv-7" || s.endsWith("mpv7");
   if (href.includes("vf7")) return s.includes("vf7") || s === "vf-7" || s.endsWith("vf7");
   if (href.includes("vf6")) return s.includes("vf6") || s === "vf-6" || s.endsWith("vf6");
   return false;
@@ -61,8 +75,16 @@ function mergeModels(
 ): ModelCard[] {
   return base.map((m) => {
     const api = apiList?.find((p) => slugMatchesHref(m.href, String(p.slug ?? "")));
-    const sitePrice = m.href.includes("vf7") ? site.vf7Price : site.vf6Price;
-    const siteRange = m.href.includes("vf7") ? site.vf7Range : site.vf6Range;
+    const sitePrice = m.href.includes("vf7")
+      ? site.vf7Price
+      : m.href.includes("mpv7")
+        ? "Bookings open*"
+        : site.vf6Price;
+    const siteRange = m.href.includes("vf7")
+      ? site.vf7Range
+      : m.href.includes("mpv7")
+        ? "450 km (NEDC)"
+        : site.vf6Range;
     const price = api?.priceFrom ? String(api.priceFrom) : sitePrice;
     const image =
       api?.heroImage && String(api.heroImage).trim() ? String(api.heroImage) : m.image;
@@ -125,7 +147,7 @@ const ModelDiscovery = () => {
           </h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-8 lg:gap-12">
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8 lg:gap-10">
           {models.map((model, i) => (
             <motion.div
               key={model.href}

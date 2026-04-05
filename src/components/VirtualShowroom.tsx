@@ -5,6 +5,7 @@ import interiorImg from "@/assets/interior.jpg";
 import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Card from "@/assets/vf6-banner.png";
+import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
 
 const VirtualShowroom = () => {
   return (
@@ -23,7 +24,7 @@ const VirtualShowroom = () => {
             Step Inside Luxury
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Experience the premium craftsmanship and cutting-edge technology of the VF 6 & VF 7.
+            Experience the premium craftsmanship and cutting-edge technology of the VF 6, VF 7, and seven-seat VF MPV 7.
           </p>
         </motion.div>
 
@@ -48,7 +49,7 @@ const VirtualShowroom = () => {
         </motion.div>
 
         {/* Individual model cards */}
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {/* VF 7 card */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
@@ -98,6 +99,31 @@ const VirtualShowroom = () => {
               </Link>
             </div>
           </motion.div>
+
+          {/* VF MPV 7 card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="relative rounded-3xl overflow-hidden shadow-luxury group md:col-span-2 lg:col-span-1"
+          >
+            <img
+              src={mpv7Hero}
+              alt="VinFast VF MPV 7"
+              className="w-full aspect-[16/10] object-cover object-[center_42%] transition-[filter] duration-500 group-hover:brightness-[1.06]"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl">VinFast VF MPV 7</p>
+                <p className="text-on-image-soft text-xs sm:text-sm">7 seats · 450 km (NEDC) · 75.3 kWh · Bookings open</p>
+              </div>
+              <Link to="/models/mpv7">
+                <Button variant="hero" size="sm" className="w-full sm:w-auto">View Model</Button>
+              </Link>
+            </div>
+          </motion.div>
         </div>
 
         {/* VF 6 & VF 7 — dual banner */}
@@ -116,8 +142,8 @@ const VirtualShowroom = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-transparent" />
           <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-10 lg:left-10 lg:right-10 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 & VF 7</p>
-              <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Two bold electric SUVs. One authorised dealer in Bihar.</p>
+              <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-3xl">VF 6 · VF 7 · VF MPV 7</p>
+              <p className="text-on-image-soft text-xs sm:text-sm lg:text-base mt-1">Electric SUVs and a seven-seat MPV. One authorised dealer in Bihar.</p>
             </div>
             <div className="flex flex-wrap gap-1.5 md:gap-2">
               <Link to="/models/vf6">
@@ -128,6 +154,11 @@ const VirtualShowroom = () => {
               <Link to="/models/vf7">
                 <Button variant="hero" size="sm" className="w-full sm:w-auto shadow-md">
                   Explore VF 7
+                </Button>
+              </Link>
+              <Link to="/models/mpv7">
+                <Button variant="outline" size="sm" className="w-full sm:w-auto shadow-md border-white/80 bg-black/30 text-white hover:bg-black/45">
+                  Explore VF MPV 7
                 </Button>
               </Link>
             </div>

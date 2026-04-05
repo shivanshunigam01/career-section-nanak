@@ -21,6 +21,7 @@ import {
   compareRowLabels,
   compareSectionDefinitions,
   getVariantEntry,
+  type CompareModelKey,
   type CompareSelection,
 } from "@/data/compareCatalog";
 
@@ -46,7 +47,7 @@ function VsBadge() {
 const ComparePage = () => {
   const [slots, setSlots] = useState<[Slot, Slot, Slot]>(defaultSlots);
   const [hideCommon, setHideCommon] = useState(false);
-  const [thirdModelDraft, setThirdModelDraft] = useState<"vf6" | "vf7">("vf6");
+  const [thirdModelDraft, setThirdModelDraft] = useState<CompareModelKey>("vf6");
   const [thirdVariantDraft, setThirdVariantDraft] = useState<string>(
     compareModels.vf6.variants[0]?.id ?? "earth",
   );
@@ -221,45 +222,35 @@ const ComparePage = () => {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mx-auto mb-10">
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">Compare</p>
             <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 leading-tight px-1">
-              VinFast VF 6 vs VF 7
+              VinFast VF 6, VF 7 &amp; VF MPV 7
             </h1>
             <p className="text-muted-foreground text-sm md:text-base">
               Pick up to three trims, hide identical lines, and scroll the full spec stack — Patliputra VinFast Patna.
             </p>
           </motion.div>
 
-          {/* Quick summary card — VF7 vs VF6 */}
-          <div className="max-w-3xl mx-auto mb-10 sm:mb-12 rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
-            <div className="relative grid grid-cols-2 gap-0 bg-muted/40 px-3 py-5 sm:px-8 sm:py-8">
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-                <VsBadge />
-              </div>
-              <div className="flex justify-center pr-6 sm:pr-12 min-w-0">
-                <img
-                  src={compareModels.vf7.image}
-                  alt="VinFast VF 7"
-                  className="max-h-24 sm:max-h-32 md:max-h-36 w-full max-w-[min(100%,200px)] object-contain"
-                />
-              </div>
-              <div className="flex justify-center pl-6 sm:pl-12 min-w-0">
-                <img
-                  src={compareModels.vf6.image}
-                  alt="VinFast VF 6"
-                  className="max-h-24 sm:max-h-32 md:max-h-36 w-full max-w-[min(100%,200px)] object-contain"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-px bg-border/60 border-t border-border/60">
-              <div className="bg-card p-3 sm:p-6 text-center min-w-0">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{compareModels.vf7.brand}</p>
-                <p className="font-display font-bold text-base sm:text-lg md:text-xl leading-tight">{compareModels.vf7.name}</p>
-                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹21,89,000* – ₹26,79,000*</p>
-              </div>
-              <div className="bg-card p-3 sm:p-6 text-center min-w-0">
-                <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{compareModels.vf6.brand}</p>
-                <p className="font-display font-bold text-base sm:text-lg md:text-xl leading-tight">{compareModels.vf6.name}</p>
-                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹17,29,000* – ₹19,19,000*</p>
-              </div>
+          {/* Quick summary — lineup */}
+          <div className="max-w-5xl mx-auto mb-10 sm:mb-12 rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 bg-muted/40 px-3 py-5 sm:px-6 sm:py-8 divide-y sm:divide-y-0 sm:divide-x divide-border/50">
+              {(["vf7", "vf6", "mpv7"] as const).map((key) => {
+                const m = compareModels[key];
+                return (
+                  <div key={key} className="flex flex-col items-center justify-center py-4 sm:py-0 px-2 min-w-0">
+                    <img
+                      src={m.image}
+                      alt={`VinFast ${m.name}`}
+                      className="max-h-24 sm:max-h-28 md:max-h-32 w-full max-w-[min(100%,180px)] object-contain mb-3"
+                    />
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">{m.brand}</p>
+                    <p className="font-display font-bold text-base sm:text-lg leading-tight text-center">{m.name}</p>
+                    <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug text-center px-1">
+                      {key === "vf7" && "₹21,89,000* – ₹26,79,000*"}
+                      {key === "vf6" && "₹17,29,000* – ₹19,19,000*"}
+                      {key === "mpv7" && "Bookings open*"}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
             <div className="p-4 sm:p-5 border-t border-border/60">
               <Button variant="outline" className="w-full border-primary/60 text-primary hover:bg-primary/5" asChild>
@@ -328,8 +319,8 @@ const ComparePage = () => {
                         value={col.sel.modelKey}
                         onValueChange={(v) =>
                           updateSlot(idx as 0 | 1 | 2, {
-                            modelKey: v as "vf6" | "vf7",
-                            variantId: compareModels[v as "vf6" | "vf7"].variants[0].id,
+                            modelKey: v as CompareModelKey,
+                            variantId: compareModels[v as CompareModelKey].variants[0].id,
                           })
                         }
                       >
@@ -339,6 +330,7 @@ const ComparePage = () => {
                         <SelectContent>
                           <SelectItem value="vf6">VinFast VF 6</SelectItem>
                           <SelectItem value="vf7">VinFast VF 7</SelectItem>
+                          <SelectItem value="mpv7">VinFast VF MPV 7</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -383,14 +375,14 @@ const ComparePage = () => {
                     </div>
                     <p className="font-display font-semibold text-sm">Add a third vehicle</p>
                     <p className="text-xs text-muted-foreground max-w-xs">
-                      Compare another VF 6 or VF 7 trim (for example two VF 7 variants side by side).
+                      Add a VF 6, VF 7, or VF MPV 7 trim — for example two VF 7 variants side by side.
                     </p>
                     <div className="w-full space-y-2 text-left">
                       <Label className="text-xs text-muted-foreground">Model</Label>
                       <Select
                         value={thirdModelDraft}
                         onValueChange={(v) => {
-                          const mk = v as "vf6" | "vf7";
+                          const mk = v as CompareModelKey;
                           setThirdModelDraft(mk);
                           setThirdVariantDraft(compareModels[mk].variants[0].id);
                         }}
@@ -401,6 +393,7 @@ const ComparePage = () => {
                         <SelectContent>
                           <SelectItem value="vf6">VinFast VF 6</SelectItem>
                           <SelectItem value="vf7">VinFast VF 7</SelectItem>
+                          <SelectItem value="mpv7">VinFast VF MPV 7</SelectItem>
                         </SelectContent>
                       </Select>
                       <Label className="text-xs text-muted-foreground mt-2 block">
@@ -497,6 +490,9 @@ const ComparePage = () => {
                 VF 7 brochure
               </Button>
             </a>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/models/mpv7">VF MPV 7 — specs &amp; gallery</Link>
+            </Button>
           </div>
         </div>
       </section>

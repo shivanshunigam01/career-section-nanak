@@ -9,6 +9,7 @@ import heroVf7LedHighway from "@/assets/hero-slideshow/hero-vf7-led-highway.png"
 import heroVf7Cockpit from "@/assets/hero-slideshow/hero-vf7-cockpit.png";
 import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
 import heroSlide06 from "@/assets/vf6-earth-hero-family.png";
+import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero.png";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 import { usePublicSite } from "@/context/PublicSiteContext";
@@ -30,8 +31,8 @@ export type HeroSlideView = {
 const FALLBACK_SLIDES: HeroSlideView[] = [
   {
     image: heroSlide01,
-    title: "VF 6 & VF 7",
-    sub: "Electrify your drive and outshine the streets with the best in class SUVs. Experience the revolution in motion, exclusively at Patliputra VinFast, Bihar's only authorized dealer.",
+    title: "VF 6, VF 7 & VF MPV 7",
+    sub: "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7. Experience the revolution in motion, exclusively at Patliputra VinFast, Bihar's only authorized dealer.",
     objectPosition: "28% 48%",
   },
   {
@@ -70,6 +71,15 @@ const FALLBACK_SLIDES: HeroSlideView[] = [
     sub: "VF 6 — space, safety, and zero-emission drives from Patna to the open road.",
     footnote: "*Images shown are for illustrative purposes only. Features and specification may vary as per trim.",
     objectPosition: "28% 45%",
+  },
+  {
+    image: heroMpv7,
+    title: "The all-new VF MPV 7",
+    sub: "Seven-seat electric MPV — 450 km (NEDC), 75.3 kWh battery, bookings open at Patliputra VinFast.",
+    footnote: "*Images shown are for illustrative purposes only. Specifications may vary; confirm with dealer.",
+    objectPosition: "center 42%",
+    ctaSecondary: "Explore VF MPV 7",
+    ctaSecondaryLink: "/models/mpv7",
   },
 ];
 
@@ -274,6 +284,12 @@ const HeroSection = () => {
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
           >
             Explore VF 6 <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+          <Link
+            to="/models/mpv7"
+            className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
+          >
+            Explore VF MPV 7 <ChevronRight className="w-3.5 h-3.5" />
           </Link>
           <a
             href={waUrl}

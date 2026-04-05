@@ -28,7 +28,7 @@ const Footer = () => {
             </Link>
             <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">Authorized Dealer, Bihar</p>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mb-6">
-              Bihar's authorized VinFast dealer. Experience premium electric SUVs — VF 6 & VF 7 — with world-class safety, technology, and support.
+              Bihar's authorized VinFast dealer. Experience electric SUVs and the seven-seat VF MPV 7 — world-class safety, technology, and support.
             </p>
             <div className="flex gap-4">
               <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
@@ -51,6 +51,7 @@ const Footer = () => {
                 { label: "Home", href: "/" },
                 { label: "VF 7", href: "/models/vf7" },
                 { label: "VF 6", href: "/models/vf6" },
+                { label: "VF MPV 7", href: "/models/mpv7" },
                 { label: "Compare Models", href: "/compare" },
                 { label: "Book Now", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },

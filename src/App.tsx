@@ -7,6 +7,7 @@ import { PublicSiteProvider } from "@/context/PublicSiteContext";
 import Index from "./pages/Index";
 import ModelVF7 from "./pages/ModelVF7";
 import ModelVF6 from "./pages/ModelVF6";
+import ModelMPV7 from "./pages/ModelMPV7";
 import TestDrive from "./pages/TestDrive";
 import BookNow from "./pages/BookNow";
 import EMICalculator from "./pages/EMICalculator";
@@ -43,6 +44,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/models/vf7" element={<ModelVF7 />} />
           <Route path="/models/vf6" element={<ModelVF6 />} />
+          <Route path="/models/mpv7" element={<ModelMPV7 />} />
           <Route path="/book-now" element={<BookNow />} />
           <Route path="/test-drive" element={<TestDrive />} />
           <Route path="/emi-calculator" element={<EMICalculator />} />
