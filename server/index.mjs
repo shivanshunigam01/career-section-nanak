@@ -225,6 +225,10 @@ function buildV1Router() {
 }
 
 const app = express();
+/** Behind nginx / a load balancer, set TRUST_PROXY=1 so req.protocol and host match the public URL. */
+if (process.env.TRUST_PROXY === "1" || process.env.TRUST_PROXY === "true") {
+  app.set("trust proxy", 1);
+}
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "256kb" }));
 
