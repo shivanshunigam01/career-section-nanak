@@ -169,7 +169,7 @@ const BookNowPage = () => {
     "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
       <div className="pt-24 pb-36 lg:pt-32 lg:pb-32">
         <div className="container mx-auto px-4 lg:px-8">

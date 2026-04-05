@@ -344,7 +344,7 @@ const ModelVF6 = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero — top inset clears fixed navbar (h-16 lg:h-20); flex spacer keeps copy bottom-aligned without clipping under nav */}
+      {/* Hero — top inset clears fixed navbar (~4.25rem lg:h-20); flex spacer keeps copy bottom-aligned without clipping under nav */}
       <section className="relative flex min-h-[85vh] flex-col">
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
@@ -416,7 +416,7 @@ const ModelVF6 = () => {
               *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
+            <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
               <Link to="/test-drive" className="w-full">
                 <Button variant="hero" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
                   Book Test Drive
@@ -593,7 +593,7 @@ const ModelVF6 = () => {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 pt-1">
+              <div className="hidden lg:flex flex-wrap gap-3 pt-1">
                 <Button asChild variant="default" size="default">
                   <Link to="/test-drive">Book test drive</Link>
                 </Button>

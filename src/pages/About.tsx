@@ -9,11 +9,11 @@ import vf8Convoy from "@/assets/vf8-convoy.jpg";
 
 const AboutPage = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
       {/* Hero */}
-      <section className="relative min-h-[52vh] sm:min-h-[60vh] flex items-end pb-10 sm:pb-14 pt-16 lg:pt-20">
+      <section className="relative min-h-[52vh] sm:min-h-[60vh] flex items-end pb-10 sm:pb-14 pt-[4.25rem] lg:pt-20">
         <div className="absolute inset-0">
           <img
             src={patliputraVinfastHero}

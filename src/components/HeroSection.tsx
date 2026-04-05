@@ -241,36 +241,71 @@ const HeroSection = () => {
     return () => clearInterval(timer);
   }, [next, slides.length]);
 
+  const [intrinsicBySrc, setIntrinsicBySrc] = useState<Record<string, { w: number; h: number }>>({});
+  const [isLg, setIsLg] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(min-width: 1024px)").matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const fn = () => setIsLg(mq.matches);
+    fn();
+    mq.addEventListener("change", fn);
+    return () => mq.removeEventListener("change", fn);
+  }, []);
+
+  const handleHeroImageLoad = useCallback((src: string, w: number, h: number) => {
+    if (w <= 0 || h <= 0) return;
+    setIntrinsicBySrc((prev) => {
+      if (prev[src]?.w === w && prev[src]?.h === h) return prev;
+      return { ...prev, [src]: { w, h } };
+    });
+  }, []);
+
   const waUrl = useMemo(() => waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp), [siteConfig.whatsappNumber, dealer.whatsapp]);
 
   const slide = slides[current] ?? FALLBACK_SLIDES[0];
 
-  return (
-    <section className="relative h-[85vh] sm:h-[90vh] lg:h-screen min-h-[500px] sm:min-h-[600px] max-h-[min(100vh,1280px)] flex items-end pb-6 sm:pb-12 lg:pb-28 pt-16 lg:pt-0 overflow-hidden bg-zinc-950">
-      {slides.map((s, i) => (
-        <div
-          key={`${s.image}-${i}`}
-          className="hero-media-scrim absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
-          style={{
-            opacity: i === current ? 1 : 0,
-            zIndex: i === current ? 1 : 0,
-          }}
-          aria-hidden={i !== current}
-        >
-          <img
-            src={s.image}
-            alt={`${s.title} — VinFast hero`}
-            className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
-            style={{ objectPosition: s.objectPosition }}
-            sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
-            loading={i <= 1 ? "eager" : "lazy"}
-            decoding="async"
-            fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
-          />
-        </div>
-      ))}
+  const mobileAspectStyle = useMemo(() => {
+    const intr = intrinsicBySrc[slide.image];
+    if (intr && intr.w > 0 && intr.h > 0) {
+      return { aspectRatio: `${intr.w} / ${intr.h}` as const };
+    }
+    return { aspectRatio: "16 / 9" as const };
+  }, [intrinsicBySrc, slide.image]);
 
-      <div className="relative container mx-auto px-4 lg:px-8 z-10">
+  return (
+    <section className="relative z-0 overflow-hidden bg-zinc-950 pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
+      <div
+        className="relative w-full shrink-0 overflow-hidden lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px]"
+        style={isLg ? undefined : mobileAspectStyle}
+      >
+        {slides.map((s, i) => (
+          <div
+            key={`${s.image}-${i}`}
+            className="hero-media-scrim absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
+            style={{
+              opacity: i === current ? 1 : 0,
+              zIndex: i === current ? 1 : 0,
+            }}
+            aria-hidden={i !== current}
+          >
+            <img
+              src={s.image}
+              alt={`${s.title} — VinFast hero`}
+              className="hero-slider-image h-full w-full object-contain object-center lg:min-h-full lg:min-w-full lg:object-cover"
+              style={isLg ? { objectPosition: s.objectPosition } : undefined}
+              sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
+              loading={i <= 1 ? "eager" : "lazy"}
+              decoding="async"
+              fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
+              onLoad={(e) => handleHeroImageLoad(s.image, e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
+            />
+          </div>
+        ))}
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 max-lg:bg-gradient-to-t max-lg:from-zinc-950 max-lg:via-zinc-950/80 max-lg:to-transparent max-lg:pt-16 pb-6 sm:pb-8 lg:pb-28">
+          <div className="pointer-events-auto container mx-auto px-4 lg:px-8">
         <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
             <p className="text-hero-plain font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">
               {slide.badge || `${dealer.dealerName} · ${siteConfig.heroTagline}`}
@@ -294,7 +329,7 @@ const HeroSection = () => {
               <p className="text-hero-plain-muted text-[11px] sm:text-xs leading-snug max-w-prose mt-3">{slide.footnote}</p>
             )}
             <div className="h-4 sm:h-5" />
-            <div className="flex flex-wrap gap-3 sm:gap-4">
+            <div className="hidden lg:flex flex-wrap gap-3 sm:gap-4">
               {slide.ctaPrimary && slide.ctaPrimaryLink ? (
                 <CtaButton label={slide.ctaPrimary} link={slide.ctaPrimaryLink} variant="hero" />
               ) : (
@@ -317,7 +352,7 @@ const HeroSection = () => {
         </div>
 
         <div
-          className="flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12 w-full flex-wrap"
+          className="hidden lg:flex items-center gap-3 sm:gap-4 mt-6 sm:mt-10 lg:mt-12 w-full flex-wrap"
           role="group"
           aria-label="Hero slideshow controls"
         >
@@ -355,7 +390,7 @@ const HeroSection = () => {
           </button>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 mt-5 sm:mt-6 lg:mt-8 flex-wrap">
+        <div className="hidden lg:flex items-center gap-2 sm:gap-3 mt-5 sm:mt-6 lg:mt-8 flex-wrap">
           <Link
             to="/models/mpv7"
             className="inline-flex items-center gap-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-gray-300 bg-white hover:bg-neutral-50 text-gray-900 text-[11px] sm:text-sm font-medium"
@@ -382,6 +417,8 @@ const HeroSection = () => {
           >
             WhatsApp Now <ChevronRight className="w-3.5 h-3.5" />
           </a>
+        </div>
+          </div>
         </div>
       </div>
     </section>
