@@ -41,8 +41,8 @@ const DEFAULT_SITE: SiteConfigPublic = {
   heroTagline: "Bihar's First VinFast Dealer",
   leadStripTitle: "Ready to Go Electric?",
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
-  vf7Price: "₹21.89L*",
-  vf6Price: "₹17.29L*",
+  vf7Price: "₹21,89,000*",
+  vf6Price: "₹17,29,000*",
   vf7Range: "431 km",
   vf6Range: "381 km",
 };

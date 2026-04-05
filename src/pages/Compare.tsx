@@ -253,12 +253,12 @@ const ComparePage = () => {
               <div className="bg-card p-3 sm:p-6 text-center min-w-0">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{compareModels.vf7.brand}</p>
                 <p className="font-display font-bold text-base sm:text-lg md:text-xl leading-tight">{compareModels.vf7.name}</p>
-                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹21.89 – 26.79 Lakh*</p>
+                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹21,89,000* – ₹26,79,000*</p>
               </div>
               <div className="bg-card p-3 sm:p-6 text-center min-w-0">
                 <p className="text-[10px] sm:text-xs text-muted-foreground mb-1">{compareModels.vf6.brand}</p>
                 <p className="font-display font-bold text-base sm:text-lg md:text-xl leading-tight">{compareModels.vf6.name}</p>
-                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹17.29 – 19.19 Lakh*</p>
+                <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug">₹17,29,000* – ₹19,19,000*</p>
               </div>
             </div>
             <div className="p-4 sm:p-5 border-t border-border/60">

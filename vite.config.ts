@@ -4,7 +4,8 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "./",
+  // Root URL on Hostinger/Vercel — required so /models/vf7 loads /assets/* correctly
+  base: "/",
 
   server: {
     host: "::",

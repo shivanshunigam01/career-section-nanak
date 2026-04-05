@@ -50,7 +50,7 @@ const initialSlides: HeroSlide[] = [
     ctaSecondary: "Explore VF 7", ctaSecondaryLink: "/models/vf7", bgImage: "", active: true, order: 1,
   },
   {
-    id: "S2", title: "VinFast VF 6", subtitle: "Smart. Sleek. Perfect for Bihar roads.", badge: "Starting ₹17.29L*",
+    id: "S2", title: "VinFast VF 6", subtitle: "Smart. Sleek. Perfect for Bihar roads.", badge: "Starting ₹17,29,000*",
     ctaPrimary: "Book Test Drive", ctaPrimaryLink: "/test-drive", ctaSecondary: "Explore VF 6",
     ctaSecondaryLink: "/models/vf6", bgImage: "", active: true, order: 2,
   },
@@ -62,8 +62,8 @@ const initialConfig: SiteConfig = {
   heroTagline: "Bihar's First VinFast Dealer",
   leadStripTitle: "Ready to Go Electric?",
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
-  vf7Price: "₹21.89L*",
-  vf6Price: "₹17.29L*",
+  vf7Price: "₹21,89,000*",
+  vf6Price: "₹17,29,000*",
   vf7Range: "431 km",
   vf6Range: "381 km",
 };
@@ -323,11 +323,11 @@ const AdminHomepage = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 7 Display Price</Label>
-                <Input value={config.vf7Price} onChange={e => updateConfig("vf7Price", e.target.value)} className="bg-secondary/50" placeholder="₹21.89L*" />
+                <Input value={config.vf7Price} onChange={e => updateConfig("vf7Price", e.target.value)} className="bg-secondary/50" placeholder="₹21,89,000*" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 6 Display Price</Label>
-                <Input value={config.vf6Price} onChange={e => updateConfig("vf6Price", e.target.value)} className="bg-secondary/50" placeholder="₹17.29L*" />
+                <Input value={config.vf6Price} onChange={e => updateConfig("vf6Price", e.target.value)} className="bg-secondary/50" placeholder="₹17,29,000*" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 7 Range</Label>
