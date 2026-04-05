@@ -23,11 +23,14 @@ import vf7GalHeadlight from "@/assets/vf7-gallery/vf7-gallery-headlight.jpg";
 import vf7GalWheel from "@/assets/vf7-gallery/vf7-gallery-wheel.jpg";
 import vf7GalSideStep from "@/assets/vf7-gallery/vf7-gallery-side-step.jpg";
 import vf7GalSideMirror from "@/assets/vf7-gallery/vf7-gallery-side-mirror.jpg";
-import vf7GalAirVents from "@/assets/vf7-gallery/vf7-gallery-air-vents.jpg";
-import vf7GalSteeringWheel from "@/assets/vf7-gallery/vf7-gallery-steering-wheel.jpg";
-import vf7GalSteeringControls from "@/assets/vf7-gallery/vf7-gallery-steering-controls.jpg";
-import vf7GalConfigKnob from "@/assets/vf7-gallery/vf7-gallery-config-knob.jpg";
-import vf7GalInfotainment from "@/assets/vf7-gallery/vf7-gallery-infotainment.jpg";
+import vf7GalIntEnh01 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-01.jpg";
+import vf7GalIntEnh02 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-02.jpg";
+import vf7GalIntEnh03 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-03.jpg";
+import vf7GalIntEnh04 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-04.jpg";
+import vf7GalIntEnh05 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-05.jpg";
+import vf7GalIntEnh06 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-06.jpg";
+import vf7GalIntEnh07 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-07.jpg";
+import vf7GalIntEnh08 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E6E6E2", image: vf7InfinityBlanc },
@@ -92,6 +95,14 @@ const variantHeroStats: Record<
   windInfinity: { range: "510 km", accel: "8.5 s", power: "204 PS", driveline: "FWD" },
   sky: { range: "510 km", accel: "5.8 s", power: "353 PS", driveline: "AWD" },
   skyInfinity: { range: "510 km", accel: "5.8 s", power: "353 PS", driveline: "AWD" },
+};
+
+const variantExShowroomPrice: Record<VariantId, string> = {
+  earth: "₹21,89,000*",
+  wind: "₹24,69,000*",
+  windInfinity: "₹25,19,000*",
+  sky: "₹26,19,000*",
+  skyInfinity: "₹26,79,000*",
 };
 
 const variantKeyFigures: Record<VariantId, { label: string; value: string }[]> = {
@@ -347,34 +358,52 @@ const vf7GalleryDetails: { src: string; title: string; description: string; alt:
     alt: "VF 7 side mirror",
   },
   {
-    src: vf7GalAirVents,
-    title: "Dual-zone climate",
-    description: "Automatic dual-zone HVAC, PM1.0 filtration and ionizer keep cabin air fresh in every seat row.",
-    alt: "VF 7 dashboard air vents",
+    src: vf7GalIntEnh01,
+    title: "Cabin climate & air quality",
+    description: "Automatic dual-zone HVAC with PM1.0 filtration and ionizer — fresh air for every row on Patna commutes and highway runs.",
+    alt: "VinFast VF 7 interior — climate and cabin air",
   },
   {
-    src: vf7GalSteeringWheel,
-    title: "Steering wheel",
-    description: "D-cut wheel with vegan leather wrap and multi-function controls — tilt and telescopic adjustment for all drivers.",
-    alt: "VF 7 steering wheel",
+    src: vf7GalIntEnh02,
+    title: "Steering & driver controls",
+    description: "D-cut steering with vegan leather wrap, multi-function spokes and tilt/telescopic reach — keep eyes forward with HUD in view.",
+    alt: "VinFast VF 7 interior — steering wheel and controls",
   },
   {
-    src: vf7GalSteeringControls,
-    title: "Controls at thumb reach",
-    description: "Audio, phone and driver-assist interfaces without taking your eyes off the HUD and road ahead.",
-    alt: "VF 7 steering wheel controls",
+    src: vf7GalIntEnh03,
+    title: "Driver-focused cockpit",
+    description: "Clear sightlines, digital instrumentation and a minimalist IP — technology that stays intuitive at city speeds and on the open road.",
+    alt: "VinFast VF 7 interior — driver cockpit",
   },
   {
-    src: vf7GalConfigKnob,
-    title: "Drive mode & drive selector",
-    description: "Eco, Normal and Sport modes with adjustable regeneration (Off / Low / Medium / High) to match traffic and range goals.",
-    alt: "VF 7 configuration selector knob",
+    src: vf7GalIntEnh04,
+    title: "Center console & storage",
+    description: "Thoughtful stowage, piano-key drive logic and satin accents — daily usability with a premium feel across Earth through Sky Infinity.",
+    alt: "VinFast VF 7 interior — center console",
   },
   {
-    src: vf7GalInfotainment,
-    title: "32.76 cm touchscreen",
-    description: "Central hub for navigation and media; Wind upward adds wireless Android Auto & Apple CarPlay, smart modes and OTA updates.",
-    alt: "VF 7 infotainment main menu",
+    src: vf7GalIntEnh05,
+    title: "Front-row comfort",
+    description: "Powered adjustment (trim-dependent), supportive cushioning and refined materials — Wind upward adds ventilated front seats for Bihar summers.",
+    alt: "VinFast VF 7 interior — front seats",
+  },
+  {
+    src: vf7GalIntEnh06,
+    title: "Rear passenger space",
+    description: "2840 mm wheelbase pays off in legroom; rear vents and amenities keep family trips out of Patna comfortable.",
+    alt: "VinFast VF 7 interior — rear seating",
+  },
+  {
+    src: vf7GalIntEnh07,
+    title: "Craft & detailing",
+    description: "Contrast stitching, soft-touch surfaces and ambient touches that read upscale without shouting — showroom photography from Patliputra VinFast.",
+    alt: "VinFast VF 7 interior — trim and detail",
+  },
+  {
+    src: vf7GalIntEnh08,
+    title: "32.76 cm touchscreen hub",
+    description: "Navigation, media and connected services; Wind upward adds wireless Android Auto & Apple CarPlay, smart modes and OTA updates.",
+    alt: "VinFast VF 7 interior — infotainment display",
   },
 ];
 
@@ -415,7 +444,7 @@ function SpecTable7({ title, rows }: { title: string; rows: [string, string, str
 
 const ModelVF7 = () => {
   const [selectedColor, setSelectedColor] = useState(0);
-  const [variant, setVariant] = useState<VariantId>("wind");
+  const [variant, setVariant] = useState<VariantId>("earth");
 
   const stats = variantHeroStats[variant];
   const vMeta = vf7Variants.find((v) => v.id === variant)!;
@@ -468,7 +497,9 @@ const ModelVF7 = () => {
               </div>
 
               <div className="mb-2">
-                <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">₹21.89L*</p>
+                <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
+                  {variantExShowroomPrice[variant]}
+                </p>
                 <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
               </div>
 
@@ -634,7 +665,9 @@ const ModelVF7 = () => {
                   <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 leading-tight">
                     Indicative ex-showroom
                   </p>
-                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">₹21.89L*</p>
+                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">
+                    {variantExShowroomPrice[variant]}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -900,7 +933,7 @@ const ModelVF7 = () => {
             </div>
             <div className="rounded-3xl overflow-hidden shadow-luxury border border-border/40">
               <img
-                src={vf7GalInfotainment}
+                src={vf7GalIntEnh08}
                 alt="VF 7 infotainment and cabin"
                 className="image-high-quality h-auto w-full object-cover aspect-[4/3]"
                 sizes="(max-width: 1024px) 100vw, 50vw"

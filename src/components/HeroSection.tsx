@@ -31,8 +31,8 @@ const FALLBACK_SLIDES: HeroSlideView[] = [
   {
     image: heroSlide01,
     title: "VF 6 & VF 7",
-    sub: "Two electric SUVs, signature V lighting — experience them at Patliputra VinFast, Bihar's authorized dealer.",
-    objectPosition: "center 42%",
+    sub: "Electrify your drive and outshine the streets with the best in class SUVs. Experience the revolution in motion, exclusively at Patliputra VinFast, Bihar's only authorized dealer.",
+    objectPosition: "28% 48%",
   },
   {
     image: heroSlide02,
@@ -49,8 +49,8 @@ const FALLBACK_SLIDES: HeroSlideView[] = [
   {
     image: heroVf7LedHighway,
     title: "Signature LED presence",
-    sub: "Full-width V-shaped front lighting and the centred VinFast V — unmistakable presence, engineered to stand out day or night.",
-    objectPosition: "center 48%",
+    sub: "Full-width rear LED light bar with the centred V dip — the same identity as the front, unmistakable after dark.",
+    objectPosition: "center 50%",
   },
   {
     image: heroVf7Cockpit,

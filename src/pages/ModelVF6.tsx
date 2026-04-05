@@ -16,16 +16,11 @@ import vf6ZenithGrey from "@/assets/vf6-zenith-grey.png";
 import vf6UrbanMint from "@/assets/vf6-urban-mint.png";
 import vf6GalExterior1 from "@/assets/vf6-gallery/vf6-gallery-exterior-1.jpg";
 import vf6GalExterior2 from "@/assets/vf6-gallery/vf6-gallery-exterior-2.jpg";
-import vf6GalSideProfile from "@/assets/vf6-gallery/vf6-gallery-side-profile.jpg";
-import vf6GalFrontThreeQuarter from "@/assets/vf6-gallery/vf6-gallery-front-three-quarter.jpg";
-import vf6GalGrille from "@/assets/vf6-gallery/vf6-gallery-grille.jpg";
-import vf6GalParkingSensor from "@/assets/vf6-gallery/vf6-gallery-parking-sensor.jpg";
-import vf6GalAlloyA from "@/assets/vf6-gallery/vf6-gallery-alloy-wheel-a.jpg";
-import vf6GalFrontSeats from "@/assets/vf6-gallery/vf6-gallery-front-seats.jpg";
-import vf6GalSteering from "@/assets/vf6-gallery/vf6-gallery-steering-wheel.jpg";
-import vf6GalAirVents from "@/assets/vf6-gallery/vf6-gallery-air-vents.jpg";
-import vf6GalInfotainment from "@/assets/vf6-gallery/vf6-gallery-infotainment.jpg";
-import vf6GalPanoramicRoof from "@/assets/vf6-gallery/vf6-gallery-panoramic-roof.jpg";
+import vf6GalDetail01 from "@/assets/vf6-gallery/vf6-gallery-detail-01.png";
+import vf6GalDetail02 from "@/assets/vf6-gallery/vf6-gallery-detail-02.png";
+import vf6GalDetail03 from "@/assets/vf6-gallery/vf6-gallery-detail-03.png";
+import vf6GalDetail04 from "@/assets/vf6-gallery/vf6-gallery-detail-04.png";
+import vf6GalDetail05 from "@/assets/vf6-gallery/vf6-gallery-detail-05.png";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
@@ -71,6 +66,12 @@ const variantHeroStats: Record<
   earth: { range: "468 km", accel: "10.4 s", power: "177 PS", driveline: "FWD" },
   wind: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
   infinity: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
+};
+
+const variantExShowroomPrice: Record<VariantId, string> = {
+  earth: "₹17,29,000*",
+  wind: "₹18,69,000*",
+  infinity: "₹19,19,000*",
 };
 
 /** Dense facts for the selected-variant column (synced with spec tables) */
@@ -266,66 +267,39 @@ const vf6GalleryFeature: { src: string; title: string; description: string; alt:
 
 const vf6GalleryDetails: { src: string; title: string; description: string; alt: string }[] = [
   {
-    src: vf6GalSideProfile,
+    src: vf6GalDetail01,
+    title: "Driver-centric cabin",
+    description:
+      "Landscape touchscreen, D-cut steering with the VinFast V, and light upholstery with contrast stitching — clear ergonomics and a premium feel through the front row.",
+    alt: "VinFast VF 6 interior dashboard, steering wheel, and front seats",
+  },
+  {
+    src: vf6GalDetail02,
     title: "Sleek side profile",
-    description: "Aerodynamic roofline and defined wheel arches — Wind and Wind Infinity wear 18\" machine-cut alloys; Earth uses refined 17\" silver alloys.",
-    alt: "VF 6 left side profile",
+    description:
+      "Aerodynamic roofline and defined wheel arches — Wind and Wind Infinity wear 18\" machine-cut alloys; Earth uses refined 17\" silver alloys.",
+    alt: "VinFast VF 6 full side profile",
   },
   {
-    src: vf6GalFrontThreeQuarter,
+    src: vf6GalDetail03,
     title: "Front fascia & lighting",
-    description: "LED projector headlamps, signature V-shaped DRL, and a confident grille graphic — visibility and identity in one glance.",
-    alt: "VF 6 front left three-quarter detail",
-  },
-  {
-    src: vf6GalGrille,
-    title: "Signature V identity",
-    description: "The VinFast V centres the front graphic — paired with follow-me-home and auto headlamp behaviour on every trim.",
-    alt: "VF 6 front grille and V logo detail",
-  },
-  {
-    src: vf6GalParkingSensor,
-    title: "Front parking sensors",
     description:
-      "Wind and Wind Infinity add a full convenience and safety layer — front sensors work with the 360° camera for tight urban parking. Sensors sit neatly in the bumper for clean styling while you get audible and visual guidance.",
-    alt: "VF 6 with front parking sensors and sensor zone illustration",
+      "LED lighting, signature V-shaped DRL, and a confident front graphic — visibility and identity in one glance.",
+    alt: "VinFast VF 6 front three-quarter studio view",
   },
   {
-    src: vf6GalAlloyA,
-    title: "Alloys & tyres",
+    src: vf6GalDetail04,
+    title: "Signature road presence",
     description:
-      "Machine-cut 18\" alloys on Wind and Wind Infinity (225/55 R18); Earth uses silver 17\" wheels (225/60 R17) for efficiency and comfort. Packages are tuned to the VF 6 FWD chassis for confident grip in monsoon runs and on highways.",
-    alt: "VF 6 alloy wheel and tyre detail",
+      "Bold VF 6 proportions on the road — the full-width V light signature and sculpted cladding read unmistakable from the three-quarter angle.",
+    alt: "VinFast VF 6 front three-quarter on open road with mountain backdrop",
   },
   {
-    src: vf6GalFrontSeats,
-    title: "Front row comfort",
-    description: "Wind and Wind Infinity upgrade to vegan leather with powered adjustment — ventilated front seats on Wind/Infinity for Bihar summers.",
-    alt: "VF 6 front seats from passenger side",
-  },
-  {
-    src: vf6GalSteering,
-    title: "D-cut steering wheel",
-    description: "Multi-function controls and vegan leather wrap — tilt and telescopic adjustment so drivers of every height find a natural position.",
-    alt: "VF 6 steering wheel and controls",
-  },
-  {
-    src: vf6GalAirVents,
-    title: "Dual-zone climate",
-    description: "Wind and Wind Infinity get automatic dual-zone HVAC with PM1.0 cabin filter and air ionizer — Earth retains capable single-zone automatic comfort.",
-    alt: "VF 6 dashboard air vents",
-  },
-  {
-    src: vf6GalInfotainment,
-    title: "32.76 cm touchscreen",
-    description: "Central hub for navigation, media, and on Wind/Infinity — wireless Android Auto & Apple CarPlay, smart modes, OTA updates and remote app features.",
-    alt: "VF 6 infotainment main menu on touchscreen",
-  },
-  {
-    src: vf6GalPanoramicRoof,
-    title: "Panoramic glass roof",
-    description: "Standard on Wind and Wind Infinity — floods the cabin with natural light and opens the rear bench for family trips out of Patna.",
-    alt: "VF 6 panoramic glass roof from inside cabin",
+    src: vf6GalDetail05,
+    title: "Electrified performance",
+    description:
+      "Panoramic roofline, motion-ready stance, and smart-tech positioning — Wind and Wind Infinity add full ADAS and connected features; confirm your exact trim at Patliputra VinFast.",
+    alt: "VinFast VF 6 dynamic front three-quarter on highway with motion blur",
   },
 ];
 
@@ -361,7 +335,7 @@ function SpecTable({ title, rows }: { title: string; rows: [string, string, stri
 
 const ModelVF6 = () => {
   const [selectedColor, setSelectedColor] = useState(0);
-  const [variant, setVariant] = useState<VariantId>("wind");
+  const [variant, setVariant] = useState<VariantId>("earth");
 
   const stats = variantHeroStats[variant];
   const vMeta = vf6Variants.find((v) => v.id === variant)!;
@@ -415,7 +389,9 @@ const ModelVF6 = () => {
             </div>
 
             <div className="mb-2">
-              <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">₹17.29L*</p>
+              <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
+                {variantExShowroomPrice[variant]}
+              </p>
               <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
             </div>
 
@@ -576,7 +552,9 @@ const ModelVF6 = () => {
                   <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 leading-tight">
                     Indicative ex-showroom
                   </p>
-                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">₹17.29L*</p>
+                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">
+                    {variantExShowroomPrice[variant]}
+                  </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">

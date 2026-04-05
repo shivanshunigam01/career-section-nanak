@@ -34,9 +34,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "earth",
         label: "Earth",
-        price: "₹17.29 Lakh*",
+        price: "₹17,29,000*",
         specs: {
-          ex_showroom: "₹17.29 Lakh*",
+          ex_showroom: "₹17,29,000*",
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "468 km",
@@ -71,9 +71,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "wind",
         label: "Wind",
-        price: "₹18.49 Lakh*",
+        price: "₹18,69,000*",
         specs: {
-          ex_showroom: "₹18.49 Lakh*",
+          ex_showroom: "₹18,69,000*",
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "463 km",
@@ -108,9 +108,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "infinity",
         label: "Wind Infinity",
-        price: "₹19.19 Lakh*",
+        price: "₹19,19,000*",
         specs: {
-          ex_showroom: "₹19.19 Lakh*",
+          ex_showroom: "₹19,19,000*",
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "463 km",
@@ -154,9 +154,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "earth",
         label: "Earth",
-        price: "₹21.89 Lakh*",
+        price: "₹21,89,000*",
         specs: {
-          ex_showroom: "₹21.89 Lakh*",
+          ex_showroom: "₹21,89,000*",
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "438 km",
@@ -191,9 +191,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "wind",
         label: "Wind",
-        price: "₹23.29 Lakh*",
+        price: "₹24,69,000*",
         specs: {
-          ex_showroom: "₹23.29 Lakh*",
+          ex_showroom: "₹24,69,000*",
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "532 km",
@@ -228,9 +228,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "windInfinity",
         label: "Wind Infinity",
-        price: "₹24.59 Lakh*",
+        price: "₹25,19,000*",
         specs: {
-          ex_showroom: "₹24.59 Lakh*",
+          ex_showroom: "₹25,19,000*",
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "510 km",
@@ -265,9 +265,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "sky",
         label: "Sky",
-        price: "₹25.79 Lakh*",
+        price: "₹26,19,000*",
         specs: {
-          ex_showroom: "₹25.79 Lakh*",
+          ex_showroom: "₹26,19,000*",
           power: "260 kW (353 PS)",
           torque: "500 Nm",
           range_midc: "510 km",
@@ -302,9 +302,9 @@ export const compareModels: Record<"vf6" | "vf7", CatalogModel> = {
       {
         id: "skyInfinity",
         label: "Sky Infinity",
-        price: "₹26.79 Lakh*",
+        price: "₹26,79,000*",
         specs: {
-          ex_showroom: "₹26.79 Lakh*",
+          ex_showroom: "₹26,79,000*",
           power: "260 kW (353 PS)",
           torque: "500 Nm",
           range_midc: "510 km",

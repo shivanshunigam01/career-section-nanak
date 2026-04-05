@@ -25,7 +25,7 @@ type ColorVariant = Product["colorVariants"][number];
 const initialProducts: Product[] = [
   {
     id: "P1", slug: "vf-7", name: "VinFast VF 7", tagline: "Bold. Intelligent. Unstoppable.",
-    priceFrom: "₹21.89 Lakh*", range: "431 km", battery: "75.3 kWh", power: "349 HP",
+    priceFrom: "₹21,89,000*", range: "431 km", battery: "75.3 kWh", power: "349 HP",
     torque: "500 Nm", topSpeed: "200 km/h", driveType: "AWD", fastCharge: "10-70% in 24 min",
     homeCharge: "0-100% in 11 hrs", safety: "5-Star NCAP", airbags: "6 Airbags",
     adas: "Level 2+", touchscreen: '15.6"', variants: "Plus, Max",
@@ -41,7 +41,7 @@ const initialProducts: Product[] = [
   },
   {
     id: "P2", slug: "vf-6", name: "VinFast VF 6", tagline: "Urban. Smart. Agile.",
-    priceFrom: "₹17.29 Lakh*", range: "381 km", battery: "59.6 kWh", power: "201 HP",
+    priceFrom: "₹17,29,000*", range: "381 km", battery: "59.6 kWh", power: "201 HP",
     torque: "310 Nm", topSpeed: "175 km/h", driveType: "FWD", fastCharge: "10-70% in 26 min",
     homeCharge: "0-100% in 9 hrs", safety: "5-Star NCAP", airbags: "6 Airbags",
     adas: "Level 2", touchscreen: '12.9"', variants: "Plus, Max",
@@ -271,7 +271,7 @@ const ProductForm = ({ product, onSave, onCancel }: { product: Product; onSave: 
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Ex-Showroom Price</Label>
-            <Input value={form.priceFrom} onChange={e => update("priceFrom", e.target.value)} className="bg-secondary/50" placeholder="₹21.89 Lakh*" />
+            <Input value={form.priceFrom} onChange={e => update("priceFrom", e.target.value)} className="bg-secondary/50" placeholder="₹21,89,000*" />
           </div>
           <div className="space-y-1.5">
             <Label className="text-xs">Variants</Label>
