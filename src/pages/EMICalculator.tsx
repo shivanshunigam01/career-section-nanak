@@ -43,7 +43,7 @@ const EMICalculator = () => {
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Easy Finance</p>
             <h1 className="font-display font-bold text-4xl md:text-5xl mb-4">EMI Calculator</h1>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Calculate your monthly EMI for VinFast VF 6 or VF 7.
+              Calculate your monthly EMI for VinFast VF 6, VF 7, or VF MPV 7.
             </p>
           </motion.div>
 

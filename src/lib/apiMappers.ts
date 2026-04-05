@@ -18,20 +18,30 @@ function populatedName(ref: unknown): string {
   return "";
 }
 
-/** Map UI model line to backend Lead.model enum. */
-export function normalizeLeadModel(display: string): "VF 6" | "VF 7" | "Both" {
+/** Map UI model line to backend Lead.model field. */
+export function normalizeLeadModel(display: string): string {
   const s = display.toUpperCase();
-  const has6 = s.includes("VF 6") || s.includes("VF6");
-  const has7 = s.includes("VF 7") || s.includes("VF7");
+  if (
+    s.includes("NOT SURE") ||
+    s.includes("VF 6 / VF 7 / VF MPV 7") ||
+    s.includes("VF 6 / VF 7") ||
+    s === "BOTH"
+  ) {
+    return "Both";
+  }
+  if (s.includes("MPV")) return "VF MPV 7";
+  const has6 = /\bVF\s*6\b|\bVF6\b/i.test(display);
+  const has7 = /\bVF\s*7\b|\bVF7\b/i.test(display);
   if (has6 && has7) return "Both";
   if (has6) return "VF 6";
   return "VF 7";
 }
 
-/** Test drives reject `Both`; default to VF 7. */
-export function normalizeTestDriveModel(display: string): "VF 6" | "VF 7" {
+/** Test drives reject `Both`; default to VF 7. VF MPV 7 preserved when selected. */
+export function normalizeTestDriveModel(display: string): string {
   const m = normalizeLeadModel(display);
-  return m === "VF 6" ? "VF 6" : "VF 7";
+  if (m === "Both") return "VF 7";
+  return m;
 }
 
 export function leadFromApi(doc: Record<string, unknown>): Lead {
