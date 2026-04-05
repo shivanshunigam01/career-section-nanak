@@ -1,10 +1,7 @@
 /**
- * Dev / test API for public site forms.
+ * Public site API: forms + CMS-style GETs (so the SPA works without the Mongo backend).
  *
- * Routes are mounted at:
- *   /api/v1/*  (canonical — matches VITE_API_URL=.../api/v1)
- *   /v1/*      (if reverse proxy forwards /api/v1 → /v1)
- *   /*         (if proxy strips prefix: /live, /health, POST /leads, …)
+ * Mounted at /api/v1, /v1, and root aliases (see app.use below).
  *
  * Run: npm run api
  * Frontend: VITE_API_URL=https://apivnfast.patliputragroup.com/api/v1
@@ -25,6 +22,34 @@ const recent = {
   enquiries: [],
 };
 const MAX_RECENT = 80;
+
+/** Same shape as Mongo `backend` + React `PublicSiteContext` defaults — keeps the SPA working when only this server is deployed. */
+const DEFAULT_SITE_CONFIG = {
+  whatsappNumber: "919231445060",
+  phoneNumber: "+91 9231445060",
+  heroTagline: "Bihar's First VinFast Dealer",
+  leadStripTitle: "Ready to Go Electric?",
+  leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
+  vf7Price: "₹21,89,000*",
+  vf6Price: "₹17,29,000*",
+  vf7Range: "431 km",
+  vf6Range: "381 km",
+};
+
+const DEFAULT_DEALER_SETTINGS = {
+  dealerName: "Patliputra VinFast",
+  phone: "+91 9231445060",
+  whatsapp: "919231445060",
+  email: "info@patliputravinfast.com",
+  address:
+    "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009",
+  showroomHours: "10 AM – 8 PM, Mon–Sat",
+  gstNo: "",
+};
+
+function publicSuccess(res, data) {
+  res.json({ success: true, data });
+}
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -88,12 +113,11 @@ function liveJson(req) {
     originalUrl: req.originalUrl,
     nodeEnv: process.env.NODE_ENV || "development",
     tryThesePaths: [
+      "/ping",
       "/live",
       "/api/v1/live",
-      "/v1/live",
-      "/health",
-      "/api/v1/health",
-      "/ping",
+      "/api/v1/public/site-config",
+      "/api/v1/public/dealer-settings",
     ],
   };
 }
@@ -116,6 +140,19 @@ function buildV1Router() {
       port: PORT,
     });
   });
+
+  /* Public CMS reads — same paths as full Mongo backend; static defaults + empty lists (SPA falls back to bundled content). */
+  r.get("/public/site-config", (_req, res) => publicSuccess(res, { ...DEFAULT_SITE_CONFIG }));
+  r.get("/public/dealer-settings", (_req, res) => publicSuccess(res, { ...DEFAULT_DEALER_SETTINGS }));
+  r.get("/public/hero-slides", (_req, res) => publicSuccess(res, []));
+  r.get("/public/products", (_req, res) => publicSuccess(res, []));
+  r.get("/public/products/:slug", (_req, res) =>
+    res.status(404).json({ success: false, message: "Product not found" }),
+  );
+  r.get("/public/offers", (_req, res) => publicSuccess(res, []));
+  r.get("/public/banners", (_req, res) => publicSuccess(res, []));
+  r.get("/public/faqs", (_req, res) => publicSuccess(res, []));
+  r.get("/public/testimonials", (_req, res) => publicSuccess(res, []));
 
   r.get("/forms-debug/recent", (_req, res) => {
     res.json({
@@ -287,7 +324,7 @@ app.use((req, res) => {
 ensureDataDir();
 app.listen(PORT, () => {
   console.log(`Forms API on port ${PORT}`);
-  console.log(`  GET  /ping  /live  /api/v1/live  /v1/live`);
-  console.log(`  POST /leads  (same under /api/v1 and /v1)`);
+  console.log(`  GET  /ping  /live  /public/site-config  …`);
+  console.log(`  POST /leads  /test-drives  /enquiries`);
   console.log(`  JSONL: ${DATA_DIR}`);
 });
