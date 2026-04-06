@@ -62,16 +62,11 @@ function subtitleToThreeLines(raw: string): readonly [string, string, string] {
 }
 
 /** New launch — always first in the home hero rotation (fallback + merged API slides). */
-function buildMpv7LaunchSlide(dealerName: string): HeroSlideView {
+function buildMpv7LaunchSlide(): HeroSlideView {
   return {
     image: heroMpv7,
-    badge: "Brand new",
     title: "The all-new VF MPV 7",
-    subLines: [
-      "Seven-seat electric MPV",
-      "450 km (NEDC), 75.3 kWh battery",
-      `Bookings open at ${dealerName}.`,
-    ],
+    subLines: ["Seven-seat electric MPV", "60.13 kWh battery", "Pre-booking open."],
     footnote: "*Images shown are for illustrative purposes only. Specifications may vary; confirm with dealer.",
     objectPosition: "center 48%",
     ctaPrimary: "Register for pre-booking",
@@ -85,77 +80,49 @@ const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   {
     image: heroSlide02,
     title: "VinFast VF 7",
-    subLines: [
-      "Urban performance and electric sophistication —",
-      "crafted for highways, city streets,",
-      "and everything between.",
-    ],
+    subLines: ["Urban electric SUV for city and highway."],
     objectPosition: "center 48%",
   },
   {
     image: heroSlide03,
     title: "Precision in every detail",
-    subLines: [
-      "Aerodynamic alloys,",
-      "bold red and black —",
-      "the unmistakable VF design language.",
-    ],
+    subLines: ["Alloys, colour, unmistakable VF form."],
     objectPosition: "center 55%",
   },
   {
     image: heroVf7LedHighway,
     title: "Signature LED presence",
-    subLines: [
-      "Full-width rear LED light bar with the centred V dip —",
-      "the same identity as the front,",
-      "unmistakable after dark.",
-    ],
+    subLines: ["Full-width light signature, front to rear."],
     objectPosition: "center 50%",
   },
   {
     image: heroVf7Cockpit,
     title: "Your command centre",
-    subLines: [
-      "Landscape touchscreen, connected services,",
-      "and a leather-wrapped cabin",
-      "centred on the VinFast V.",
-    ],
+    subLines: ["Touchscreen, connected services, refined cabin."],
     objectPosition: "center 48%",
   },
   {
     image: heroSlide05,
     title: "Premium VF 6 cabin",
-    subLines: [
-      "Large touchscreen, minimalist dash,",
-      "and a driver-centric cockpit",
-      "built for comfort and connectivity.",
-    ],
+    subLines: ["Minimal dash, large screen, driver-focused layout."],
     objectPosition: "center 50%",
   },
   {
     image: heroSlide06,
     title: "Built for your family",
-    subLines: [
-      "VF 6 — space, safety,",
-      "and zero-emission drives",
-      "from Patna to the open road.",
-    ],
+    subLines: ["VF 6 — space, safety, zero tailpipe emissions."],
     footnote: "*Images shown are for illustrative purposes only. Features and specification may vary as per trim.",
     objectPosition: "28% 45%",
   },
 ];
 
-function buildHeroFallbackSlides(dealerName: string, brand: string): HeroSlideView[] {
+function buildHeroFallbackSlides(brand: string): HeroSlideView[] {
   return [
-    buildMpv7LaunchSlide(dealerName),
+    buildMpv7LaunchSlide(),
     {
       image: heroSlide01,
       title: "VF 6, VF 7 & VF MPV 7",
-      subLines: [
-        "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7.",
-        `Experience the revolution in motion, exclusively at ${dealerName},`,
-        `Bihar's only authorized ${brand} dealer.`,
-      ],
+      subLines: [`Electric SUVs and seven-seat MPV — ${brand}.`],
       objectPosition: "28% 48%",
     },
     ...HERO_FALLBACK_TAIL,
@@ -214,10 +181,7 @@ function CtaButton({
 
 const HeroSection = () => {
   const { dealer, siteConfig } = usePublicSite();
-  const fallbackSlides = useMemo(
-    () => buildHeroFallbackSlides(dealer.dealerName, dealer.brand),
-    [dealer.dealerName, dealer.brand],
-  );
+  const fallbackSlides = useMemo(() => buildHeroFallbackSlides(dealer.brand), [dealer.brand]);
   const [apiSlides, setApiSlides] = useState<HeroSlideView[] | null>(null);
   const slides = apiSlides ?? fallbackSlides;
   const [current, setCurrent] = useState(0);
@@ -229,9 +193,9 @@ const HeroSection = () => {
     const mapped = (raw as Record<string, unknown>[]).map(mapHeroFromApi).filter(Boolean) as HeroSlideView[];
     if (mapped.length > 0) {
       const withoutDuplicateMpv7 = mapped.filter((s) => s.image !== heroMpv7);
-      setApiSlides([buildMpv7LaunchSlide(dealer.dealerName), ...withoutDuplicateMpv7]);
+      setApiSlides([buildMpv7LaunchSlide(), ...withoutDuplicateMpv7]);
     }
-  }, [dealer.dealerName]);
+  }, []);
 
   useEffect(() => {
     if (!hasApi()) return;
@@ -322,9 +286,17 @@ const HeroSection = () => {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 max-lg:bg-gradient-to-t max-lg:from-zinc-950 max-lg:via-zinc-950/80 max-lg:to-transparent max-lg:pt-16 pb-6 sm:pb-8 lg:pb-28">
           <div className="pointer-events-auto container mx-auto px-4 lg:px-8">
         <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
-            <p className="text-hero-plain font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">
-              {slide.badge || `${dealer.dealerName} · ${siteConfig.heroTagline}`}
-            </p>
+            {(() => {
+              const lockup =
+                current === 0
+                  ? `${dealer.dealerName}. ${siteConfig.heroTagline}`
+                  : (slide.badge?.trim() ?? "");
+              return lockup ? (
+                <p className="text-hero-plain font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">
+                  {lockup}
+                </p>
+              ) : null;
+            })()}
             <h2 className="text-hero-plain-lg font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl leading-tight mb-3 sm:mb-4">
               {slide.title}
             </h2>

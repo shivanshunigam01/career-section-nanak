@@ -129,7 +129,7 @@ JWT_SECRET=your_super_secret_key_minimum_32_characters
 JWT_EXPIRES_IN=7d
 
 # Client (CORS)
-CLIENT_URL=https://patliputraauto.com
+CLIENT_URL=https://patliputravinfast.com
 
 # Cloudinary
 CLOUDINARY_CLOUD_NAME=your_cloud_name
@@ -603,7 +603,7 @@ module.exports = mongoose.model('SiteConfig', SiteConfigSchema);
 
 ## 9. API Endpoints — Public (User Panel)
 
-> **Base:** `https://api.patliputraauto.com/api/v1`  
+> **Base:** `https://apivnfast.patliputragroup.com/api/v1` (or your deployed API URL)
 > No authentication required for public endpoints.
 
 ---
@@ -886,7 +886,7 @@ Submitted from `/contact` page.
 
 ## 10. API Endpoints — Admin Panel
 
-> **Base:** `https://api.patliputraauto.com/api/v1/admin`  
+> **Base:** `https://apivnfast.patliputragroup.com/api/v1/admin` (or your deployed API URL)
 > 🔒 All routes require: `Authorization: Bearer <jwt_token>`
 
 ---
@@ -897,7 +897,7 @@ Submitted from `/contact` page.
 
 **Request Body:**
 ```json
-{ "email": "admin@patliputraauto.com", "password": "yourpassword" }
+{ "email": "admin@patliputravinfast.com", "password": "yourpassword" }
 ```
 
 **Response `200`:**
@@ -908,7 +908,7 @@ Submitted from `/contact` page.
   "admin": {
     "_id": "64admin001",
     "name": "Admin",
-    "email": "admin@patliputraauto.com",
+    "email": "admin@patliputravinfast.com",
     "role": "superadmin"
   }
 }

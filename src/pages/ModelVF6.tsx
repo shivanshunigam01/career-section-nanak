@@ -7,7 +7,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf6Hero from "@/assets/vf6-earth-hero-family.png";
+import vf6Hero from "@/assets/vf6-product-hero.png";
 import interiorImg from "@/assets/interior.jpg";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
@@ -65,7 +65,7 @@ const variantHeroStats: Record<
   VariantId,
   { range: string; accel: string; power: string; driveline: string }
 > = {
-  earth: { range: "468 km", accel: "10.4 s", power: "177 PS", driveline: "FWD" },
+  earth: { range: "468 km", accel: "8.9 s", power: "177 PS", driveline: "FWD" },
   wind: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
   infinity: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
 };
@@ -135,7 +135,7 @@ const technicalSpecRows: [string, string, string, string][] = [
   ["Max. torque", "250 Nm", "310 Nm", "310 Nm"],
   ["Driveline", "FWD", "FWD", "FWD"],
   ["Range (MIDC)", "468 km", "463 km", "463 km"],
-  ["Acceleration (0–100 km/h)", "10.4 s", "8.9 s", "8.9 s"],
+  ["Acceleration (0–100 km/h)", "8.9 s", "8.9 s", "8.9 s"],
   ["Usable battery capacity", "59.6 kWh", "59.6 kWh", "59.6 kWh"],
   ["Charge port", "CCS2", "CCS2", "CCS2"],
   ["AC charging", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW"],
@@ -354,8 +354,8 @@ const ModelVF6 = () => {
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf6Hero}
-            alt="Silver VinFast VF 6 electric SUV beside a sunlit field with a family in the background"
-            className="h-full w-full object-cover object-[22%_50%]"
+            alt="Silver VinFast VF 6 electric SUV on a modern patio at dusk with a family and bay view in the background"
+            className="h-full w-full object-cover object-[38%_52%]"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"

@@ -15,6 +15,8 @@ import { hasApi } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { leadModelLabel } from "@/data/vinfastModels";
+import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -59,7 +61,7 @@ export function BrochureDownloadButton({
   const [name, setName] = useState("");
   const [mobile, setMobile] = useState("");
   const [email, setEmail] = useState("");
-  const [city, setCity] = useState("Patna");
+  const [city, setCity] = useState(BIHAR_DEFAULT_DISTRICT);
   const [otherCity, setOtherCity] = useState("");
 
   useEffect(() => {
@@ -67,7 +69,7 @@ export function BrochureDownloadButton({
       setName("");
       setMobile("");
       setEmail("");
-      setCity("Patna");
+      setCity(BIHAR_DEFAULT_DISTRICT);
       setOtherCity("");
       setSubmitting(false);
     }
@@ -87,12 +89,12 @@ export function BrochureDownloadButton({
       toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
-    if (city === "Other" && !otherCity.trim()) {
-      toast.error("Please enter your city.");
+    if (city === DISTRICT_OTHER && !otherCity.trim()) {
+      toast.error("Please enter your city or district (outside Bihar).");
       return;
     }
 
-    const cityVal = city === "Other" ? "Other" : city;
+    const cityVal = city === DISTRICT_OTHER ? DISTRICT_OTHER : city;
     const modelLine = leadModelLabel(modelDisplay, "");
     const remarks = `Brochure: ${downloadFileName}`;
 
@@ -103,7 +105,7 @@ export function BrochureDownloadButton({
           name: name.trim(),
           mobile,
           city: cityVal,
-          otherCity: city === "Other" ? otherCity : "",
+          otherCity: city === DISTRICT_OTHER ? otherCity : "",
           email: email.trim() || undefined,
           modelDisplay: modelLine,
           source: "Brochure download",
@@ -114,7 +116,7 @@ export function BrochureDownloadButton({
         try {
           const todayStr = getLocalISODate();
           const ts = Date.now();
-          const resolvedCity = city === "Other" ? otherCity.trim() : city;
+          const resolvedCity = city === DISTRICT_OTHER ? otherCity.trim() || DISTRICT_OTHER : city;
           const lead: Lead = {
             id: `WL_${ts}`,
             name: name.trim(),
@@ -210,36 +212,18 @@ export function BrochureDownloadButton({
                 placeholder="you@example.com"
               />
             </div>
-            <div>
-              <label htmlFor="brochure-city" className="text-xs font-medium text-foreground/80 mb-1 block">
-                City <span className="text-primary">*</span>
-              </label>
-              <select
-                id="brochure-city"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className={inputClass}
-              >
-                <option value="Patna">Patna</option>
-                <option value="Muzaffarpur">Muzaffarpur</option>
-                <option value="Other">Other</option>
-              </select>
-            </div>
-            {city === "Other" && (
-              <div>
-                <label htmlFor="brochure-other-city" className="text-xs font-medium text-foreground/80 mb-1 block">
-                  Your city
-                </label>
-                <input
-                  id="brochure-other-city"
-                  type="text"
-                  value={otherCity}
-                  onChange={(e) => setOtherCity(e.target.value)}
-                  className={inputClass}
-                  placeholder="City name"
-                />
-              </div>
-            )}
+            <BiharDistrictField
+              label="District (Bihar)"
+              selectClassName={inputClass}
+              otherInputClassName={`${inputClass} border-primary/50`}
+              value={city}
+              otherValue={otherCity}
+              onDistrictChange={(c) => {
+                setCity(c);
+                setOtherCity("");
+              }}
+              onOtherChange={setOtherCity}
+            />
 
             <DialogFooter className="gap-2 sm:gap-0 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>

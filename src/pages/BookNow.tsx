@@ -14,6 +14,8 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import interiorImg from "@/assets/interior.jpg";
@@ -35,7 +37,8 @@ const BookNowPage = () => {
     name: "",
     mobile: "",
     email: "",
-    city: "Patna",
+    city: BIHAR_DEFAULT_DISTRICT,
+    otherCity: "",
     model: "VF 7",
     variant: DEFAULT_VF7_TRIM,
     remarks: "",
@@ -81,6 +84,10 @@ const BookNowPage = () => {
       toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
+    if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
+      toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
 
     const extras = [
       formData.financeNeeded ? "Finance assistance requested." : "",
@@ -94,7 +101,8 @@ const BookNowPage = () => {
         await submitPublicLead({
           name: formData.name.trim(),
           mobile: formData.mobile,
-          city: formData.city,
+          city: formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city,
+          otherCity: formData.city === DISTRICT_OTHER ? formData.otherCity : "",
           modelDisplay: leadModelLabel(formData.model, formData.variant),
           source: "Book Now",
           email: formData.email.trim(),
@@ -113,7 +121,8 @@ const BookNowPage = () => {
         name: "",
         mobile: "",
         email: "",
-        city: "Patna",
+        city: BIHAR_DEFAULT_DISTRICT,
+        otherCity: "",
         model: "VF 7",
         variant: DEFAULT_VF7_TRIM,
         remarks: "",
@@ -130,7 +139,10 @@ const BookNowPage = () => {
         name: formData.name.trim(),
         mobile: formData.mobile,
         email: formData.email.trim(),
-        city: formData.city,
+        city:
+          formData.city === DISTRICT_OTHER
+            ? formData.otherCity.trim() || DISTRICT_OTHER
+            : formData.city,
         model: leadModelLabel(formData.model, formData.variant),
         source: "Book Now",
         status: "Interested",
@@ -152,7 +164,8 @@ const BookNowPage = () => {
       name: "",
       mobile: "",
       email: "",
-      city: "Patna",
+      city: BIHAR_DEFAULT_DISTRICT,
+      otherCity: "",
       model: "VF 7",
       variant: DEFAULT_VF7_TRIM,
       remarks: "",
@@ -320,19 +333,16 @@ const BookNowPage = () => {
                     />
                   </div>
                   <div className="space-y-1.5 min-w-0">
-                    <label htmlFor="booknow-city" className="text-xs font-medium text-muted-foreground">
-                      City
-                    </label>
-                    <select
-                      id="booknow-city"
+                    <BiharDistrictField
+                      id="booknow-district"
+                      label="District (Bihar)"
+                      selectClassName={inputClass}
+                      otherInputClassName={`${inputClass} border-primary/50`}
                       value={formData.city}
-                      onChange={(e) => update("city", e.target.value)}
-                      className={inputClass}
-                    >
-                      <option value="Patna">Patna</option>
-                      <option value="Muzaffarpur">Muzaffarpur</option>
-                      <option value="Other">Other</option>
-                    </select>
+                      otherValue={formData.otherCity}
+                      onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
+                      onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+                    />
                   </div>
                 </div>
                 <div className="flex flex-col gap-3 pt-1">

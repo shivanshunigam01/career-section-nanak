@@ -73,8 +73,8 @@ function coalesceStr(v: unknown, fallback: string): string {
 function normalizeDealerName(name: string): string {
   return name
     .trim()
-    .replace(/\bpatliputra\s+autos?\b/gi, "Patliputra Group")
-    .replace(/\bpatliputraautos?\b/gi, "Patliputra Group");
+    .replace(/\bpatliputra\s+autos?\b/gi, "Patliputra VinFast")
+    .replace(/\bpatliputraautos?\b/gi, "Patliputra VinFast");
 }
 
 function mergeDealer(doc: Record<string, unknown> | null): DealerInfo {

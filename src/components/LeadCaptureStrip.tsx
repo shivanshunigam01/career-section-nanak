@@ -9,6 +9,8 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -27,7 +29,7 @@ const LeadCaptureStrip = () => {
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
-    city: "Patna",
+    city: BIHAR_DEFAULT_DISTRICT,
     otherCity: "",
     model: "VF 7",
     variant: DEFAULT_VF7_TRIM,
@@ -65,15 +67,19 @@ const LeadCaptureStrip = () => {
       toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
+    if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
+      toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
 
     if (hasApi()) {
-      const cityVal = formData.city === "Other" ? "Other" : formData.city;
+      const cityVal = formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city;
       try {
         await submitPublicLead({
           name: formData.name,
           mobile: formData.mobile,
           city: cityVal,
-          otherCity: formData.city === "Other" ? formData.otherCity : "",
+          otherCity: formData.city === DISTRICT_OTHER ? formData.otherCity : "",
           modelDisplay: leadModelLabel(formData.model, formData.variant),
           source: "Website",
           interest: formData.interest,
@@ -85,14 +91,14 @@ const LeadCaptureStrip = () => {
         return;
       }
       toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
-      setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
+      setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
       setMobileError("");
       return;
     }
 
     try {
       const todayStr = getLocalISODate();
-      const city = formData.city === "Other" ? (formData.otherCity || "Other") : formData.city;
+      const city = formData.city === DISTRICT_OTHER ? (formData.otherCity || DISTRICT_OTHER) : formData.city;
       const lead: Lead = {
         id: `WL_${Date.now()}`,
         name: formData.name.trim(),
@@ -116,7 +122,7 @@ const LeadCaptureStrip = () => {
     }
 
     toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", city: "Patna", otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
+    setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
     setMobileError("");
   };
 
@@ -169,28 +175,14 @@ const LeadCaptureStrip = () => {
                 <p className="text-red-500 text-[11px] px-1 leading-tight">{mobileError}</p>
               )}
             </div>
-            <div className="flex min-w-0 w-full flex-col gap-2">
-              <select
-                value={formData.city}
-                onChange={(e) => setFormData({ ...formData, city: e.target.value, otherCity: "" })}
-                className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-              >
-                <option value="Patna">Patna</option>
-                <option value="Muzaffarpur">Muzaffarpur</option>
-                <option value="Gaya">Gaya</option>
-                <option value="Other">Other</option>
-              </select>
-              {formData.city === "Other" && (
-                <input
-                  type="text"
-                  placeholder="Enter your city / state"
-                  value={formData.otherCity}
-                  onChange={(e) => setFormData({ ...formData, otherCity: e.target.value })}
-                  className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-primary/50 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
-                  autoFocus
-                />
-              )}
-            </div>
+            <BiharDistrictField
+              selectClassName="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              otherInputClassName="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-primary/50 text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              value={formData.city}
+              otherValue={formData.otherCity}
+              onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
+              onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+            />
             <ModelTrimSelect
               model={formData.model}
               variant={formData.variant}

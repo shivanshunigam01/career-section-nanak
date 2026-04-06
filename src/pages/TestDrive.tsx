@@ -18,6 +18,8 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicTestDrive } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -51,8 +53,16 @@ const getLocalISODate = () => {
 
 const TestDrivePage = () => {
   const [formData, setFormData] = useState({
-    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM,
-    date: "", time: "", remarks: "",
+    name: "",
+    mobile: "",
+    email: "",
+    city: BIHAR_DEFAULT_DISTRICT,
+    otherCity: "",
+    model: "VF 7",
+    variant: DEFAULT_VF7_TRIM,
+    date: "",
+    time: "",
+    remarks: "",
   });
   const [mobileError, setMobileError] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
@@ -105,8 +115,13 @@ const TestDrivePage = () => {
       );
       return;
     }
+    if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
+      toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
 
     const modelLine = leadModelLabel(formData.model, formData.variant);
+    const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
       try {
@@ -114,7 +129,7 @@ const TestDrivePage = () => {
           customerName: formData.name.trim(),
           mobile: formData.mobile,
           email: formData.email.trim(),
-          city: formData.city,
+          city: cityResolved,
           model: formData.model,
           variant: formData.variant,
           preferredDate: formData.date,
@@ -128,7 +143,18 @@ const TestDrivePage = () => {
         return;
       }
       toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
-      setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, date: "", time: "", remarks: "" });
+      setFormData({
+        name: "",
+        mobile: "",
+        email: "",
+        city: BIHAR_DEFAULT_DISTRICT,
+        otherCity: "",
+        model: "VF 7",
+        variant: DEFAULT_VF7_TRIM,
+        date: "",
+        time: "",
+        remarks: "",
+      });
       setMobileError("");
       return;
     }
@@ -140,7 +166,7 @@ const TestDrivePage = () => {
         name: formData.name.trim(),
         mobile: formData.mobile,
         email: formData.email.trim(),
-        city: formData.city,
+        city: cityResolved,
         model: modelLine,
         source: "Test Drive",
         status: "Test Drive Scheduled",
@@ -175,7 +201,18 @@ const TestDrivePage = () => {
     }
 
     toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
-    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, date: "", time: "", remarks: "" });
+    setFormData({
+      name: "",
+      mobile: "",
+      email: "",
+      city: BIHAR_DEFAULT_DISTRICT,
+      otherCity: "",
+      model: "VF 7",
+      variant: DEFAULT_VF7_TRIM,
+      date: "",
+      time: "",
+      remarks: "",
+    });
     setMobileError("");
   };
 
@@ -260,11 +297,15 @@ const TestDrivePage = () => {
                     onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
                     className={inputClass}
                   />
-                  <select value={formData.city} onChange={(e) => update("city", e.target.value)} className={inputClass}>
-                    <option value="Patna">Patna</option>
-                    <option value="Muzaffarpur">Muzaffarpur</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <BiharDistrictField
+                    label="District (Bihar)"
+                    selectClassName={inputClass}
+                    otherInputClassName={`${inputClass} border-primary/50`}
+                    value={formData.city}
+                    otherValue={formData.otherCity}
+                    onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
+                    onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
