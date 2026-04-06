@@ -370,26 +370,22 @@ const ModelVF6 = () => {
               VF 6
             </h1>
 
-            <div className="mb-1.5 flex w-max max-w-full gap-4 sm:gap-5">
-              <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/30">
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
-                </div>
+            <div className="mb-1.5 space-y-3 sm:space-y-3.5 max-w-md">
+              <div>
+                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
+                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
               </div>
-              <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 min-w-0">
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Driveline</p>
-                </div>
+              <div>
+                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
+                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
+              </div>
+              <div>
+                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
+                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
+              </div>
+              <div>
+                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
+                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Driveline</p>
               </div>
             </div>
 

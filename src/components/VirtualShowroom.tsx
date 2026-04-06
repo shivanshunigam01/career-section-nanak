@@ -2,18 +2,10 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import interiorLuxuryRhd from "@/assets/interior-rhd-luxury.png";
-import vf6Interior from "@/assets/interior.jpg";
 import vf7Interior from "@/assets/slide-vf7-interior.png";
 import mpv7Interior from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 
 const interiorModels = [
-  {
-    href: "/models/vf6",
-    label: "VF 6",
-    image: vf6Interior,
-    alt: "VinFast VF 6 cabin — dashboard and seating",
-    objectClass: "object-cover object-center",
-  },
   {
     href: "/models/vf7",
     label: "VF 7",
@@ -70,7 +62,7 @@ const VirtualShowroom = () => {
         </motion.div>
 
         {/* Model cabins — interior photography only */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 mb-8 sm:mb-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6 mb-8 sm:mb-10 max-w-4xl mx-auto w-full">
           {interiorModels.map((m, i) => (
             <motion.div
               key={m.href}
