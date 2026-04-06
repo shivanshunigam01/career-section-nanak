@@ -13,6 +13,8 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicEnquiry, submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { mapsDirectionsHref, mapsEmbedSrc } from "@/lib/dealerMap";
@@ -37,8 +39,15 @@ const ContactPage = () => {
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
 
   const [formData, setFormData] = useState({
-    name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM,
-    interest: "General Enquiry", message: "",
+    name: "",
+    mobile: "",
+    email: "",
+    city: BIHAR_DEFAULT_DISTRICT,
+    otherCity: "",
+    model: "VF 7",
+    variant: DEFAULT_VF7_TRIM,
+    interest: "General Enquiry",
+    message: "",
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -52,6 +61,12 @@ const ContactPage = () => {
       toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
+    if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
+      toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
+
+    const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
       try {
@@ -59,7 +74,7 @@ const ContactPage = () => {
           name: formData.name,
           mobile: mobileDigits,
           email: formData.email,
-          city: formData.city,
+          city: cityResolved,
           model: formData.model,
           variant: formData.variant,
           interest: formData.interest,
@@ -68,7 +83,8 @@ const ContactPage = () => {
         await submitPublicLead({
           name: formData.name,
           mobile: mobileDigits,
-          city: formData.city,
+          city: formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city,
+          otherCity: formData.city === DISTRICT_OTHER ? formData.otherCity : "",
           modelDisplay: leadModelLabel(formData.model, formData.variant),
           source: `Contact: ${formData.interest}`,
           email: formData.email,
@@ -80,7 +96,17 @@ const ContactPage = () => {
         return;
       }
       toast.success("Thank you! Our team will contact you within 10 minutes.");
-      setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "General Enquiry", message: "" });
+      setFormData({
+        name: "",
+        mobile: "",
+        email: "",
+        city: BIHAR_DEFAULT_DISTRICT,
+        otherCity: "",
+        model: "VF 7",
+        variant: DEFAULT_VF7_TRIM,
+        interest: "General Enquiry",
+        message: "",
+      });
       return;
     }
 
@@ -103,7 +129,7 @@ const ContactPage = () => {
         name: formData.name.trim(),
         mobile: formData.mobile.trim(),
         email: formData.email.trim(),
-        city: formData.city,
+        city: cityResolved,
         model: leadModelLabel(formData.model, formData.variant),
         source: `Contact: ${formData.interest}`,
         status: "New Lead",
@@ -121,7 +147,17 @@ const ContactPage = () => {
     }
 
     toast.success("Thank you! Our team will contact you within 10 minutes.");
-    setFormData({ name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "General Enquiry", message: "" });
+    setFormData({
+      name: "",
+      mobile: "",
+      email: "",
+      city: BIHAR_DEFAULT_DISTRICT,
+      otherCity: "",
+      model: "VF 7",
+      variant: DEFAULT_VF7_TRIM,
+      interest: "General Enquiry",
+      message: "",
+    });
   };
 
   const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });
@@ -217,11 +253,15 @@ const ContactPage = () => {
                     className={inputClass}
                     includeNotSureBoth
                   />
-                  <select value={formData.city} onChange={(e) => update("city", e.target.value)} className={inputClass}>
-                    <option value="Patna">Patna</option>
-                    <option value="Muzaffarpur">Muzaffarpur</option>
-                    <option value="Other">Other</option>
-                  </select>
+                  <BiharDistrictField
+                    label="District (Bihar)"
+                    selectClassName={inputClass}
+                    otherInputClassName={`${inputClass} border-primary/50`}
+                    value={formData.city}
+                    otherValue={formData.otherCity}
+                    onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
+                    onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+                  />
                 </div>
                 <select value={formData.interest} onChange={(e) => update("interest", e.target.value)} className={inputClass}>
                   <option value="General Enquiry">General Enquiry</option>

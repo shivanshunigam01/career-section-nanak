@@ -31,7 +31,7 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
     specs: [
       { icon: Battery, label: "Battery", value: "70.8 kWh" },
       { icon: Gauge, label: "Range", value: "532 km" },
-      { icon: Zap, label: "0–100", value: "5.9s" },
+      { icon: Zap, label: "0–100", value: "5.8s" },
       { icon: Shield, label: "Safety", value: "5-Star" },
     ],
   },
@@ -43,7 +43,7 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
     specs: [
       { icon: Battery, label: "Battery", value: "59.6 kWh" },
       { icon: Gauge, label: "Range", value: "468 km" },
-      { icon: Zap, label: "0–100", value: "6.8s" },
+      { icon: Zap, label: "0–100", value: "8.9s" },
       { icon: Shield, label: "Safety", value: "5-Star" },
     ],
   },
@@ -53,9 +53,9 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
     image: mpv7Card,
     href: "/models/mpv7",
     specs: [
-      { icon: Battery, label: "Battery", value: "75.3 kWh" },
-      { icon: Gauge, label: "Range", value: "450 km (NEDC)" },
-      { icon: Zap, label: "0–100", value: "8.3s" },
+      { icon: Battery, label: "Battery", value: "60.13 kWh" },
+      { icon: Gauge, label: "Max. power", value: "150 kW" },
+      { icon: Zap, label: "0–100", value: "<10 sec" },
       { icon: Users, label: "Seats", value: "7" },
     ],
   },
@@ -81,10 +81,10 @@ function mergeModels(
       : m.href.includes("mpv7")
         ? "Bookings open*"
         : site.vf6Price;
-    const siteRange = m.href.includes("vf7")
-      ? site.vf7Range
-      : m.href.includes("mpv7")
-        ? "450 km (NEDC)"
+    const siteRange = m.href.includes("mpv7")
+      ? ""
+      : m.href.includes("vf7")
+        ? site.vf7Range
         : site.vf6Range;
     const price = api?.priceFrom ? String(api.priceFrom) : sitePrice;
     const image =

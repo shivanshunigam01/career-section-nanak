@@ -73,6 +73,7 @@ const ComparePage = () => {
               const v = getVariantEntry(sel);
               return (v?.specs[key] ?? "—").trim();
             });
+            if (values.every((v) => v === "—" || v === "")) return null;
             const allEqual = values.length > 1 && values.every((v) => v === values[0]);
             if (hideCommon && allEqual) return null;
             return { key, label, values };

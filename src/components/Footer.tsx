@@ -134,7 +134,7 @@ const Footer = () => {
       <div className="border-t border-border/30">
         <div className="container mx-auto px-4 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-xs">
-            © 2026 {dealer.dealerName}. All rights reserved. Authorized VinFast Dealer, Bihar.
+            © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast Dealer, Bihar.
           </p>
           <div className="flex gap-6">
             <Link to="/about" className="text-muted-foreground text-xs hover:text-foreground transition-colors">

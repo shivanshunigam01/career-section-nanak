@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
+import { Check, Download, Sparkles, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
@@ -14,6 +14,8 @@ import { hasApi } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
+import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
 import mpv7Feature2 from "@/assets/mpv7-gallery/mpv7-02.png";
 import mpv7DtlOverview1 from "@/assets/mpv7-details/mpv7-dtl-overview-1.jpg";
@@ -217,23 +219,22 @@ const specRows: [string, string][] = [
   ["Maximum power", "150 kW"],
   ["Maximum torque", "310 Nm"],
   ["Drive system", "Front-wheel drive (FWD)"],
-  ["Battery capacity", "75.3 kWh"],
+  ["Battery capacity", "60.13 kWh"],
   ["AC charging time (10–70%)", "~7 hours"],
   ["DC charging time (10–70%)", "~35 mins"],
   ["Top speed", "145 km/h"],
-  ["Acceleration (0–100 km/h)", "8.3 s"],
+  ["Acceleration (0–100 km/h)", "<10 sec"],
   ["Seating capacity", "7 seats"],
   ["Tyre size", "225/55 R18"],
   ["Ground clearance (unladen)", "175 mm"],
   ["Turning radius", "5.8 m"],
-  ["Range (NEDC)", "450 km"],
   ["Safety", "6 airbags · ADAS (confirm pack with dealer)"],
   ["Warranty — vehicle", "7 years or 160,000 km"],
   ["Warranty — battery", "8 years or unlimited km"],
 ];
 
 const mpv7KeyFigures: { label: string; value: string }[] = [
-  { label: "Battery capacity", value: "75.3 kWh" },
+  { label: "Battery capacity", value: "60.13 kWh" },
   { label: "Max. torque", value: "310 Nm" },
   { label: "DC charge (10–70%)", value: "~35 mins" },
   { label: "Seating", value: "7 seats · 2+3+2" },
@@ -243,7 +244,6 @@ const mpv7KeyFigures: { label: string; value: string }[] = [
 
 const mpv7SpotlightChips = [
   "Seven-seat electric MPV",
-  "450 km range (NEDC)",
   "ADAS — confirm pack with dealer",
   "Fast DC charging",
   "Bookings open · Patna",
@@ -274,7 +274,8 @@ const ModelMPV7 = () => {
     name: "",
     mobile: "",
     email: "",
-    city: "Patna",
+    city: BIHAR_DEFAULT_DISTRICT,
+    otherCity: "",
   });
   const [mobileError, setMobileError] = useState("");
   const [studioIdx, setStudioIdx] = useState(0);
@@ -308,6 +309,10 @@ const ModelMPV7 = () => {
       toast.error("Please enter a valid 10-digit Indian mobile number.");
       return;
     }
+    if (interestForm.city === DISTRICT_OTHER && !interestForm.otherCity.trim()) {
+      toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
 
     const modelDisplay = leadModelLabel("VF MPV 7", DEFAULT_MPV7_TRIM);
 
@@ -316,7 +321,8 @@ const ModelMPV7 = () => {
         await submitPublicLead({
           name: interestForm.name.trim(),
           mobile: interestForm.mobile,
-          city: interestForm.city,
+          city: interestForm.city === DISTRICT_OTHER ? DISTRICT_OTHER : interestForm.city,
+          otherCity: interestForm.city === DISTRICT_OTHER ? interestForm.otherCity : "",
           modelDisplay,
           source: "VF MPV 7 Pre-book",
           email: interestForm.email.trim(),
@@ -337,7 +343,10 @@ const ModelMPV7 = () => {
           name: interestForm.name.trim(),
           mobile: interestForm.mobile,
           email: interestForm.email.trim(),
-          city: interestForm.city,
+          city:
+            interestForm.city === DISTRICT_OTHER
+              ? interestForm.otherCity.trim() || DISTRICT_OTHER
+              : interestForm.city,
           model: modelDisplay,
           source: "VF MPV 7 Pre-book",
           status: "Interested",
@@ -359,7 +368,7 @@ const ModelMPV7 = () => {
     window.dispatchEvent(new Event(MPV7_PREBOOK_UNLOCK_EVENT));
     setPrebookUnlocked(true);
     toast.success("Thank you! You can now continue to complete your VF MPV 7 pre-booking.");
-    setInterestForm({ name: "", mobile: "", email: "", city: "Patna" });
+    setInterestForm({ name: "", mobile: "", email: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "" });
     setMobileError("");
   };
 
@@ -402,12 +411,6 @@ const ModelMPV7 = () => {
                 <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/30">
                   <div>
                     <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                      450 km
-                    </p>
-                    <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (NEDC)</p>
-                  </div>
-                  <div>
-                    <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
                       150 kW
                     </p>
                     <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
@@ -416,7 +419,7 @@ const ModelMPV7 = () => {
                 <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 min-w-0">
                   <div>
                     <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                      8.3 s
+                      {"<10 sec"}
                     </p>
                     <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
                   </div>
@@ -524,7 +527,7 @@ const ModelMPV7 = () => {
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm col-span-2 sm:col-span-1">
                   <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1 leading-tight">
                     Status
@@ -533,17 +536,10 @@ const ModelMPV7 = () => {
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
-                    <Gauge className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                    <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider leading-tight">Range (NEDC)</p>
-                  </div>
-                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">450 km</p>
-                </div>
-                <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
-                  <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
                     <Timer className="w-3.5 h-3.5 shrink-0" aria-hidden />
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider leading-tight">0–100 km/h</p>
                   </div>
-                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">8.3 s</p>
+                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">{"<10 sec"}</p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -901,19 +897,16 @@ const ModelMPV7 = () => {
                   />
                 </div>
                 <div className="sm:col-span-1 lg:col-span-2">
-                  <label htmlFor="mpv7-pb-city" className="sr-only">
-                    City
-                  </label>
-                  <select
-                    id="mpv7-pb-city"
+                  <BiharDistrictField
+                    id="mpv7-pb-district"
+                    label="District (Bihar)"
+                    selectClassName={inputClass}
+                    otherInputClassName={`${inputClass} border-primary/50`}
                     value={interestForm.city}
-                    onChange={(e) => setInterestForm({ ...interestForm, city: e.target.value })}
-                    className={inputClass}
-                  >
-                    <option value="Patna">Patna</option>
-                    <option value="Muzaffarpur">Muzaffarpur</option>
-                    <option value="Other">Other</option>
-                  </select>
+                    otherValue={interestForm.otherCity}
+                    onDistrictChange={(city) => setInterestForm({ ...interestForm, city, otherCity: "" })}
+                    onOtherChange={(otherCity) => setInterestForm({ ...interestForm, otherCity })}
+                  />
                 </div>
                 <div className="sm:col-span-2 lg:col-span-2 flex lg:pt-0">
                   <Button type="submit" variant="hero" size="lg" className="w-full lg:w-auto lg:shrink-0">

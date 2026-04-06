@@ -8,7 +8,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf7Street from "@/assets/vf7-street.jpg";
+import vf7FrontHero from "@/assets/vf7-front-page-hero.png";
 import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
 import vf7CrimsonRed from "@/assets/vf7-crimson-red.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
@@ -77,7 +77,7 @@ const vf7Variants: {
     name: "VF 7 Sky",
     shortLabel: "Sky",
     description:
-      "353 PS dual-motor AWD, 70 kWh, 510 km MIDC, 5.8 s to 100 km/h — performance flagship with 110 kW DC charging & black alloys.",
+      "353 PS dual-motor AWD, 70.8 kWh, 510 km MIDC, 5.8 s to 100 km/h — performance flagship with 110 kW DC charging & black alloys.",
   },
   {
     id: "skyInfinity",
@@ -134,7 +134,7 @@ const variantKeyFigures: Record<VariantId, { label: string; value: string }[]> =
   ],
   sky: [
     { label: "Driveline", value: "AWD (dual motor)" },
-    { label: "Usable battery", value: "70 kWh" },
+    { label: "Usable battery", value: "70.8 kWh" },
     { label: "Max. torque", value: "500 Nm" },
     { label: "DC fast charge (10–70%)", value: "28 min · up to 110 kW" },
     { label: "Boot space", value: "537 L" },
@@ -142,7 +142,7 @@ const variantKeyFigures: Record<VariantId, { label: string; value: string }[]> =
   ],
   skyInfinity: [
     { label: "Driveline", value: "AWD (dual motor)" },
-    { label: "Usable battery", value: "70 kWh" },
+    { label: "Usable battery", value: "70.8 kWh" },
     { label: "Max. torque", value: "500 Nm" },
     { label: "DC fast charge (10–70%)", value: "28 min · up to 110 kW" },
     { label: "Boot space", value: "537 L" },
@@ -175,7 +175,7 @@ const variantSpotlightChips: Record<VariantId, string[]> = {
   ],
   sky: [
     "353 PS AWD performance",
-    "70 kWh battery · 110 kW DC",
+    "70.8 kWh battery · 110 kW DC",
     "Black alloys · flush handles",
     "Full ADAS + ACC",
     "8 speakers · smart connectivity",
@@ -195,7 +195,7 @@ const technicalSpecRows: [string, string, string, string, string, string][] = [
   ["Driveline", "FWD", "FWD", "FWD", "AWD", "AWD"],
   ["Range (MIDC)", "438 km", "532 km", "510 km", "510 km", "510 km"],
   ["Acceleration (0–100 km/h)", "9.1 s", "8.5 s", "8.5 s", "5.8 s", "5.8 s"],
-  ["Usable battery capacity", "59.6 kWh", "59.6 kWh", "59.6 kWh", "70 kWh", "70 kWh"],
+  ["Usable battery capacity", "59.6 kWh", "59.6 kWh", "59.6 kWh", "70.8 kWh", "70.8 kWh"],
   ["Charge port", "CCS2", "CCS2", "CCS2", "CCS2", "CCS2"],
   ["AC charging", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW"],
   ["DC charging (max.)", "100 kW", "100 kW", "100 kW", "110 kW", "110 kW"],
@@ -292,7 +292,7 @@ const connectivityRows: [string, string, string, string, string, string][] = [
 ];
 
 const featureHighlights = [
-  "Five trims: Earth & Wind (FWD 59.6 kWh), Wind Infinity (FWD + panoramic roof), Sky & Sky Infinity (AWD 70 kWh, 353 PS)",
+  "Five trims: Earth & Wind (FWD 59.6 kWh), Wind Infinity (FWD + panoramic roof), Sky & Sky Infinity (AWD 70.8 kWh, 353 PS)",
   "Earth: 438 km MIDC; Wind peaks at 532 km; Wind Infinity & Sky line at 510 km MIDC",
   "Sky & Sky Infinity: dual-motor AWD, 500 Nm, 5.8 s 0–100 km/h, 110 kW DC & 28 min 10–70% charge",
   "All variants: 7 airbags, 360° camera, LED lighting signature, dual-zone climate, HUD, 537 L boot",
@@ -461,9 +461,9 @@ const ModelVF7 = () => {
       <section className="relative flex min-h-[85vh] flex-col">
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
-            src={vf7Street}
+            src={vf7FrontHero}
             alt="VinFast VF 7"
-            className="h-full w-full object-cover object-[32%_50%]"
+            className="h-full w-full object-cover object-[42%_48%]"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
@@ -859,7 +859,7 @@ const ModelVF7 = () => {
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Specifications</p>
             <h2 className="font-display font-bold text-3xl md:text-5xl mb-4">VF 7 — all five variants</h2>
             <p className="text-muted-foreground text-sm md:text-base">
-              Technical brief: FWD Earth / Wind / Wind Infinity (59.6 kWh) and AWD Sky / Sky Infinity (70 kW·h class battery, 353 PS).
+              Technical brief: FWD Earth / Wind / Wind Infinity (59.6 kWh) and AWD Sky / Sky Infinity (70.8 kWh battery, 353 PS).
             </p>
           </div>
 
