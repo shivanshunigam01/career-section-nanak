@@ -393,8 +393,8 @@ const ModelMPV7 = () => {
           <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
             <div className="text-left max-w-3xl">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-2">
-                <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-white bg-black/40 border border-white/45 backdrop-blur-sm">
-                  Brand new
+                <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-white bg-black/55 border border-white/40 backdrop-blur-sm">
+                  New launch
                 </span>
                 <span className="hidden sm:inline text-white/50 text-xs" aria-hidden>
                   ·
@@ -407,54 +407,44 @@ const ModelMPV7 = () => {
                 VF MPV 7
               </h1>
 
-              <div className="mb-1.5 flex w-max max-w-full gap-4 sm:gap-5">
-                <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 pr-4 sm:pr-5 border-r border-white/30">
-                  <div>
-                    <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                      150 kW
-                    </p>
-                    <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
-                  </div>
+              <div className="mb-5 sm:mb-6 space-y-3 sm:space-y-3.5 max-w-md">
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
+                    60.13 kWh
+                  </p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Battery capacity</p>
                 </div>
-                <div className="grid auto-rows-min gap-y-1.5 sm:gap-y-2 min-w-0">
-                  <div>
-                    <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                      {"<10 sec"}
-                    </p>
-                    <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
-                  </div>
-                  <div>
-                    <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                      7 seats
-                    </p>
-                    <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">2+3+2 layout</p>
-                  </div>
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
+                    150 kW
+                  </p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
+                </div>
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
+                    {"<10 sec"}
+                  </p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
+                </div>
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
+                    7 seats
+                  </p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">2+3+2 layout</p>
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
-                <span className="rounded-full px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border text-center leading-tight whitespace-nowrap shrink-0 bg-white text-gray-900 border-white">
-                  Bookings open
-                </span>
-                <span className="rounded-full px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border text-center leading-tight whitespace-nowrap shrink-0 bg-black/45 text-white border-white/50">
-                  Pre-booking
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
+              <div className="flex w-full max-w-md flex-col gap-3">
                 <Link to="#mpv7-prebook" className="w-full min-w-0">
                   <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
                     Register for pre-booking
                   </Button>
                 </Link>
-                <Link to="/emi-calculator" className="w-full min-w-0">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55"
-                  >
-                    EMI Calculator
-                  </Button>
+                <Link
+                  to="/emi-calculator"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-white/55 bg-black/35 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/50 sm:py-3.5"
+                >
+                  EMI Calculator
                 </Link>
               </div>
             </div>

@@ -218,7 +218,10 @@ const TestDrivePage = () => {
 
   const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });
 
-  const inputClass = "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
+  const inputClass =
+    "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full min-w-0";
+  const labelClass = "text-xs font-medium text-muted-foreground";
+  const fieldBlockClass = "flex flex-col gap-2 min-w-0";
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
@@ -274,31 +277,64 @@ const TestDrivePage = () => {
                 {`Date and time apply only to test drives. The first selectable day each month is the ${MIN_TEST_DRIVE_DAY_OF_MONTH}th (days 1–9 are blocked).`}
               </p>
               <div className="space-y-4">
-                <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
-                <div className="flex flex-col gap-1">
+                <div className={fieldBlockClass}>
+                  <label htmlFor="td-name" className={labelClass}>
+                    Full name *
+                  </label>
                   <input
+                    id="td-name"
+                    type="text"
+                    placeholder="Enter your full name"
+                    value={formData.name}
+                    onChange={(e) => update("name", e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className={fieldBlockClass}>
+                  <label htmlFor="td-mobile" className={labelClass}>
+                    Mobile number *
+                  </label>
+                  <input
+                    id="td-mobile"
                     type="tel"
-                    placeholder="Mobile Number *"
+                    placeholder="10-digit mobile"
                     value={formData.mobile}
                     onChange={handleMobileChange}
                     maxLength={10}
                     inputMode="numeric"
                     className={`${inputClass} ${mobileError ? "border-red-500 focus:ring-red-500/50" : ""}`}
                   />
-                  {mobileError && (
-                    <p className="text-red-500 text-[11px] px-1 leading-tight">{mobileError}</p>
-                  )}
+                  {mobileError ? <p className="text-red-500 text-[11px] leading-tight">{mobileError}</p> : null}
                 </div>
-                <input type="email" placeholder="Email (Optional)" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ModelTrimSelect
-                    model={formData.model}
-                    variant={formData.variant}
-                    onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
+                <div className={fieldBlockClass}>
+                  <label htmlFor="td-email" className={labelClass}>
+                    Email (optional)
+                  </label>
+                  <input
+                    id="td-email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={formData.email}
+                    onChange={(e) => update("email", e.target.value)}
                     className={inputClass}
                   />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                  <div className={fieldBlockClass}>
+                    <label htmlFor="td-model-trim" className={labelClass}>
+                      Select your test drive *
+                    </label>
+                    <ModelTrimSelect
+                      id="td-model-trim"
+                      model={formData.model}
+                      variant={formData.variant}
+                      onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
+                      className={inputClass}
+                    />
+                  </div>
                   <BiharDistrictField
-                    label="District (Bihar)"
+                    id="td-district"
+                    label="District (Bihar) *"
                     selectClassName={inputClass}
                     otherInputClassName={`${inputClass} border-primary/50`}
                     value={formData.city}
@@ -307,51 +343,80 @@ const TestDrivePage = () => {
                     onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className={cn(
-                          "h-12 w-full justify-start text-left font-normal rounded-xl border-border bg-background/50 px-4",
-                          !formData.date && "text-muted-foreground",
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
-                        {formData.date
-                          ? format(new Date(`${formData.date}T12:00:00`), "dd MMM yyyy")
-                          : "Pick date *"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={selectedCalendarDate}
-                        onSelect={(d) => {
-                          if (!d) return;
-                          if (!isTestDriveBookableDate(d)) return;
-                          update("date", toISODateString(d));
-                          setDatePickerOpen(false);
-                        }}
-                        disabled={(date) => !isTestDriveBookableDate(date)}
-                        defaultMonth={selectedCalendarDate ?? new Date()}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <select value={formData.time} onChange={(e) => update("time", e.target.value)} className={inputClass}>
-                    <option value="">Select Time</option>
-                    <option value="10:00 AM">10:00 AM</option>
-                    <option value="11:00 AM">11:00 AM</option>
-                    <option value="12:00 PM">12:00 PM</option>
-                    <option value="02:00 PM">02:00 PM</option>
-                    <option value="03:00 PM">03:00 PM</option>
-                    <option value="04:00 PM">04:00 PM</option>
-                    <option value="05:00 PM">05:00 PM</option>
-                  </select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+                  <div className={fieldBlockClass}>
+                    <span id="td-date-label" className={labelClass}>
+                      Preferred date *
+                    </span>
+                    <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          aria-labelledby="td-date-label"
+                          className={cn(
+                            "h-12 w-full min-w-0 justify-start text-left font-normal rounded-xl border-border bg-background/50 px-4",
+                            !formData.date && "text-muted-foreground",
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
+                          <span className="truncate">
+                            {formData.date
+                              ? format(new Date(`${formData.date}T12:00:00`), "dd MMM yyyy")
+                              : "Pick date"}
+                          </span>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={selectedCalendarDate}
+                          onSelect={(d) => {
+                            if (!d) return;
+                            if (!isTestDriveBookableDate(d)) return;
+                            update("date", toISODateString(d));
+                            setDatePickerOpen(false);
+                          }}
+                          disabled={(date) => !isTestDriveBookableDate(date)}
+                          defaultMonth={selectedCalendarDate ?? new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className={fieldBlockClass}>
+                    <label htmlFor="td-time" className={labelClass}>
+                      Preferred time
+                    </label>
+                    <select
+                      id="td-time"
+                      value={formData.time}
+                      onChange={(e) => update("time", e.target.value)}
+                      className={inputClass}
+                    >
+                      <option value="">Select time</option>
+                      <option value="10:00 AM">10:00 AM</option>
+                      <option value="11:00 AM">11:00 AM</option>
+                      <option value="12:00 PM">12:00 PM</option>
+                      <option value="02:00 PM">02:00 PM</option>
+                      <option value="03:00 PM">03:00 PM</option>
+                      <option value="04:00 PM">04:00 PM</option>
+                      <option value="05:00 PM">05:00 PM</option>
+                    </select>
+                  </div>
                 </div>
-                <textarea placeholder="Any remarks..." value={formData.remarks} onChange={(e) => update("remarks", e.target.value)} className={`${inputClass} h-24 py-3 resize-none`} />
+                <div className={fieldBlockClass}>
+                  <label htmlFor="td-remarks" className={labelClass}>
+                    Remarks (optional)
+                  </label>
+                  <textarea
+                    id="td-remarks"
+                    placeholder="Any special requests…"
+                    value={formData.remarks}
+                    onChange={(e) => update("remarks", e.target.value)}
+                    className={`${inputClass} h-24 py-3 resize-none`}
+                  />
+                </div>
                 <Button type="submit" variant="hero" size="lg" className="w-full">
                   Confirm Test Drive
                 </Button>
