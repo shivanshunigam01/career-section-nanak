@@ -43,7 +43,7 @@ const Navbar = () => {
             <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
               <img
                 src={vinfastLogo}
-                alt="Patliputra VinFast"
+                alt={dealer.dealerName}
                 className="h-[3.25rem] sm:h-14 lg:h-16 w-auto max-h-full object-contain object-left"
               />
               <span className="w-px h-7 sm:h-8 lg:h-8 self-center bg-border shrink-0" aria-hidden />

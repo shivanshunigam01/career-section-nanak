@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -9,6 +9,7 @@ import mpv7Card from "@/assets/mpv7-gallery/mpv7-hero.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
+import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 type Spec = { icon: typeof Battery | typeof Users; label: string; value: string };
 
@@ -110,20 +111,20 @@ const ModelDiscovery = () => {
   const { siteConfig } = usePublicSite();
   const [apiProducts, setApiProducts] = useState<Record<string, unknown>[] | null>(null);
 
+  const loadProducts = useCallback(async () => {
+    if (!hasApi()) return;
+    const data = await publicGet<unknown[]>("/public/products");
+    if (Array.isArray(data) && data.length > 0) {
+      setApiProducts(data as Record<string, unknown>[]);
+    }
+  }, []);
+
   useEffect(() => {
     if (!hasApi()) return;
-    let cancelled = false;
-    (async () => {
-      const data = await publicGet<unknown[]>("/public/products");
-      if (cancelled) return;
-      if (Array.isArray(data) && data.length > 0) {
-        setApiProducts(data as Record<string, unknown>[]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadProducts();
+  }, [loadProducts]);
+
+  useRefetchWhenVisible(loadProducts, hasApi());
 
   const models = useMemo(
     () => mergeModels(BASE_MODELS, apiProducts, siteConfig),

@@ -6,8 +6,11 @@ import FaqSection from "@/components/FaqSection";
 import { Award, Users, Target, Globe } from "lucide-react";
 import patliputraVinfastHero from "@/assets/patliputra-vinfast-about-hero.png";
 import vf8Convoy from "@/assets/vf8-convoy.jpg";
+import { usePublicSite } from "@/context/PublicSiteContext";
 
 const AboutPage = () => {
+  const { dealer } = usePublicSite();
+
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
@@ -17,7 +20,7 @@ const AboutPage = () => {
         <div className="absolute inset-0">
           <img
             src={patliputraVinfastHero}
-            alt="Patliputra VinFast"
+            alt={dealer.dealerName}
             className="image-high-quality h-full w-full object-cover object-center"
             sizes="100vw"
             fetchPriority="high"
@@ -30,10 +33,10 @@ const AboutPage = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
             <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
             <h1 className="text-on-image-lg font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight mb-3">
-              Patliputra VinFast
+              {dealer.dealerName}
             </h1>
             <p className="text-on-image-soft text-base md:text-lg max-w-xl">
-              Bihar's first authorized VinFast dealer — bringing electric excellence to your doorstep.
+              Bihar&apos;s first authorized {dealer.brand} dealer — bringing electric excellence to your doorstep.
             </p>
           </motion.div>
         </div>
@@ -43,7 +46,7 @@ const AboutPage = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <motion.p initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
             className="text-foreground/60 text-base sm:text-lg leading-relaxed max-w-3xl mx-auto text-center mb-12 sm:mb-20 px-1">
-            Bihar's first and authorized VinFast dealer. Backed by Patliputra Group's legacy of trust, we bring Vietnam's leading electric vehicle brand to the heart of India.
+            Bihar&apos;s first and authorized {dealer.brand} dealer — {dealer.dealerName}. Backed by Patliputra Group&apos;s legacy of trust, we bring Vietnam&apos;s leading electric vehicle brand to the heart of India.
           </motion.p>
 
           {/* Stats */}
@@ -84,19 +87,19 @@ const AboutPage = () => {
               <div>
                 <h2 className="font-display font-bold text-2xl mb-4">About VinFast</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  VinFast is Vietnam's leading automotive manufacturer, part of Vingroup — one of Southeast Asia's largest conglomerates. With a mission to make electric vehicles accessible to everyone, VinFast combines cutting-edge technology, world-class safety, and premium design at competitive prices.
+                  VinFast is Vietnam&apos;s leading automotive manufacturer, part of Vingroup — one of Southeast Asia&apos;s largest conglomerates. With a mission to make electric vehicles accessible to everyone, VinFast combines cutting-edge technology, world-class safety, and premium design at competitive prices.
                 </p>
               </div>
               <div>
-                <h2 className="font-display font-bold text-2xl mb-4">About Patliputra VinFast</h2>
+                <h2 className="font-display font-bold text-2xl mb-4">About {dealer.dealerName}</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  Patliputra VinFast builds on the Patliputra Group legacy — Bihar's trusted automotive partner for 25+ years with brands like JCB, Ashok Leyland, and Switch EV. As VinFast's authorized dealer for Bihar, we bring the same commitment to excellence and after-sales support.
+                  {dealer.dealerName} builds on the Patliputra Group legacy — Bihar&apos;s trusted automotive partner for 25+ years with brands like JCB, Ashok Leyland, and Switch EV. As {dealer.brand}&apos;s authorized dealer for Bihar, we bring the same commitment to excellence and after-sales support.
                 </p>
               </div>
               <div>
                 <h2 className="font-display font-bold text-2xl mb-4">Our Mission</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  To make Bihar's electric vehicle transition seamless, premium, and accessible. Every family deserves safe, intelligent, and sustainable mobility.
+                  To make Bihar&apos;s electric vehicle transition seamless, premium, and accessible. Every family deserves safe, intelligent, and sustainable mobility.
                 </p>
               </div>
             </motion.div>

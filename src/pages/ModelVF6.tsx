@@ -21,6 +21,7 @@ import vf6GalDetail02 from "@/assets/vf6-gallery/vf6-gallery-detail-02.png";
 import vf6GalDetail03 from "@/assets/vf6-gallery/vf6-gallery-detail-03.png";
 import vf6GalDetail04 from "@/assets/vf6-gallery/vf6-gallery-detail-04.png";
 import vf6GalDetail05 from "@/assets/vf6-gallery/vf6-gallery-detail-05.png";
+import { usePublicSite } from "@/context/PublicSiteContext";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
@@ -334,11 +335,14 @@ function SpecTable({ title, rows }: { title: string; rows: [string, string, stri
 }
 
 const ModelVF6 = () => {
+  const { siteConfig } = usePublicSite();
   const [selectedColor, setSelectedColor] = useState(0);
   const [variant, setVariant] = useState<VariantId>("earth");
 
   const stats = variantHeroStats[variant];
   const vMeta = vf6Variants.find((v) => v.id === variant)!;
+  const displayExShowroom =
+    variant === "earth" ? siteConfig.vf6Price : variantExShowroomPrice[variant];
 
   return (
     <div className="min-h-screen bg-background">
@@ -390,7 +394,7 @@ const ModelVF6 = () => {
 
             <div className="mb-2">
               <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
-                {variantExShowroomPrice[variant]}
+                {displayExShowroom}
               </p>
               <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
             </div>
@@ -553,7 +557,7 @@ const ModelVF6 = () => {
                     Indicative ex-showroom
                   </p>
                   <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">
-                    {variantExShowroomPrice[variant]}
+                    {displayExShowroom}
                   </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">

@@ -13,9 +13,9 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicEnquiry, submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
-
-const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
-const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { telHref, waMeUrl } from "@/lib/contactLinks";
+import { mapsDirectionsHref, mapsEmbedSrc } from "@/lib/dealerMap";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -29,6 +29,13 @@ const getLocalISODate = () => {
 };
 
 const ContactPage = () => {
+  const { dealer, siteConfig } = usePublicSite();
+  const address = dealer.address;
+  const mapLink = mapsDirectionsHref(address, dealer.mapEmbedUrl);
+  const embedSrc = mapsEmbedSrc(address, dealer.mapEmbedUrl);
+  const tel = telHref(siteConfig.phoneNumber || dealer.phone);
+  const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
+
   const [formData, setFormData] = useState({
     name: "", mobile: "", email: "", city: "Patna", model: "VF 7", variant: DEFAULT_VF7_TRIM,
     interest: "General Enquiry", message: "",
@@ -137,13 +144,13 @@ const ContactPage = () => {
             {/* Contact Info */}
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="space-y-8">
               <div className="glass-card p-5 sm:p-8">
-                <h3 className="font-display font-bold text-xl mb-6">Patna Showroom</h3>
+                <h3 className="font-display font-bold text-xl mb-6">Visit us</h3>
                 <div className="space-y-4">
                   {[
-                    { icon: MapPin, text: SHOWROOM_ADDRESS, href: GOOGLE_MAPS_URL },
-                    { icon: Phone, text: "+91 92314 45060", href: "tel:+919231445060" },
-                    { icon: Mail, text: "info@patliputravinfast.com", href: "mailto:info@patliputravinfast.com" },
-                    { icon: Clock, text: "10:00 AM – 8:00 PM, Monday – Saturday" },
+                    { icon: MapPin, text: address, href: mapLink },
+                    { icon: Phone, text: siteConfig.phoneNumber || dealer.phone, href: tel },
+                    { icon: Mail, text: dealer.email, href: `mailto:${dealer.email}` },
+                    { icon: Clock, text: dealer.showroomHours },
                   ].map((item) => {
                     const Icon = item.icon;
                     const content = (
@@ -171,20 +178,20 @@ const ContactPage = () => {
 
               <div className="glass-card p-8 aspect-video rounded-2xl overflow-hidden">
                 <iframe
-                  src={`https://www.google.com/maps?q=${encodeURIComponent(SHOWROOM_ADDRESS)}&output=embed`}
+                  src={embedSrc}
                   width="100%" height="100%" style={{ border: 0 }} allowFullScreen loading="lazy"
-                  title="Patliputra VinFast Showroom Location"
+                  title={`${dealer.dealerName} showroom location`}
                   className="rounded-xl"
                 />
               </div>
 
               <div className="flex gap-3">
-                <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="flex-1">
+                <a href={wa} target="_blank" rel="noopener noreferrer" className="flex-1">
                   <Button variant="whatsapp" size="lg" className="w-full">
                     <MessageCircle className="w-5 h-5" /> WhatsApp Us
                   </Button>
                 </a>
-                <a href="tel:+919231445060" className="flex-1">
+                <a href={tel} className="flex-1">
                   <Button variant="outline" size="lg" className="w-full">
                     <Phone className="w-5 h-5" /> Call Now
                   </Button>

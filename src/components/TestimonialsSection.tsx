@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Star, Quote } from "lucide-react";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
+import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 type TestimonialView = {
   name: string;
@@ -55,18 +56,19 @@ function mapFromApi(raw: Record<string, unknown>[]): TestimonialView[] {
 const TestimonialsSection = () => {
   const [items, setItems] = useState<TestimonialView[]>(FALLBACK);
 
+  const loadTestimonials = useCallback(async () => {
+    if (!hasApi()) return;
+    const data = await publicGet<unknown[]>("/public/testimonials");
+    if (!Array.isArray(data) || data.length === 0) return;
+    setItems(mapFromApi(data as Record<string, unknown>[]));
+  }, []);
+
   useEffect(() => {
     if (!hasApi()) return;
-    let cancelled = false;
-    (async () => {
-      const data = await publicGet<unknown[]>("/public/testimonials");
-      if (cancelled || !Array.isArray(data) || data.length === 0) return;
-      setItems(mapFromApi(data as Record<string, unknown>[]));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadTestimonials();
+  }, [loadTestimonials]);
+
+  useRefetchWhenVisible(loadTestimonials, hasApi());
 
   const testimonials = useMemo(() => (items.length ? items : FALLBACK), [items]);
 

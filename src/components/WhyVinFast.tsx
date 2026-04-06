@@ -1,40 +1,47 @@
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Shield, Headphones, CreditCard, ArrowLeftRight, MapPin, Award } from "lucide-react";
-
-const trustItems = [
-  {
-    icon: Award,
-    title: "Authorized Dealer",
-    description: "Bihar's first and only authorized VinFast dealer — Patliputra VinFast.",
-  },
-  {
-    icon: Shield,
-    title: "5-Star Safety",
-    description: "Bharat NCAP 5-star rated with advanced ADAS for ultimate protection.",
-  },
-  {
-    icon: CreditCard,
-    title: "Easy EV Finance",
-    description: "Tailored finance solutions with leading banks. Low EMIs, quick approval.",
-  },
-  {
-    icon: Headphones,
-    title: "24/7 Support",
-    description: "Roadside assistance, service support, and dedicated EV advisors.",
-  },
-  {
-    icon: ArrowLeftRight,
-    title: "Exchange Assist",
-    description: "Trade in your old car for the best exchange value on a new VinFast.",
-  },
-  {
-    icon: MapPin,
-    title: "Bihar Presence",
-    description: "Showrooms in Patna with expanding service network across Bihar.",
-  },
-];
+import { usePublicSite } from "@/context/PublicSiteContext";
 
 const WhyVinFast = () => {
+  const { dealer } = usePublicSite();
+
+  const trustItems = useMemo(
+    () => [
+      {
+        icon: Award,
+        title: "Authorized Dealer",
+        description: `Bihar's first and only authorized ${dealer.brand} dealer — ${dealer.dealerName}.`,
+      },
+      {
+        icon: Shield,
+        title: "5-Star Safety",
+        description: "Bharat NCAP 5-star rated with advanced ADAS for ultimate protection.",
+      },
+      {
+        icon: CreditCard,
+        title: "Easy EV Finance",
+        description: "Tailored finance solutions with leading banks. Low EMIs, quick approval.",
+      },
+      {
+        icon: Headphones,
+        title: "24/7 Support",
+        description: "Roadside assistance, service support, and dedicated EV advisors.",
+      },
+      {
+        icon: ArrowLeftRight,
+        title: "Exchange Assist",
+        description: `Trade in your old car for the best exchange value on a new ${dealer.brand}.`,
+      },
+      {
+        icon: MapPin,
+        title: "Bihar Presence",
+        description: "Showrooms in Patna with expanding service network across Bihar.",
+      },
+    ],
+    [dealer.brand, dealer.dealerName],
+  );
+
   return (
     <section className="py-16 sm:py-24 lg:py-32 section-surface">
       <div className="container mx-auto px-4 lg:px-8">

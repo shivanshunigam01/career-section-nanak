@@ -1,8 +1,9 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
+import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 type FaqItem = { question: string; answer: string; category?: string };
 
@@ -28,24 +29,25 @@ const FaqSection = ({ className = "" }: { className?: string }) => {
   const [items, setItems] = useState<FaqItem[]>(FALLBACK_FAQS);
   const [open, setOpen] = useState<number | null>(0);
 
+  const loadFaqs = useCallback(async () => {
+    if (!hasApi()) return;
+    const data = await publicGet<unknown[]>("/public/faqs");
+    if (!Array.isArray(data) || data.length === 0) return;
+    setItems(
+      (data as Record<string, unknown>[]).map((d) => ({
+        question: String(d.question ?? ""),
+        answer: String(d.answer ?? ""),
+        category: d.category ? String(d.category) : undefined,
+      })),
+    );
+  }, []);
+
   useEffect(() => {
     if (!hasApi()) return;
-    let cancelled = false;
-    (async () => {
-      const data = await publicGet<unknown[]>("/public/faqs");
-      if (cancelled || !Array.isArray(data) || data.length === 0) return;
-      setItems(
-        (data as Record<string, unknown>[]).map((d) => ({
-          question: String(d.question ?? ""),
-          answer: String(d.answer ?? ""),
-          category: d.category ? String(d.category) : undefined,
-        })),
-      );
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadFaqs();
+  }, [loadFaqs]);
+
+  useRefetchWhenVisible(loadFaqs, hasApi());
 
   const list = useMemo(() => (items.length ? items : FALLBACK_FAQS), [items]);
 
