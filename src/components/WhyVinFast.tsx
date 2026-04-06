@@ -55,7 +55,7 @@ const WhyVinFast = () => {
             Why Choose Us
           </p>
           <h2 className="font-display font-bold text-3xl md:text-5xl">
-            The Patliputra Advantage
+            The Patliputra Group Advantage
           </h2>
         </motion.div>
 

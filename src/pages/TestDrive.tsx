@@ -1,12 +1,16 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
-import { CalendarDays, MapPin, Car } from "lucide-react";
+import { CalendarDays, Calendar as CalendarIcon, MapPin, Car } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { addLead, addTestDriveBooking } from "@/lib/vfLocalStorage";
 import type { Lead, TestDriveBooking } from "@/data/mockData";
 import { hasApi } from "@/lib/apiConfig";
@@ -16,6 +20,25 @@ import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
+
+/** First calendar day of each month that accepts test-drive bookings (days 1–9 are blocked). */
+const MIN_TEST_DRIVE_DAY_OF_MONTH = 10;
+
+function isTestDriveBookableDate(d: Date): boolean {
+  const start = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  const today = new Date();
+  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  if (start < todayStart) return false;
+  if (d.getDate() < MIN_TEST_DRIVE_DAY_OF_MONTH) return false;
+  return true;
+}
+
+function toISODateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 const getLocalISODate = () => {
   // Returns YYYY-MM-DD in the user's local timezone (safe for <input type="date">).
@@ -32,7 +55,11 @@ const TestDrivePage = () => {
     date: "", time: "", remarks: "",
   });
   const [mobileError, setMobileError] = useState("");
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const todayStr = getLocalISODate();
+  const selectedCalendarDate = formData.date
+    ? new Date(`${formData.date}T12:00:00`)
+    : undefined;
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -67,14 +94,15 @@ const TestDrivePage = () => {
       return;
     }
 
-    const selected = new Date(`${formData.date}T00:00:00`);
-    const today = new Date(`${todayStr}T00:00:00`);
+    const selected = new Date(`${formData.date}T12:00:00`);
     if (Number.isNaN(selected.getTime())) {
       toast.error("Please select a valid preferred date.");
       return;
     }
-    if (selected.getTime() < today.getTime()) {
-      toast.error("Back date test drive booking is not allowed. Please select today or a future date.");
+    if (!isTestDriveBookableDate(selected)) {
+      toast.error(
+        `Test drives can be booked from the ${MIN_TEST_DRIVE_DAY_OF_MONTH}th of each month onward (past dates are not allowed).`,
+      );
       return;
     }
 
@@ -174,7 +202,11 @@ const TestDrivePage = () => {
               <div className="space-y-6">
                 {[
                   { icon: Car, title: "Choose Your Model", desc: "Select VF 6 or VF 7 for your test drive experience." },
-                  { icon: CalendarDays, title: "Pick a Date", desc: "Choose a convenient time. We're available Mon–Sat." },
+                  {
+                    icon: CalendarDays,
+                    title: "Pick a Date",
+                    desc: `Bookings open from the ${MIN_TEST_DRIVE_DAY_OF_MONTH}th of each month. We're available Mon–Sat.`,
+                  },
                   { icon: MapPin, title: "Visit or Home Drive", desc: "Drive at our showroom or request a home test drive." },
                 ].map((step) => {
                   const Icon = step.icon;
@@ -201,7 +233,9 @@ const TestDrivePage = () => {
               className="glass-card p-5 sm:p-8 min-w-0"
             >
               <h3 className="font-display font-bold text-xl mb-2">Schedule your test drive</h3>
-              <p className="text-muted-foreground text-sm mb-6">Date and time apply only to test drives.</p>
+              <p className="text-muted-foreground text-sm mb-6">
+                {`Date and time apply only to test drives. The first selectable day each month is the ${MIN_TEST_DRIVE_DAY_OF_MONTH}th (days 1–9 are blocked).`}
+              </p>
               <div className="space-y-4">
                 <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
                 <div className="flex flex-col gap-1">
@@ -233,13 +267,38 @@ const TestDrivePage = () => {
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => update("date", e.target.value)}
-                    min={todayStr}
-                    className={inputClass}
-                  />
+                  <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn(
+                          "h-12 w-full justify-start text-left font-normal rounded-xl border-border bg-background/50 px-4",
+                          !formData.date && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4 shrink-0 opacity-70" />
+                        {formData.date
+                          ? format(new Date(`${formData.date}T12:00:00`), "dd MMM yyyy")
+                          : "Pick date *"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedCalendarDate}
+                        onSelect={(d) => {
+                          if (!d) return;
+                          if (!isTestDriveBookableDate(d)) return;
+                          update("date", toISODateString(d));
+                          setDatePickerOpen(false);
+                        }}
+                        disabled={(date) => !isTestDriveBookableDate(date)}
+                        defaultMonth={selectedCalendarDate ?? new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
                   <select value={formData.time} onChange={(e) => update("time", e.target.value)} className={inputClass}>
                     <option value="">Select Time</option>
                     <option value="10:00 AM">10:00 AM</option>

@@ -29,8 +29,8 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
     image: vf7Real,
     href: "/models/vf7",
     specs: [
-      { icon: Battery, label: "Battery", value: "75.3 kWh" },
-      { icon: Gauge, label: "Range", value: "431 km" },
+      { icon: Battery, label: "Battery", value: "70.8 kWh" },
+      { icon: Gauge, label: "Range", value: "532 km" },
       { icon: Zap, label: "0–100", value: "5.9s" },
       { icon: Shield, label: "Safety", value: "5-Star" },
     ],
@@ -42,7 +42,7 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
     href: "/models/vf6",
     specs: [
       { icon: Battery, label: "Battery", value: "59.6 kWh" },
-      { icon: Gauge, label: "Range", value: "381 km" },
+      { icon: Gauge, label: "Range", value: "468 km" },
       { icon: Zap, label: "0–100", value: "6.8s" },
       { icon: Shield, label: "Safety", value: "5-Star" },
     ],

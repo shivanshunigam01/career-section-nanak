@@ -6,6 +6,7 @@ import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
@@ -363,7 +364,7 @@ const ModelMPV7 = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
       {/* Hero — same shell as VF 6 */}
@@ -783,12 +784,18 @@ const ModelMPV7 = () => {
             </table>
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Button variant="outline" size="lg" asChild className="border-white/25 bg-white/5 text-white hover:bg-white/10">
-              <Link to="/contact" className="inline-flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                Request brochure
-              </Link>
-            </Button>
+            <BrochureDownloadButton
+              brochureHref="/brochures/VF-MPV7-Brochure.pdf"
+              downloadFileName="VinFast-VF-MPV7-Brochure.pdf"
+              modelDisplay="VF MPV 7"
+              pageSource="VF MPV 7 Model Page"
+              variant="outline"
+              size="lg"
+              className="border-white/25 bg-white/5 text-white hover:bg-white/10"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              Request brochure
+            </BrochureDownloadButton>
             <Button variant="hero" size="lg" asChild>
               <Link to="/compare">Compare models</Link>
             </Button>

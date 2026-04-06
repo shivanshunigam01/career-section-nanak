@@ -48,8 +48,8 @@ const DEFAULT_SITE: SiteConfigPublic = {
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
   vf7Price: "₹21,89,000*",
   vf6Price: "₹17,29,000*",
-  vf7Range: "431 km",
-  vf6Range: "381 km",
+  vf7Range: "532 km",
+  vf6Range: "468 km",
 };
 
 type PublicSiteContextValue = {
@@ -69,12 +69,20 @@ function coalesceStr(v: unknown, fallback: string): string {
   return s || fallback;
 }
 
+/** Normalize legacy dealer name variants from CMS for public display. */
+function normalizeDealerName(name: string): string {
+  return name
+    .trim()
+    .replace(/\bpatliputra\s+autos?\b/gi, "Patliputra Group")
+    .replace(/\bpatliputraautos?\b/gi, "Patliputra Group");
+}
+
 function mergeDealer(doc: Record<string, unknown> | null): DealerInfo {
   if (!doc) return DEFAULT_DEALER;
   const mapRaw = doc.mapEmbedUrl;
   const gst = doc.gstNo != null ? String(doc.gstNo).trim() : "";
   return {
-    dealerName: coalesceStr(doc.dealerName, DEFAULT_DEALER.dealerName),
+    dealerName: normalizeDealerName(coalesceStr(doc.dealerName, DEFAULT_DEALER.dealerName)),
     brand: coalesceStr(doc.brand, DEFAULT_DEALER.brand),
     phone: coalesceStr(doc.phone, DEFAULT_DEALER.phone),
     whatsapp: coalesceStr(doc.whatsapp, DEFAULT_DEALER.whatsapp),

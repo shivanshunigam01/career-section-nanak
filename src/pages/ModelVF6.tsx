@@ -4,6 +4,7 @@ import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
+import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
@@ -345,7 +346,7 @@ const ModelVF6 = () => {
     variant === "earth" ? siteConfig.vf6Price : variantExShowroomPrice[variant];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
       {/* Hero — top inset clears fixed navbar (~4.25rem lg:h-20); flex spacer keeps copy bottom-aligned without clipping under nav */}
@@ -854,11 +855,16 @@ const ModelVF6 = () => {
           <SpecTable title="Connectivity, infotainment & smart features" rows={connectivityRows} />
 
           <div className="flex justify-center mt-10">
-            <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg">
-                <Download className="w-4 h-4 mr-2" /> Download Brochure
-              </Button>
-            </a>
+            <BrochureDownloadButton
+              brochureHref="/brochures/VF6-Brochure.pdf"
+              downloadFileName="VinFast-VF6-Brochure.pdf"
+              modelDisplay="VF 6"
+              pageSource="VF 6 Model Page"
+              variant="outline"
+              size="lg"
+            >
+              <Download className="w-4 h-4 mr-2" /> Download Brochure
+            </BrochureDownloadButton>
           </div>
         </div>
       </section>
@@ -877,13 +883,6 @@ const ModelVF6 = () => {
                     <span className="text-sm text-foreground/80">{f}</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a href="/brochures/VF6-Brochure.pdf" download="VinFast-VF6-Brochure.pdf" target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="lg">
-                    <Download className="w-4 h-4 mr-2" /> Download Brochure
-                  </Button>
-                </a>
               </div>
             </div>
             <div className="rounded-3xl overflow-hidden shadow-luxury border border-border/40">

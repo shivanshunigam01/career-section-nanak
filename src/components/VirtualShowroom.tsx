@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { usePublicSite } from "@/context/PublicSiteContext";
 import interiorImg from "@/assets/interior.jpg";
 import slideVf6Vf7Night from "@/assets/slide-vf6-vf7-night.png";
 import vf7Real from "@/assets/vf7-real.png";
@@ -8,6 +9,10 @@ import vf6Card from "@/assets/vf6-banner.png";
 import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
 
 const VirtualShowroom = () => {
+  const { siteConfig } = usePublicSite();
+  const vf7Range = siteConfig.vf7Range.trim() || "532 km";
+  const vf6Range = siteConfig.vf6Range.trim() || "468 km";
+
   return (
     <section className="py-12 sm:py-16 lg:py-24 section-surface overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8">
@@ -67,7 +72,9 @@ const VirtualShowroom = () => {
             <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl">VinFast VF 7</p>
-                <p className="text-on-image-soft text-xs sm:text-sm">349 HP · 431 km · AWD · 5-Star</p>
+                <p className="text-on-image-soft text-xs sm:text-sm">
+                  349 HP · {vf7Range} · AWD · 5-Star
+                </p>
               </div>
               <Link to="/models/vf7">
                 <Button variant="hero" size="sm" className="w-full sm:w-auto">View Model</Button>
@@ -92,7 +99,9 @@ const VirtualShowroom = () => {
             <div className="absolute bottom-4 left-4 right-4 sm:bottom-5 sm:left-6 sm:right-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
               <div>
                 <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl">VinFast VF 6</p>
-                <p className="text-on-image-soft text-xs sm:text-sm">201 HP · 381 km · FWD · 5-Star</p>
+                <p className="text-on-image-soft text-xs sm:text-sm">
+                  201 HP · {vf6Range} · FWD · 5-Star
+                </p>
               </div>
               <Link to="/models/vf6">
                 <Button variant="hero" size="sm" className="w-full sm:w-auto">View Model</Button>

@@ -49,7 +49,7 @@ const Navbar = () => {
               <span className="w-px h-7 sm:h-8 lg:h-8 self-center bg-border shrink-0" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
-                alt="Patliputra"
+                alt="Patliputra Group"
                 className="h-7 sm:h-8 lg:h-8 w-auto max-h-full object-contain object-left"
               />
             </Link>

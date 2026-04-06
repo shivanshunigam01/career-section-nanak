@@ -29,7 +29,7 @@ const Footer = () => {
               <span className="hidden sm:block w-px h-4 sm:h-5 lg:h-7 self-center bg-border shrink-0" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
-                alt="Patliputra"
+                alt="Patliputra Group"
                 className="h-4 sm:h-5 lg:h-8 w-auto max-h-full object-contain object-left"
               />
             </Link>
