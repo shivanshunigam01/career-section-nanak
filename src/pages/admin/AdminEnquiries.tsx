@@ -111,7 +111,7 @@ const AdminEnquiries = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `patliputra-enquiries-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `patliputra-group-enquiries-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`Exported ${rowsToExport.length} enquiry(ies).`);
@@ -156,7 +156,7 @@ const AdminEnquiries = () => {
           </style>
         </head>
         <body>
-          <h2>Patliputra Enquiries Export (${rowsToExport.length})</h2>
+          <h2>Patliputra Group Enquiries Export (${rowsToExport.length})</h2>
           <table>
             <thead>
               <tr><th>Name</th><th>Mobile</th><th>Email</th><th>Type</th><th>Status</th><th>Created At</th></tr>
@@ -189,7 +189,7 @@ const AdminEnquiries = () => {
       toast.dismiss(t);
       const preview = rowsToExport.slice(0, 10).map((e) => `• ${e.name} (${e.mobile}) - ${e.type} - ${e.status}`).join("\n");
       const suffix = rowsToExport.length > 10 ? `\n...and ${rowsToExport.length - 10} more` : "";
-      const msg = `Patliputra Enquiries (${rowsToExport.length})\n${preview}${suffix}`;
+      const msg = `Patliputra Group Enquiries (${rowsToExport.length})\n${preview}${suffix}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
     } catch (e) {
       toast.dismiss(t);

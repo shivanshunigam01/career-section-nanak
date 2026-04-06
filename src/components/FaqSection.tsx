@@ -10,7 +10,7 @@ type FaqItem = { question: string; answer: string; category?: string };
 const FALLBACK_FAQS: FaqItem[] = [
   {
     question: "What is the range of VF 7?",
-    answer: "The VF 7 offers up to 431 km of range on a single charge (WLTP, variant-dependent).",
+    answer: "The VF 7 offers up to 532 km of range (MIDC, variant-dependent) on a single charge.",
     category: "VF 7",
   },
   {

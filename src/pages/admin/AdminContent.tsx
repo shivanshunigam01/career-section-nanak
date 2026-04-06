@@ -39,7 +39,7 @@ const initialBanners: Banner[] = [
   { id: "B2", title: "VF Series — Design You Can Feel", subtitle: "Explore the lineup", imageUrl: "", link: "/models/vf7", active: true, order: 1 },
 ];
 const initialFaqs: FAQ[] = [
-  { id: "F1", question: "What is the range of VF 7?", answer: "The VF 7 offers up to 431 km of range on a single charge.", category: "VF 7", active: true, order: 0 },
+  { id: "F1", question: "What is the range of VF 7?", answer: "The VF 7 offers up to 532 km of range (MIDC, variant-dependent) on a single charge.", category: "VF 7", active: true, order: 0 },
   { id: "F2", question: "Is home charging available?", answer: "Yes, VinFast provides a complimentary home charger installation with every purchase.", category: "Charging", active: true, order: 1 },
   { id: "F3", question: "What finance options are available?", answer: "We partner with leading banks to offer EMI options starting from ₹21,890/month.", category: "Finance", active: true, order: 2 },
 ];

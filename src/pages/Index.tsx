@@ -6,14 +6,13 @@ import WhyVinFast from "@/components/WhyVinFast";
 import VirtualShowroom from "@/components/VirtualShowroom";
 import OwnershipSection from "@/components/OwnershipSection";
 import OffersSection from "@/components/OffersSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
       <HeroSection />
       <QuickActionBar />
@@ -22,7 +21,6 @@ const Index = () => {
       <VirtualShowroom />
       <OwnershipSection />
       <OffersSection />
-      <TestimonialsSection />
       <LeadCaptureStrip />
       <Footer />
       <StickyMobileCTA />

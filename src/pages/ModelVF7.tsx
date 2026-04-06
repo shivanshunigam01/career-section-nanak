@@ -5,6 +5,7 @@ import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
+import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import vf7Street from "@/assets/vf7-street.jpg";
@@ -55,7 +56,7 @@ const vf7Variants: {
     name: "VF 7 Earth",
     shortLabel: "Earth",
     description:
-      "177 PS FWD, 59.6 kWh, up to 438 km MIDC — silver alloys, limited ADAS, 6 speakers, no panoramic roof or wireless charger.",
+      "177 PS FWD, 59.6 kWh, up to 438 km MIDC — silver alloys, limited ADAS, 6 speakers.",
   },
   {
     id: "wind",
@@ -454,7 +455,7 @@ const ModelVF7 = () => {
     variant === "earth" ? siteConfig.vf7Price : variantExShowroomPrice[variant];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
       <section className="relative flex min-h-[85vh] flex-col">
@@ -899,11 +900,16 @@ const ModelVF7 = () => {
           <SpecTable7 title="Connectivity & infotainment" rows={connectivityRows} />
 
           <div className="flex justify-center mt-10">
-            <a href="/brochures/VF7-Brochure.pdf" download="VinFast-VF7-Brochure.pdf" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="lg">
-                <Download className="w-4 h-4 mr-2" /> Download Brochure
-              </Button>
-            </a>
+            <BrochureDownloadButton
+              brochureHref="/brochures/VF7-Brochure.pdf"
+              downloadFileName="VinFast-VF7-Brochure.pdf"
+              modelDisplay="VF 7"
+              pageSource="VF 7 Model Page"
+              variant="outline"
+              size="lg"
+            >
+              <Download className="w-4 h-4 mr-2" /> Download Brochure
+            </BrochureDownloadButton>
           </div>
         </div>
       </section>
@@ -922,13 +928,6 @@ const ModelVF7 = () => {
                     <span className="text-sm text-foreground/80">{f}</span>
                   </div>
                 ))}
-              </div>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <a href="/brochures/VF7-Brochure.pdf" download="VinFast-VF7-Brochure.pdf" target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" size="lg">
-                    <Download className="w-4 h-4 mr-2" /> Download Brochure
-                  </Button>
-                </a>
               </div>
             </div>
             <div className="rounded-3xl overflow-hidden shadow-luxury border border-border/40">

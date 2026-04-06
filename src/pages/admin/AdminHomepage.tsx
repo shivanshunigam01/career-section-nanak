@@ -64,8 +64,8 @@ const initialConfig: SiteConfig = {
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
   vf7Price: "₹21,89,000*",
   vf6Price: "₹17,29,000*",
-  vf7Range: "431 km",
-  vf6Range: "381 km",
+  vf7Range: "532 km",
+  vf6Range: "468 km",
 };
 
 const emptySlide: HeroSlide = {
@@ -343,11 +343,11 @@ const AdminHomepage = () => {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 7 Range</Label>
-                <Input value={config.vf7Range} onChange={e => updateConfig("vf7Range", e.target.value)} className="bg-secondary/50" placeholder="431 km" />
+                <Input value={config.vf7Range} onChange={e => updateConfig("vf7Range", e.target.value)} className="bg-secondary/50" placeholder="532 km" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 6 Range</Label>
-                <Input value={config.vf6Range} onChange={e => updateConfig("vf6Range", e.target.value)} className="bg-secondary/50" placeholder="381 km" />
+                <Input value={config.vf6Range} onChange={e => updateConfig("vf6Range", e.target.value)} className="bg-secondary/50" placeholder="468 km" />
               </div>
             </div>
           </Card>

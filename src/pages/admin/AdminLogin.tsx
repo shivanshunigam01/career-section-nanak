@@ -55,7 +55,7 @@ const AdminLogin = () => {
           <div className="text-center mb-8">
             <img src={vinLogo} alt="Patliputra VinFast" className="h-14 w-auto object-contain mx-auto mb-4" />
             <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground text-sm mt-1">Patliputra Auto Dealer Management</p>
+            <p className="text-muted-foreground text-sm mt-1">Patliputra Group Dealer Management</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
@@ -72,7 +72,7 @@ const AdminLogin = () => {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@patliputraauto.com"
+                  placeholder="admin@patliputravinfast.com"
                   value={email}
                   onChange={(e) => { setEmail(e.target.value); setError(""); }}
                   className="pl-10 bg-secondary/50 border-border/50"

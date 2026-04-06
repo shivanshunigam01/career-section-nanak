@@ -11,11 +11,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X } from "lucide-react";
+import { Download, Plus, X } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import {
   compareModels,
   compareRowLabels,
@@ -480,16 +481,28 @@ const ComparePage = () => {
           </div>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4 max-w-6xl mx-auto">
-            <a href="/brochures/VF6-Brochure.pdf" download target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                VF 6 brochure
-              </Button>
-            </a>
-            <a href="/brochures/VF7-Brochure.pdf" download target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                VF 7 brochure
-              </Button>
-            </a>
+            <BrochureDownloadButton
+              brochureHref="/brochures/VF6-Brochure.pdf"
+              downloadFileName="VinFast-VF6-Brochure.pdf"
+              modelDisplay="VF 6"
+              pageSource="Compare Page"
+              variant="outline"
+              size="sm"
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              VF 6 brochure
+            </BrochureDownloadButton>
+            <BrochureDownloadButton
+              brochureHref="/brochures/VF7-Brochure.pdf"
+              downloadFileName="VinFast-VF7-Brochure.pdf"
+              modelDisplay="VF 7"
+              pageSource="Compare Page"
+              variant="outline"
+              size="sm"
+            >
+              <Download className="w-3.5 h-3.5 mr-1.5" />
+              VF 7 brochure
+            </BrochureDownloadButton>
             <Button variant="outline" size="sm" asChild>
               <Link to="/models/mpv7">VF MPV 7 — specs &amp; gallery</Link>
             </Button>

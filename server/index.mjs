@@ -32,8 +32,8 @@ const DEFAULT_SITE_CONFIG = {
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
   vf7Price: "₹21,89,000*",
   vf6Price: "₹17,29,000*",
-  vf7Range: "431 km",
-  vf6Range: "381 km",
+  vf7Range: "532 km",
+  vf6Range: "468 km",
 };
 
 const DEFAULT_DEALER_SETTINGS = {

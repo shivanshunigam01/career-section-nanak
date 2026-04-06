@@ -129,7 +129,7 @@ const AdminTestDrives = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `patliputra-test-drives-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `patliputra-group-test-drives-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`Exported ${rowsToExport.length} booking(s).`);
@@ -175,7 +175,7 @@ const AdminTestDrives = () => {
           </style>
         </head>
         <body>
-          <h2>Patliputra Test Drives Export (${rowsToExport.length})</h2>
+          <h2>Patliputra Group Test Drives Export (${rowsToExport.length})</h2>
           <table>
             <thead>
               <tr>
@@ -210,7 +210,7 @@ const AdminTestDrives = () => {
       toast.dismiss(t);
       const preview = rowsToExport.slice(0, 10).map((b) => `• ${b.customerName} (${b.mobile}) - ${b.model} - ${b.preferredDate} ${b.preferredTime}`).join("\n");
       const suffix = rowsToExport.length > 10 ? `\n...and ${rowsToExport.length - 10} more` : "";
-      const msg = `Patliputra Test Drives (${rowsToExport.length})\n${preview}${suffix}`;
+      const msg = `Patliputra Group Test Drives (${rowsToExport.length})\n${preview}${suffix}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
     } catch (e) {
       toast.dismiss(t);

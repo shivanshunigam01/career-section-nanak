@@ -114,7 +114,7 @@ const AdminLeads = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `patliputra-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.download = `patliputra-group-leads-${new Date().toISOString().slice(0, 10)}.csv`;
       a.click();
       URL.revokeObjectURL(url);
       toast.success(`Exported ${rowsToExport.length} lead(s).`);
@@ -161,7 +161,7 @@ const AdminLeads = () => {
           </style>
         </head>
         <body>
-          <h2>Patliputra Leads Export (${rowsToExport.length})</h2>
+          <h2>Patliputra Group Leads Export (${rowsToExport.length})</h2>
           <table>
             <thead>
               <tr>
@@ -197,7 +197,7 @@ const AdminLeads = () => {
       toast.dismiss(t);
       const preview = rowsToExport.slice(0, 10).map((l) => `• ${l.name} (${l.mobile}) - ${l.model} - ${l.status}`).join("\n");
       const suffix = rowsToExport.length > 10 ? `\n...and ${rowsToExport.length - 10} more` : "";
-      const msg = `Patliputra Leads (${rowsToExport.length})\n${preview}${suffix}`;
+      const msg = `Patliputra Group Leads (${rowsToExport.length})\n${preview}${suffix}`;
       window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
     } catch (e) {
       toast.dismiss(t);
