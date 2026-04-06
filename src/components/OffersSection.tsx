@@ -1,10 +1,11 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Gift, Repeat, Sparkles, Tag, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
+import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 const ICONS: LucideIcon[] = [Sparkles, Repeat, Tag, Gift];
 
@@ -54,18 +55,19 @@ function mapOffersFromApi(raw: Record<string, unknown>[]): OfferCard[] {
 const OffersSection = () => {
   const [offers, setOffers] = useState<OfferCard[]>(FALLBACK_OFFERS);
 
+  const loadOffers = useCallback(async () => {
+    if (!hasApi()) return;
+    const data = await publicGet<unknown[]>("/public/offers");
+    if (!Array.isArray(data) || data.length === 0) return;
+    setOffers(mapOffersFromApi(data as Record<string, unknown>[]));
+  }, []);
+
   useEffect(() => {
     if (!hasApi()) return;
-    let cancelled = false;
-    (async () => {
-      const data = await publicGet<unknown[]>("/public/offers");
-      if (cancelled || !Array.isArray(data) || data.length === 0) return;
-      setOffers(mapOffersFromApi(data as Record<string, unknown>[]));
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadOffers();
+  }, [loadOffers]);
+
+  useRefetchWhenVisible(loadOffers, hasApi());
 
   const list = useMemo(() => (offers.length ? offers : FALLBACK_OFFERS), [offers]);
 

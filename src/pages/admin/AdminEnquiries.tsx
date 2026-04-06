@@ -9,6 +9,7 @@ import {
 } from "@/lib/vfLocalStorage";
 import { hasApi } from "@/lib/apiConfig";
 import { adminGet, adminPutJson, formatApiErrors } from "@/lib/api";
+import { fetchAllAdminRows } from "@/lib/adminFetchAll";
 import { enquiryFromApi, enquiryStatusPayload } from "@/lib/apiMappers";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -87,23 +88,51 @@ const AdminEnquiries = () => {
     return str;
   };
 
-  const exportCsv = () => {
-    const headers: (keyof Enquiry)[] = ["id", "name", "mobile", "email", "type", "message", "status", "createdAt"];
-    const rows = filtered.map((e) => headers.map((h) => escapeCsv(e[h])).join(","));
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `patliputra-enquiries-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const loadAllEnquiriesForExport = async (): Promise<Enquiry[]> => {
+    if (useRemote) {
+      return fetchAllAdminRows("/admin/enquiries", (d) => enquiryFromApi(d));
+    }
+    return enquiries;
   };
 
-  const exportPdf = () => {
-    const htmlRows = filtered
-      .map(
-        (e) => `<tr>
+  const exportCsv = async () => {
+    const t = toast.loading("Preparing CSV…");
+    try {
+      const rowsToExport = await loadAllEnquiriesForExport();
+      toast.dismiss(t);
+      if (rowsToExport.length === 0) {
+        toast.message("No enquiries to export.");
+        return;
+      }
+      const headers: (keyof Enquiry)[] = ["id", "name", "mobile", "email", "type", "message", "status", "createdAt"];
+      const rows = rowsToExport.map((e) => headers.map((h) => escapeCsv(e[h])).join(","));
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `patliputra-enquiries-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${rowsToExport.length} enquiry(ies).`);
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
+  };
+
+  const exportPdf = async () => {
+    const t = toast.loading("Preparing PDF…");
+    try {
+      const rowsToExport = await loadAllEnquiriesForExport();
+      toast.dismiss(t);
+      if (rowsToExport.length === 0) {
+        toast.message("No enquiries to export.");
+        return;
+      }
+      const htmlRows = rowsToExport
+        .map(
+          (e) => `<tr>
           <td>${e.name}</td>
           <td>${e.mobile}</td>
           <td>${e.email}</td>
@@ -111,10 +140,10 @@ const AdminEnquiries = () => {
           <td>${e.status}</td>
           <td>${e.createdAt}</td>
         </tr>`,
-      )
-      .join("");
+        )
+        .join("");
 
-    const html = `<!doctype html>
+      const html = `<!doctype html>
       <html>
         <head>
           <meta charset="utf-8" />
@@ -127,7 +156,7 @@ const AdminEnquiries = () => {
           </style>
         </head>
         <body>
-          <h2>Patliputra Enquiries Export (${filtered.length})</h2>
+          <h2>Patliputra Enquiries Export (${rowsToExport.length})</h2>
           <table>
             <thead>
               <tr><th>Name</th><th>Mobile</th><th>Email</th><th>Type</th><th>Status</th><th>Created At</th></tr>
@@ -138,18 +167,34 @@ const AdminEnquiries = () => {
         </body>
       </html>`;
 
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+      const win = window.open("", "_blank");
+      if (!win) {
+        toast.error("Pop-up blocked — allow pop-ups to print.");
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      toast.success(`Opened print view (${rowsToExport.length} enquiry(ies)).`);
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
   };
 
-  const shareWhatsApp = () => {
-    const preview = filtered.slice(0, 10).map((e) => `• ${e.name} (${e.mobile}) - ${e.type} - ${e.status}`).join("\n");
-    const suffix = filtered.length > 10 ? `\n...and ${filtered.length - 10} more` : "";
-    const msg = `Patliputra Enquiries (${filtered.length})\n${preview}${suffix}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  const shareWhatsApp = async () => {
+    const t = toast.loading("Loading enquiries…");
+    try {
+      const rowsToExport = await loadAllEnquiriesForExport();
+      toast.dismiss(t);
+      const preview = rowsToExport.slice(0, 10).map((e) => `• ${e.name} (${e.mobile}) - ${e.type} - ${e.status}`).join("\n");
+      const suffix = rowsToExport.length > 10 ? `\n...and ${rowsToExport.length - 10} more` : "";
+      const msg = `Patliputra Enquiries (${rowsToExport.length})\n${preview}${suffix}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
   };
 
   return (
@@ -160,13 +205,13 @@ const AdminEnquiries = () => {
           <p className="text-muted-foreground text-sm">{enquiries.length} total enquiries</p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
-          <Button onClick={exportCsv} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void exportCsv()} variant="outline" className="bg-secondary/50">
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
-          <Button onClick={exportPdf} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void exportPdf()} variant="outline" className="bg-secondary/50">
             <FileText className="w-4 h-4 mr-2" /> Export PDF
           </Button>
-          <Button onClick={shareWhatsApp} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void shareWhatsApp()} variant="outline" className="bg-secondary/50">
             <MessageCircle className="w-4 h-4 mr-2" /> Share WhatsApp
           </Button>
         </div>

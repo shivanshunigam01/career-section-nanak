@@ -2,11 +2,18 @@ import { Link } from "react-router-dom";
 import { Phone, Mail, MapPin, MessageCircle, Clock } from "lucide-react";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
 import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
-
-const GOOGLE_MAPS_URL = "https://maps.app.goo.gl/6LioDasHnAeh2eus9";
-const SHOWROOM_ADDRESS = "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { telHref, waMeUrl } from "@/lib/contactLinks";
+import { mapsDirectionsHref } from "@/lib/dealerMap";
 
 const Footer = () => {
+  const { dealer, siteConfig } = usePublicSite();
+  const address = dealer.address;
+  const mapHref = mapsDirectionsHref(address, dealer.mapEmbedUrl);
+  const tel = telHref(siteConfig.phoneNumber || dealer.phone);
+  const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
+  const mailTo = dealer.email ? `mailto:${dealer.email}` : "mailto:info@patliputravinfast.com";
+
   return (
     <footer className="section-surface border-t border-border/50">
       <div className="container mx-auto px-4 lg:px-8 py-16 lg:py-20">
@@ -16,7 +23,7 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-2 sm:gap-3 mb-4 w-fit shrink-0 min-w-0">
               <img
                 src={vinfastLogo}
-                alt="Patliputra VinFast"
+                alt={dealer.dealerName}
                 className="h-10 sm:h-12 lg:h-16 w-auto max-h-full object-contain object-left"
               />
               <span className="hidden sm:block w-px h-4 sm:h-5 lg:h-7 self-center bg-border shrink-0" aria-hidden />
@@ -28,16 +35,16 @@ const Footer = () => {
             </Link>
             <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">Authorized Dealer, Bihar</p>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mb-6">
-              Bihar's authorized VinFast dealer. Experience electric SUVs and the seven-seat VF MPV 7 — world-class safety, technology, and support.
+              {dealer.dealerName} — Bihar&apos;s authorized {dealer.brand} dealer. Experience electric SUVs and the seven-seat VF MPV 7 — world-class safety, technology, and support.
             </p>
             <div className="flex gap-4">
-              <a href="https://wa.me/919231445060" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a href={wa} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <a href="tel:+919231445060" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a href={tel} className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
                 <Phone className="w-4 h-4" />
               </a>
-              <a href="mailto:info@patliputravinfast.com" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a href={mailTo} className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
                 <Mail className="w-4 h-4" />
               </a>
             </div>
@@ -94,29 +101,29 @@ const Footer = () => {
               <li className="flex gap-3 text-sm">
                 <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
                 <a
-                  href={GOOGLE_MAPS_URL}
+                  href={mapHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="min-w-0 text-muted-foreground hover:text-foreground transition-colors break-words"
                 >
-                  {SHOWROOM_ADDRESS}
+                  {address}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                <a href="tel:+919231445060" className="text-muted-foreground hover:text-foreground transition-colors">
-                  +91 92314 45060
+                <a href={tel} className="text-muted-foreground hover:text-foreground transition-colors">
+                  {siteConfig.phoneNumber || dealer.phone}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                <a href="mailto:info@patliputravinfast.com" className="text-muted-foreground hover:text-foreground transition-colors">
-                  info@patliputravinfast.com
+                <a href={mailTo} className="text-muted-foreground hover:text-foreground transition-colors">
+                  {dealer.email}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
                 <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">10 AM – 8 PM, Mon–Sat</span>
+                <span className="text-muted-foreground">{dealer.showroomHours}</span>
               </li>
             </ul>
           </div>
@@ -127,7 +134,7 @@ const Footer = () => {
       <div className="border-t border-border/30">
         <div className="container mx-auto px-4 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <p className="text-muted-foreground text-xs">
-            © 2026 Patliputra Auto. All rights reserved. Authorized VinFast Dealer, Bihar.
+            © 2026 {dealer.dealerName}. All rights reserved. Authorized VinFast Dealer, Bihar.
           </p>
           <div className="flex gap-6">
             <Link to="/about" className="text-muted-foreground text-xs hover:text-foreground transition-colors">

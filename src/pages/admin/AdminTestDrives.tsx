@@ -9,6 +9,7 @@ import {
 } from "@/lib/vfLocalStorage";
 import { hasApi } from "@/lib/apiConfig";
 import { adminDeleteJson, adminGet, adminPutJson, formatApiErrors, publicPost } from "@/lib/api";
+import { fetchAllAdminRows } from "@/lib/adminFetchAll";
 import { normalizeTestDriveModel, testDriveFromApi, testDriveToApiPayload } from "@/lib/apiMappers";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -105,23 +106,51 @@ const AdminTestDrives = () => {
     return str;
   };
 
-  const exportCsv = () => {
-    const headers: (keyof TestDriveBooking)[] = ["id", "leadId", "customerName", "mobile", "model", "preferredDate", "preferredTime", "branch", "status", "assignedExecutive", "feedback", "createdAt"];
-    const rows = filtered.map((b) => headers.map((h) => escapeCsv(b[h])).join(","));
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `patliputra-test-drives-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const loadAllBookingsForExport = async (): Promise<TestDriveBooking[]> => {
+    if (useRemote) {
+      return fetchAllAdminRows("/admin/test-drives", (d) => testDriveFromApi(d));
+    }
+    return bookings;
   };
 
-  const exportPdf = () => {
-    const htmlRows = filtered
-      .map(
-        (b) => `<tr>
+  const exportCsv = async () => {
+    const t = toast.loading("Preparing CSV…");
+    try {
+      const rowsToExport = await loadAllBookingsForExport();
+      toast.dismiss(t);
+      if (rowsToExport.length === 0) {
+        toast.message("No bookings to export.");
+        return;
+      }
+      const headers: (keyof TestDriveBooking)[] = ["id", "leadId", "customerName", "mobile", "model", "preferredDate", "preferredTime", "branch", "status", "feedback", "createdAt"];
+      const rows = rowsToExport.map((b) => headers.map((h) => escapeCsv(b[h])).join(","));
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `patliputra-test-drives-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${rowsToExport.length} booking(s).`);
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
+  };
+
+  const exportPdf = async () => {
+    const t = toast.loading("Preparing PDF…");
+    try {
+      const rowsToExport = await loadAllBookingsForExport();
+      toast.dismiss(t);
+      if (rowsToExport.length === 0) {
+        toast.message("No bookings to export.");
+        return;
+      }
+      const htmlRows = rowsToExport
+        .map(
+          (b) => `<tr>
           <td>${b.customerName}</td>
           <td>${b.mobile}</td>
           <td>${b.model}</td>
@@ -129,12 +158,11 @@ const AdminTestDrives = () => {
           <td>${b.preferredTime}</td>
           <td>${b.branch}</td>
           <td>${b.status}</td>
-          <td>${b.assignedExecutive || "-"}</td>
         </tr>`,
-      )
-      .join("");
+        )
+        .join("");
 
-    const html = `<!doctype html>
+      const html = `<!doctype html>
       <html>
         <head>
           <meta charset="utf-8" />
@@ -147,11 +175,11 @@ const AdminTestDrives = () => {
           </style>
         </head>
         <body>
-          <h2>Patliputra Test Drives Export (${filtered.length})</h2>
+          <h2>Patliputra Test Drives Export (${rowsToExport.length})</h2>
           <table>
             <thead>
               <tr>
-                <th>Customer</th><th>Mobile</th><th>Model</th><th>Preferred Date</th><th>Preferred Time</th><th>Branch</th><th>Status</th><th>Executive</th>
+                <th>Customer</th><th>Mobile</th><th>Model</th><th>Preferred Date</th><th>Preferred Time</th><th>Branch</th><th>Status</th>
               </tr>
             </thead>
             <tbody>${htmlRows}</tbody>
@@ -160,18 +188,34 @@ const AdminTestDrives = () => {
         </body>
       </html>`;
 
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+      const win = window.open("", "_blank");
+      if (!win) {
+        toast.error("Pop-up blocked — allow pop-ups to print.");
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      toast.success(`Opened print view (${rowsToExport.length} booking(s)).`);
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
   };
 
-  const shareWhatsApp = () => {
-    const preview = filtered.slice(0, 10).map((b) => `• ${b.customerName} (${b.mobile}) - ${b.model} - ${b.preferredDate} ${b.preferredTime}`).join("\n");
-    const suffix = filtered.length > 10 ? `\n...and ${filtered.length - 10} more` : "";
-    const msg = `Patliputra Test Drives (${filtered.length})\n${preview}${suffix}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  const shareWhatsApp = async () => {
+    const t = toast.loading("Loading bookings…");
+    try {
+      const rowsToExport = await loadAllBookingsForExport();
+      toast.dismiss(t);
+      const preview = rowsToExport.slice(0, 10).map((b) => `• ${b.customerName} (${b.mobile}) - ${b.model} - ${b.preferredDate} ${b.preferredTime}`).join("\n");
+      const suffix = rowsToExport.length > 10 ? `\n...and ${rowsToExport.length - 10} more` : "";
+      const msg = `Patliputra Test Drives (${rowsToExport.length})\n${preview}${suffix}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
   };
 
   const handleSave = async (booking: TestDriveBooking) => {
@@ -253,13 +297,13 @@ const AdminTestDrives = () => {
           <Button onClick={() => { setEditBooking(emptyBooking); setShowForm(true); }} className="bg-primary text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" /> Add Booking
           </Button>
-          <Button onClick={exportCsv} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void exportCsv()} variant="outline" className="bg-secondary/50">
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
-          <Button onClick={exportPdf} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void exportPdf()} variant="outline" className="bg-secondary/50">
             <FileText className="w-4 h-4 mr-2" /> Export PDF
           </Button>
-          <Button onClick={shareWhatsApp} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void shareWhatsApp()} variant="outline" className="bg-secondary/50">
             <MessageCircle className="w-4 h-4 mr-2" /> Share WhatsApp
           </Button>
         </div>
@@ -295,7 +339,6 @@ const AdminTestDrives = () => {
               <div><span className="text-muted-foreground">Date:</span> <span className="text-foreground">{td.preferredDate}</span></div>
               <div><span className="text-muted-foreground">Time:</span> <span className="text-foreground">{td.preferredTime}</span></div>
               <div><span className="text-muted-foreground">Branch:</span> <span className="text-foreground">{td.branch}</span></div>
-              <div className="col-span-2"><span className="text-muted-foreground">Executive:</span> <span className="text-foreground">{td.assignedExecutive || "Unassigned"}</span></div>
             </div>
             {td.feedback && <p className="text-xs text-muted-foreground italic border-t border-border/30 pt-2">"{td.feedback}"</p>}
             <div className="flex items-center gap-1 pt-1 border-t border-border/30">
@@ -371,7 +414,6 @@ const TestDriveForm = ({
         </div>
         <div className="space-y-1.5"><Label className="text-xs">Time</Label><Input value={form.preferredTime} onChange={e => update("preferredTime", e.target.value)} className="bg-secondary/50" placeholder="e.g. 10:00 AM" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Branch</Label><Input value={form.branch} onChange={e => update("branch", e.target.value)} className="bg-secondary/50" /></div>
-        <div className="space-y-1.5"><Label className="text-xs">Executive</Label><Input value={form.assignedExecutive} onChange={e => update("assignedExecutive", e.target.value)} className="bg-secondary/50" /></div>
       </div>
       <div className="space-y-1.5"><Label className="text-xs">Feedback</Label><Textarea value={form.feedback} onChange={e => update("feedback", e.target.value)} className="bg-secondary/50" rows={2} /></div>
       <div className="flex gap-3 pt-2">

@@ -31,6 +31,7 @@ import vf7GalIntEnh05 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-0
 import vf7GalIntEnh06 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-06.jpg";
 import vf7GalIntEnh07 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-07.jpg";
 import vf7GalIntEnh08 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
+import { usePublicSite } from "@/context/PublicSiteContext";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E6E6E2", image: vf7InfinityBlanc },
@@ -443,11 +444,14 @@ function SpecTable7({ title, rows }: { title: string; rows: [string, string, str
 }
 
 const ModelVF7 = () => {
+  const { siteConfig } = usePublicSite();
   const [selectedColor, setSelectedColor] = useState(0);
   const [variant, setVariant] = useState<VariantId>("earth");
 
   const stats = variantHeroStats[variant];
   const vMeta = vf7Variants.find((v) => v.id === variant)!;
+  const displayExShowroom =
+    variant === "earth" ? siteConfig.vf7Price : variantExShowroomPrice[variant];
 
   return (
     <div className="min-h-screen bg-background">
@@ -498,7 +502,7 @@ const ModelVF7 = () => {
 
               <div className="mb-2">
                 <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
-                  {variantExShowroomPrice[variant]}
+                  {displayExShowroom}
                 </p>
                 <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
               </div>
@@ -666,7 +670,7 @@ const ModelVF7 = () => {
                     Indicative ex-showroom
                   </p>
                   <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">
-                    {variantExShowroomPrice[variant]}
+                    {displayExShowroom}
                   </p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">

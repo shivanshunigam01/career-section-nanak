@@ -14,6 +14,7 @@ import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { waMeUrl } from "@/lib/contactLinks";
+import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 export type HeroSlideView = {
   image: string;
@@ -61,35 +62,26 @@ function subtitleToThreeLines(raw: string): readonly [string, string, string] {
 }
 
 /** New launch — always first in the home hero rotation (fallback + merged API slides). */
-const MPV7_LAUNCH_SLIDE: HeroSlideView = {
-  image: heroMpv7,
-  badge: "Brand new",
-  title: "The all-new VF MPV 7",
-  subLines: [
-    "Seven-seat electric MPV",
-    "450 km (NEDC), 75.3 kWh battery",
-    "Bookings open at Patliputra VinFast.",
-  ],
-  footnote: "*Images shown are for illustrative purposes only. Specifications may vary; confirm with dealer.",
-  objectPosition: "center 48%",
-  ctaPrimary: "Register for pre-booking",
-  ctaPrimaryLink: "/models/mpv7#mpv7-prebook",
-  ctaSecondary: "Get on-road price",
-  ctaSecondaryLink: "/contact",
-};
-
-const FALLBACK_SLIDES: HeroSlideView[] = [
-  MPV7_LAUNCH_SLIDE,
-  {
-    image: heroSlide01,
-    title: "VF 6, VF 7 & VF MPV 7",
+function buildMpv7LaunchSlide(dealerName: string): HeroSlideView {
+  return {
+    image: heroMpv7,
+    badge: "Brand new",
+    title: "The all-new VF MPV 7",
     subLines: [
-      "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7.",
-      "Experience the revolution in motion, exclusively at Patliputra VinFast,",
-      "Bihar's only authorized dealer.",
+      "Seven-seat electric MPV",
+      "450 km (NEDC), 75.3 kWh battery",
+      `Bookings open at ${dealerName}.`,
     ],
-    objectPosition: "28% 48%",
-  },
+    footnote: "*Images shown are for illustrative purposes only. Specifications may vary; confirm with dealer.",
+    objectPosition: "center 48%",
+    ctaPrimary: "Register for pre-booking",
+    ctaPrimaryLink: "/models/mpv7#mpv7-prebook",
+    ctaSecondary: "Get on-road price",
+    ctaSecondaryLink: "/contact",
+  };
+}
+
+const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   {
     image: heroSlide02,
     title: "VinFast VF 7",
@@ -153,6 +145,23 @@ const FALLBACK_SLIDES: HeroSlideView[] = [
   },
 ];
 
+function buildHeroFallbackSlides(dealerName: string, brand: string): HeroSlideView[] {
+  return [
+    buildMpv7LaunchSlide(dealerName),
+    {
+      image: heroSlide01,
+      title: "VF 6, VF 7 & VF MPV 7",
+      subLines: [
+        "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7.",
+        `Experience the revolution in motion, exclusively at ${dealerName},`,
+        `Bihar's only authorized ${brand} dealer.`,
+      ],
+      objectPosition: "28% 48%",
+    },
+    ...HERO_FALLBACK_TAIL,
+  ];
+}
+
 function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
   const img = String(doc.bgImage ?? "").trim();
   if (!img) return null;
@@ -205,25 +214,31 @@ function CtaButton({
 
 const HeroSection = () => {
   const { dealer, siteConfig } = usePublicSite();
-  const [slides, setSlides] = useState<HeroSlideView[]>(FALLBACK_SLIDES);
+  const fallbackSlides = useMemo(
+    () => buildHeroFallbackSlides(dealer.dealerName, dealer.brand),
+    [dealer.dealerName, dealer.brand],
+  );
+  const [apiSlides, setApiSlides] = useState<HeroSlideView[] | null>(null);
+  const slides = apiSlides ?? fallbackSlides;
   const [current, setCurrent] = useState(0);
+
+  const loadSlidesFromApi = useCallback(async () => {
+    if (!hasApi()) return;
+    const raw = await publicGet<unknown[]>("/public/hero-slides");
+    if (!Array.isArray(raw) || raw.length === 0) return;
+    const mapped = (raw as Record<string, unknown>[]).map(mapHeroFromApi).filter(Boolean) as HeroSlideView[];
+    if (mapped.length > 0) {
+      const withoutDuplicateMpv7 = mapped.filter((s) => s.image !== heroMpv7);
+      setApiSlides([buildMpv7LaunchSlide(dealer.dealerName), ...withoutDuplicateMpv7]);
+    }
+  }, [dealer.dealerName]);
 
   useEffect(() => {
     if (!hasApi()) return;
-    let cancelled = false;
-    (async () => {
-      const raw = await publicGet<unknown[]>("/public/hero-slides");
-      if (cancelled || !Array.isArray(raw) || raw.length === 0) return;
-      const mapped = (raw as Record<string, unknown>[]).map(mapHeroFromApi).filter(Boolean) as HeroSlideView[];
-      if (mapped.length > 0) {
-        const withoutDuplicateMpv7 = mapped.filter((s) => s.image !== heroMpv7);
-        setSlides([MPV7_LAUNCH_SLIDE, ...withoutDuplicateMpv7]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    void loadSlidesFromApi();
+  }, [loadSlidesFromApi]);
+
+  useRefetchWhenVisible(loadSlidesFromApi, hasApi());
 
   useEffect(() => {
     setCurrent((c) => (slides.length ? Math.min(c, slides.length - 1) : 0));
@@ -264,7 +279,7 @@ const HeroSection = () => {
 
   const waUrl = useMemo(() => waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp), [siteConfig.whatsappNumber, dealer.whatsapp]);
 
-  const slide = slides[current] ?? FALLBACK_SLIDES[0];
+  const slide = slides[current] ?? fallbackSlides[0];
 
   const mobileAspectStyle = useMemo(() => {
     const intr = intrinsicBySrc[slide.image];

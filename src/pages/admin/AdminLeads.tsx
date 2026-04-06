@@ -10,6 +10,7 @@ import {
 import { hasApi } from "@/lib/apiConfig";
 import { adminDeleteJson, adminGet, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
 import { leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
+import { fetchAllAdminRows } from "@/lib/adminFetchAll";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -90,23 +91,51 @@ const AdminLeads = () => {
     return str;
   };
 
-  const exportCsv = () => {
-    const headers: (keyof Lead)[] = ["id", "name", "mobile", "email", "city", "model", "source", "status", "assignedTo", "createdAt", "nextFollowUp", "remarks", "financeNeeded", "exchangeNeeded"];
-    const rows = filtered.map((l) => headers.map((h) => escapeCsv(l[h])).join(","));
-    const csv = [headers.join(","), ...rows].join("\n");
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `patliputra-leads-${new Date().toISOString().slice(0, 10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const loadAllLeadsForExport = async (): Promise<Lead[]> => {
+    if (useRemote) {
+      return fetchAllAdminRows("/admin/leads", (d) => leadFromApi(d));
+    }
+    return leads;
   };
 
-  const exportPdf = () => {
-    const htmlRows = filtered
-      .map(
-        (l) => `<tr>
+  const exportCsv = async () => {
+    const t = toast.loading("Preparing CSV…");
+    try {
+      const rowsToExport = await loadAllLeadsForExport();
+      toast.dismiss(t);
+      if (rowsToExport.length === 0) {
+        toast.message("No leads to export.");
+        return;
+      }
+      const headers: (keyof Lead)[] = ["id", "name", "mobile", "email", "city", "model", "source", "status", "createdAt", "nextFollowUp", "remarks", "financeNeeded", "exchangeNeeded"];
+      const rows = rowsToExport.map((l) => headers.map((h) => escapeCsv(l[h])).join(","));
+      const csv = [headers.join(","), ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `patliputra-leads-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${rowsToExport.length} lead(s).`);
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
+  };
+
+  const exportPdf = async () => {
+    const t = toast.loading("Preparing PDF…");
+    try {
+      const rowsToExport = await loadAllLeadsForExport();
+      toast.dismiss(t);
+      if (rowsToExport.length === 0) {
+        toast.message("No leads to export.");
+        return;
+      }
+      const htmlRows = rowsToExport
+        .map(
+          (l) => `<tr>
           <td>${l.name}</td>
           <td>${l.mobile}</td>
           <td>${l.email}</td>
@@ -114,13 +143,12 @@ const AdminLeads = () => {
           <td>${l.city}</td>
           <td>${l.source}</td>
           <td>${l.status}</td>
-          <td>${l.assignedTo || "-"}</td>
           <td>${l.nextFollowUp || "-"}</td>
         </tr>`,
-      )
-      .join("");
+        )
+        .join("");
 
-    const html = `<!doctype html>
+      const html = `<!doctype html>
       <html>
         <head>
           <meta charset="utf-8" />
@@ -133,11 +161,11 @@ const AdminLeads = () => {
           </style>
         </head>
         <body>
-          <h2>Patliputra Leads Export (${filtered.length})</h2>
+          <h2>Patliputra Leads Export (${rowsToExport.length})</h2>
           <table>
             <thead>
               <tr>
-                <th>Name</th><th>Mobile</th><th>Email</th><th>Model</th><th>City</th><th>Source</th><th>Status</th><th>Assigned</th><th>Next Follow-up</th>
+                <th>Name</th><th>Mobile</th><th>Email</th><th>Model</th><th>City</th><th>Source</th><th>Status</th><th>Next Follow-up</th>
               </tr>
             </thead>
             <tbody>${htmlRows}</tbody>
@@ -147,18 +175,34 @@ const AdminLeads = () => {
         </body>
       </html>`;
 
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.open();
-    win.document.write(html);
-    win.document.close();
+      const win = window.open("", "_blank");
+      if (!win) {
+        toast.error("Pop-up blocked — allow pop-ups to print.");
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      toast.success(`Opened print view (${rowsToExport.length} lead(s)).`);
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
   };
 
-  const shareWhatsApp = () => {
-    const preview = filtered.slice(0, 10).map((l) => `• ${l.name} (${l.mobile}) - ${l.model} - ${l.status}`).join("\n");
-    const suffix = filtered.length > 10 ? `\n...and ${filtered.length - 10} more` : "";
-    const msg = `Patliputra Leads (${filtered.length})\n${preview}${suffix}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  const shareWhatsApp = async () => {
+    const t = toast.loading("Loading leads…");
+    try {
+      const rowsToExport = await loadAllLeadsForExport();
+      toast.dismiss(t);
+      const preview = rowsToExport.slice(0, 10).map((l) => `• ${l.name} (${l.mobile}) - ${l.model} - ${l.status}`).join("\n");
+      const suffix = rowsToExport.length > 10 ? `\n...and ${rowsToExport.length - 10} more` : "";
+      const msg = `Patliputra Leads (${rowsToExport.length})\n${preview}${suffix}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    } catch (e) {
+      toast.dismiss(t);
+      toast.error(formatApiErrors(e));
+    }
   };
 
   const handleSave = async (lead: Lead) => {
@@ -216,13 +260,13 @@ const AdminLeads = () => {
           <Button onClick={() => { setEditLead(emptyLead); setShowForm(true); }} className="bg-primary text-primary-foreground">
             <Plus className="w-4 h-4 mr-2" /> Add Lead
           </Button>
-          <Button onClick={exportCsv} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void exportCsv()} variant="outline" className="bg-secondary/50">
             <Download className="w-4 h-4 mr-2" /> Export CSV
           </Button>
-          <Button onClick={exportPdf} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void exportPdf()} variant="outline" className="bg-secondary/50">
             <FileText className="w-4 h-4 mr-2" /> Export PDF
           </Button>
-          <Button onClick={shareWhatsApp} variant="outline" className="bg-secondary/50">
+          <Button onClick={() => void shareWhatsApp()} variant="outline" className="bg-secondary/50">
             <MessageCircle className="w-4 h-4 mr-2" /> Share WhatsApp
           </Button>
         </div>
@@ -254,7 +298,6 @@ const AdminLeads = () => {
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Model</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">Source</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Status</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden lg:table-cell">Assigned</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden lg:table-cell">Follow-up</th>
                 <th className="text-right p-3 text-xs text-muted-foreground font-medium">Actions</th>
               </tr>
@@ -285,7 +328,6 @@ const AdminLeads = () => {
                       "bg-secondary text-muted-foreground"
                     }`}>{lead.status}</span>
                   </td>
-                  <td className="p-3 hidden lg:table-cell text-muted-foreground text-xs">{lead.assignedTo || "—"}</td>
                   <td className="p-3 hidden lg:table-cell text-muted-foreground text-xs">{lead.nextFollowUp || "—"}</td>
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end gap-1">
@@ -348,8 +390,7 @@ const LeadForm = ({ lead, onSave, onCancel }: { lead: Lead; onSave: (l: Lead) =>
           <Label className="text-xs">Status</Label>
           <Select value={form.status} onValueChange={v => update("status", v as LeadStatus)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent>{LEAD_STATUSES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
         </div>
-        <div className="space-y-1.5"><Label className="text-xs">Assigned To</Label><Input value={form.assignedTo} onChange={e => update("assignedTo", e.target.value)} className="bg-secondary/50" /></div>
-        <div className="space-y-1.5"><Label className="text-xs">Next Follow-up</Label><Input type="date" value={form.nextFollowUp} onChange={e => update("nextFollowUp", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5 col-span-2"><Label className="text-xs">Next Follow-up</Label><Input type="date" value={form.nextFollowUp} onChange={e => update("nextFollowUp", e.target.value)} className="bg-secondary/50" /></div>
       </div>
       <div className="space-y-1.5"><Label className="text-xs">Remarks</Label><Textarea value={form.remarks} onChange={e => update("remarks", e.target.value)} className="bg-secondary/50" rows={2} /></div>
       <div className="flex items-center gap-4">

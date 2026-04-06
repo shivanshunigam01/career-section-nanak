@@ -319,6 +319,18 @@ const AdminHomepage = () => {
         {/* Site Config */}
         <TabsContent value="config" className="space-y-4">
           <Card className="bg-card border-border/50 p-5 space-y-4">
+            <h3 className="font-display font-semibold text-foreground">Hero &amp; branding</h3>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Hero tagline (shown with dealer name when a slide has no badge)</Label>
+              <Input
+                value={config.heroTagline}
+                onChange={(e) => updateConfig("heroTagline", e.target.value)}
+                className="bg-secondary/50"
+                placeholder="Bihar's First VinFast Dealer"
+              />
+            </div>
+          </Card>
+          <Card className="bg-card border-border/50 p-5 space-y-4">
             <h3 className="font-display font-semibold text-foreground">Display Prices & Stats</h3>
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
@@ -383,8 +395,8 @@ const AdminHomepage = () => {
       </Tabs>
 
       {/* Slide Form Dialog */}
-      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditSlide(null); }}>
-        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+      <Dialog modal={false} open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setEditSlide(null); }}>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto z-[100]">
           <DialogHeader>
             <DialogTitle className="font-display">{editSlide?.id ? "Edit Slide" : "Add Slide"}</DialogTitle>
           </DialogHeader>

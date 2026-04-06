@@ -1,18 +1,28 @@
 import { Link } from "react-router-dom";
 import { Car, Calculator, ArrowLeftRight, MapPin, Phone, MessageCircle, CalendarDays, ShoppingBag } from "lucide-react";
-
-const actions = [
-  { icon: ShoppingBag, label: "Book Now", href: "/book-now" },
-  { icon: CalendarDays, label: "Test Drive", href: "/test-drive" },
-  { icon: Car, label: "Get Price", href: "/contact" },
-  { icon: Calculator, label: "EMI Calculator", href: "/emi-calculator" },
-  { icon: ArrowLeftRight, label: "Exchange", href: "/contact" },
-  { icon: MapPin, label: "Find Showroom", href: "/contact" },
-  { icon: Phone, label: "Call", href: "tel:+919231445060", external: true },
-  { icon: MessageCircle, label: "WhatsApp", href: "https://wa.me/919231445060", external: true },
-];
+import { useMemo } from "react";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { telHref, waMeUrl } from "@/lib/contactLinks";
 
 const QuickActionBar = () => {
+  const { dealer, siteConfig } = usePublicSite();
+  const tel = telHref(siteConfig.phoneNumber || dealer.phone);
+  const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
+
+  const actions = useMemo(
+    () => [
+      { icon: ShoppingBag, label: "Book Now", href: "/book-now" as const, external: false },
+      { icon: CalendarDays, label: "Test Drive", href: "/test-drive" as const, external: false },
+      { icon: Car, label: "Get Price", href: "/contact" as const, external: false },
+      { icon: Calculator, label: "EMI Calculator", href: "/emi-calculator" as const, external: false },
+      { icon: ArrowLeftRight, label: "Exchange", href: "/contact" as const, external: false },
+      { icon: MapPin, label: "Find Showroom", href: "/contact" as const, external: false },
+      { icon: Phone, label: "Call", href: tel, external: true },
+      { icon: MessageCircle, label: "WhatsApp", href: wa, external: true },
+    ],
+    [tel, wa],
+  );
+
   return (
     <section className="relative z-10 -mt-12 lg:-mt-16 hidden lg:block">
       <div className="container mx-auto px-4 lg:px-8">
