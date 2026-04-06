@@ -416,41 +416,37 @@ const ModelVF6 = () => {
               ))}
             </div>
 
-            <p className="text-hero-plain-muted text-[11px] sm:text-xs max-w-xl mb-3 leading-snug">
-              *Contact Patliputra VinFast Patna for variant-wise on-road price and offers.
-            </p>
-
-            <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
-              <Link to="/test-drive" className="w-full">
-                <Button variant="hero" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
-                  Book Test Drive
-                </Button>
-              </Link>
-              <Link to="/book-now" className="w-full">
-                <Button variant="heroWhite" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base">
-                  Book Now
-                </Button>
-              </Link>
-              <Link to="/contact" className="w-full">
-                <Button variant="heroOutline" size="lg" className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55">
-                  Get On-Road Price
-                </Button>
-              </Link>
-              <Link to="/emi-calculator" className="w-full">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full rounded-full sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55"
-                >
-                  EMI Calculator
-                </Button>
-              </Link>
-            </div>
-
             <div className="mt-4 sm:mt-5 w-full min-w-0">
               <p className="text-hero-plain-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
                 {vMeta.description}
               </p>
+            </div>
+
+            <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
+              <Link to="/test-drive" className="w-full min-w-0">
+                <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
+                  Book Test Drive
+                </Button>
+              </Link>
+              <Link to="/book-now" className="w-full min-w-0">
+                <Button variant="heroWhite" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
+                  Book Now
+                </Button>
+              </Link>
+              <Link to="/contact" className="w-full min-w-0">
+                <Button variant="heroOutline" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55">
+                  Get On-Road Price
+                </Button>
+              </Link>
+              <Link to="/emi-calculator" className="w-full min-w-0">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55"
+                >
+                  EMI Calculator
+                </Button>
+              </Link>
             </div>
           </div>
           </div>
