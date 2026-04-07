@@ -25,7 +25,7 @@ const interiorModels = [
     label: "VF MPV 7",
     image: mpv7Hero,
     alt: "VinFast VF MPV 7 — studio exterior, seven-seat electric MPV",
-    objectClass: "object-cover object-[72%_50%]",
+    objectClass: "object-cover object-[48%_top]",
   },
 ] as const;
 
