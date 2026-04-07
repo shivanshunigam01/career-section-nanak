@@ -16,6 +16,7 @@ import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
 import mpv7Feature2 from "@/assets/mpv7-gallery/mpv7-02.png";
 import mpv7DtlOverview1 from "@/assets/mpv7-details/mpv7-dtl-overview-1.jpg";
@@ -266,6 +267,7 @@ const inputClass =
   "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
 
 const ModelMPV7 = () => {
+  const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();
   const [prebookUnlocked, setPrebookUnlocked] = useState(
     () => typeof sessionStorage !== "undefined" && sessionStorage.getItem(MPV7_PREBOOK_SESSION_KEY) === "1",
@@ -317,6 +319,13 @@ const ModelMPV7 = () => {
     const modelDisplay = leadModelLabel("VF MPV 7", DEFAULT_MPV7_TRIM);
 
     if (hasApi()) {
+      let recaptchaToken: string | undefined;
+      try {
+        recaptchaToken = await getToken("mpv7_prebook");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Security verification failed.");
+        return;
+      }
       try {
         await submitPublicLead({
           name: interestForm.name.trim(),
@@ -331,6 +340,7 @@ const ModelMPV7 = () => {
           financeNeeded: false,
           exchangeNeeded: false,
           pageSource: "VF MPV 7 Model Page",
+          recaptchaToken,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));
@@ -389,64 +399,63 @@ const ModelMPV7 = () => {
           />
         </div>
         <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
-          <div className="min-h-0 flex-1" aria-hidden />
-          <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
-            <div className="text-left max-w-3xl">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-2 mb-2">
-                <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-white bg-black/55 border border-white/40 backdrop-blur-sm">
-                  New launch
-                </span>
-                <span className="hidden sm:inline text-white/50 text-xs" aria-hidden>
-                  ·
-                </span>
-                <p className="text-hero-plain font-display font-semibold text-sm uppercase tracking-[0.25em]">
-                  Seven-seat electric MPV
-                </p>
-              </div>
-              <h1 className="text-hero-plain-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 sm:mb-5 leading-[1.05]">
-                VF MPV 7
-              </h1>
+          <div className="container mx-auto w-full px-4 pb-8 sm:pb-10 lg:px-8 lg:pb-12">
+            <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-white bg-black/55 border border-white/40 backdrop-blur-sm">
+              New launch
+            </span>
+          </div>
+        </div>
+      </section>
 
-              <div className="mb-5 sm:mb-6 space-y-3 sm:space-y-3.5 max-w-md">
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                    60.13 kWh
-                  </p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Battery capacity</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                    150 kW
-                  </p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                    {"<10 sec"}
-                  </p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">
-                    7 seats
-                  </p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">2+3+2 layout</p>
-                </div>
-              </div>
+      <section className="border-b border-border/60 bg-background py-5 sm:py-6">
+        <div className="container mx-auto px-4 lg:px-8">
+          <Link to="#mpv7-prebook" className="inline-flex w-full max-w-md min-w-0 sm:w-auto">
+            <Button variant="default" size="lg" className="w-full rounded-full sm:min-w-[14rem]">
+              Register for pre-booking
+            </Button>
+          </Link>
+        </div>
+      </section>
 
-              <div className="flex w-full max-w-md flex-col gap-3">
-                <Link to="#mpv7-prebook" className="w-full min-w-0">
-                  <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
-                    Register for pre-booking
-                  </Button>
-                </Link>
-                <Link
-                  to="/emi-calculator"
-                  className="inline-flex w-full items-center justify-center rounded-full border border-white/55 bg-black/35 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-black/50 sm:py-3.5"
+      <section className="border-b border-border/60 bg-background/95 py-5 sm:py-6">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-1">Choose view</p>
+              <p className="text-sm text-muted-foreground">{studio.label} preview</p>
+            </div>
+            <div className="hidden sm:flex flex-wrap items-center gap-2">
+              {studioViews.map((v, i) => (
+                <button
+                  key={v.label}
+                  type="button"
+                  onClick={() => setStudioIdx(i)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                    studioIdx === i
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-border/80 hover:bg-muted"
+                  }`}
                 >
-                  EMI Calculator
-                </Link>
-              </div>
+                  {v.label}
+                </button>
+              ))}
+            </div>
+            <div className="sm:hidden">
+              <label htmlFor="mpv7-view-selector" className="sr-only">
+                Select MPV 7 view
+              </label>
+              <select
+                id="mpv7-view-selector"
+                value={studioIdx}
+                onChange={(e) => setStudioIdx(Number(e.target.value))}
+                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+              >
+                {studioViews.map((v, i) => (
+                  <option key={v.label} value={i}>
+                    {v.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -566,30 +575,6 @@ const ModelMPV7 = () => {
                 <Button asChild variant="ghost" size="default" className="text-muted-foreground">
                   <Link to="/contact">On-road price</Link>
                 </Button>
-              </div>
-
-              <div
-                className="rounded-xl border border-border/60 bg-muted/30 p-4 sm:p-5 mt-4"
-                role="group"
-                aria-label="Choose exterior preview angle"
-              >
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">Exterior preview</p>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-2 w-full max-w-2xl">
-                  {studioViews.map((v, i) => (
-                    <button
-                      key={v.label}
-                      type="button"
-                      onClick={() => setStudioIdx(i)}
-                      className={`rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-semibold transition-all border text-center leading-tight whitespace-nowrap shrink-0 ${
-                        studioIdx === i
-                          ? "bg-foreground text-background border-foreground shadow-sm"
-                          : "bg-background/90 text-foreground border-border/80 hover:bg-muted"
-                      }`}
-                    >
-                      {v.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
             </div>

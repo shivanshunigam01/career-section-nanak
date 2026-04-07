@@ -77,6 +77,51 @@ function bad(res, message, status = 400, errors) {
   res.status(status).json({ success: false, message, errors });
 }
 
+/** When RECAPTCHA_SECRET_KEY is set, require a valid Google reCAPTCHA token (same as Mongo API). */
+async function verifyRecaptchaOrReject(req, res) {
+  const secret = process.env.RECAPTCHA_SECRET_KEY?.trim();
+  if (!secret) return true;
+
+  const token = req.body?.recaptchaToken;
+  if (!token || typeof token !== "string" || !token.trim()) {
+    bad(res, "Security verification required. Please try again.");
+    return false;
+  }
+
+  const params = new URLSearchParams();
+  params.append("secret", secret);
+  params.append("response", token.trim());
+  const ip = req.ip || req.socket?.remoteAddress;
+  if (ip) params.append("remoteip", String(ip));
+
+  let data;
+  try {
+    const r = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: params.toString(),
+    });
+    data = await r.json();
+  } catch {
+    bad(res, "Security verification could not be completed. Please try again.");
+    return false;
+  }
+
+  if (!data.success) {
+    bad(res, "Security verification failed. Please try again.");
+    return false;
+  }
+
+  const minScore = Number(process.env.RECAPTCHA_MIN_SCORE ?? "0.5");
+  if (typeof data.score === "number" && !Number.isNaN(minScore) && data.score < minScore) {
+    bad(res, "Security verification failed. Please try again.");
+    return false;
+  }
+
+  delete req.body.recaptchaToken;
+  return true;
+}
+
 function requireMobile(body) {
   const m = String(body.mobile ?? "").replace(/\D/g, "").slice(0, 10);
   if (!/^[6-9]\d{9}$/.test(m)) {
@@ -167,7 +212,8 @@ function buildV1Router() {
     });
   });
 
-  r.post("/leads", (req, res) => {
+  r.post("/leads", async (req, res) => {
+    if (!(await verifyRecaptchaOrReject(req, res))) return;
     const body = req.body ?? {};
     const name = String(body.name ?? "").trim();
     if (!name) return bad(res, "Name is required.");
@@ -198,7 +244,8 @@ function buildV1Router() {
     ok(res, { id: row.id, receivedAt: row.receivedAt }, "Lead captured");
   });
 
-  r.post("/test-drives", (req, res) => {
+  r.post("/test-drives", async (req, res) => {
+    if (!(await verifyRecaptchaOrReject(req, res))) return;
     const body = req.body ?? {};
     const customerName = String(body.customerName ?? "").trim();
     if (!customerName) return bad(res, "Customer name is required.");
@@ -229,7 +276,8 @@ function buildV1Router() {
     ok(res, { id: row.id, receivedAt: row.receivedAt }, "Test drive request captured");
   });
 
-  r.post("/enquiries", (req, res) => {
+  r.post("/enquiries", async (req, res) => {
+    if (!(await verifyRecaptchaOrReject(req, res))) return;
     const body = req.body ?? {};
     const name = String(body.name ?? "").trim();
     if (!name) return bad(res, "Name is required.");

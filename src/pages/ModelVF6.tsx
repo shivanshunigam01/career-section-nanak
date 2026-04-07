@@ -370,60 +370,11 @@ const ModelVF6 = () => {
         <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
           <div className="min-h-0 flex-1" aria-hidden />
           <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
-          <div className="text-left max-w-3xl">
+            <div className="text-left max-w-3xl">
             <p className="text-hero-plain font-display font-semibold text-sm uppercase tracking-[0.25em] mb-2 mt-px">Compact Electric SUV</p>
             <h1 className="text-hero-plain-lg font-display font-bold text-4xl sm:text-5xl md:text-6xl lg:text-8xl mb-4 sm:mb-5 leading-[1.05]">
               VF 6
             </h1>
-
-            <div className="mb-1.5 space-y-3 sm:space-y-3.5 max-w-md">
-              <div>
-                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
-                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
-              </div>
-              <div>
-                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
-                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
-              </div>
-              <div key={`hero-accel-${variant}`}>
-                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
-                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
-              </div>
-              <div>
-                <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
-                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Driveline</p>
-              </div>
-            </div>
-
-            <div className="mb-2">
-              <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
-                {displayExShowroom}
-              </p>
-              <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
-              {vf6Variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariant(v.id)}
-                  className={`rounded-full px-2.5 py-1.5 text-[11px] sm:text-xs font-semibold border text-center leading-tight whitespace-nowrap shrink-0 ${
-                    variant === v.id
-                      ? "bg-white text-gray-900 border-white"
-                      : "bg-black/45 text-white border-white/50 hover:bg-black/55"
-                  }`}
-                >
-                  {v.shortLabel}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-4 sm:mt-5 w-full min-w-0">
-              <p className="text-hero-plain-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
-                {vMeta.description}
-              </p>
-            </div>
 
             <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
               <Link to="/test-drive" className="w-full min-w-0">
@@ -452,6 +403,50 @@ const ModelVF6 = () => {
               </Link>
             </div>
           </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60 bg-background/95 py-5 sm:py-6">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-1">Select variant</p>
+              <p className="text-sm text-muted-foreground">{vMeta.name}</p>
+            </div>
+            <div className="hidden sm:flex flex-wrap items-center gap-2">
+              {vf6Variants.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setVariant(v.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                    variant === v.id
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-border/80 hover:bg-muted"
+                  }`}
+                >
+                  {v.shortLabel}
+                </button>
+              ))}
+            </div>
+            <div className="sm:hidden">
+              <label htmlFor="vf6-variant-selector" className="sr-only">
+                Select VF 6 variant
+              </label>
+              <select
+                id="vf6-variant-selector"
+                value={variant}
+                onChange={(e) => setVariant(e.target.value as VariantId)}
+                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+              >
+                {vf6Variants.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </div>
       </section>

@@ -27,6 +27,7 @@ import {
   PURCHASE_TIMELINE_OPTIONS,
   TEST_DRIVE_LOCATION_OPTIONS,
 } from "@/data/testDriveFormOptions";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -59,6 +60,7 @@ const getLocalISODate = () => {
 };
 
 const TestDrivePage = () => {
+  const { getToken } = usePublicFormRecaptcha();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -151,6 +153,13 @@ const TestDrivePage = () => {
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
+      let recaptchaToken: string | undefined;
+      try {
+        recaptchaToken = await getToken("test_drive");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Security verification failed.");
+        return;
+      }
       try {
         await submitPublicTestDrive({
           customerName: formData.name.trim(),
@@ -169,6 +178,7 @@ const TestDrivePage = () => {
           currentCarDetails:
             formData.ownsCar === "Yes" ? formData.currentCarDetails.trim() : undefined,
           purchaseTimeline: formData.purchaseTimeline,
+          recaptchaToken,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));

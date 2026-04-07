@@ -16,6 +16,7 @@ import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinf
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import bookNowCabinGrid from "@/assets/book-now-cabin-grid.png";
@@ -32,6 +33,7 @@ const getLocalISODate = () => {
 };
 
 const BookNowPage = () => {
+  const { getToken } = usePublicFormRecaptcha();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",
@@ -97,6 +99,13 @@ const BookNowPage = () => {
       .join(" ");
 
     if (hasApi()) {
+      let recaptchaToken: string | undefined;
+      try {
+        recaptchaToken = await getToken("book_now");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Security verification failed.");
+        return;
+      }
       try {
         await submitPublicLead({
           name: formData.name.trim(),
@@ -111,6 +120,7 @@ const BookNowPage = () => {
           financeNeeded: formData.financeNeeded,
           exchangeNeeded: formData.exchangeNeeded,
           pageSource: "Book Now Page",
+          recaptchaToken,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));
