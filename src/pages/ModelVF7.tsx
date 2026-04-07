@@ -33,6 +33,7 @@ import vf7GalIntEnh06 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-0
 import vf7GalIntEnh07 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-07.jpg";
 import vf7GalIntEnh08 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { VF7_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E6E6E2", image: vf7InfinityBlanc },
@@ -92,11 +93,11 @@ const variantHeroStats: Record<
   VariantId,
   { range: string; accel: string; power: string; driveline: string }
 > = {
-  earth: { range: "438 km", accel: "9.1 s", power: "177 PS", driveline: "FWD" },
-  wind: { range: "532 km", accel: "8.5 s", power: "204 PS", driveline: "FWD" },
-  windInfinity: { range: "532 km", accel: "8.5 s", power: "204 PS", driveline: "FWD" },
-  sky: { range: "510 km", accel: "5.8 s", power: "353 PS", driveline: "AWD" },
-  skyInfinity: { range: "510 km", accel: "5.8 s", power: "353 PS", driveline: "AWD" },
+  earth: { range: "438 km", accel: VF7_TRIM_0_100_KMH.earth, power: "177 PS", driveline: "FWD" },
+  wind: { range: "532 km", accel: VF7_TRIM_0_100_KMH.wind, power: "204 PS", driveline: "FWD" },
+  windInfinity: { range: "532 km", accel: VF7_TRIM_0_100_KMH.windInfinity, power: "204 PS", driveline: "FWD" },
+  sky: { range: "510 km", accel: VF7_TRIM_0_100_KMH.sky, power: "353 PS", driveline: "AWD" },
+  skyInfinity: { range: "510 km", accel: VF7_TRIM_0_100_KMH.skyInfinity, power: "353 PS", driveline: "AWD" },
 };
 
 const variantExShowroomPrice: Record<VariantId, string> = {
@@ -194,7 +195,14 @@ const technicalSpecRows: [string, string, string, string, string, string][] = [
   ["Max. torque", "250 Nm", "310 Nm", "310 Nm", "500 Nm", "500 Nm"],
   ["Driveline", "FWD", "FWD", "FWD", "AWD", "AWD"],
   ["Range (MIDC)", "438 km", "532 km", "532 km", "510 km", "510 km"],
-  ["Acceleration (0–100 km/h)", "9.1 s", "8.5 s", "8.5 s", "5.8 s", "5.8 s"],
+  [
+    "Acceleration (0–100 km/h)",
+    VF7_TRIM_0_100_KMH.earth,
+    VF7_TRIM_0_100_KMH.wind,
+    VF7_TRIM_0_100_KMH.windInfinity,
+    VF7_TRIM_0_100_KMH.sky,
+    VF7_TRIM_0_100_KMH.skyInfinity,
+  ],
   ["Usable battery capacity", "59.6 kWh", "70 kWh", "70 kWh", "70.8 kWh", "70.8 kWh"],
   ["Charge port", "CCS2", "CCS2", "CCS2", "CCS2", "CCS2"],
   ["AC charging", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW"],
