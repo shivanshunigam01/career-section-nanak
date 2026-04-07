@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
@@ -419,32 +417,6 @@ const ModelVF6 = () => {
               </p>
             </div>
 
-            <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
-              <Link to="/test-drive" className="w-full min-w-0">
-                <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
-                  Book Test Drive
-                </Button>
-              </Link>
-              <Link to="/book-now" className="w-full min-w-0">
-                <Button variant="heroWhite" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
-                  Book Now
-                </Button>
-              </Link>
-              <Link to="/contact" className="w-full min-w-0">
-                <Button variant="heroOutline" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55">
-                  Get On-Road Price
-                </Button>
-              </Link>
-              <Link to="/emi-calculator" className="w-full min-w-0">
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55"
-                >
-                  EMI Calculator
-                </Button>
-              </Link>
-            </div>
           </div>
           </div>
         </div>
@@ -588,18 +560,6 @@ const ModelVF6 = () => {
                     </span>
                   ))}
                 </div>
-              </div>
-
-              <div className="hidden lg:flex flex-wrap gap-3 pt-1">
-                <Button asChild variant="default" size="default">
-                  <Link to="/test-drive">Book test drive</Link>
-                </Button>
-                <Button asChild variant="outline" size="default">
-                  <Link to="/book-now">Book now</Link>
-                </Button>
-                <Button asChild variant="ghost" size="default" className="text-muted-foreground">
-                  <Link to="/contact">On-road price</Link>
-                </Button>
               </div>
 
               <div
