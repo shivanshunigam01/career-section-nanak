@@ -404,7 +404,7 @@ const ModelMPV7 = () => {
             <img
               src={mpv7Hero}
               alt="VinFast VF MPV 7 electric MPV — studio"
-              className="w-full h-auto min-h-[200px] max-h-[min(90vh,800px)] object-cover object-[center_42%] md:max-h-[min(88vh,960px)] md:object-[72%_center]"
+              className="w-full h-auto min-h-[200px] max-md:max-h-[min(92vh,760px)] max-md:object-contain max-md:object-center md:max-h-[min(88vh,960px)] md:object-cover md:object-[72%_center]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
