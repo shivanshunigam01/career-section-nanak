@@ -106,7 +106,7 @@ const LeadCaptureStrip = () => {
         email: "",
         city,
         model: leadModelLabel(formData.model, formData.variant),
-        source: `Homepage: ${formData.interest}`,
+        source: "Website",
         status: "New Lead",
         assignedTo: "",
         createdAt: todayStr,

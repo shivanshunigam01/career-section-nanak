@@ -1,5 +1,6 @@
 import vf6DesatSilver from "@/assets/vf6-desat-silver.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
+import { VF6_TRIM_0_100_KMH, VF7_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
 
 export type CompareModelKey = "vf6" | "vf7";
 
@@ -42,7 +43,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "468 km",
-          accel: "10.4 s",
+          accel: VF6_TRIM_0_100_KMH.earth,
           battery: "59.6 kWh",
           driveline: "FWD",
           dc_charging: "Up to 100 kW",
@@ -79,7 +80,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "463 km",
-          accel: "8.9 s",
+          accel: VF6_TRIM_0_100_KMH.wind,
           battery: "59.6 kWh",
           driveline: "FWD",
           dc_charging: "Up to 100 kW",

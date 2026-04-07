@@ -324,7 +324,7 @@ const ModelMPV7 = () => {
           city: interestForm.city === DISTRICT_OTHER ? DISTRICT_OTHER : interestForm.city,
           otherCity: interestForm.city === DISTRICT_OTHER ? interestForm.otherCity : "",
           modelDisplay,
-          source: "VF MPV 7 Pre-book",
+          source: "Website",
           email: interestForm.email.trim(),
           remarks: "VF MPV 7 pre-booking interest — form gate on model page",
           interest: "Pre-book interest",
@@ -348,7 +348,7 @@ const ModelMPV7 = () => {
               ? interestForm.otherCity.trim() || DISTRICT_OTHER
               : interestForm.city,
           model: modelDisplay,
-          source: "VF MPV 7 Pre-book",
+          source: "Website",
           status: "Interested",
           assignedTo: "",
           createdAt: todayStr,

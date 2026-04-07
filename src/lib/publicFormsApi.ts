@@ -32,7 +32,7 @@ export async function submitPublicLead(payload: {
     otherCity,
     model,
     interest: payload.interest?.trim() || undefined,
-    source: payload.source,
+    source: (payload.source?.trim() || "Website"),
     remarks: remarks || undefined,
     financeNeeded: payload.financeNeeded ?? false,
     exchangeNeeded: payload.exchangeNeeded ?? false,
