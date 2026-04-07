@@ -19,6 +19,7 @@ import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
+import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-desktop.png";
 import mpv7Feature2 from "@/assets/mpv7-gallery/mpv7-02.png";
 import mpv7DtlOverview1 from "@/assets/mpv7-details/mpv7-dtl-overview-1.jpg";
 import mpv7DtlOverview2 from "@/assets/mpv7-details/mpv7-dtl-overview-2.jpg";
@@ -394,23 +395,24 @@ const ModelMPV7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      {/* Hero — full-bleed studio shot; only “New launch” on the image; CTA sits in the band below */}
-      <section className="relative w-full overflow-hidden bg-[#E8E0D4] dark:bg-zinc-900" aria-label="VF MPV 7 hero">
+      {/* Hero — portrait launch creative (copy/CTA in artwork); band below for site pre-booking */}
+      <section
+        className="relative w-full max-w-[100vw] overflow-x-hidden bg-gradient-to-b from-slate-200 via-[#d9cdb9] to-zinc-950 dark:from-zinc-800 dark:via-zinc-900 dark:to-black"
+        aria-label="VF MPV 7 hero"
+      >
         <h1 className="sr-only">VinFast VF MPV 7</h1>
-        <div className="relative mx-auto max-w-[1920px]">
-          <img
-            src={mpv7Hero}
-            alt="VinFast VF MPV 7 electric MPV — studio"
-            className="w-full h-auto min-h-[220px] max-h-[min(88vh,960px)] object-cover object-[78%_center] sm:object-[72%_center] lg:object-center"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-          <div className="pointer-events-none absolute left-3 top-16 sm:left-5 sm:top-[4.75rem] md:top-20 lg:left-8 lg:top-24 z-10">
-            <span className="inline-flex items-center rounded-full bg-zinc-800/95 px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white shadow-lg shadow-black/20 ring-1 ring-white/15">
-              New launch
-            </span>
-          </div>
+        <div className="relative mx-auto flex w-full max-w-[min(100%,36rem)] justify-center px-3 sm:max-w-[40rem] sm:px-5 md:max-w-[44rem] lg:max-w-[min(100%,85rem)] lg:px-6 xl:px-8">
+          <picture className="flex w-full justify-center">
+            <source media="(min-width: 1024px)" srcSet={mpv7HeroDesktop} />
+            <img
+              src={mpv7Hero}
+              alt="The all-new VinFast VF MPV 7 — bookings open"
+              className="h-auto w-full max-h-[min(88svh,56rem)] object-contain object-center md:max-h-[min(90vh,58rem)] lg:max-h-[min(88vh,52rem)] xl:max-h-[min(90vh,56rem)]"
+              sizes="(max-width: 1023px) 100vw, min(1600px, 95vw)"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </picture>
         </div>
       </section>
 
@@ -419,7 +421,12 @@ const ModelMPV7 = () => {
         <div className="container mx-auto px-4 lg:px-8 py-8 sm:py-10 lg:py-12">
           <div className="mx-auto flex max-w-lg flex-col items-center gap-5 text-center">
             <div className="h-1 w-12 rounded-full bg-primary/80" aria-hidden />
-            <Button variant="hero" size="lg" className="h-12 min-w-[min(100%,17rem)] rounded-full px-8 text-sm font-semibold shadow-md shadow-primary/25 sm:h-14 sm:px-10" asChild>
+            <Button
+              variant="hero"
+              size="lg"
+              className="h-12 w-full max-w-md rounded-full px-8 text-sm font-semibold shadow-md shadow-primary/25 sm:h-14 sm:w-auto sm:min-w-[17rem] sm:px-10"
+              asChild
+            >
               <Link to="#mpv7-prebook">Register for pre-booking</Link>
             </Button>
           </div>

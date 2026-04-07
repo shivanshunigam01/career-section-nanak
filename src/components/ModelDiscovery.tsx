@@ -6,6 +6,7 @@ import { Battery, Gauge, Shield, Users, Zap } from "lucide-react";
 import vf7FrontHero from "@/assets/vf7-model-discovery-upload.png";
 import vf6DiscoveryHero from "@/assets/vf6-model-discovery-upload.png";
 import mpv7Card from "@/assets/mpv7-gallery/mpv7-hero.png";
+import mpv7CardDesktop from "@/assets/mpv7-gallery/mpv7-hero-desktop.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
@@ -161,13 +162,35 @@ const ModelDiscovery = () => {
               transition={{ delay: i * 0.15 }}
               className="group relative rounded-3xl overflow-hidden border border-foreground/[0.06] bg-card hover:border-foreground/[0.12] transition-all duration-500"
             >
-              <div className="relative aspect-[16/10] overflow-hidden">
-                <img
-                  src={model.image}
-                  alt={`VinFast ${model.name}`}
-                  className="w-full h-full object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]"
-                  loading="lazy"
-                />
+              <div
+                className={`relative aspect-[16/10] overflow-hidden ${
+                  model.href.includes("mpv7")
+                    ? "bg-gradient-to-b from-slate-200 via-[#d8cbb8] to-zinc-950"
+                    : ""
+                }`}
+              >
+                {model.href.includes("mpv7") ? (
+                  <picture className="contents">
+                    <source media="(min-width: 1024px)" srcSet={mpv7CardDesktop} />
+                    <img
+                      src={model.image}
+                      alt={`VinFast ${model.name}`}
+                      className="h-full w-full object-contain object-center transition-[filter] duration-500 group-hover:brightness-[1.06]"
+                      sizes="(max-width: 1023px) 100vw, 800px"
+                      loading="lazy"
+                      decoding="async"
+                    />
+                  </picture>
+                ) : (
+                  <img
+                    src={model.image}
+                    alt={`VinFast ${model.name}`}
+                    className="h-full w-full object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 420px"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
               </div>
               <div className="p-5 sm:p-6 lg:p-8">

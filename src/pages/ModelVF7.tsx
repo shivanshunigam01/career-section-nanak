@@ -454,12 +454,15 @@ const ModelVF7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      <section className="relative min-h-[85vh]" aria-label="VF 7 hero">
+      <section
+        className="relative isolate min-h-[min(85svh,56rem)] w-full md:min-h-[min(88vh,60rem)]"
+        aria-label="VF 7 hero"
+      >
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf7FrontHero}
             alt="VinFast VF 7"
-            className="h-full w-full object-cover object-[42%_48%]"
+            className="h-full w-full object-cover object-[36%_52%] sm:object-[40%_50%] md:object-[42%_48%]"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
