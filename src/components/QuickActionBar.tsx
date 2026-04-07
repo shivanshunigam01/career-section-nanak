@@ -11,7 +11,7 @@ const QuickActionBar = () => {
 
   const actions = useMemo(
     () => [
-      { icon: ShoppingBag, label: "Book Now", href: "/book-now" as const, external: false },
+      { icon: ShoppingBag, label: "Pre Book", href: "/book-now" as const, external: false },
       { icon: CalendarDays, label: "Test Drive", href: "/test-drive" as const, external: false },
       { icon: Car, label: "Get Price", href: "/contact" as const, external: false },
       { icon: Calculator, label: "EMI Calculator", href: "/emi-calculator" as const, external: false },

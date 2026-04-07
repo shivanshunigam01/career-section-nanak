@@ -18,8 +18,14 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicTestDrive } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { FormCaptcha } from "@/components/FormCaptcha";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
-import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
+import {
+  BIHAR_DEFAULT_DISTRICT,
+  DISTRICT_OTHER,
+  isPatnaDistrict,
+  resolvedDistrictLabel,
+} from "@/data/biharDistricts";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -79,10 +85,13 @@ const TestDrivePage = () => {
   });
   const [mobileError, setMobileError] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
   const todayStr = getLocalISODate();
   const selectedCalendarDate = formData.date
     ? new Date(`${formData.date}T12:00:00`)
     : undefined;
+  const isPatnaSelected = isPatnaDistrict(formData.city);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -148,6 +157,10 @@ const TestDrivePage = () => {
       toast.error("Please select when you are planning to purchase.");
       return;
     }
+    if (!captchaVerified) {
+      toast.error("Please complete captcha verification.");
+      return;
+    }
 
     const modelLine = leadModelLabel(formData.model, formData.variant);
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
@@ -202,6 +215,7 @@ const TestDrivePage = () => {
         remarks: "",
       });
       setMobileError("");
+      setCaptchaResetSignal((n) => n + 1);
       return;
     }
 
@@ -283,6 +297,7 @@ const TestDrivePage = () => {
       remarks: "",
     });
     setMobileError("");
+    setCaptchaResetSignal((n) => n + 1);
   };
 
   const update = (field: string, value: string) =>
@@ -309,7 +324,7 @@ const TestDrivePage = () => {
               <p className="text-muted-foreground text-lg mb-6 max-w-lg">
                 Schedule a complimentary test drive with a date and time. For buying or reserving a vehicle, use{" "}
                 <Link to="/book-now" className="text-primary font-medium hover:underline">
-                  Book Now
+                  Pre Book
                 </Link>
                 .
               </p>
@@ -404,6 +419,7 @@ const TestDrivePage = () => {
                       variant={formData.variant}
                       onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
                       className={inputClass}
+                      includeMpv7={false}
                     />
                   </div>
                   <BiharDistrictField
@@ -419,6 +435,15 @@ const TestDrivePage = () => {
                     otherFieldLabel="City / state / district *"
                   />
                 </div>
+                {isPatnaSelected ? (
+                  <p className="text-emerald-600 text-xs leading-relaxed">
+                    Great! Patna selected - we can arrange a home (doorstep) test drive for you.
+                  </p>
+                ) : (
+                  <p className="text-amber-600 text-xs leading-relaxed">
+                    Outside Patna? No problem - please choose Dealership Visit for your test drive.
+                  </p>
+                )}
 
                 <div className={fieldBlockClass}>
                   <span className={labelClass}>Preferred test drive location *</span>
@@ -430,9 +455,12 @@ const TestDrivePage = () => {
                     {TEST_DRIVE_LOCATION_OPTIONS.map((opt) => (
                       <div
                         key={opt}
-                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/30 px-3 py-2.5"
+                        className="flex items-center gap-2 rounded-xl border px-3 py-2.5 border-border/60 bg-background/30"
                       >
-                        <RadioGroupItem value={opt} id={`td-loc-${opt.replace(/\s+/g, "-")}`} />
+                        <RadioGroupItem
+                          value={opt}
+                          id={`td-loc-${opt.replace(/\s+/g, "-")}`}
+                        />
                         <Label
                           htmlFor={`td-loc-${opt.replace(/\s+/g, "-")}`}
                           className="text-sm font-normal cursor-pointer leading-snug"
@@ -579,11 +607,12 @@ const TestDrivePage = () => {
                 <Button type="submit" variant="hero" size="lg" className="w-full">
                   Confirm Test Drive
                 </Button>
+                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>
                 <p className="text-center text-muted-foreground text-xs pt-1">
                   Ready to buy?{" "}
                   <Link to="/book-now" className="text-primary font-medium hover:underline">
-                    Go to Book Now
+                    Go to Pre Book
                   </Link>
                 </p>
               </div>

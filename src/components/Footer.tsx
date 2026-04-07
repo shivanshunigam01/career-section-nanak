@@ -60,7 +60,7 @@ const Footer = () => {
                 { label: "VF 6", href: "/models/vf6" },
                 { label: "VF MPV 7", href: "/models/mpv7" },
                 { label: "Compare Models", href: "/compare" },
-                { label: "Book Now", href: "/book-now" },
+                { label: "Pre Book", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },
                 { label: "EMI Calculator", href: "/emi-calculator" },
               ].map((link) => (
@@ -161,13 +161,13 @@ const Footer = () => {
           </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-6">
             <Link
-              to="/about#privacy"
+              to="/privacy-policy"
               className="text-muted-foreground text-xs hover:text-foreground transition-colors inline-flex min-h-11 min-w-[44px] items-center justify-center px-3 py-2 rounded-md active:bg-foreground/5"
             >
               Privacy Policy
             </Link>
             <Link
-              to="/about#terms"
+              to="/terms-of-service"
               className="text-muted-foreground text-xs hover:text-foreground transition-colors inline-flex min-h-11 min-w-[44px] items-center justify-center px-3 py-2 rounded-md active:bg-foreground/5"
             >
               Terms of Service

@@ -264,7 +264,7 @@ const HeroSection = () => {
         </div>
 
         {/* Full-bleed bottom stack: same pattern as desktop — copy pinned bottom-left, dots centered above safe area */}
-        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end bg-gradient-to-t from-black/85 via-black/25 via-45% to-transparent max-lg:from-zinc-950 max-lg:via-zinc-950/75 max-lg:via-50% max-lg:to-transparent lg:from-black/80 lg:via-black/35 lg:via-40%">
+        <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end">
           <div className="pointer-events-auto w-full">
             <div className="container mx-auto px-4 pb-3 sm:pb-4 lg:px-8 lg:pb-5 lg:pt-4">
               <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl">

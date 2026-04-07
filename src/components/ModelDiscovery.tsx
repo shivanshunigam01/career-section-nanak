@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Battery, Gauge, Shield, Users, Zap } from "lucide-react";
-import vf7FrontHero from "@/assets/vf7-front-page-hero.png";
-import vf6DiscoveryHero from "@/assets/vf6-discovery-coastal.png";
+import vf7FrontHero from "@/assets/vf7-model-discovery-upload.png";
+import vf6DiscoveryHero from "@/assets/vf6-model-discovery-upload.png";
 import mpv7Card from "@/assets/mpv7-gallery/mpv7-hero.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
@@ -174,7 +174,7 @@ const ModelDiscovery = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mb-4">
                   <div className="min-w-0">
                     <h3 className="font-display font-bold text-xl sm:text-2xl lg:text-3xl">
-                      VinFast {model.name}
+                      {model.href.includes("mpv7") ? model.name : `VinFast ${model.name}`}
                     </h3>
                     <p className="text-muted-foreground text-sm mt-1">{model.tagline}</p>
                   </div>
