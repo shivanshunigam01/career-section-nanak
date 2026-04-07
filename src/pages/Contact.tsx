@@ -86,7 +86,8 @@ const ContactPage = () => {
           city: formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city,
           otherCity: formData.city === DISTRICT_OTHER ? formData.otherCity : "",
           modelDisplay: leadModelLabel(formData.model, formData.variant),
-          source: `Contact: ${formData.interest}`,
+          source: "Website",
+          interest: formData.interest,
           email: formData.email,
           remarks: formData.message.trim() || `Interest: ${formData.interest}`,
           pageSource: "Contact Page",
@@ -95,7 +96,7 @@ const ContactPage = () => {
         toast.error(formatApiErrors(err));
         return;
       }
-      toast.success("Thank you! Our team will contact you within 10 minutes.");
+      toast.success("Our EV advisor will get in touch with you shortly.");
       setFormData({
         name: "",
         mobile: "",
@@ -131,7 +132,7 @@ const ContactPage = () => {
         email: formData.email.trim(),
         city: cityResolved,
         model: leadModelLabel(formData.model, formData.variant),
-        source: `Contact: ${formData.interest}`,
+        source: "Website",
         status: "New Lead",
         assignedTo: "",
         createdAt: todayStr,
@@ -146,7 +147,7 @@ const ContactPage = () => {
       return;
     }
 
-    toast.success("Thank you! Our team will contact you within 10 minutes.");
+    toast.success("Our EV advisor will get in touch with you shortly.");
     setFormData({
       name: "",
       mobile: "",
@@ -237,15 +238,16 @@ const ContactPage = () => {
 
             {/* Form */}
             <motion.form
+              id="contact-form"
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
-              onSubmit={handleSubmit} className="glass-card p-5 sm:p-8"
+              onSubmit={handleSubmit} className="glass-card p-5 sm:p-8 scroll-mt-24"
             >
               <h3 className="font-display font-bold text-xl mb-6">Send an Enquiry</h3>
               <div className="space-y-4">
                 <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
                 <input type="tel" placeholder="Mobile Number *" value={formData.mobile} onChange={(e) => update("mobile", e.target.value)} className={inputClass} />
                 <input type="email" placeholder="Email (Optional)" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                   <ModelTrimSelect
                     model={formData.model}
                     variant={formData.variant}
@@ -254,6 +256,7 @@ const ContactPage = () => {
                     includeNotSureBoth
                   />
                   <BiharDistrictField
+                    id="contact-district"
                     label="District (Bihar)"
                     selectClassName={inputClass}
                     otherInputClassName={`${inputClass} border-primary/50`}
@@ -261,6 +264,8 @@ const ContactPage = () => {
                     otherValue={formData.otherCity}
                     onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
                     onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+                    fullWidthOtherRow
+                    otherFieldLabel="City / state / district *"
                   />
                 </div>
                 <select value={formData.interest} onChange={(e) => update("interest", e.target.value)} className={inputClass}>

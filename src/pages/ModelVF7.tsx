@@ -31,6 +31,7 @@ import vf7GalIntEnh06 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-0
 import vf7GalIntEnh07 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-07.jpg";
 import vf7GalIntEnh08 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { VF7_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E6E6E2", image: vf7InfinityBlanc },
@@ -54,7 +55,7 @@ const vf7Variants: {
     name: "VF 7 Earth",
     shortLabel: "Earth",
     description:
-      "177 PS FWD, 59.6 kWh, up to 438 km MIDC — silver alloys, limited ADAS, 6 speakers.",
+      "177 PS FWD, 59.6 kWh, up to 438 km MIDC — silver alloys, flush door handles, limited ADAS, 6 speakers.",
   },
   {
     id: "wind",
@@ -68,7 +69,7 @@ const vf7Variants: {
     name: "VF 7 Wind Infinity",
     shortLabel: "Wind Infinity",
     description:
-      "204 PS FWD, 70 kWh, up to 510 km MIDC — adds panoramic glass roof and Wind+ equipment: powered tailgate, roof rails, wireless charger & more.",
+      "204 PS FWD, 70 kWh, up to 532 km MIDC — adds panoramic glass roof and Wind+ equipment: powered tailgate, roof rails, wireless charger & more.",
   },
   {
     id: "sky",
@@ -90,11 +91,11 @@ const variantHeroStats: Record<
   VariantId,
   { range: string; accel: string; power: string; driveline: string }
 > = {
-  earth: { range: "438 km", accel: "9.1 s", power: "177 PS", driveline: "FWD" },
-  wind: { range: "532 km", accel: "8.5 s", power: "204 PS", driveline: "FWD" },
-  windInfinity: { range: "510 km", accel: "8.5 s", power: "204 PS", driveline: "FWD" },
-  sky: { range: "510 km", accel: "5.8 s", power: "353 PS", driveline: "AWD" },
-  skyInfinity: { range: "510 km", accel: "5.8 s", power: "353 PS", driveline: "AWD" },
+  earth: { range: "438 km", accel: VF7_TRIM_0_100_KMH.earth, power: "177 PS", driveline: "FWD" },
+  wind: { range: "532 km", accel: VF7_TRIM_0_100_KMH.wind, power: "204 PS", driveline: "FWD" },
+  windInfinity: { range: "532 km", accel: VF7_TRIM_0_100_KMH.windInfinity, power: "204 PS", driveline: "FWD" },
+  sky: { range: "510 km", accel: VF7_TRIM_0_100_KMH.sky, power: "353 PS", driveline: "AWD" },
+  skyInfinity: { range: "510 km", accel: VF7_TRIM_0_100_KMH.skyInfinity, power: "353 PS", driveline: "AWD" },
 };
 
 const variantExShowroomPrice: Record<VariantId, string> = {
@@ -150,7 +151,7 @@ const variantKeyFigures: Record<VariantId, { label: string; value: string }[]> =
 
 const variantSpotlightChips: Record<VariantId, string[]> = {
   earth: [
-    "Silver 19\" alloys",
+    "Silver 19\" alloys · flush handles",
     "Electric tailgate release",
     "6-way powered driver seat",
     "Dual-zone HVAC · PM1.0 · ionizer",
@@ -191,8 +192,15 @@ const technicalSpecRows: [string, string, string, string, string, string][] = [
   ["Max. power", "130 kW (177 PS)", "150 kW (204 PS)", "150 kW (204 PS)", "260 kW (353 PS)", "260 kW (353 PS)"],
   ["Max. torque", "250 Nm", "310 Nm", "310 Nm", "500 Nm", "500 Nm"],
   ["Driveline", "FWD", "FWD", "FWD", "AWD", "AWD"],
-  ["Range (MIDC)", "438 km", "532 km", "510 km", "510 km", "510 km"],
-  ["Acceleration (0–100 km/h)", "9.1 s", "8.5 s", "8.5 s", "5.8 s", "5.8 s"],
+  ["Range (MIDC)", "438 km", "532 km", "532 km", "510 km", "510 km"],
+  [
+    "Acceleration (0–100 km/h)",
+    VF7_TRIM_0_100_KMH.earth,
+    VF7_TRIM_0_100_KMH.wind,
+    VF7_TRIM_0_100_KMH.windInfinity,
+    VF7_TRIM_0_100_KMH.sky,
+    VF7_TRIM_0_100_KMH.skyInfinity,
+  ],
   ["Usable battery capacity", "59.6 kWh", "70 kWh", "70 kWh", "70.8 kWh", "70.8 kWh"],
   ["Charge port", "CCS2", "CCS2", "CCS2", "CCS2", "CCS2"],
   ["AC charging", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW"],
@@ -218,7 +226,7 @@ const exteriorDiffRows: [string, string, string, string, string, string][] = [
   ["Wheels", "Silver finish alloy", "Black alloy", "Black alloy", "Black alloy", "Black alloy"],
   ["Tailgate", "Electric release", "Powered", "Powered", "Powered", "Powered"],
   ["Roof rail", "No", "Yes", "Yes", "Yes", "Yes"],
-  ["Flush door handles", "No", "Yes", "Yes", "Yes", "Yes"],
+  ["Flush door handles", "Yes", "Yes", "Yes", "Yes", "Yes"],
 ];
 
 const interiorDiffRows: [string, string, string, string, string, string][] = [
@@ -251,7 +259,8 @@ const safetyAllBullets = [
   "Theft alarm & immobilizer · speed-sensing door lock · seatbelt reminder (all seats)",
 ];
 
-const adasEarthNote = "Basic / limited ADAS. Conventional cruise control.";
+const adasEarthBody = "Basic / Limited ADAS. Conventional Cruise Control.";
+const adasEarthNote = `VF 7 Earth: ${adasEarthBody}`;
 
 const adasUpperTrimsSummary =
   "Full ADAS including adaptive cruise control and extended driver-assistance features.";
@@ -279,7 +288,7 @@ const connectivityRows: [string, string, string, string, string, string][] = [
 
 const featureHighlights = [
   "Five trims: Earth (FWD 59.6 kWh), Wind & Wind Infinity (FWD 70 kWh + panoramic on Infinity), Sky & Sky Infinity (AWD 70.8 kWh, 353 PS)",
-  "Earth: 438 km MIDC; Wind peaks at 532 km; Wind Infinity & Sky line at 510 km MIDC",
+  "Earth: 438 km MIDC; Wind & Wind Infinity: 532 km MIDC; Sky & Sky Infinity: 510 km MIDC",
   "Sky & Sky Infinity: dual-motor AWD, 500 Nm, 5.8 s 0–100 km/h, 110 kW DC & 28 min 10–70% charge",
   "All variants: 7 airbags, 360° camera, LED lighting signature, dual-zone climate, HUD, 537 L boot",
   "Colours: Infinity Blanc, Crimson Red, Jet Black, Desert Silver, Zenith Grey, Urban Mint",
@@ -436,6 +445,8 @@ const ModelVF7 = () => {
   const [variant, setVariant] = useState<VariantId>("earth");
 
   const stats = variantHeroStats[variant];
+  const heroRange = stats.range;
+  const heroAccel = stats.accel;
   const vMeta = vf7Variants.find((v) => v.id === variant)!;
   const displayExShowroom =
     variant === "earth" ? siteConfig.vf7Price : variantExShowroomPrice[variant];
@@ -466,7 +477,7 @@ const ModelVF7 = () => {
 
               <div className="mb-1.5 space-y-3 sm:space-y-3.5 max-w-md">
                 <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.range}</p>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{heroRange}</p>
                   <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
                 </div>
                 <div>
@@ -474,7 +485,7 @@ const ModelVF7 = () => {
                   <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
                 </div>
                 <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{heroAccel}</p>
                   <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
                 </div>
                 <div>
@@ -567,7 +578,7 @@ const ModelVF7 = () => {
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground/80 mb-3">Key figures</p>
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
                   {variantKeyFigures[variant].map((row) => (
-                    <div key={row.label} className="border-b border-border/40 sm:border-0 pb-3 sm:pb-0 last:border-0 last:pb-0">
+                    <div key={`${variant}-${row.label}`} className="border-b border-border/40 sm:border-0 pb-3 sm:pb-0 last:border-0 last:pb-0">
                       <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{row.label}</dt>
                       <dd className="text-sm font-medium text-foreground mt-0.5 leading-snug">{row.value}</dd>
                     </div>
@@ -623,14 +634,14 @@ const ModelVF7 = () => {
                     <Gauge className="w-3.5 h-3.5 shrink-0" aria-hidden />
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider leading-tight">Range (MIDC)</p>
                   </div>
-                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">{stats.range}</p>
+                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">{heroRange}</p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
                     <Timer className="w-3.5 h-3.5 shrink-0" aria-hidden />
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider leading-tight">0–100 km/h</p>
                   </div>
-                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">{stats.accel}</p>
+                  <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">{heroAccel}</p>
                 </div>
                 <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
@@ -687,9 +698,6 @@ const ModelVF7 = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground mt-3">
-                *Contact Patliputra VinFast Patna for variant-wise pricing and offers.
-              </p>
             </div>
           </div>
         </div>
@@ -748,9 +756,6 @@ const ModelVF7 = () => {
             ))}
           </div>
 
-          <p className="text-muted-foreground text-xs mt-12 max-w-4xl leading-relaxed">
-            Images are representative; equipment may vary by Earth, Wind, Wind Infinity, Sky or Sky Infinity. Confirm with Patliputra VinFast Patna.
-          </p>
         </div>
       </section>
 
@@ -826,8 +831,7 @@ const ModelVF7 = () => {
             <h3 className="font-display font-bold text-lg md:text-xl mb-3">ADAS summary</h3>
             <div className="space-y-3 text-sm text-muted-foreground leading-relaxed">
               <p>
-                <span className="font-medium text-foreground/90">VF 7 Earth — </span>
-                {adasEarthNote}
+                <span className="font-medium text-foreground/90">VF 7 Earth:</span> {adasEarthBody}
               </p>
               <p>
                 <span className="font-medium text-foreground/90">Wind, Wind Infinity, Sky & Sky Infinity — </span>

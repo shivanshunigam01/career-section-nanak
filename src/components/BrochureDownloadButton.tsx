@@ -108,7 +108,8 @@ export function BrochureDownloadButton({
           otherCity: city === DISTRICT_OTHER ? otherCity : "",
           email: email.trim() || undefined,
           modelDisplay: modelLine,
-          source: "Brochure download",
+          source: "Website",
+          interest: "Brochure download",
           remarks,
           pageSource,
         });
@@ -124,7 +125,7 @@ export function BrochureDownloadButton({
             email: email.trim(),
             city: resolvedCity,
             model: modelLine,
-            source: "Brochure download",
+            source: "Website",
             status: "New Lead",
             assignedTo: "",
             createdAt: todayStr,

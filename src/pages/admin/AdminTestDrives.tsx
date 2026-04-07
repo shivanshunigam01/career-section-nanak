@@ -22,6 +22,13 @@ import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Edit2, Trash2, CheckCircle, XCircle, Clock, Download, FileText, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  OWNS_CAR_OPTIONS,
+  PURCHASE_TIMELINE_OPTIONS,
+  TEST_DRIVE_LOCATION_OPTIONS,
+} from "@/data/testDriveFormOptions";
+
+const SELECT_NONE = "__none__";
 
 const statusColors: Record<string, string> = {
   Pending: "bg-amber-400/10 text-amber-400",
@@ -59,6 +66,10 @@ const AdminTestDrives = () => {
     preferredDate: "",
     preferredTime: "",
     branch: "Patna Showroom",
+    preferredTestDriveLocation: "",
+    ownsCar: "",
+    currentCarDetails: "",
+    purchaseTimeline: "",
     status: "Pending",
     assignedExecutive: "",
     feedback: "",
@@ -122,7 +133,23 @@ const AdminTestDrives = () => {
         toast.message("No bookings to export.");
         return;
       }
-      const headers: (keyof TestDriveBooking)[] = ["id", "leadId", "customerName", "mobile", "model", "preferredDate", "preferredTime", "branch", "status", "feedback", "createdAt"];
+      const headers: (keyof TestDriveBooking)[] = [
+        "id",
+        "leadId",
+        "customerName",
+        "mobile",
+        "model",
+        "preferredDate",
+        "preferredTime",
+        "branch",
+        "preferredTestDriveLocation",
+        "ownsCar",
+        "currentCarDetails",
+        "purchaseTimeline",
+        "status",
+        "feedback",
+        "createdAt",
+      ];
       const rows = rowsToExport.map((b) => headers.map((h) => escapeCsv(b[h])).join(","));
       const csv = [headers.join(","), ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -157,6 +184,10 @@ const AdminTestDrives = () => {
           <td>${b.preferredDate}</td>
           <td>${b.preferredTime}</td>
           <td>${b.branch}</td>
+          <td>${b.preferredTestDriveLocation ?? ""}</td>
+          <td>${b.ownsCar ?? ""}</td>
+          <td>${b.currentCarDetails ?? ""}</td>
+          <td>${b.purchaseTimeline ?? ""}</td>
           <td>${b.status}</td>
         </tr>`,
         )
@@ -179,7 +210,7 @@ const AdminTestDrives = () => {
           <table>
             <thead>
               <tr>
-                <th>Customer</th><th>Mobile</th><th>Model</th><th>Preferred Date</th><th>Preferred Time</th><th>Branch</th><th>Status</th>
+                <th>Customer</th><th>Mobile</th><th>Model</th><th>Preferred Date</th><th>Preferred Time</th><th>Branch</th><th>TD Location</th><th>Owns car</th><th>Current car</th><th>Purchase plan</th><th>Status</th>
               </tr>
             </thead>
             <tbody>${htmlRows}</tbody>
@@ -234,6 +265,11 @@ const AdminTestDrives = () => {
             preferredDate: booking.preferredDate,
             preferredTime: booking.preferredTime?.trim() || undefined,
             branch: booking.branch?.trim() || undefined,
+            preferredTestDriveLocation: booking.preferredTestDriveLocation?.trim() || undefined,
+            ownsCar: booking.ownsCar?.trim() || undefined,
+            currentCarDetails:
+              booking.ownsCar === "Yes" ? booking.currentCarDetails?.trim() || undefined : undefined,
+            purchaseTimeline: booking.purchaseTimeline?.trim() || undefined,
             remarks: booking.feedback?.trim() || undefined,
           });
           await refreshFromApi();
@@ -339,6 +375,27 @@ const AdminTestDrives = () => {
               <div><span className="text-muted-foreground">Date:</span> <span className="text-foreground">{td.preferredDate}</span></div>
               <div><span className="text-muted-foreground">Time:</span> <span className="text-foreground">{td.preferredTime}</span></div>
               <div><span className="text-muted-foreground">Branch:</span> <span className="text-foreground">{td.branch}</span></div>
+              {td.preferredTestDriveLocation ? (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">TD location:</span>{" "}
+                  <span className="text-foreground">{td.preferredTestDriveLocation}</span>
+                </div>
+              ) : null}
+              {td.purchaseTimeline ? (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Purchase plan:</span>{" "}
+                  <span className="text-foreground">{td.purchaseTimeline}</span>
+                </div>
+              ) : null}
+              {td.ownsCar ? (
+                <div className="col-span-2">
+                  <span className="text-muted-foreground">Owns car:</span>{" "}
+                  <span className="text-foreground">
+                    {td.ownsCar}
+                    {td.ownsCar === "Yes" && td.currentCarDetails ? ` — ${td.currentCarDetails}` : ""}
+                  </span>
+                </div>
+              ) : null}
             </div>
             {td.feedback && <p className="text-xs text-muted-foreground italic border-t border-border/30 pt-2">"{td.feedback}"</p>}
             <div className="flex items-center gap-1 pt-1 border-t border-border/30">
@@ -414,6 +471,69 @@ const TestDriveForm = ({
         </div>
         <div className="space-y-1.5"><Label className="text-xs">Time</Label><Input value={form.preferredTime} onChange={e => update("preferredTime", e.target.value)} className="bg-secondary/50" placeholder="e.g. 10:00 AM" /></div>
         <div className="space-y-1.5"><Label className="text-xs">Branch</Label><Input value={form.branch} onChange={e => update("branch", e.target.value)} className="bg-secondary/50" /></div>
+        <div className="space-y-1.5 col-span-2">
+          <Label className="text-xs">Preferred test drive location</Label>
+          <Select
+            value={form.preferredTestDriveLocation || SELECT_NONE}
+            onValueChange={(v) => update("preferredTestDriveLocation", v === SELECT_NONE ? "" : v)}
+          >
+            <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_NONE}>— Not set —</SelectItem>
+              {TEST_DRIVE_LOCATION_OPTIONS.map((o) => (
+                <SelectItem key={o} value={o}>{o}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1.5 col-span-2">
+          <Label className="text-xs">Currently own a car?</Label>
+          <Select
+            value={form.ownsCar || SELECT_NONE}
+            onValueChange={(v) => {
+              const next = v === SELECT_NONE ? "" : v;
+              setForm((prev) => ({
+                ...prev,
+                ownsCar: next,
+                ...(next !== "Yes" ? { currentCarDetails: "" } : {}),
+              }));
+            }}
+          >
+            <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_NONE}>— Not set —</SelectItem>
+              {OWNS_CAR_OPTIONS.map((o) => (
+                <SelectItem key={o} value={o}>{o}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        {form.ownsCar === "Yes" ? (
+          <div className="space-y-1.5 col-span-2">
+            <Label className="text-xs">Current car (model / brand)</Label>
+            <Input
+              value={form.currentCarDetails}
+              onChange={(e) => update("currentCarDetails", e.target.value)}
+              className="bg-secondary/50"
+              placeholder="e.g. Honda City"
+            />
+          </div>
+        ) : null}
+        <div className="space-y-1.5 col-span-2">
+          <Label className="text-xs">Planning to purchase within</Label>
+          <Select
+            value={form.purchaseTimeline || SELECT_NONE}
+            onValueChange={(v) => update("purchaseTimeline", v === SELECT_NONE ? "" : v)}
+          >
+            <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="—" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SELECT_NONE}>— Not set —</SelectItem>
+              {PURCHASE_TIMELINE_OPTIONS.map((o) => (
+                <SelectItem key={o} value={o}>{o}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="space-y-1.5"><Label className="text-xs">Feedback</Label><Textarea value={form.feedback} onChange={e => update("feedback", e.target.value)} className="bg-secondary/50" rows={2} /></div>
       <div className="flex gap-3 pt-2">

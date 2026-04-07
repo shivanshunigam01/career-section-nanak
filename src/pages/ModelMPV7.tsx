@@ -22,7 +22,7 @@ import mpv7DtlOverview1 from "@/assets/mpv7-details/mpv7-dtl-overview-1.jpg";
 import mpv7DtlOverview2 from "@/assets/mpv7-details/mpv7-dtl-overview-2.jpg";
 import mpv7DtlOverview3 from "@/assets/mpv7-details/mpv7-dtl-overview-3.jpg";
 import mpv7DtlFrontView from "@/assets/mpv7-details/mpv7-dtl-front-view.jpg";
-import mpv7DtlSideLeft from "@/assets/mpv7-details/mpv7-dtl-side-left.jpg";
+import mpv7DtlSideLeft from "@/assets/mpv7-details/mpv7-dtl-side-left.png";
 import mpv7DtlGrille from "@/assets/mpv7-details/mpv7-dtl-grille.jpg";
 import mpv7DtlHeadlight from "@/assets/mpv7-details/mpv7-dtl-headlight.jpg";
 import mpv7DtlWheel from "@/assets/mpv7-details/mpv7-dtl-wheel.jpg";
@@ -324,7 +324,7 @@ const ModelMPV7 = () => {
           city: interestForm.city === DISTRICT_OTHER ? DISTRICT_OTHER : interestForm.city,
           otherCity: interestForm.city === DISTRICT_OTHER ? interestForm.otherCity : "",
           modelDisplay,
-          source: "VF MPV 7 Pre-book",
+          source: "Website",
           email: interestForm.email.trim(),
           remarks: "VF MPV 7 pre-booking interest — form gate on model page",
           interest: "Pre-book interest",
@@ -348,7 +348,7 @@ const ModelMPV7 = () => {
               ? interestForm.otherCity.trim() || DISTRICT_OTHER
               : interestForm.city,
           model: modelDisplay,
-          source: "VF MPV 7 Pre-book",
+          source: "Website",
           status: "Interested",
           assignedTo: "",
           createdAt: todayStr,
@@ -554,7 +554,7 @@ const ModelMPV7 = () => {
                 </div>
               </div>
 
-              <div className="hidden lg:flex flex-wrap gap-3 pt-1">
+              <div className="flex flex-wrap gap-3 pt-1">
                 <Button asChild variant="default" size="default">
                   <Link to="#mpv7-prebook">Register for pre-booking</Link>
                 </Button>
@@ -592,9 +592,6 @@ const ModelMPV7 = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground mt-3">
-                *Contact Patliputra VinFast Patna for pre-booking, pricing, and delivery timelines.
-              </p>
             </div>
           </div>
 
@@ -652,8 +649,7 @@ const ModelMPV7 = () => {
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Gallery</p>
             <h2 className="font-display font-bold text-3xl md:text-4xl lg:text-5xl mb-4">VF MPV 7 in detail</h2>
             <p className="text-muted-foreground text-sm md:text-base leading-relaxed">
-              Below: full official MPV 7 detail pack (exterior, cabin, and mobile crops) — each frame with short context. Exact
-              equipment may vary; confirm with Patliputra VinFast Patna.
+              Below: full official MPV 7 detail pack (exterior, cabin, and mobile crops) — each frame with short context.
             </p>
           </div>
 
@@ -699,10 +695,6 @@ const ModelMPV7 = () => {
             ))}
           </div>
 
-          <p className="text-muted-foreground text-xs mt-12 max-w-4xl leading-relaxed">
-            *Images shown are for illustrative purposes only. Features and specifications may vary — contact Patliputra VinFast for
-            the latest VF MPV 7 pack and availability in Bihar.
-          </p>
         </div>
       </section>
 
@@ -712,8 +704,7 @@ const ModelMPV7 = () => {
           <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Exterior studio</p>
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-8">Choose your view</h2>
           <p className="text-muted-foreground text-sm max-w-xl mx-auto mb-8">
-            Studio, lifestyle, and side profile — representative VF MPV 7 imagery. Final paint and trim with Patliputra VinFast
-            Patna.
+            Studio, lifestyle, and side profile views of the VF MPV 7.
           </p>
           <div className="max-w-5xl mx-auto mb-8 rounded-3xl overflow-hidden bg-[#F0F0F0] dark:bg-muted/30">
             <img
@@ -886,18 +877,20 @@ const ModelMPV7 = () => {
                     autoComplete="email"
                   />
                 </div>
-                <div className="sm:col-span-1 lg:col-span-2">
-                  <BiharDistrictField
-                    id="mpv7-pb-district"
-                    label="District (Bihar)"
-                    selectClassName={inputClass}
-                    otherInputClassName={`${inputClass} border-primary/50`}
-                    value={interestForm.city}
-                    otherValue={interestForm.otherCity}
-                    onDistrictChange={(city) => setInterestForm({ ...interestForm, city, otherCity: "" })}
-                    onOtherChange={(otherCity) => setInterestForm({ ...interestForm, otherCity })}
-                  />
-                </div>
+                <BiharDistrictField
+                  id="mpv7-pb-district"
+                  label="District (Bihar)"
+                  selectClassName={inputClass}
+                  otherInputClassName={`${inputClass} border-primary/50`}
+                  value={interestForm.city}
+                  otherValue={interestForm.otherCity}
+                  onDistrictChange={(city) => setInterestForm({ ...interestForm, city, otherCity: "" })}
+                  onOtherChange={(otherCity) => setInterestForm({ ...interestForm, otherCity })}
+                  fullWidthOtherRow
+                  otherFieldLabel="City / state / district *"
+                  selectWrapperClassName="sm:col-span-1 lg:col-span-2"
+                  otherRowClassName="sm:col-span-2 lg:col-span-12"
+                />
                 <div className="sm:col-span-2 lg:col-span-2 flex lg:pt-0">
                   <Button type="submit" variant="hero" size="lg" className="w-full lg:w-auto lg:shrink-0">
                     Submit

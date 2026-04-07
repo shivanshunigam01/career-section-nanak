@@ -20,6 +20,13 @@ import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  OWNS_CAR_OPTIONS,
+  PURCHASE_TIMELINE_OPTIONS,
+  TEST_DRIVE_LOCATION_OPTIONS,
+} from "@/data/testDriveFormOptions";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -60,6 +67,10 @@ const TestDrivePage = () => {
     otherCity: "",
     model: "VF 7",
     variant: DEFAULT_VF7_TRIM,
+    preferredTestDriveLocation: "",
+    ownsCar: "",
+    currentCarDetails: "",
+    purchaseTimeline: "",
     date: "",
     time: "",
     remarks: "",
@@ -119,6 +130,22 @@ const TestDrivePage = () => {
       toast.error("Please enter your city or district (outside Bihar).");
       return;
     }
+    if (!formData.preferredTestDriveLocation) {
+      toast.error("Please choose a preferred test drive location.");
+      return;
+    }
+    if (!formData.ownsCar) {
+      toast.error("Please answer whether you currently own a car.");
+      return;
+    }
+    if (formData.ownsCar === "Yes" && !formData.currentCarDetails.trim()) {
+      toast.error("Please enter your current car (model / brand).");
+      return;
+    }
+    if (!formData.purchaseTimeline) {
+      toast.error("Please select when you are planning to purchase.");
+      return;
+    }
 
     const modelLine = leadModelLabel(formData.model, formData.variant);
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
@@ -137,6 +164,11 @@ const TestDrivePage = () => {
           branch: "Patna Showroom",
           remarks: formData.remarks?.trim() ? formData.remarks.trim() : `Preferred: ${formData.date} ${formData.time}`,
           pageSource: "Test Drive Page",
+          preferredTestDriveLocation: formData.preferredTestDriveLocation,
+          ownsCar: formData.ownsCar,
+          currentCarDetails:
+            formData.ownsCar === "Yes" ? formData.currentCarDetails.trim() : undefined,
+          purchaseTimeline: formData.purchaseTimeline,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));
@@ -151,6 +183,10 @@ const TestDrivePage = () => {
         otherCity: "",
         model: "VF 7",
         variant: DEFAULT_VF7_TRIM,
+        preferredTestDriveLocation: "",
+        ownsCar: "",
+        currentCarDetails: "",
+        purchaseTimeline: "",
         date: "",
         time: "",
         remarks: "",
@@ -161,6 +197,13 @@ const TestDrivePage = () => {
 
     try {
       const leadId = `WL_${Date.now()}`;
+      const tdMeta = [
+        `TD location: ${formData.preferredTestDriveLocation}`,
+        formData.ownsCar === "Yes"
+          ? `Owns car: Yes — ${formData.currentCarDetails.trim()}`
+          : "Owns car: No",
+        `Purchase plan: ${formData.purchaseTimeline}`,
+      ].join(" | ");
       const lead: Lead = {
         id: leadId,
         name: formData.name.trim(),
@@ -168,12 +211,19 @@ const TestDrivePage = () => {
         email: formData.email.trim(),
         city: cityResolved,
         model: modelLine,
-        source: "Test Drive",
+        source: "Website",
         status: "Test Drive Scheduled",
         assignedTo: "",
         createdAt: todayStr,
         nextFollowUp: "",
-        remarks: formData.remarks?.trim() ? formData.remarks.trim() : `Preferred: ${formData.date} ${formData.time}` ,
+        remarks: [
+          "Test drive booking (website)",
+          formData.remarks?.trim(),
+          tdMeta,
+          `Preferred: ${formData.date} ${formData.time}`,
+        ]
+          .filter(Boolean)
+          .join(" | "),
         financeNeeded: false,
         exchangeNeeded: false,
       };
@@ -187,6 +237,11 @@ const TestDrivePage = () => {
         preferredDate: formData.date,
         preferredTime: formData.time,
         branch: "Patna Showroom",
+        preferredTestDriveLocation: formData.preferredTestDriveLocation,
+        ownsCar: formData.ownsCar,
+        currentCarDetails:
+          formData.ownsCar === "Yes" ? formData.currentCarDetails.trim() : "",
+        purchaseTimeline: formData.purchaseTimeline,
         status: "Pending",
         assignedExecutive: "",
         feedback: "",
@@ -209,6 +264,10 @@ const TestDrivePage = () => {
       otherCity: "",
       model: "VF 7",
       variant: DEFAULT_VF7_TRIM,
+      preferredTestDriveLocation: "",
+      ownsCar: "",
+      currentCarDetails: "",
+      purchaseTimeline: "",
       date: "",
       time: "",
       remarks: "",
@@ -216,7 +275,12 @@ const TestDrivePage = () => {
     setMobileError("");
   };
 
-  const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });
+  const update = (field: string, value: string) =>
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "ownsCar" && value !== "Yes" ? { currentCarDetails: "" } : {}),
+    }));
 
   const inputClass =
     "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full min-w-0";
@@ -341,8 +405,93 @@ const TestDrivePage = () => {
                     otherValue={formData.otherCity}
                     onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
                     onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+                    fullWidthOtherRow
+                    otherFieldLabel="City / state / district *"
                   />
                 </div>
+
+                <div className={fieldBlockClass}>
+                  <span className={labelClass}>Preferred test drive location *</span>
+                  <RadioGroup
+                    value={formData.preferredTestDriveLocation}
+                    onValueChange={(v) => update("preferredTestDriveLocation", v)}
+                    className="grid gap-2 sm:grid-cols-2"
+                  >
+                    {TEST_DRIVE_LOCATION_OPTIONS.map((opt) => (
+                      <div
+                        key={opt}
+                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/30 px-3 py-2.5"
+                      >
+                        <RadioGroupItem value={opt} id={`td-loc-${opt.replace(/\s+/g, "-")}`} />
+                        <Label
+                          htmlFor={`td-loc-${opt.replace(/\s+/g, "-")}`}
+                          className="text-sm font-normal cursor-pointer leading-snug"
+                        >
+                          {opt}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                <div className={fieldBlockClass}>
+                  <span className={labelClass}>Do you currently own a car? *</span>
+                  <RadioGroup
+                    value={formData.ownsCar}
+                    onValueChange={(v) => update("ownsCar", v)}
+                    className="flex flex-wrap gap-3"
+                  >
+                    {OWNS_CAR_OPTIONS.map((opt) => (
+                      <div
+                        key={opt}
+                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/30 px-3 py-2.5"
+                      >
+                        <RadioGroupItem value={opt} id={`td-own-${opt}`} />
+                        <Label htmlFor={`td-own-${opt}`} className="text-sm font-normal cursor-pointer">
+                          {opt}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
+                {formData.ownsCar === "Yes" ? (
+                  <div className={fieldBlockClass}>
+                    <label htmlFor="td-current-car" className={labelClass}>
+                      Which car? (model / brand) *
+                    </label>
+                    <input
+                      id="td-current-car"
+                      type="text"
+                      placeholder="e.g. Honda City, Maruti Swift"
+                      value={formData.currentCarDetails}
+                      onChange={(e) => update("currentCarDetails", e.target.value)}
+                      className={inputClass}
+                    />
+                  </div>
+                ) : null}
+
+                <div className={fieldBlockClass}>
+                  <span className={labelClass}>Are you planning to purchase within? *</span>
+                  <RadioGroup
+                    value={formData.purchaseTimeline}
+                    onValueChange={(v) => update("purchaseTimeline", v)}
+                    className="grid gap-2 sm:grid-cols-2"
+                  >
+                    {PURCHASE_TIMELINE_OPTIONS.map((opt, i) => (
+                      <div
+                        key={opt}
+                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/30 px-3 py-2.5"
+                      >
+                        <RadioGroupItem value={opt} id={`td-buy-${i}`} />
+                        <Label htmlFor={`td-buy-${i}`} className="text-sm font-normal cursor-pointer leading-snug">
+                          {opt}
+                        </Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                   <div className={fieldBlockClass}>
                     <span id="td-date-label" className={labelClass}>
