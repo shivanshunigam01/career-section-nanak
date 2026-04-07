@@ -41,6 +41,7 @@ export const BIHAR_DISTRICTS: readonly string[] = [
 ] as const;
 
 export const BIHAR_DEFAULT_DISTRICT = "Patna";
+export const PATNA_DISTRICT = "Patna";
 
 /** Value used when the user is outside Bihar; pairs with a free-text field. */
 export const DISTRICT_OTHER = "Other" as const;
@@ -49,4 +50,9 @@ export const DISTRICT_OTHER = "Other" as const;
 export function resolvedDistrictLabel(district: string, otherDetail: string): string {
   if (district === DISTRICT_OTHER) return (otherDetail.trim() || DISTRICT_OTHER);
   return district;
+}
+
+/** Test-drive policy: service is currently available only inside Patna district. */
+export function isPatnaDistrict(district: string): boolean {
+  return district.trim().toLowerCase() === PATNA_DISTRICT.toLowerCase();
 }

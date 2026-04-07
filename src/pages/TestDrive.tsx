@@ -19,7 +19,13 @@ import { submitPublicTestDrive } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
-import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
+import {
+  BIHAR_DEFAULT_DISTRICT,
+  DISTRICT_OTHER,
+  PATNA_DISTRICT,
+  isPatnaDistrict,
+  resolvedDistrictLabel,
+} from "@/data/biharDistricts";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -81,6 +87,7 @@ const TestDrivePage = () => {
   const selectedCalendarDate = formData.date
     ? new Date(`${formData.date}T12:00:00`)
     : undefined;
+  const isPatnaSelected = isPatnaDistrict(formData.city);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -128,6 +135,10 @@ const TestDrivePage = () => {
     }
     if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
       toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
+    if (isPatnaSelected === false) {
+      toast.error(`Test drive is currently available only for ${PATNA_DISTRICT} district.`);
       return;
     }
     if (!formData.preferredTestDriveLocation) {
@@ -409,6 +420,16 @@ const TestDrivePage = () => {
                     otherFieldLabel="City / state / district *"
                   />
                 </div>
+                {isPatnaSelected ? (
+                  <p className="text-emerald-600 text-xs leading-relaxed">
+                    Great! {PATNA_DISTRICT} selected - we can arrange a home test drive for you.
+                  </p>
+                ) : (
+                  <p className="text-amber-600 text-xs leading-relaxed">
+                    Test drive is currently available only in {PATNA_DISTRICT}. For other districts in Bihar, please use Book
+                    Now and our team will assist you.
+                  </p>
+                )}
 
                 <div className={fieldBlockClass}>
                   <span className={labelClass}>Preferred test drive location *</span>
@@ -416,6 +437,7 @@ const TestDrivePage = () => {
                     value={formData.preferredTestDriveLocation}
                     onValueChange={(v) => update("preferredTestDriveLocation", v)}
                     className="grid gap-2 sm:grid-cols-2"
+                    disabled={!isPatnaSelected}
                   >
                     {TEST_DRIVE_LOCATION_OPTIONS.map((opt) => (
                       <div
@@ -566,7 +588,7 @@ const TestDrivePage = () => {
                     className={`${inputClass} h-24 py-3 resize-none`}
                   />
                 </div>
-                <Button type="submit" variant="hero" size="lg" className="w-full">
+                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={!isPatnaSelected}>
                   Confirm Test Drive
                 </Button>
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>

@@ -10,7 +10,7 @@ import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
-import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, PATNA_DISTRICT, isPatnaDistrict } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -69,6 +69,10 @@ const LeadCaptureStrip = () => {
     }
     if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
       toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
+    if (isPatnaDistrict(formData.city) === false) {
+      toast.error(`Test drive is currently available only in ${PATNA_DISTRICT}.`);
       return;
     }
 
