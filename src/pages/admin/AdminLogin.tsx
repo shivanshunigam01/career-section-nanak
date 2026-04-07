@@ -53,7 +53,11 @@ const AdminLogin = () => {
       >
         <div className="glass-card p-8 sm:p-10">
           <div className="text-center mb-8">
-            <img src={vinLogo} alt="Patliputra VinFast" className="h-14 w-auto object-contain mx-auto mb-4" />
+            <img
+              src={vinLogo}
+              alt="Patliputra VinFast"
+              className="mx-auto mb-4 h-16 w-auto max-w-[min(100%,280px)] object-contain sm:h-20 sm:max-w-[320px]"
+            />
             <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
             <p className="text-muted-foreground text-sm mt-1">Patliputra Group Dealer Management</p>
           </div>

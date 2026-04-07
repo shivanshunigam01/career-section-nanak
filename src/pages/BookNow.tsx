@@ -18,7 +18,7 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
-import interiorImg from "@/assets/interior.jpg";
+import bookNowCabinGrid from "@/assets/book-now-cabin-grid.png";
 import slideVf7Interior from "@/assets/slide-vf7-interior.png";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -218,8 +218,8 @@ const BookNowPage = () => {
                 </div>
                 <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border/60 shadow-sm">
                   <img
-                    src={interiorImg}
-                    alt="VinFast interior"
+                    src={bookNowCabinGrid}
+                    alt="VinFast cabin — dashboard and front seats"
                     className="image-high-quality absolute inset-0 h-full w-full object-cover"
                     sizes="(max-width: 1024px) 45vw, 320px"
                     loading="lazy"
@@ -319,7 +319,7 @@ const BookNowPage = () => {
                   onChange={(e) => update("email", e.target.value)}
                   className={inputClass}
                 />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                   <div className="space-y-1.5 min-w-0">
                     <label htmlFor="booknow-model-trim" className="text-xs font-medium text-muted-foreground">
                       Model &amp; trim
@@ -332,18 +332,18 @@ const BookNowPage = () => {
                       className={inputClass}
                     />
                   </div>
-                  <div className="space-y-1.5 min-w-0">
-                    <BiharDistrictField
-                      id="booknow-district"
-                      label="District (Bihar)"
-                      selectClassName={inputClass}
-                      otherInputClassName={`${inputClass} border-primary/50`}
-                      value={formData.city}
-                      otherValue={formData.otherCity}
-                      onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
-                      onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
-                    />
-                  </div>
+                  <BiharDistrictField
+                    id="booknow-district"
+                    label="District (Bihar)"
+                    selectClassName={inputClass}
+                    otherInputClassName={`${inputClass} border-primary/50`}
+                    value={formData.city}
+                    otherValue={formData.otherCity}
+                    onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
+                    onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
+                    fullWidthOtherRow
+                    otherFieldLabel="City / state / district *"
+                  />
                 </div>
                 <div className="flex flex-col gap-3 pt-1">
                   <label className="flex items-center gap-3 text-sm cursor-pointer">

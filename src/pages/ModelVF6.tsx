@@ -8,7 +8,7 @@ import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import vf6Hero from "@/assets/vf6-product-hero.png";
-import interiorImg from "@/assets/interior.jpg";
+import vf6WhyInteriorRhd from "@/assets/vf6-why-section-interior-rhd.png";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
 import vf6JetBlack from "@/assets/vf6-jet-black.png";
@@ -65,7 +65,7 @@ const variantHeroStats: Record<
   VariantId,
   { range: string; accel: string; power: string; driveline: string }
 > = {
-  earth: { range: "468 km", accel: "8.9 s", power: "177 PS", driveline: "FWD" },
+  earth: { range: "468 km", accel: "10.4 s", power: "177 PS", driveline: "FWD" },
   wind: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
   infinity: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
 };
@@ -135,7 +135,12 @@ const technicalSpecRows: [string, string, string, string][] = [
   ["Max. torque", "250 Nm", "310 Nm", "310 Nm"],
   ["Driveline", "FWD", "FWD", "FWD"],
   ["Range (MIDC)", "468 km", "463 km", "463 km"],
-  ["Acceleration (0–100 km/h)", "8.9 s", "8.9 s", "8.9 s"],
+  [
+    "Acceleration (0–100 km/h)",
+    variantHeroStats.earth.accel,
+    variantHeroStats.wind.accel,
+    variantHeroStats.infinity.accel,
+  ],
   ["Usable battery capacity", "59.6 kWh", "59.6 kWh", "59.6 kWh"],
   ["Charge port", "CCS2", "CCS2", "CCS2"],
   ["AC charging", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW"],
@@ -379,7 +384,7 @@ const ModelVF6 = () => {
                 <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
                 <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
               </div>
-              <div>
+              <div key={`hero-accel-${variant}`}>
                 <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.accel}</p>
                 <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
               </div>
@@ -560,7 +565,7 @@ const ModelVF6 = () => {
                   </div>
                   <p className="font-display font-bold text-base sm:text-lg md:text-xl tabular-nums">{stats.range}</p>
                 </div>
-                <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm">
+                <div className="rounded-xl border border-border/70 bg-card/80 p-3 sm:p-4 shadow-sm" key={`stat-accel-${variant}`}>
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
                     <Timer className="w-3.5 h-3.5 shrink-0" aria-hidden />
                     <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-wider leading-tight">0–100 km/h</p>
@@ -590,7 +595,7 @@ const ModelVF6 = () => {
                 </div>
               </div>
 
-              <div className="hidden lg:flex flex-wrap gap-3 pt-1">
+              <div className="flex flex-wrap gap-3 pt-1">
                 <Button asChild variant="default" size="default">
                   <Link to="/test-drive">Book test drive</Link>
                 </Button>
@@ -628,9 +633,6 @@ const ModelVF6 = () => {
                 </div>
               </div>
 
-              <p className="text-xs text-muted-foreground mt-3">
-                *Contact Patliputra VinFast Patna for variant-wise pricing and offers.
-              </p>
             </div>
           </div>
 
@@ -723,9 +725,6 @@ const ModelVF6 = () => {
             ))}
           </div>
 
-          <p className="text-muted-foreground text-xs mt-12 max-w-4xl leading-relaxed">
-            Images are representative of VF 6 equipment and trim; exact features depend on Earth, Wind, or Wind Infinity specification. Contact Patliputra VinFast Patna to confirm variant availability.
-          </p>
         </div>
       </section>
 
@@ -883,8 +882,8 @@ const ModelVF6 = () => {
             </div>
             <div className="rounded-3xl overflow-hidden shadow-luxury border border-border/40">
               <img
-                src={interiorImg}
-                alt="VinFast VF 6 interior"
+                src={vf6WhyInteriorRhd}
+                alt="VinFast VF 6 interior — right-hand drive cabin, dashboard and front seats"
                 className="image-high-quality aspect-[4/3] w-full object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
                 loading="lazy"

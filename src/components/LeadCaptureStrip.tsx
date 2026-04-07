@@ -90,7 +90,7 @@ const LeadCaptureStrip = () => {
         toast.error(formatApiErrors(err));
         return;
       }
-      toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
+      toast.success("Our EV advisor will get in touch with you shortly.");
       setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
       setMobileError("");
       return;
@@ -121,7 +121,7 @@ const LeadCaptureStrip = () => {
       return;
     }
 
-    toast.success("Thank you! Our EV advisor will contact you within 10 minutes.");
+    toast.success("Our EV advisor will get in touch with you shortly.");
     setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
     setMobileError("");
   };

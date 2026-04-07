@@ -3,8 +3,8 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
 import { Battery, Gauge, Shield, Users, Zap } from "lucide-react";
-import vf7Real from "@/assets/vf7-real.png";
-import vf6Card from "@/assets/vf6-banner.png";
+import vf7FrontHero from "@/assets/vf7-front-page-hero.png";
+import vf6DiscoveryHero from "@/assets/vf6-discovery-coastal.png";
 import mpv7Card from "@/assets/mpv7-gallery/mpv7-hero.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
@@ -26,7 +26,7 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
   {
     name: "VF 7",
     tagline: "Bold. Intelligent. Unstoppable.",
-    image: vf7Real,
+    image: vf7FrontHero,
     href: "/models/vf7",
     specs: [
       { icon: Battery, label: "Battery", value: "70.8 kWh" },
@@ -38,12 +38,12 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
   {
     name: "VF 6",
     tagline: "Compact. Smart. Electrifying.",
-    image: vf6Card,
+    image: vf6DiscoveryHero,
     href: "/models/vf6",
     specs: [
       { icon: Battery, label: "Battery", value: "59.6 kWh" },
       { icon: Gauge, label: "Range", value: "468 km" },
-      { icon: Zap, label: "0–100", value: "8.9s" },
+      { icon: Zap, label: "0–100", value: "10.4s" },
       { icon: Shield, label: "Safety", value: "5-Star" },
     ],
   },
@@ -93,9 +93,12 @@ function mergeModels(
     const displayName = api?.name
       ? String(api.name).replace(/^VinFast\s*/i, "").trim() || m.name
       : m.name;
-    const specs = m.specs.map((spec) =>
-      spec.label === "Range" ? { ...spec, value: siteRange || spec.value } : spec,
-    );
+    const specs = m.specs.map((spec) => {
+      if (spec.label !== "Range") return spec;
+      /** VF 6 / VF 7 cards use fixed headline MIDC from BASE_MODELS; ignore CMS vf6Range / vf7Range so wrong admin values (e.g. 381 / 431 km) never override. */
+      if (m.href.includes("/models/vf6") || m.href.includes("/models/vf7")) return spec;
+      return { ...spec, value: siteRange || spec.value };
+    });
     return {
       ...m,
       name: displayName,
