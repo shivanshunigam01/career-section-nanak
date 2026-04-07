@@ -10,7 +10,7 @@ import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
-import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, PATNA_DISTRICT, isPatnaDistrict } from "@/data/biharDistricts";
+import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -24,7 +24,11 @@ const getLocalISODate = () => {
   return `${yyyy}-${mm}-${dd}`;
 };
 
-const LeadCaptureStrip = () => {
+type LeadCaptureStripProps = {
+  includeMpv7InModelSelect?: boolean;
+};
+
+const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripProps) => {
   const { siteConfig } = usePublicSite();
   const [formData, setFormData] = useState({
     name: "",
@@ -71,11 +75,6 @@ const LeadCaptureStrip = () => {
       toast.error("Please enter your city or district (outside Bihar).");
       return;
     }
-    if (isPatnaDistrict(formData.city) === false) {
-      toast.error(`Test drive is currently available only in ${PATNA_DISTRICT}.`);
-      return;
-    }
-
     if (hasApi()) {
       const cityVal = formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city;
       try {
@@ -192,6 +191,7 @@ const LeadCaptureStrip = () => {
               variant={formData.variant}
               onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
               className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+              includeMpv7={includeMpv7InModelSelect}
             />
             <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0">
               Get in Touch
