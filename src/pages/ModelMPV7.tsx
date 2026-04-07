@@ -18,8 +18,7 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
-import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
-import mpv7HeroMobile from "@/assets/mpv7-gallery/mpv7-hero-mobile.png";
+import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-desktop.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
@@ -188,23 +187,20 @@ const ModelMPV7 = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="min-h-screen bg-background pb-36 pt-[4.25rem] lg:pt-20 lg:pb-0">
       <Navbar />
 
-      {/* Hero — full width, natural aspect ratio; no crop (object-cover would clip) */}
-      <section className="relative w-full bg-[#E8E0D4] dark:bg-zinc-900" aria-label="VF MPV 7 hero">
+      {/* Hero — single asset directly under fixed navbar */}
+      <section className="relative w-full leading-none" aria-label="VF MPV 7 hero">
         <h1 className="sr-only">VinFast VF MPV 7</h1>
-        <picture className="block w-full leading-none">
-          <source media="(max-width: 767px)" srcSet={mpv7HeroMobile} />
-          <img
-            src={mpv7Hero}
-            alt="VinFast VF MPV 7 electric MPV — studio"
-            className="block h-auto w-full max-w-full align-middle object-contain object-center"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-        </picture>
+        <img
+          src={mpv7HeroDesktop}
+          alt="VinFast VF MPV 7"
+          className="block h-auto w-full max-w-full object-contain object-top"
+          sizes="100vw"
+          fetchPriority="high"
+          decoding="async"
+        />
       </section>
 
       <section className="relative border-b border-border/50 bg-gradient-to-b from-background via-background to-muted/30">
