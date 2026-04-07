@@ -353,15 +353,12 @@ const ModelVF6 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      <section
-        className="relative isolate min-h-[min(85svh,56rem)] w-full md:min-h-[min(88vh,60rem)]"
-        aria-label="VF 6 hero"
-      >
+      <section className="relative min-h-[85vh]" aria-label="VF 6 hero">
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf6Hero}
             alt="Silver VinFast VF 6 electric SUV on a modern patio with a family and coastal bay view in the background"
-            className="h-full w-full object-cover object-[30%_56%] sm:object-[34%_54%] md:object-[38%_52%]"
+            className="h-full w-full object-cover object-[38%_52%]"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
