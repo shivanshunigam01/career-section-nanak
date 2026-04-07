@@ -211,12 +211,17 @@ const TestDrivePage = () => {
         email: formData.email.trim(),
         city: cityResolved,
         model: modelLine,
-        source: "Test Drive",
+        source: "Website",
         status: "Test Drive Scheduled",
         assignedTo: "",
         createdAt: todayStr,
         nextFollowUp: "",
-        remarks: [formData.remarks?.trim(), tdMeta, `Preferred: ${formData.date} ${formData.time}`]
+        remarks: [
+          "Test drive booking (website)",
+          formData.remarks?.trim(),
+          tdMeta,
+          `Preferred: ${formData.date} ${formData.time}`,
+        ]
           .filter(Boolean)
           .join(" | "),
         financeNeeded: false,

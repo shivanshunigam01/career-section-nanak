@@ -104,7 +104,7 @@ const BookNowPage = () => {
           city: formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city,
           otherCity: formData.city === DISTRICT_OTHER ? formData.otherCity : "",
           modelDisplay: leadModelLabel(formData.model, formData.variant),
-          source: "Book Now",
+          source: "Website",
           email: formData.email.trim(),
           remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Book Now enquiry",
           interest: "Book Now",
@@ -144,7 +144,7 @@ const BookNowPage = () => {
             ? formData.otherCity.trim() || DISTRICT_OTHER
             : formData.city,
         model: leadModelLabel(formData.model, formData.variant),
-        source: "Book Now",
+        source: "Website",
         status: "Interested",
         assignedTo: "",
         createdAt: todayStr,

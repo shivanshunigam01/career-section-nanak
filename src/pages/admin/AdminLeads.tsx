@@ -23,6 +23,8 @@ import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { Textarea } from "@/components/ui/textarea";
 import { Search, Plus, Edit2, Trash2, Phone, Mail, Download, FileText, MessageCircle } from "lucide-react";
 
+const CRM_LEAD_SOURCES = ["Website", "Google Ads", "Meta Ads", "WhatsApp", "Walk-in", "Referral"] as const;
+
 const AdminLeads = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
@@ -360,6 +362,11 @@ const LeadForm = ({ lead, onSave, onCancel }: { lead: Lead; onSave: (l: Lead) =>
   const [form, setForm] = useState(lead);
   const update = (key: keyof Lead, value: string | boolean) => setForm(prev => ({ ...prev, [key]: value }));
 
+  const sourceChoices: string[] = [...CRM_LEAD_SOURCES];
+  if (form.source && !sourceChoices.includes(form.source)) {
+    sourceChoices.push(form.source);
+  }
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -384,7 +391,18 @@ const LeadForm = ({ lead, onSave, onCancel }: { lead: Lead; onSave: (l: Lead) =>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Source</Label>
-          <Select value={form.source} onValueChange={v => update("source", v)}><SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger><SelectContent>{["Website", "Google Ads", "Meta Ads", "WhatsApp", "Walk-in", "Referral"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select>
+          <Select value={form.source || "Website"} onValueChange={v => update("source", v)}>
+            <SelectTrigger className="bg-secondary/50">
+              <SelectValue placeholder="Source" />
+            </SelectTrigger>
+            <SelectContent>
+              {sourceChoices.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Status</Label>
