@@ -31,6 +31,14 @@ export interface TestDriveBooking {
   preferredDate: string;
   preferredTime: string;
   branch: string;
+  /** Dealership Visit | Home Test Drive */
+  preferredTestDriveLocation?: string;
+  /** Yes | No */
+  ownsCar?: string;
+  /** When ownsCar is Yes */
+  currentCarDetails?: string;
+  /** Purchase intent window */
+  purchaseTimeline?: string;
   status: TestDriveStatus;
   assignedExecutive: string;
   feedback: string;

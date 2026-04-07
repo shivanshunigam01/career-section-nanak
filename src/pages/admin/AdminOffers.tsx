@@ -20,16 +20,9 @@ import { toast } from "sonner";
 
 type Offer = AdminOfferRow;
 
-const initialOffers: Offer[] = [
-  { id: "O1", title: "Launch Bonus — ₹2 Lakh Off", description: "Exclusive launch discount on VF 7 Plus variant for first 50 customers", model: "VF 7", validTill: "2026-04-30", active: true, type: "Launch" },
-  { id: "O2", title: "Exchange Bonus ₹75,000", description: "Extra exchange value when you trade in your old car", model: "All Models", validTill: "2026-04-15", active: true, type: "Exchange" },
-  { id: "O3", title: "Free Home Charging Setup", description: "Complimentary home charger installation with every VF 6 booking", model: "VF 6", validTill: "2026-05-31", active: true, type: "Accessory" },
-  { id: "O4", title: "0% EMI for 12 Months", description: "Zero interest EMI through select finance partners", model: "All Models", validTill: "2026-04-30", active: false, type: "Finance" },
-];
-
 const AdminOffers = () => {
   const [hydrated, setHydrated] = useState(false);
-  const [offers, setOffers] = useState<Offer[]>(initialOffers);
+  const [offers, setOffers] = useState<Offer[]>([]);
   const [editOffer, setEditOffer] = useState<Offer | null>(null);
   const [showForm, setShowForm] = useState(false);
   const STORAGE_KEY = "vf_admin_offers";
@@ -51,21 +44,22 @@ const AdminOffers = () => {
       if (hasApi()) {
         try {
           const data = await adminGetData<unknown[]>("/admin/offers?limit=200&page=1");
-          if (!cancelled && Array.isArray(data) && data.length > 0) {
-            setOffers(data.map((doc) => adminOfferFromApi(doc as Record<string, unknown>)));
-            setHydrated(true);
-            return;
+          if (!cancelled) {
+            setOffers(
+              Array.isArray(data)
+                ? data.map((doc) => adminOfferFromApi(doc as Record<string, unknown>))
+                : [],
+            );
           }
-        } catch {
-          /* fallback */
-        }
-        if (!cancelled) {
-          const stored = getStoredState<Offer[] | null>(STORAGE_KEY, null);
-          setOffers(stored && stored.length > 0 ? stored : initialOffers);
+        } catch (e) {
+          if (!cancelled) {
+            setOffers([]);
+            toast.error(formatApiErrors(e));
+          }
         }
       } else {
         const stored = getStoredState<Offer[] | null>(STORAGE_KEY, null);
-        if (!cancelled && stored && stored.length > 0) setOffers(stored);
+        if (!cancelled) setOffers(Array.isArray(stored) ? stored : []);
       }
       if (!cancelled) setHydrated(true);
     })();
@@ -153,6 +147,17 @@ const AdminOffers = () => {
       </div>
 
       <div className="space-y-3">
+        {hydrated && offers.length === 0 && (
+          <Card className="border-dashed border-border/70 bg-muted/20 p-8 text-center">
+            <Tag className="mx-auto mb-3 h-8 w-8 text-muted-foreground opacity-60" />
+            <p className="font-medium text-foreground">No offers yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {hasApi()
+                ? "Create offers in the database via Add Offer, or they will appear here once synced from the API."
+                : "Add an offer with the button above. Data is stored in this browser only when the API is not configured."}
+            </p>
+          </Card>
+        )}
         {offers.map((offer) => (
           <Card key={offer.id} className={`border-border/50 p-4 transition-opacity ${offer.active ? "bg-card" : "bg-card/50 opacity-60"}`}>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

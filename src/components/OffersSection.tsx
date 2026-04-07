@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { Gift, Repeat, Sparkles, Tag, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { hasApi } from "@/lib/apiConfig";
-import { publicGet } from "@/lib/api";
 import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
+import { usePublicOffers } from "@/hooks/usePublicOffers";
 
 const ICONS: LucideIcon[] = [Sparkles, Repeat, Tag, Gift];
 
@@ -15,33 +15,6 @@ type OfferCard = {
   description: string;
   badge: string | null;
 };
-
-const FALLBACK_OFFERS: OfferCard[] = [
-  {
-    icon: Sparkles,
-    title: "Bihar Launch Offer",
-    description: "Exclusive launch benefits worth ₹2.5 Lakh on VF 6 & VF 7. Limited time only.",
-    badge: "NEW",
-  },
-  {
-    icon: Repeat,
-    title: "Exchange Bonus",
-    description: "Get up to ₹1.5 Lakh additional exchange value when you upgrade to VinFast.",
-    badge: "POPULAR",
-  },
-  {
-    icon: Tag,
-    title: "Early Booking Benefit",
-    description: "Reserve your VinFast today with just ₹21,000 and lock in launch pricing.",
-    badge: null,
-  },
-  {
-    icon: Gift,
-    title: "Corporate Special",
-    description: "Special fleet pricing and benefits for corporate and bulk buyers in Bihar.",
-    badge: null,
-  },
-];
 
 function mapOffersFromApi(raw: Record<string, unknown>[]): OfferCard[] {
   return raw.map((o, i) => ({
@@ -53,26 +26,14 @@ function mapOffersFromApi(raw: Record<string, unknown>[]): OfferCard[] {
 }
 
 const OffersSection = () => {
-  const [offers, setOffers] = useState<OfferCard[]>(FALLBACK_OFFERS);
+  const { offers: rawOffers, loaded, hasOffers, reload } = usePublicOffers();
 
-  const loadOffers = useCallback(async () => {
-    if (!hasApi()) return;
-    const data = await publicGet<unknown[]>("/public/offers");
-    if (!Array.isArray(data) || data.length === 0) return;
-    setOffers(mapOffersFromApi(data as Record<string, unknown>[]));
-  }, []);
+  useRefetchWhenVisible(reload, hasApi());
 
-  useEffect(() => {
-    if (!hasApi()) return;
-    void loadOffers();
-  }, [loadOffers]);
-
-  useRefetchWhenVisible(loadOffers, hasApi());
-
-  const list = useMemo(() => (offers.length ? offers : FALLBACK_OFFERS), [offers]);
+  const list = useMemo(() => mapOffersFromApi(rawOffers), [rawOffers]);
 
   return (
-    <section className="py-16 sm:py-24 lg:py-32 section-dark">
+    <section id="offers" className="py-16 sm:py-24 lg:py-32 section-dark scroll-mt-20">
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -88,30 +49,66 @@ const OffersSection = () => {
           </h2>
         </motion.div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
-          {list.map((offer, i) => {
-            const Icon = offer.icon;
-            return (
-              <motion.div
-                key={`${offer.title}-${i}`}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="glass-card-sm p-6 relative group hover:bg-foreground/[0.04] transition-colors"
-              >
-                {offer.badge && (
-                  <span className="absolute top-4 right-4 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
-                    {offer.badge}
-                  </span>
-                )}
-                <Icon className="w-8 h-8 text-primary mb-4" />
-                <h3 className="font-display font-semibold text-lg mb-2">{offer.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{offer.description}</p>
-              </motion.div>
-            );
-          })}
-        </div>
+        {loaded && hasOffers && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6">
+            {list.map((offer, i) => {
+              const Icon = offer.icon;
+              return (
+                <motion.div
+                  key={`${offer.title}-${i}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="glass-card-sm p-6 relative group hover:bg-foreground/[0.04] transition-colors"
+                >
+                  {offer.badge && (
+                    <span className="absolute top-4 right-4 bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">
+                      {offer.badge}
+                    </span>
+                  )}
+                  <Icon className="w-8 h-8 text-primary mb-4" />
+                  <h3 className="font-display font-semibold text-lg mb-2">{offer.title}</h3>
+                  <p className="text-muted-foreground text-sm leading-relaxed">{offer.description}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+
+        {loaded && !hasOffers && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-xl mx-auto text-center rounded-2xl border border-border/60 bg-foreground/[0.03] px-6 py-10"
+          >
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              There are no published offers at the moment. Contact us for the latest pricing, exchange benefits, and finance options.
+            </p>
+          </motion.div>
+        )}
+
+        {!loaded && hasApi() && (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 animate-pulse">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="glass-card-sm p-6 h-48 rounded-2xl bg-foreground/[0.06]" />
+            ))}
+          </div>
+        )}
+
+        {!loaded && !hasApi() && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="max-w-xl mx-auto text-center rounded-2xl border border-border/60 bg-foreground/[0.03] px-6 py-10"
+          >
+            <p className="text-muted-foreground text-sm leading-relaxed">
+              Connect the site to the dealer API to show live offers, or use the form below to reach our team.
+            </p>
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 10 }}
@@ -119,11 +116,17 @@ const OffersSection = () => {
           viewport={{ once: true }}
           className="text-center mt-12"
         >
-          <Link to="/contact">
-            <Button variant="hero" size="lg">
-              Claim Your Offer
+          {!loaded && hasApi() ? (
+            <p className="text-muted-foreground text-sm">Loading offers…</p>
+          ) : loaded && hasOffers ? (
+            <Button variant="hero" size="lg" asChild>
+              <Link to={{ pathname: "/", hash: "offers" }}>View offers</Link>
             </Button>
-          </Link>
+          ) : (
+            <Button variant="hero" size="lg" asChild>
+              <Link to={{ pathname: "/contact", hash: "contact-form" }}>Know more</Link>
+            </Button>
+          )}
         </motion.div>
       </div>
     </section>

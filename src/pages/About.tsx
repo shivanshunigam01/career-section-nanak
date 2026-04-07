@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -10,6 +12,17 @@ import { usePublicSite } from "@/context/PublicSiteContext";
 
 const AboutPage = () => {
   const { dealer } = usePublicSite();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.pathname !== "/about") return;
+    const id = location.hash?.replace(/^#/, "");
+    if (id !== "privacy" && id !== "terms") return;
+    const t = window.setTimeout(() => {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 50);
+    return () => window.clearTimeout(t);
+  }, [location.pathname, location.hash]);
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
@@ -106,6 +119,33 @@ const AboutPage = () => {
           </div>
         </div>
       </div>
+
+      <section className="border-t border-border/40 bg-background">
+        <div className="container mx-auto px-4 lg:px-8 py-12 sm:py-16 max-w-3xl space-y-12 sm:space-y-16">
+          <article id="privacy" className="scroll-mt-[5.5rem]">
+            <h2 className="font-display font-bold text-2xl mb-4">Privacy Policy</h2>
+            <div className="text-muted-foreground text-sm leading-relaxed space-y-4">
+              <p>
+                {dealer.dealerName} respects your privacy. Information you submit through our website (for example test drive, booking, or contact forms) is used only to respond to your enquiry and to improve our services, unless you agree otherwise.
+              </p>
+              <p>
+                We do not sell your personal data. Technical data such as device and browser type may be processed as needed to run and secure this site. For questions about how we handle your information, contact us using the details in the footer.
+              </p>
+            </div>
+          </article>
+          <article id="terms" className="scroll-mt-[5.5rem]">
+            <h2 className="font-display font-bold text-2xl mb-4">Terms of Service</h2>
+            <div className="text-muted-foreground text-sm leading-relaxed space-y-4">
+              <p>
+                This website is provided for general information about {dealer.brand} vehicles and {dealer.dealerName}. Specifications, features, colours, and pricing may change; offers and on-road prices are confirmed only at the dealership.
+              </p>
+              <p>
+                Nothing on this site constitutes a binding sale until you complete official documentation with us. Trademarks and images belong to their respective owners. Use of this site is subject to applicable law in India.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
 
       <FaqSection className="section-surface border-t border-border/40" />
 

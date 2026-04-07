@@ -52,6 +52,10 @@ export async function submitPublicTestDrive(payload: {
   branch?: string;
   remarks?: string;
   pageSource?: string;
+  preferredTestDriveLocation: string;
+  ownsCar: string;
+  currentCarDetails?: string;
+  purchaseTimeline: string;
 }): Promise<void> {
   const display = leadModelLabel(payload.model, payload.variant);
   await publicPost("/test-drives", {
@@ -63,6 +67,11 @@ export async function submitPublicTestDrive(payload: {
     preferredDate: payload.preferredDate,
     preferredTime: payload.preferredTime?.trim() || undefined,
     branch: payload.branch?.trim() || undefined,
+    preferredTestDriveLocation: payload.preferredTestDriveLocation,
+    ownsCar: payload.ownsCar,
+    currentCarDetails:
+      payload.ownsCar === "Yes" ? payload.currentCarDetails?.trim() || undefined : undefined,
+    purchaseTimeline: payload.purchaseTimeline,
     remarks: [payload.remarks?.trim(), `Trim: ${display}`].filter(Boolean).join(" | ") || undefined,
     pageSource: payload.pageSource,
   });
