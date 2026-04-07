@@ -80,8 +80,8 @@ function buildMpv7LaunchSlide(): HeroSlideView {
       "",
       "",
     ],
-    /* Studio desktop hero: vehicle biased right; keep headline zone clear on lg+ */
-    objectPosition: "72% 50%",
+    /* Align to top of artwork so baked-in headline (“THE ALL-NEW”, etc.) stays in frame */
+    objectPosition: "48% top",
   };
 }
 

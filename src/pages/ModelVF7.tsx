@@ -5,7 +5,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf7FrontHero from "@/assets/vf7-front-page-hero.png";
+import vf7FrontHero from "@/assets/VF7 Front Page.png";
 import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
 import vf7CrimsonRed from "@/assets/vf7-crimson-red.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";

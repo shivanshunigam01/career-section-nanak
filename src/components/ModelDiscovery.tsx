@@ -166,7 +166,7 @@ const ModelDiscovery = () => {
                   src={model.image}
                   alt={`VinFast ${model.name}`}
                   className={`w-full h-full object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]${
-                    model.href.includes("mpv7") ? " object-[72%_50%]" : ""
+                    model.href.includes("mpv7") ? " object-[48%_top]" : ""
                   }`}
                   loading="lazy"
                 />
