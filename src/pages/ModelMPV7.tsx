@@ -395,7 +395,7 @@ const ModelMPV7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      {/* Hero — desktop vs mobile art (picture); “New launch” pill only on md+ (mobile asset has baked headline). CTA below. */}
+      {/* Hero — responsive picture; CTA band below */}
       <section className="relative w-full overflow-hidden bg-[#E8E0D4] dark:bg-zinc-900" aria-label="VF MPV 7 hero">
         <h1 className="sr-only">VinFast VF MPV 7</h1>
         <div className="relative mx-auto max-w-[1920px]">
@@ -410,11 +410,6 @@ const ModelMPV7 = () => {
               decoding="async"
             />
           </picture>
-          <div className="pointer-events-none absolute left-3 top-16 max-md:hidden sm:left-5 sm:top-[4.75rem] md:top-20 lg:left-8 lg:top-24 z-10">
-            <span className="inline-flex items-center rounded-full bg-zinc-800/95 px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white shadow-lg shadow-black/20 ring-1 ring-white/15">
-              New launch
-            </span>
-          </div>
         </div>
       </section>
 
