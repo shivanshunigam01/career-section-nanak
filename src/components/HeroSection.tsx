@@ -8,6 +8,7 @@ import heroVf7Cockpit from "@/assets/hero-slideshow/hero-vf7-cockpit.png";
 import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
 import heroSlide06 from "@/assets/vf6-earth-hero-family.png";
 import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero.png";
+import heroMpv7Desktop from "@/assets/mpv7-gallery/mpv7-hero-desktop.png";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 import { usePublicSite } from "@/context/PublicSiteContext";
@@ -15,10 +16,14 @@ import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 export type HeroSlideView = {
   image: string;
+  /** Optional larger / landscape source for `min-width: 1024px` (e.g. MPV 7 desktop hero). */
+  imageDesktop?: string;
   title: string;
   /** Three subtitle lines under the title (CMS / API subtitles are split automatically). */
   subLines?: readonly [string, string, string];
   objectPosition: string;
+  /** Portrait / full-bleed artwork: letterbox inside slide instead of cropping. */
+  objectFit?: "cover" | "contain";
   badge?: string;
   ctaPrimary?: string;
   ctaPrimaryLink?: string;
@@ -74,13 +79,12 @@ function buildDealerOpeningSlide(): HeroSlideView {
 function buildMpv7LaunchSlide(): HeroSlideView {
   return {
     image: heroMpv7,
-    title: "The all-new VF MPV 7",
-    subLines: [
-      "Seven-seat electric MPV · 60.13 kWh battery · Pre-booking open.",
-      "",
-      "",
-    ],
-    objectPosition: "center 48%",
+    imageDesktop: heroMpv7Desktop,
+    /** Copy is embedded in campaign artwork — avoid duplicate headline over the slide. */
+    title: "",
+    subLines: ["", "", ""],
+    objectPosition: "center center",
+    objectFit: "contain",
   };
 }
 
@@ -146,6 +150,8 @@ function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
     title: String(doc.title ?? "VinFast"),
     subLines,
     objectPosition: String(doc.objectPosition ?? "center 50%"),
+    objectFit: doc.objectFit === "contain" ? "contain" : undefined,
+    imageDesktop: String(doc.bgImageDesktop ?? "").trim() || undefined,
     badge: String(doc.badge ?? "").trim() || undefined,
     ctaPrimary: String(doc.ctaPrimary ?? "").trim() || undefined,
     ctaPrimaryLink: String(doc.ctaPrimaryLink ?? "").trim() || undefined,
@@ -169,10 +175,12 @@ const HeroSection = () => {
     if (mapped.length > 0) {
       const opening = buildDealerOpeningSlide();
       const mpv7 = buildMpv7LaunchSlide();
-      const withoutDupes = mapped.filter((s) => s.image !== heroMpv7 && s.image !== opening.image);
+      const withoutDupes = mapped.filter(
+        (s) => s.image !== heroMpv7 && s.image !== heroMpv7Desktop && s.image !== opening.image,
+      );
       setApiSlides([opening, mpv7, ...withoutDupes]);
     }
-  }, []);
+  }, [heroMpv7, heroMpv7Desktop]);
 
   useEffect(() => {
     if (!hasApi()) return;
@@ -210,7 +218,7 @@ const HeroSection = () => {
       <div className="relative w-full shrink-0 overflow-hidden max-lg:min-h-[min(68svh,720px)] max-lg:max-h-[min(88svh,900px)] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
         {slides.map((s, i) => (
           <div
-            key={`${s.image}-${i}`}
+            key={`${s.image}-${s.imageDesktop ?? ""}-${i}`}
             className="hero-media-scrim absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
             style={{
               opacity: i === current ? 1 : 0,
@@ -218,16 +226,45 @@ const HeroSection = () => {
             }}
             aria-hidden={i !== current}
           >
-            <img
-              src={s.image}
-              alt={`${s.title} — VinFast hero`}
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
-              style={{ objectPosition: s.objectPosition }}
-              sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
-              loading={i <= 1 ? "eager" : "lazy"}
-              decoding="async"
-              fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
-            />
+            {s.objectFit === "contain" ? (
+              <div className="absolute inset-0 flex items-center justify-center p-3 sm:p-6 md:p-10 lg:p-6">
+                {s.imageDesktop ? (
+                  <picture className="contents">
+                    <source media="(min-width: 1024px)" srcSet={s.imageDesktop} />
+                    <img
+                      src={s.image}
+                      alt={s.title.trim() ? `${s.title} — VinFast hero` : "VinFast VF MPV 7 — hero"}
+                      className="hero-slider-image max-h-full max-w-full h-auto w-full object-contain object-center"
+                      sizes="(max-width: 1023px) 100vw, min(1600px, 95vw)"
+                      loading={i <= 1 ? "eager" : "lazy"}
+                      decoding="async"
+                      fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
+                    />
+                  </picture>
+                ) : (
+                  <img
+                    src={s.image}
+                    alt={s.title.trim() ? `${s.title} — VinFast hero` : "VinFast VF MPV 7 — hero"}
+                    className="hero-slider-image max-h-full max-w-full h-auto w-full object-contain object-center"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 90vw, min(720px, 90vw)"
+                    loading={i <= 1 ? "eager" : "lazy"}
+                    decoding="async"
+                    fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
+                  />
+                )}
+              </div>
+            ) : (
+              <img
+                src={s.image}
+                alt={s.title.trim() ? `${s.title} — VinFast hero` : "VinFast VF MPV 7 — hero"}
+                className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+                style={{ objectPosition: s.objectPosition }}
+                sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
+                loading={i <= 1 ? "eager" : "lazy"}
+                decoding="async"
+                fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
+              />
+            )}
           </div>
         ))}
 
@@ -268,9 +305,11 @@ const HeroSection = () => {
           <div className="pointer-events-auto w-full">
             <div className="container mx-auto px-4 pb-3 sm:pb-4 lg:px-8 lg:pb-5 lg:pt-4">
               <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
+                {slide.title.trim() ? (
                 <h2 className="text-hero-plain-lg font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl lg:tracking-tight leading-[1.08] mb-2 sm:mb-3 lg:mb-4 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
                   {slide.title}
                 </h2>
+                ) : null}
                 {slide.subLines?.some((l) => l.trim()) && (
                   <div className="text-hero-plain-soft font-medium text-sm sm:text-base md:text-lg leading-relaxed max-w-prose space-y-1 drop-shadow-[0_1px_8px_rgba(0,0,0,0.45)]">
                     {slide.subLines.map(
