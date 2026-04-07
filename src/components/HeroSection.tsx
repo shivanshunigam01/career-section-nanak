@@ -254,7 +254,7 @@ const HeroSection = () => {
   }, [intrinsicBySrc, slide.image]);
 
   return (
-    <section className="relative z-0 overflow-hidden bg-zinc-950 pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
+    <section className="relative z-0 overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
       <div
         className="relative w-full shrink-0 overflow-hidden lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px]"
         style={isLg ? undefined : mobileAspectStyle}
@@ -272,7 +272,7 @@ const HeroSection = () => {
             <img
               src={s.image}
               alt={`${s.title} — VinFast hero`}
-              className="hero-slider-image h-full w-full object-contain object-center lg:min-h-full lg:min-w-full lg:object-cover"
+              className="hero-slider-image h-full w-full object-cover object-center lg:min-h-full lg:min-w-full"
               style={isLg ? { objectPosition: s.objectPosition } : undefined}
               sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
               loading={i <= 1 ? "eager" : "lazy"}
@@ -283,7 +283,7 @@ const HeroSection = () => {
           </div>
         ))}
 
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 max-lg:bg-gradient-to-t max-lg:from-zinc-950 max-lg:via-zinc-950/80 max-lg:to-transparent max-lg:pt-16 pb-6 sm:pb-8 lg:pb-28">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 pb-6 sm:pb-8 lg:pb-28">
           <div className="pointer-events-auto container mx-auto px-4 lg:px-8">
         <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
             {(() => {

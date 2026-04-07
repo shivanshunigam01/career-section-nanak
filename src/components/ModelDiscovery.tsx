@@ -171,7 +171,7 @@ const ModelDiscovery = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4 mb-4">
                   <div className="min-w-0">
                     <h3 className="font-display font-bold text-xl sm:text-2xl lg:text-3xl">
-                      VinFast {model.name}
+                      {model.href.includes("mpv7") ? model.name : `VinFast ${model.name}`}
                     </h3>
                     <p className="text-muted-foreground text-sm mt-1">{model.tagline}</p>
                   </div>
