@@ -60,7 +60,7 @@ const Footer = () => {
                 { label: "VF 6", href: "/models/vf6" },
                 { label: "VF MPV 7", href: "/models/mpv7" },
                 { label: "Compare Models", href: "/compare" },
-                { label: "Pre Book", href: "/book-now" },
+                { label: "Pre-Booking", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },
                 { label: "EMI Calculator", href: "/emi-calculator" },
               ].map((link) => (

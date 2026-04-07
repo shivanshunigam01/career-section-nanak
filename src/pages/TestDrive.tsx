@@ -324,7 +324,7 @@ const TestDrivePage = () => {
               <p className="text-muted-foreground text-lg mb-6 max-w-lg">
                 Schedule a complimentary test drive with a date and time. For buying or reserving a vehicle, use{" "}
                 <Link to="/book-now" className="text-primary font-medium hover:underline">
-                  Pre Book
+                  Pre-Booking
                 </Link>
                 .
               </p>
@@ -612,7 +612,7 @@ const TestDrivePage = () => {
                 <p className="text-center text-muted-foreground text-xs pt-1">
                   Ready to buy?{" "}
                   <Link to="/book-now" className="text-primary font-medium hover:underline">
-                    Go to Pre Book
+                    Go to Pre-Booking
                   </Link>
                 </p>
               </div>

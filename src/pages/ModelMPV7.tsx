@@ -394,34 +394,35 @@ const ModelMPV7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      {/* Hero — same shell as VF 6 */}
-      <section className="relative flex min-h-[85vh] flex-col">
-        <div className="hero-media-scrim absolute inset-0 overflow-hidden">
+      {/* Hero — full-bleed studio shot; only “New launch” on the image; CTA sits in the band below */}
+      <section className="relative w-full overflow-hidden bg-[#E8E0D4] dark:bg-zinc-900" aria-label="VF MPV 7 hero">
+        <h1 className="sr-only">VinFast VF MPV 7</h1>
+        <div className="relative mx-auto max-w-[1920px]">
           <img
             src={mpv7Hero}
-            alt="VinFast VF MPV 7 electric MPV"
-            className="h-full w-full object-cover object-[center_45%]"
+            alt="VinFast VF MPV 7 electric MPV — studio"
+            className="w-full h-auto min-h-[220px] max-h-[min(88vh,960px)] object-cover object-[78%_center] sm:object-[72%_center] lg:object-center"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
           />
-        </div>
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
-          <div className="container mx-auto w-full px-4 pb-8 sm:pb-10 lg:px-8 lg:pb-12">
-            <span className="inline-flex rounded-full px-2.5 py-1 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.18em] text-white bg-black/55 border border-white/40 backdrop-blur-sm">
+          <div className="pointer-events-none absolute left-3 top-16 sm:left-5 sm:top-[4.75rem] md:top-20 lg:left-8 lg:top-24 z-10">
+            <span className="inline-flex items-center rounded-full bg-zinc-800/95 px-3 py-1.5 text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.22em] text-white shadow-lg shadow-black/20 ring-1 ring-white/15">
               New launch
             </span>
           </div>
         </div>
       </section>
 
-      <section className="border-b border-border/60 bg-background py-5 sm:py-6">
-        <div className="container mx-auto px-4 lg:px-8">
-          <Link to="#mpv7-prebook" className="inline-flex w-full max-w-md min-w-0 sm:w-auto">
-            <Button variant="default" size="lg" className="w-full rounded-full sm:min-w-[14rem]">
-              Register for pre-booking
+      <section className="relative border-b border-border/50 bg-gradient-to-b from-background via-background to-muted/30">
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" aria-hidden />
+        <div className="container mx-auto px-4 lg:px-8 py-8 sm:py-10 lg:py-12">
+          <div className="mx-auto flex max-w-lg flex-col items-center gap-5 text-center">
+            <div className="h-1 w-12 rounded-full bg-primary/80" aria-hidden />
+            <Button variant="hero" size="lg" className="h-12 min-w-[min(100%,17rem)] rounded-full px-8 text-sm font-semibold shadow-md shadow-primary/25 sm:h-14 sm:px-10" asChild>
+              <Link to="#mpv7-prebook">Register for pre-booking</Link>
             </Button>
-          </Link>
+          </div>
         </div>
       </section>
 
@@ -495,7 +496,7 @@ const ModelMPV7 = () => {
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground/80 mb-2">Bookings &amp; pre-booking</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Bookings are open at Patliputra VinFast Patna. Register your interest in the section below — after you submit,
-                  you can continue on Pre Book with VF MPV 7 pre-selected.
+                  you can continue on Pre-Booking with VF MPV 7 pre-selected.
                 </p>
               </div>
 
@@ -577,7 +578,7 @@ const ModelMPV7 = () => {
                 </Button>
                 {prebookUnlocked ? (
                   <Button asChild variant="default" size="default" className="bg-primary">
-                    <Link to="/book-now?model=VF%20MPV%207">Pre-book VF MPV 7</Link>
+                    <Link to="/book-now?model=VF%20MPV%207">Pre-Booking — VF MPV 7</Link>
                   </Button>
                 ) : null}
                 <Button asChild variant="ghost" size="default" className="text-muted-foreground">
@@ -808,7 +809,7 @@ const ModelMPV7 = () => {
         </div>
       </section>
 
-      {/* Pre-booking interest — form unlocks Pre-book on Pre Book (VF 6 lead-style band) */}
+      {/* Pre-booking interest — unlocks Pre-Booking CTA (VF 6 lead-style band) */}
       <section
         id="mpv7-prebook"
         className="scroll-mt-20 sm:scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-primary/[0.07] via-muted/40 to-muted/30 py-14 sm:py-16 lg:py-20"
@@ -818,7 +819,7 @@ const ModelMPV7 = () => {
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">VF MPV 7 · Pre-booking</p>
             <h2 className="font-display font-bold text-3xl sm:text-4xl mb-3">Ready to take the next step?</h2>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-              Share your details — we’ll call you back from Patna. After you submit, the <strong className="text-foreground font-medium">Pre-book VF MPV 7</strong> action unlocks on this page and in the overview above.
+              Share your details — we’ll call you back from Patna. After you submit, the <strong className="text-foreground font-medium">Pre-Booking — VF MPV 7</strong> action unlocks on this page and in the overview above.
             </p>
           </div>
 
@@ -899,10 +900,10 @@ const ModelMPV7 = () => {
             ) : (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-center sm:text-left">
                 <p className="text-sm text-muted-foreground">
-                  You&apos;re set — continue on Pre Book with VF MPV 7 pre-selected.
+                  You&apos;re set — continue on Pre-Booking with VF MPV 7 pre-selected.
                 </p>
                 <Button variant="hero" size="lg" asChild>
-                  <Link to="/book-now?model=VF%20MPV%207">Pre-book VF MPV 7</Link>
+                  <Link to="/book-now?model=VF%20MPV%207">Pre-Booking — VF MPV 7</Link>
                 </Button>
               </div>
             )}

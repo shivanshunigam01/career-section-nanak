@@ -122,11 +122,11 @@ const BookNowPage = () => {
           modelDisplay: leadModelLabel(formData.model, formData.variant),
           source: "Website",
           email: formData.email.trim(),
-          remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Book Now enquiry",
-          interest: "Book Now",
+          remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Pre-Booking enquiry",
+          interest: "Pre-Booking",
           financeNeeded: formData.financeNeeded,
           exchangeNeeded: formData.exchangeNeeded,
-          pageSource: "Book Now Page",
+          pageSource: "Pre-Booking Page",
           recaptchaToken,
         });
       } catch (err) {
@@ -167,7 +167,7 @@ const BookNowPage = () => {
         assignedTo: "",
         createdAt: todayStr,
         nextFollowUp: "",
-        remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Book Now enquiry",
+        remarks: [extras, formData.remarks?.trim()].filter(Boolean).join(" ") || "Pre-Booking enquiry",
         financeNeeded: formData.financeNeeded,
         exchangeNeeded: formData.exchangeNeeded,
       };
@@ -207,7 +207,7 @@ const BookNowPage = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-start">
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Pre Book</p>
+              <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Pre-Booking</p>
               <h1 className="font-display font-bold text-4xl md:text-5xl mb-6">Reserve Your VinFast</h1>
               <p className="text-muted-foreground text-lg mb-8 max-w-lg">
                 Purchase or reservation enquiry — we&apos;ll share pricing, variants, finance, and delivery. This is separate
@@ -309,7 +309,7 @@ const BookNowPage = () => {
               onSubmit={handleSubmit}
               className="glass-card p-5 sm:p-8 min-w-0"
             >
-              <h3 className="font-display font-bold text-xl mb-2">Pre Book your VinFast</h3>
+              <h3 className="font-display font-bold text-xl mb-2">Complete your Pre-Booking</h3>
               <p className="text-muted-foreground text-sm mb-6">No date or time here — those are for test drives only.</p>
               <div className="space-y-4">
                 <input
@@ -392,7 +392,7 @@ const BookNowPage = () => {
                   className={`${inputClass} h-24 py-3 resize-none`}
                 />
                 <Button type="submit" variant="hero" size="lg" className="w-full">
-                  Submit booking request
+                  Submit pre-booking request
                 </Button>
                 <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>
