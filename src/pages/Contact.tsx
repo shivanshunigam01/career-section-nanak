@@ -14,7 +14,13 @@ import { submitPublicEnquiry, submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
-import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
+import {
+  BIHAR_DEFAULT_DISTRICT,
+  DISTRICT_OTHER,
+  PATNA_DISTRICT,
+  isPatnaDistrict,
+  resolvedDistrictLabel,
+} from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { mapsDirectionsHref, mapsEmbedSrc } from "@/lib/dealerMap";
@@ -63,6 +69,10 @@ const ContactPage = () => {
     }
     if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
       toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
+    if (formData.interest === "Book Test Drive" && !isPatnaDistrict(formData.city)) {
+      toast.error(`Test drive is currently available only in ${PATNA_DISTRICT}. Please choose another enquiry type.`);
       return;
     }
 
