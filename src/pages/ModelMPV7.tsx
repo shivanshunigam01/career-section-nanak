@@ -191,22 +191,20 @@ const ModelMPV7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      {/* Hero — full-bleed responsive banner */}
-      <section className="relative w-full overflow-hidden bg-[#E8E0D4] dark:bg-zinc-900" aria-label="VF MPV 7 hero">
+      {/* Hero — full width, natural aspect ratio; no crop (object-cover would clip) */}
+      <section className="relative w-full bg-[#E8E0D4] dark:bg-zinc-900" aria-label="VF MPV 7 hero">
         <h1 className="sr-only">VinFast VF MPV 7</h1>
-        <div className="relative w-full h-[44vh] min-h-[240px] max-h-[420px] sm:h-[52vh] sm:max-h-[560px] lg:h-[72vh] lg:min-h-[520px] lg:max-h-[860px]">
-          <picture>
-            <source media="(max-width: 767px)" srcSet={mpv7HeroMobile} />
-            <img
-              src={mpv7Hero}
-              alt="VinFast VF MPV 7 electric MPV — studio"
-              className="absolute inset-0 h-full w-full object-cover object-center sm:object-[50%_38%] lg:object-[52%_40%]"
-              sizes="100vw"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </picture>
-        </div>
+        <picture className="block w-full leading-none">
+          <source media="(max-width: 767px)" srcSet={mpv7HeroMobile} />
+          <img
+            src={mpv7Hero}
+            alt="VinFast VF MPV 7 electric MPV — studio"
+            className="block h-auto w-full max-w-full align-middle object-contain object-center"
+            sizes="100vw"
+            fetchPriority="high"
+            decoding="async"
+          />
+        </picture>
       </section>
 
       <section className="relative border-b border-border/50 bg-gradient-to-b from-background via-background to-muted/30">
