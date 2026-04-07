@@ -14,6 +14,8 @@ import EMICalculator from "./pages/EMICalculator";
 import ComparePage from "./pages/Compare";
 import AboutPage from "./pages/About";
 import ContactPage from "./pages/Contact";
+import PrivacyPolicyPage from "./pages/PrivacyPolicy";
+import TermsOfServicePage from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -51,6 +53,8 @@ const App = () => (
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
 
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />

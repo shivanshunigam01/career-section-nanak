@@ -10,6 +10,7 @@ import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 
@@ -28,7 +29,7 @@ type LeadCaptureStripProps = {
   includeMpv7InModelSelect?: boolean;
 };
 
-const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripProps) => {
+const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStripProps) => {
   const { siteConfig } = usePublicSite();
   const [formData, setFormData] = useState({
     name: "",
@@ -40,6 +41,8 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
     interest: "Test Drive",
   });
   const [mobileError, setMobileError] = useState("");
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Allow digits only, max 10 characters
@@ -75,6 +78,10 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
       toast.error("Please enter your city or district (outside Bihar).");
       return;
     }
+    if (!captchaVerified) {
+      toast.error("Please complete captcha verification.");
+      return;
+    }
     if (hasApi()) {
       const cityVal = formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city;
       try {
@@ -96,6 +103,7 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
       toast.success("Our EV advisor will get in touch with you shortly.");
       setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
       setMobileError("");
+      setCaptchaResetSignal((n) => n + 1);
       return;
     }
 
@@ -127,6 +135,7 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
     toast.success("Our EV advisor will get in touch with you shortly.");
     setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
     setMobileError("");
+    setCaptchaResetSignal((n) => n + 1);
   };
 
   return (
@@ -196,6 +205,9 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
             <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0">
               Get in Touch
             </Button>
+          </div>
+          <div className="mt-4">
+            <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
           </div>
           <p className="text-center text-muted-foreground text-xs mt-4">
             By submitting, you agree to our privacy policy. We respect your data.
