@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
@@ -456,7 +454,7 @@ const ModelVF7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      <section className="relative flex min-h-[85vh] flex-col">
+      <section className="relative min-h-[85vh]" aria-label="VF 7 hero">
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf7FrontHero}
@@ -467,41 +465,7 @@ const ModelVF7 = () => {
             decoding="async"
           />
         </div>
-        <div className="relative z-10 flex min-h-0 flex-1 flex-col pt-20 sm:pt-24 lg:pt-28">
-          <div className="min-h-0 flex-1" aria-hidden />
-          <div className="container mx-auto w-full shrink-0 px-4 pb-20 mt-[22px] sm:mt-[30px] lg:mt-[38px] lg:px-8 lg:pb-28 -translate-y-4 sm:-translate-y-5 lg:-translate-y-6">
-            <div className="text-left max-w-3xl">
-              <h1 className="sr-only">VinFast VF 7</h1>
-
-              <div className="grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
-                <Link to="/test-drive" className="w-full min-w-0">
-                  <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
-                    Book Test Drive
-                  </Button>
-                </Link>
-                <Link to="/book-now" className="w-full min-w-0">
-                  <Button variant="heroWhite" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
-                    Pre-Booking
-                  </Button>
-                </Link>
-                <Link to="/contact" className="w-full min-w-0">
-                  <Button variant="heroOutline" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55">
-                    Get On-Road Price
-                  </Button>
-                </Link>
-                <Link to="/emi-calculator" className="w-full min-w-0">
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base bg-black/45 border-white/50 text-white hover:bg-black/55"
-                  >
-                    EMI Calculator
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+        <h1 className="sr-only">VinFast VF 7</h1>
       </section>
 
       <section className="border-b border-border/60 bg-background/95 py-5 sm:py-6">
