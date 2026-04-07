@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -22,7 +22,6 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import {
   BIHAR_DEFAULT_DISTRICT,
   DISTRICT_OTHER,
-  PATNA_DISTRICT,
   isPatnaDistrict,
   resolvedDistrictLabel,
 } from "@/data/biharDistricts";
@@ -89,6 +88,12 @@ const TestDrivePage = () => {
     : undefined;
   const isPatnaSelected = isPatnaDistrict(formData.city);
 
+  useEffect(() => {
+    if (isPatnaSelected) return;
+    if (formData.preferredTestDriveLocation !== "Home Test Drive") return;
+    setFormData((prev) => ({ ...prev, preferredTestDriveLocation: "Dealership Visit" }));
+  }, [isPatnaSelected, formData.preferredTestDriveLocation]);
+
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
     setFormData({ ...formData, mobile: digits });
@@ -135,10 +140,6 @@ const TestDrivePage = () => {
     }
     if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) {
       toast.error("Please enter your city or district (outside Bihar).");
-      return;
-    }
-    if (isPatnaSelected === false) {
-      toast.error(`Test drive is currently available only for ${PATNA_DISTRICT} district.`);
       return;
     }
     if (!formData.preferredTestDriveLocation) {
@@ -422,12 +423,11 @@ const TestDrivePage = () => {
                 </div>
                 {isPatnaSelected ? (
                   <p className="text-emerald-600 text-xs leading-relaxed">
-                    Great! {PATNA_DISTRICT} selected - we can arrange a home test drive for you.
+                    Great! Patna selected - we can arrange a home (doorstep) test drive for you.
                   </p>
                 ) : (
                   <p className="text-amber-600 text-xs leading-relaxed">
-                    Test drive is currently available only in {PATNA_DISTRICT}. For other districts in Bihar, please use Book
-                    Now and our team will assist you.
+                    Outside Patna? No problem - please choose Dealership Visit for your test drive.
                   </p>
                 )}
 
@@ -435,16 +435,26 @@ const TestDrivePage = () => {
                   <span className={labelClass}>Preferred test drive location *</span>
                   <RadioGroup
                     value={formData.preferredTestDriveLocation}
-                    onValueChange={(v) => update("preferredTestDriveLocation", v)}
+                    onValueChange={(v) => {
+                      if (isPatnaSelected === false && v === "Home Test Drive") return;
+                      update("preferredTestDriveLocation", v);
+                    }}
                     className="grid gap-2 sm:grid-cols-2"
-                    disabled={!isPatnaSelected}
                   >
                     {TEST_DRIVE_LOCATION_OPTIONS.map((opt) => (
                       <div
                         key={opt}
-                        className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/30 px-3 py-2.5"
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                          isPatnaSelected === false && opt === "Home Test Drive"
+                            ? "border-border/40 bg-muted/40 opacity-60"
+                            : "border-border/60 bg-background/30"
+                        }`}
                       >
-                        <RadioGroupItem value={opt} id={`td-loc-${opt.replace(/\s+/g, "-")}`} />
+                        <RadioGroupItem
+                          value={opt}
+                          id={`td-loc-${opt.replace(/\s+/g, "-")}`}
+                          disabled={isPatnaSelected === false && opt === "Home Test Drive"}
+                        />
                         <Label
                           htmlFor={`td-loc-${opt.replace(/\s+/g, "-")}`}
                           className="text-sm font-normal cursor-pointer leading-snug"
@@ -588,7 +598,7 @@ const TestDrivePage = () => {
                     className={`${inputClass} h-24 py-3 resize-none`}
                   />
                 </div>
-                <Button type="submit" variant="hero" size="lg" className="w-full" disabled={!isPatnaSelected}>
+                <Button type="submit" variant="hero" size="lg" className="w-full">
                   Confirm Test Drive
                 </Button>
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>

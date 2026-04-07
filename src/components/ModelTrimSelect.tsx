@@ -17,6 +17,8 @@ type Props = {
   className?: string;
   /** Contact: “Not sure — which model” */
   includeNotSureBoth?: boolean;
+  /** Set false where MPV 7 should not be selectable (e.g., compare lead strip). */
+  includeMpv7?: boolean;
 };
 
 export function ModelTrimSelect({
@@ -26,15 +28,16 @@ export function ModelTrimSelect({
   onChange,
   className,
   includeNotSureBoth,
+  includeMpv7 = true,
 }: Props) {
   const optionValues = useMemo(() => {
     const set = new Set<string>();
     if (includeNotSureBoth) set.add(MODEL_TRIM_COMBO_BOTH);
     VF7_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF 7", l)));
     VF6_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF 6", l)));
-    MPV7_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF MPV 7", l)));
+    if (includeMpv7) MPV7_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF MPV 7", l)));
     return set;
-  }, [includeNotSureBoth]);
+  }, [includeNotSureBoth, includeMpv7]);
 
   const encoded = encodeModelTrim(model, variant);
   const value = optionValues.has(encoded)
@@ -58,7 +61,9 @@ export function ModelTrimSelect({
       className={className}
     >
       {includeNotSureBoth && (
-        <option value={MODEL_TRIM_COMBO_BOTH}>Not sure — VF 6, VF 7, or VF MPV 7</option>
+        <option value={MODEL_TRIM_COMBO_BOTH}>
+          {includeMpv7 ? "Not sure — VF 6, VF 7, or VF MPV 7" : "Not sure — VF 6 or VF 7"}
+        </option>
       )}
       <optgroup label="VinFast VF 7">
         {VF7_VARIANT_OPTIONS.map((label) => (
@@ -74,13 +79,15 @@ export function ModelTrimSelect({
           </option>
         ))}
       </optgroup>
-      <optgroup label="VinFast VF MPV 7">
-        {MPV7_VARIANT_OPTIONS.map((label) => (
-          <option key={label} value={encodeModelTrim("VF MPV 7", label)}>
-            {label}
-          </option>
-        ))}
-      </optgroup>
+      {includeMpv7 && (
+        <optgroup label="VinFast VF MPV 7">
+          {MPV7_VARIANT_OPTIONS.map((label) => (
+            <option key={label} value={encodeModelTrim("VF MPV 7", label)}>
+              {label}
+            </option>
+          ))}
+        </optgroup>
+      )}
     </select>
   );
 }

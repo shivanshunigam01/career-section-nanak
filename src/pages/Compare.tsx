@@ -542,7 +542,7 @@ const ComparePage = () => {
         </div>
       </section>
 
-      <LeadCaptureStrip />
+      <LeadCaptureStrip includeMpv7InModelSelect={false} />
       <Footer />
       <StickyMobileCTA />
     </div>

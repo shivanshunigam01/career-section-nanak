@@ -17,8 +17,6 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import {
   BIHAR_DEFAULT_DISTRICT,
   DISTRICT_OTHER,
-  PATNA_DISTRICT,
-  isPatnaDistrict,
   resolvedDistrictLabel,
 } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
@@ -71,11 +69,6 @@ const ContactPage = () => {
       toast.error("Please enter your city or district (outside Bihar).");
       return;
     }
-    if (formData.interest === "Book Test Drive" && !isPatnaDistrict(formData.city)) {
-      toast.error(`Test drive is currently available only in ${PATNA_DISTRICT}. Please choose another enquiry type.`);
-      return;
-    }
-
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
