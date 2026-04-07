@@ -18,6 +18,22 @@ function populatedName(ref: unknown): string {
   return "";
 }
 
+/** Website forms used legacy `source` strings that are not in the admin CRM dropdown — map them to "Website". */
+const LEGACY_WEBSITE_LEAD_SOURCES = new Set([
+  "Book Now",
+  "Test Drive",
+  "Brochure download",
+  "VF MPV 7 Pre-book",
+]);
+
+export function normalizeLeadSourceFromApi(raw: unknown): string {
+  const s = String(raw ?? "").trim();
+  if (!s) return "Website";
+  if (LEGACY_WEBSITE_LEAD_SOURCES.has(s)) return "Website";
+  if (s.startsWith("Contact:") || s.startsWith("Homepage:")) return "Website";
+  return s;
+}
+
 /** Map UI model line to backend Lead.model field. */
 export function normalizeLeadModel(display: string): string {
   const s = display.toUpperCase();
@@ -58,7 +74,7 @@ export function leadFromApi(doc: Record<string, unknown>): Lead {
     city: String(doc.city ?? ""),
     otherCity: String(doc.otherCity ?? ""),
     model: displayModel || "VF 7",
-    source: String(doc.source ?? "Website"),
+    source: normalizeLeadSourceFromApi(doc.source),
     status: (doc.status as LeadStatus) || "New Lead",
     assignedTo: assigned,
     createdAt: isoDateOnly(doc.createdAt),
@@ -110,6 +126,10 @@ export function testDriveFromApi(doc: Record<string, unknown>): TestDriveBooking
     preferredDate: isoDateOnly(doc.preferredDate),
     preferredTime: String(doc.preferredTime ?? ""),
     branch: String(doc.branch ?? ""),
+    preferredTestDriveLocation: String(doc.preferredTestDriveLocation ?? ""),
+    ownsCar: String(doc.ownsCar ?? ""),
+    currentCarDetails: String(doc.currentCarDetails ?? ""),
+    purchaseTimeline: String(doc.purchaseTimeline ?? ""),
     status,
     assignedExecutive: executive,
     feedback: String(doc.feedback ?? ""),
@@ -125,6 +145,10 @@ export function testDriveToApiPayload(b: TestDriveBooking): Record<string, unkno
     preferredDate: b.preferredDate ? new Date(`${b.preferredDate}T12:00:00`).toISOString() : undefined,
     preferredTime: b.preferredTime?.trim() || undefined,
     branch: b.branch?.trim() || undefined,
+    preferredTestDriveLocation: b.preferredTestDriveLocation?.trim() || undefined,
+    ownsCar: b.ownsCar?.trim() || undefined,
+    currentCarDetails: b.currentCarDetails?.trim() || undefined,
+    purchaseTimeline: b.purchaseTimeline?.trim() || undefined,
     status: b.status,
     feedback: b.feedback?.trim() || undefined,
   };

@@ -48,29 +48,46 @@ const AdminLayout = () => {
     : "PA";
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen min-h-[100dvh] bg-background flex overflow-x-hidden">
       {/* Sidebar overlay for mobile */}
       {sidebarOpen && (
         <button
           type="button"
           aria-label="Close sidebar overlay"
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/60 z-40 lg:hidden touch-manipulation"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-card border-r border-border z-50 flex flex-col transition-transform duration-300 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}`}>
-        <div className="p-5 border-b border-border flex items-center justify-between">
-          <Link to="/admin/dashboard" className="flex items-center gap-2">
-            <img src={vinLogo} alt="Patliputra VinFast" className="h-10 w-auto object-contain" />
+      {/* Sidebar — wider on lg for larger brand lockup; drawer uses most of small screens safely */}
+      <aside
+        className={`fixed lg:sticky top-0 left-0 z-50 flex h-screen max-h-[100dvh] w-[min(20rem,calc(100vw-2.5rem))] sm:w-72 lg:w-72 xl:w-80 flex-col border-r border-border bg-card shadow-xl transition-transform duration-300 ease-out lg:shadow-none ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        }`}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-4 sm:px-5 sm:py-5">
+          <Link
+            to="/admin/dashboard"
+            className="flex min-w-0 flex-1 items-center"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <img
+              src={vinLogo}
+              alt="Patliputra VinFast"
+              className="h-12 w-auto max-h-16 max-w-full object-contain object-left sm:h-14 sm:max-h-[4.5rem] lg:h-16 lg:max-h-[5rem]"
+            />
           </Link>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-muted-foreground">
-            <X className="w-5 h-5" />
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(false)}
+            className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden touch-manipulation"
+            aria-label="Close menu"
+          >
+            <X className="h-5 w-5" />
           </button>
         </div>
 
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-3 sm:p-4 overscroll-contain">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
@@ -78,49 +95,65 @@ const AdminLayout = () => {
                 key={item.path}
                 to={item.path}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
                   isActive
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                 }`}
               >
-                <item.icon className="w-4 h-4" />
-                {item.label}
+                <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                <span className="truncate">{item.label}</span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="p-3 border-t border-border">
+        <div className="shrink-0 border-t border-border p-3 sm:p-4">
           <button
+            type="button"
             onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors w-full"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive touch-manipulation sm:py-2.5"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="h-5 w-5 shrink-0 opacity-90" />
             Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 h-14 bg-card border-b border-border flex items-center px-4 gap-4">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted-foreground">
-            <Menu className="w-5 h-5" />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-border bg-card/95 px-3 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 sm:min-h-16 sm:gap-4 sm:px-4 sm:py-0 pt-[max(0.5rem,env(safe-area-inset-top))]">
+          <button
+            type="button"
+            onClick={() => setSidebarOpen(true)}
+            className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden touch-manipulation"
+            aria-label="Open menu"
+          >
+            <Menu className="h-6 w-6" />
           </button>
-          <div className="flex-1" />
-          <button className="relative text-muted-foreground hover:text-foreground">
-            <Bell className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-primary rounded-full text-[9px] text-primary-foreground flex items-center justify-center font-bold">3</span>
+          <div className="min-w-0 flex-1 lg:block" />
+          <button
+            type="button"
+            className="relative shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation"
+            aria-label="Notifications"
+          >
+            <Bell className="h-5 w-5" />
+            <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+              3
+            </span>
           </button>
-          <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary" title={adminUser?.email ?? ""}>
+          <div
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary sm:h-10 sm:w-10"
+            title={adminUser?.email ?? ""}
+          >
             {avatarLabel}
           </div>
         </header>
 
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
-          <Outlet />
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8">
+          <div className="mx-auto w-full max-w-[1600px]">
+            <Outlet />
+          </div>
         </main>
       </div>
     </div>

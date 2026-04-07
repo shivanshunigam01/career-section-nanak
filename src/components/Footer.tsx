@@ -130,17 +130,23 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* Bottom bar */}
+      {/* Bottom bar — extra bottom padding below lg so legal links sit above StickyMobileCTA (fixed z-40) */}
       <div className="border-t border-border/30">
-        <div className="container mx-auto px-4 lg:px-8 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-xs">
+        <div className="container mx-auto px-4 lg:px-8 pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] lg:pb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p className="text-muted-foreground text-xs text-center sm:text-left">
             © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast Dealer, Bihar.
           </p>
-          <div className="flex gap-6">
-            <Link to="/about" className="text-muted-foreground text-xs hover:text-foreground transition-colors">
+          <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-6">
+            <Link
+              to="/about#privacy"
+              className="text-muted-foreground text-xs hover:text-foreground transition-colors inline-flex min-h-11 min-w-[44px] items-center justify-center px-3 py-2 rounded-md active:bg-foreground/5"
+            >
               Privacy Policy
             </Link>
-            <Link to="/about" className="text-muted-foreground text-xs hover:text-foreground transition-colors">
+            <Link
+              to="/about#terms"
+              className="text-muted-foreground text-xs hover:text-foreground transition-colors inline-flex min-h-11 min-w-[44px] items-center justify-center px-3 py-2 rounded-md active:bg-foreground/5"
+            >
               Terms of Service
             </Link>
           </div>

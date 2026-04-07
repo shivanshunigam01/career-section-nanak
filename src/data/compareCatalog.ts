@@ -1,8 +1,8 @@
 import vf6DesatSilver from "@/assets/vf6-desat-silver.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
-import mpv7Listing from "@/assets/mpv7-gallery/mpv7-hero.png";
+import { VF6_TRIM_0_100_KMH, VF7_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
 
-export type CompareModelKey = "vf6" | "vf7" | "mpv7";
+export type CompareModelKey = "vf6" | "vf7";
 
 /** Flat strings for side-by-side rows */
 export type CompareSpecMap = Record<string, string>;
@@ -24,7 +24,7 @@ export interface CatalogModel {
   variants: CatalogVariant[];
 }
 
-export const COMPARE_MODEL_ORDER = ["vf6", "vf7", "mpv7"] as const satisfies readonly CompareModelKey[];
+export const COMPARE_MODEL_ORDER = ["vf6", "vf7"] as const satisfies readonly CompareModelKey[];
 
 export const compareModels: Record<CompareModelKey, CatalogModel> = {
   vf6: {
@@ -43,7 +43,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "468 km",
-          accel: "8.9 s",
+          accel: VF6_TRIM_0_100_KMH.earth,
           battery: "59.6 kWh",
           driveline: "FWD",
           dc_charging: "Up to 100 kW",
@@ -80,7 +80,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "463 km",
-          accel: "8.9 s",
+          accel: VF6_TRIM_0_100_KMH.wind,
           battery: "59.6 kWh",
           driveline: "FWD",
           dc_charging: "Up to 100 kW",
@@ -117,7 +117,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "463 km",
-          accel: "8.9 s",
+          accel: VF6_TRIM_0_100_KMH.infinity,
           battery: "59.6 kWh",
           driveline: "FWD",
           dc_charging: "Up to 100 kW",
@@ -163,7 +163,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "438 km",
-          accel: "9.1 s",
+          accel: VF7_TRIM_0_100_KMH.earth,
           battery: "59.6 kWh",
           driveline: "FWD",
           dc_charging: "Up to 100 kW",
@@ -200,7 +200,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "150 kW (204 PS)",
           torque: "310 Nm",
           range_midc: "532 km",
-          accel: "8.5 s",
+          accel: VF7_TRIM_0_100_KMH.wind,
           battery: "70 kWh",
           driveline: "FWD",
           dc_charging: "Up to 110 kW",
@@ -236,8 +236,8 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           ex_showroom: "₹25,19,000*",
           power: "150 kW (204 PS)",
           torque: "310 Nm",
-          range_midc: "510 km",
-          accel: "8.5 s",
+          range_midc: "532 km",
+          accel: VF7_TRIM_0_100_KMH.windInfinity,
           battery: "70 kWh",
           driveline: "FWD",
           dc_charging: "Up to 110 kW",
@@ -274,7 +274,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "260 kW (353 PS)",
           torque: "500 Nm",
           range_midc: "510 km",
-          accel: "5.8 s",
+          accel: VF7_TRIM_0_100_KMH.sky,
           battery: "70.8 kWh",
           driveline: "AWD (dual motor)",
           dc_charging: "Up to 110 kW",
@@ -311,7 +311,7 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           power: "260 kW (353 PS)",
           torque: "500 Nm",
           range_midc: "510 km",
-          accel: "5.8 s",
+          accel: VF7_TRIM_0_100_KMH.skyInfinity,
           battery: "70.8 kWh",
           driveline: "AWD (dual motor)",
           dc_charging: "Up to 110 kW",
@@ -337,51 +337,6 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
           airbags: "7 airbags",
           adas: "Full ADAS (Wind+ suite)",
           safety_chassis: "Full VF 7 safety pack",
-        },
-      },
-    ],
-  },
-  mpv7: {
-    key: "mpv7",
-    brand: "VinFast",
-    name: "VF MPV 7",
-    route: "/models/mpv7",
-    image: mpv7Listing,
-    variants: [
-      {
-        id: "standard",
-        label: "VF MPV 7",
-        price: "Bookings open*",
-        specs: {
-          ex_showroom: "Bookings open*",
-          power: "150 kW (204 PS)",
-          torque: "310 Nm",
-          accel: "<10 sec",
-          battery: "60.13 kWh",
-          driveline: "FWD",
-          dc_charging: "DC fast charging supported",
-          fast_charge: "~35 min (10–70%)",
-          length: "4750 mm",
-          width: "1900 mm",
-          height: "1660 mm",
-          wheelbase: "2890 mm",
-          ground_clearance: "175 mm",
-          boot: "—",
-          curb_weight: "—",
-          tyre_wheel: "225/55 R18",
-          tailgate: "Confirm with dealer",
-          roof_rail: "—",
-          seat_upholstery: "7 seats (2+3+2) · trim-dependent",
-          driver_seat: "Confirm with dealer",
-          panoramic_roof: "—",
-          wireless_charger: "—",
-          hud: "—",
-          touchscreen: "—",
-          speakers: "—",
-          smart_suite: "Connected features · confirm with dealer",
-          airbags: "6 airbags (indicative)",
-          adas: "ADAS included (per model brief)",
-          safety_chassis: "ABS, ESC, TPMS · confirm full pack with dealer",
         },
       },
     ],

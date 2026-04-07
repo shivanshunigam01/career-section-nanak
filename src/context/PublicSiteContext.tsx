@@ -34,8 +34,7 @@ const DEFAULT_DEALER: DealerInfo = {
   phone: "+91 9231445060",
   whatsapp: "919231445060",
   email: "info@patliputravinfast.com",
-  address:
-    "Plot No. 2421, NH 30, Bypass Road, Opposite Indian Oil Pump, Paijawa, Patna, Bihar - 800009",
+  address: "Near Deedarganj Check Post, NH-30, Patna, Bihar - 800009",
   showroomHours: "10 AM – 8 PM, Mon–Sat",
   gstNo: "",
 };

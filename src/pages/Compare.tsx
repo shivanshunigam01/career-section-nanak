@@ -25,6 +25,8 @@ import {
   type CompareModelKey,
   type CompareSelection,
 } from "@/data/compareCatalog";
+import { hasApi } from "@/lib/apiConfig";
+import { usePublicOffers } from "@/hooks/usePublicOffers";
 
 type Slot = CompareSelection | null;
 
@@ -46,6 +48,7 @@ function VsBadge() {
 }
 
 const ComparePage = () => {
+  const { loaded: offersLoaded, hasOffers } = usePublicOffers();
   const [slots, setSlots] = useState<[Slot, Slot, Slot]>(defaultSlots);
   const [hideCommon, setHideCommon] = useState(false);
   const [thirdModelDraft, setThirdModelDraft] = useState<CompareModelKey>("vf6");
@@ -224,7 +227,7 @@ const ComparePage = () => {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mx-auto mb-10">
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">Compare</p>
             <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 leading-tight px-1">
-              VinFast VF 6, VF 7 &amp; VF MPV 7
+              VinFast VF 6 &amp; VF 7
             </h1>
             <p className="text-muted-foreground text-sm md:text-base">
               Pick up to three trims, hide identical lines, and scroll the full spec stack — Patliputra VinFast Patna.
@@ -233,8 +236,8 @@ const ComparePage = () => {
 
           {/* Quick summary — lineup */}
           <div className="max-w-5xl mx-auto mb-10 sm:mb-12 rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-0 bg-muted/40 px-3 py-5 sm:px-6 sm:py-8 divide-y sm:divide-y-0 sm:divide-x divide-border/50">
-              {(["vf7", "vf6", "mpv7"] as const).map((key) => {
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-0 bg-muted/40 px-3 py-5 sm:px-6 sm:py-8 divide-y sm:divide-y-0 sm:divide-x divide-border/50 max-w-3xl mx-auto">
+              {(["vf7", "vf6"] as const).map((key) => {
                 const m = compareModels[key];
                 return (
                   <div key={key} className="flex flex-col items-center justify-center py-4 sm:py-0 px-2 min-w-0">
@@ -248,7 +251,6 @@ const ComparePage = () => {
                     <p className="text-xs sm:text-sm text-foreground/90 mt-2 tabular-nums leading-snug text-center px-1">
                       {key === "vf7" && "₹21,89,000* – ₹26,79,000*"}
                       {key === "vf6" && "₹17,29,000* – ₹19,19,000*"}
-                      {key === "mpv7" && "Bookings open*"}
                     </p>
                   </div>
                 );
@@ -275,14 +277,13 @@ const ComparePage = () => {
             comparison
           </h2>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex flex-wrap items-center gap-4 mb-8">
             <div className="flex items-center gap-2">
               <Checkbox id="hide-common" checked={hideCommon} onCheckedChange={(v) => setHideCommon(v === true)} />
               <Label htmlFor="hide-common" className="text-sm font-normal cursor-pointer text-muted-foreground">
                 Hide common features
               </Label>
             </div>
-            <p className="text-xs text-muted-foreground">*Indicative prices — ask Patliputra VinFast for on-road figures.</p>
           </div>
 
           {/* Selector row — CarDekho-style cards + optional third slot */}
@@ -332,7 +333,6 @@ const ComparePage = () => {
                         <SelectContent>
                           <SelectItem value="vf6">VinFast VF 6</SelectItem>
                           <SelectItem value="vf7">VinFast VF 7</SelectItem>
-                          <SelectItem value="mpv7">VinFast VF MPV 7</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -354,9 +354,23 @@ const ComparePage = () => {
                   </div>
                   <p className="mt-4 font-display font-bold text-lg tabular-nums">{col.variant?.price}</p>
                   <div className="mt-4 flex flex-col gap-2">
-                    <Button variant="outline" size="sm" className="w-full border-primary/50 text-primary" asChild>
-                      <Link to="/contact">View offers</Link>
-                    </Button>
+                    {!offersLoaded && hasApi() ? (
+                      <Button variant="outline" size="sm" className="w-full" disabled>
+                        Loading…
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" className="w-full border-primary/50 text-primary" asChild>
+                        <Link
+                          to={
+                            offersLoaded && hasOffers
+                              ? { pathname: "/", hash: "offers" }
+                              : { pathname: "/contact", hash: "contact-form" }
+                          }
+                        >
+                          {offersLoaded && hasOffers ? "View offers" : "Know more"}
+                        </Link>
+                      </Button>
+                    )}
                     <Button variant="ghost" size="sm" className="w-full text-muted-foreground" asChild>
                       <Link to={col.model.route}>Model page</Link>
                     </Button>
@@ -377,7 +391,7 @@ const ComparePage = () => {
                     </div>
                     <p className="font-display font-semibold text-sm">Add a third vehicle</p>
                     <p className="text-xs text-muted-foreground max-w-xs">
-                      Add a VF 6, VF 7, or VF MPV 7 trim — for example two VF 7 variants side by side.
+                      Add another VF 6 or VF 7 trim — for example two VF 7 variants side by side.
                     </p>
                     <div className="w-full space-y-2 text-left">
                       <Label className="text-xs text-muted-foreground">Model</Label>
@@ -395,7 +409,6 @@ const ComparePage = () => {
                         <SelectContent>
                           <SelectItem value="vf6">VinFast VF 6</SelectItem>
                           <SelectItem value="vf7">VinFast VF 7</SelectItem>
-                          <SelectItem value="mpv7">VinFast VF MPV 7</SelectItem>
                         </SelectContent>
                       </Select>
                       <Label className="text-xs text-muted-foreground mt-2 block">
@@ -504,9 +517,6 @@ const ComparePage = () => {
               <Download className="w-3.5 h-3.5 mr-1.5" />
               VF 7 brochure
             </BrochureDownloadButton>
-            <Button variant="outline" size="sm" asChild>
-              <Link to="/models/mpv7">VF MPV 7 — specs &amp; gallery</Link>
-            </Button>
           </div>
         </div>
       </section>

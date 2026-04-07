@@ -133,7 +133,7 @@ const OwnershipSection = () => {
               />
             </div>
             {/* Floating stat card */}
-            <div className="absolute -bottom-6 -left-4 glass-card p-5 hidden lg:block">
+            <div className="absolute bottom-3 left-3 right-3 max-w-xs sm:left-4 sm:right-auto sm:bottom-4 lg:-bottom-6 lg:-left-4 lg:right-auto glass-card p-4 sm:p-5">
               <p className="font-display font-bold text-2xl text-primary">24 min</p>
               <p className="text-foreground/60 text-xs">Fast charge 10-70%</p>
             </div>
