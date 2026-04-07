@@ -28,7 +28,7 @@ export function ModelTrimSelect({
   onChange,
   className,
   includeNotSureBoth,
-  includeMpv7 = true,
+  includeMpv7 = false,
 }: Props) {
   const optionValues = useMemo(() => {
     const set = new Set<string>();

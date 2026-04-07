@@ -6,7 +6,7 @@ import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import vf6Hero from "@/assets/vf6-product-hero.png";
-import vf6WhyInteriorRhd from "@/assets/vf6-why-section-interior-rhd.png";
+import vf6WhyInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
 import vf6JetBlack from "@/assets/vf6-jet-black.png";
