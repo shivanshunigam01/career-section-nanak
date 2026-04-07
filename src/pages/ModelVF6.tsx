@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
@@ -358,7 +359,7 @@ const ModelVF6 = () => {
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf6Hero}
-            alt="Silver VinFast VF 6 electric SUV on a modern patio at dusk with a family and bay view in the background"
+            alt="Silver VinFast VF 6 electric SUV on a modern patio with a family and coastal bay view in the background"
             className="h-full w-full object-cover object-[38%_52%]"
             sizes="100vw"
             fetchPriority="high"
