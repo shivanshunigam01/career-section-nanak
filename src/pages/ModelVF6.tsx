@@ -23,6 +23,7 @@ import vf6GalDetail03 from "@/assets/vf6-gallery/vf6-gallery-detail-03.png";
 import vf6GalDetail04 from "@/assets/vf6-gallery/vf6-gallery-detail-04.png";
 import vf6GalDetail05 from "@/assets/vf6-gallery/vf6-gallery-detail-05.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { VF6_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
@@ -65,9 +66,9 @@ const variantHeroStats: Record<
   VariantId,
   { range: string; accel: string; power: string; driveline: string }
 > = {
-  earth: { range: "468 km", accel: "10.4 s", power: "177 PS", driveline: "FWD" },
-  wind: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
-  infinity: { range: "463 km", accel: "8.9 s", power: "204 PS", driveline: "FWD" },
+  earth: { range: "468 km", accel: VF6_TRIM_0_100_KMH.earth, power: "177 PS", driveline: "FWD" },
+  wind: { range: "463 km", accel: VF6_TRIM_0_100_KMH.wind, power: "204 PS", driveline: "FWD" },
+  infinity: { range: "463 km", accel: VF6_TRIM_0_100_KMH.infinity, power: "204 PS", driveline: "FWD" },
 };
 
 const variantExShowroomPrice: Record<VariantId, string> = {
