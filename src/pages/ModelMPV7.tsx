@@ -15,6 +15,7 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
@@ -280,6 +281,8 @@ const ModelMPV7 = () => {
     otherCity: "",
   });
   const [mobileError, setMobileError] = useState("");
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
   const [studioIdx, setStudioIdx] = useState(0);
   const todayStr = getLocalISODate();
   const studio = studioViews[studioIdx] ?? studioViews[0];
@@ -313,6 +316,10 @@ const ModelMPV7 = () => {
     }
     if (interestForm.city === DISTRICT_OTHER && !interestForm.otherCity.trim()) {
       toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
+    if (!captchaVerified) {
+      toast.error("Please complete captcha verification.");
       return;
     }
 
@@ -380,6 +387,7 @@ const ModelMPV7 = () => {
     toast.success("Thank you! You can now continue to complete your VF MPV 7 pre-booking.");
     setInterestForm({ name: "", mobile: "", email: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "" });
     setMobileError("");
+    setCaptchaResetSignal((n) => n + 1);
   };
 
   return (
@@ -487,7 +495,7 @@ const ModelMPV7 = () => {
                 <p className="text-xs font-semibold uppercase tracking-wide text-foreground/80 mb-2">Bookings &amp; pre-booking</p>
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Bookings are open at Patliputra VinFast Patna. Register your interest in the section below — after you submit,
-                  you can continue on Book Now with VF MPV 7 pre-selected.
+                  you can continue on Pre Book with VF MPV 7 pre-selected.
                 </p>
               </div>
 
@@ -800,7 +808,7 @@ const ModelMPV7 = () => {
         </div>
       </section>
 
-      {/* Pre-booking interest — form unlocks Pre-book on Book Now (VF 6 lead-style band) */}
+      {/* Pre-booking interest — form unlocks Pre-book on Pre Book (VF 6 lead-style band) */}
       <section
         id="mpv7-prebook"
         className="scroll-mt-20 sm:scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-primary/[0.07] via-muted/40 to-muted/30 py-14 sm:py-16 lg:py-20"
@@ -881,6 +889,9 @@ const ModelMPV7 = () => {
                     Submit
                   </Button>
                 </div>
+                <div className="sm:col-span-2 lg:col-span-12">
+                  <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
+                </div>
                 <p className="sm:col-span-2 lg:col-span-12 text-center lg:text-left text-muted-foreground text-xs">
                   By submitting, you agree to be contacted about VF MPV 7.
                 </p>
@@ -888,7 +899,7 @@ const ModelMPV7 = () => {
             ) : (
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-center sm:text-left">
                 <p className="text-sm text-muted-foreground">
-                  You&apos;re set — continue on Book Now with VF MPV 7 pre-selected.
+                  You&apos;re set — continue on Pre Book with VF MPV 7 pre-selected.
                 </p>
                 <Button variant="hero" size="lg" asChild>
                   <Link to="/book-now?model=VF%20MPV%207">Pre-book VF MPV 7</Link>

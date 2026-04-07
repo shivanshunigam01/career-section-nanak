@@ -14,7 +14,12 @@ import { submitPublicEnquiry, submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
-import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER, resolvedDistrictLabel } from "@/data/biharDistricts";
+import { FormCaptcha } from "@/components/FormCaptcha";
+import {
+  BIHAR_DEFAULT_DISTRICT,
+  DISTRICT_OTHER,
+  resolvedDistrictLabel,
+} from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
@@ -51,6 +56,8 @@ const ContactPage = () => {
     interest: "General Enquiry",
     message: "",
   });
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,7 +74,10 @@ const ContactPage = () => {
       toast.error("Please enter your city or district (outside Bihar).");
       return;
     }
-
+    if (!captchaVerified) {
+      toast.error("Please complete captcha verification.");
+      return;
+    }
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
@@ -121,6 +131,7 @@ const ContactPage = () => {
         interest: "General Enquiry",
         message: "",
       });
+      setCaptchaResetSignal((n) => n + 1);
       return;
     }
 
@@ -172,6 +183,7 @@ const ContactPage = () => {
       interest: "General Enquiry",
       message: "",
     });
+    setCaptchaResetSignal((n) => n + 1);
   };
 
   const update = (field: string, value: string) => setFormData({ ...formData, [field]: value });
@@ -267,6 +279,7 @@ const ContactPage = () => {
                     onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
                     className={inputClass}
                     includeNotSureBoth
+                    includeMpv7={false}
                   />
                   <BiharDistrictField
                     id="contact-district"
@@ -292,6 +305,7 @@ const ContactPage = () => {
                 </select>
                 <textarea placeholder="Your Message (Optional)" value={formData.message} onChange={(e) => update("message", e.target.value)} className={`${inputClass} h-24 py-3 resize-none`} />
                 <Button type="submit" variant="hero" size="lg" className="w-full">Submit Enquiry</Button>
+                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <p className="text-center text-muted-foreground text-xs">We respect your privacy. No spam, ever.</p>
               </div>
             </motion.form>

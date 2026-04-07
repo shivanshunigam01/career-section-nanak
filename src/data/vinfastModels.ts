@@ -34,7 +34,7 @@ export function decodeModelTrim(raw: string): { model: string; variant: string }
 
 /** Value stored on leads / bookings / testimonials (single field). */
 export function leadModelLabel(model: string, variant: string): string {
-  if (model === "Both") return "VF 6 / VF 7 / VF MPV 7";
+  if (model === "Both") return "VF 6 / VF 7";
   return variant || model;
 }
 

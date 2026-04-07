@@ -1,5 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,6 +17,8 @@ import EMICalculator from "./pages/EMICalculator";
 import ComparePage from "./pages/Compare";
 import AboutPage from "./pages/About";
 import ContactPage from "./pages/Contact";
+import PrivacyPolicyPage from "./pages/PrivacyPolicy";
+import TermsOfServicePage from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -32,16 +36,28 @@ import AdminMedia from "./pages/admin/AdminMedia";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-      <TooltipProvider>
-        <Sonner />
-        <PublicRecaptchaProvider>
-        <PublicSiteProvider>
-      <BrowserRouter>
-        <ScrollToTop />
-        <Routes>
+const App = () => {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const media = globalThis.matchMedia("(max-width: 768px), (prefers-reduced-motion: reduce)");
+    const sync = () => setReduceMotion(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <TooltipProvider>
+          <Sonner />
+          <PublicRecaptchaProvider>
+            <PublicSiteProvider>
+              <MotionConfig reducedMotion={reduceMotion ? "always" : "user"}>
+                <BrowserRouter>
+                  <ScrollToTop />
+                  <Routes>
           {/* Public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/models/vf7" element={<ModelVF7 />} />
@@ -53,6 +69,8 @@ const App = () => (
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
 
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -70,13 +88,15 @@ const App = () => (
           </Route>
 
           <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-      </PublicSiteProvider>
-      </PublicRecaptchaProvider>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+                </Routes>
+              </BrowserRouter>
+            </MotionConfig>
+            </PublicSiteProvider>
+          </PublicRecaptchaProvider>
+        </TooltipProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

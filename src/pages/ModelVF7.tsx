@@ -1,8 +1,6 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
@@ -477,6 +475,49 @@ const ModelVF7 = () => {
                 VF 7
               </h1>
 
+              <div className="mb-1.5 space-y-3 sm:space-y-3.5 max-w-md">
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{heroRange}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
+                </div>
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
+                </div>
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{heroAccel}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
+                </div>
+                <div>
+                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
+                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Driveline</p>
+                </div>
+              </div>
+
+              <div className="mb-2">
+                <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
+                  {displayExShowroom}
+                </p>
+                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
+                {vf7Variants.map((v) => (
+                  <button
+                    key={v.id}
+                    type="button"
+                    onClick={() => setVariant(v.id)}
+                    className={`rounded-full px-2 py-1.5 text-[10px] sm:text-xs font-semibold border text-center leading-tight whitespace-nowrap shrink-0 sm:px-2.5 ${
+                      variant === v.id
+                        ? "bg-white text-gray-900 border-white"
+                        : "bg-black/45 text-white border-white/50 hover:bg-black/55"
+                    }`}
+                  >
+                    {v.shortLabel}
+                  </button>
+                ))}
+              </div>
+
               <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
                 <Link to="/test-drive" className="w-full min-w-0">
                   <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
@@ -502,6 +543,12 @@ const ModelVF7 = () => {
                     EMI Calculator
                   </Button>
                 </Link>
+              </div>
+
+              <div className="mt-4 sm:mt-5 w-full min-w-0">
+                <p className="text-hero-plain-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
+                  {vMeta.description}
+                </p>
               </div>
             </div>
           </div>
@@ -693,18 +740,6 @@ const ModelVF7 = () => {
                     </span>
                   ))}
                 </div>
-              </div>
-
-              <div className="flex flex-wrap gap-3 pt-1">
-                <Button asChild variant="default" size="default">
-                  <Link to="/test-drive">Book test drive</Link>
-                </Button>
-                <Button asChild variant="outline" size="default">
-                  <Link to="/book-now">Book now</Link>
-                </Button>
-                <Button asChild variant="ghost" size="default" className="text-muted-foreground">
-                  <Link to="/contact">On-road price</Link>
-                </Button>
               </div>
 
               <div

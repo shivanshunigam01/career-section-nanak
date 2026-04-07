@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import vf6Interior from "@/assets/interior.jpg";
+import stepInsideLuxuryV6 from "@/assets/step-inside-luxury-v6-upload.png";
 import vf7Interior from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
 import mpv7Interior from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 import leadInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
@@ -9,8 +9,8 @@ const interiorModels = [
   {
     href: "/models/vf6",
     label: "VF 6",
-    image: vf6Interior,
-    alt: "VinFast VF 6 cabin — dashboard, steering wheel, and front seats",
+    image: stepInsideLuxuryV6,
+    alt: "VinFast VF 6 interior — right-hand drive dashboard and front seats",
     objectClass: "object-cover object-center",
   },
   {

@@ -16,6 +16,7 @@ import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { leadModelLabel } from "@/data/vinfastModels";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
+import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
@@ -65,6 +66,8 @@ export function BrochureDownloadButton({
   const [email, setEmail] = useState("");
   const [city, setCity] = useState(BIHAR_DEFAULT_DISTRICT);
   const [otherCity, setOtherCity] = useState("");
+  const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
 
   useEffect(() => {
     if (!open) {
@@ -74,6 +77,7 @@ export function BrochureDownloadButton({
       setCity(BIHAR_DEFAULT_DISTRICT);
       setOtherCity("");
       setSubmitting(false);
+      setCaptchaResetSignal((n) => n + 1);
     }
   }, [open]);
 
@@ -93,6 +97,10 @@ export function BrochureDownloadButton({
     }
     if (city === DISTRICT_OTHER && !otherCity.trim()) {
       toast.error("Please enter your city or district (outside Bihar).");
+      return;
+    }
+    if (!captchaVerified) {
+      toast.error("Please complete captcha verification.");
       return;
     }
 
@@ -235,6 +243,7 @@ export function BrochureDownloadButton({
               }}
               onOtherChange={setOtherCity}
             />
+            <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
 
             <DialogFooter className="gap-2 sm:gap-0 pt-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
