@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { PublicSiteProvider } from "@/context/PublicSiteContext";
+import { PublicRecaptchaProvider } from "@/context/PublicRecaptchaContext";
 import Index from "./pages/Index";
 import ModelVF7 from "./pages/ModelVF7";
 import ModelVF6 from "./pages/ModelVF6";
@@ -36,6 +37,7 @@ const App = () => (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
       <TooltipProvider>
         <Sonner />
+        <PublicRecaptchaProvider>
         <PublicSiteProvider>
       <BrowserRouter>
         <ScrollToTop />
@@ -71,6 +73,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
       </PublicSiteProvider>
+      </PublicRecaptchaProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

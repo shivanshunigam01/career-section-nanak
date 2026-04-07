@@ -78,7 +78,7 @@ const vf7Variants: {
     name: "VF 7 Sky",
     shortLabel: "Sky",
     description:
-      "353 PS dual-motor AWD, 70.8 kWh, 510 km MIDC, 5.8 s to 100 km/h — performance flagship with 110 kW DC charging & black alloys.",
+      "353 PS dual-motor AWD, 70 kWh, 510 km MIDC, 5.8 s to 100 km/h — performance flagship with 110 kW DC charging & black alloys.",
   },
   {
     id: "skyInfinity",
@@ -135,7 +135,7 @@ const variantKeyFigures: Record<VariantId, { label: string; value: string }[]> =
   ],
   sky: [
     { label: "Driveline", value: "AWD (dual motor)" },
-    { label: "Usable battery", value: "70.8 kWh" },
+    { label: "Usable battery", value: "70 kWh" },
     { label: "Max. torque", value: "500 Nm" },
     { label: "DC fast charge (10–70%)", value: "28 min · up to 110 kW" },
     { label: "Boot space", value: "537 L" },
@@ -143,7 +143,7 @@ const variantKeyFigures: Record<VariantId, { label: string; value: string }[]> =
   ],
   skyInfinity: [
     { label: "Driveline", value: "AWD (dual motor)" },
-    { label: "Usable battery", value: "70.8 kWh" },
+    { label: "Usable battery", value: "70 kWh" },
     { label: "Max. torque", value: "500 Nm" },
     { label: "DC fast charge (10–70%)", value: "28 min · up to 110 kW" },
     { label: "Boot space", value: "537 L" },
@@ -176,7 +176,7 @@ const variantSpotlightChips: Record<VariantId, string[]> = {
   ],
   sky: [
     "353 PS AWD performance",
-    "70.8 kWh battery · 110 kW DC",
+    "70 kWh battery · 110 kW DC",
     "Black alloys · flush handles",
     "Full ADAS + ACC",
     "8 speakers · smart connectivity",
@@ -203,7 +203,7 @@ const technicalSpecRows: [string, string, string, string, string, string][] = [
     VF7_TRIM_0_100_KMH.sky,
     VF7_TRIM_0_100_KMH.skyInfinity,
   ],
-  ["Usable battery capacity", "59.6 kWh", "70 kWh", "70 kWh", "70.8 kWh", "70.8 kWh"],
+  ["Usable battery capacity", "59.6 kWh", "70 kWh", "70 kWh", "70 kWh", "70 kWh"],
   ["Charge port", "CCS2", "CCS2", "CCS2", "CCS2", "CCS2"],
   ["AC charging", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW", "Up to 7.2 kW"],
   ["DC charging (max.)", "100 kW", "110 kW", "110 kW", "110 kW", "110 kW"],
@@ -289,7 +289,7 @@ const connectivityRows: [string, string, string, string, string, string][] = [
 ];
 
 const featureHighlights = [
-  "Five trims: Earth (FWD 59.6 kWh), Wind & Wind Infinity (FWD 70 kWh + panoramic on Infinity), Sky & Sky Infinity (AWD 70.8 kWh, 353 PS)",
+  "Five trims: Earth (FWD 59.6 kWh), Wind & Wind Infinity (FWD 70 kWh + panoramic on Infinity), Sky & Sky Infinity (AWD 70 kWh, 353 PS)",
   "Earth: 438 km MIDC; Wind & Wind Infinity: 532 km MIDC; Sky & Sky Infinity: 510 km MIDC",
   "Sky & Sky Infinity: dual-motor AWD, 500 Nm, 5.8 s 0–100 km/h, 110 kW DC & 28 min 10–70% charge",
   "All variants: 7 airbags, 360° camera, LED lighting signature, dual-zone climate, HUD, 537 L boot",
@@ -477,55 +477,6 @@ const ModelVF7 = () => {
                 VF 7
               </h1>
 
-              <div className="mb-1.5 space-y-3 sm:space-y-3.5 max-w-md">
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{heroRange}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Range (MIDC)</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.power}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Max. power</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{heroAccel}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">0–100 km/h</p>
-                </div>
-                <div>
-                  <p className="text-hero-plain-lg font-display font-bold text-xl sm:text-2xl tabular-nums leading-tight">{stats.driveline}</p>
-                  <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Driveline</p>
-                </div>
-              </div>
-
-              <div className="mb-2">
-                <p className="text-hero-plain-lg font-display font-bold text-3xl sm:text-4xl lg:text-5xl tabular-nums leading-[1.08]">
-                  {displayExShowroom}
-                </p>
-                <p className="text-hero-plain-muted text-[11px] sm:text-xs mt-0.5">Indicative ex-showroom*</p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1.5 sm:gap-x-2 mb-2 w-full">
-                {vf7Variants.map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    onClick={() => setVariant(v.id)}
-                    className={`rounded-full px-2 py-1.5 text-[10px] sm:text-xs font-semibold border text-center leading-tight whitespace-nowrap shrink-0 sm:px-2.5 ${
-                      variant === v.id
-                        ? "bg-white text-gray-900 border-white"
-                        : "bg-black/45 text-white border-white/50 hover:bg-black/55"
-                    }`}
-                  >
-                    {v.shortLabel}
-                  </button>
-              ))}
-            </div>
-
-              <div className="mt-4 sm:mt-5 w-full min-w-0">
-                <p className="text-hero-plain-soft text-sm sm:text-base leading-normal whitespace-normal lg:whitespace-nowrap text-pretty max-w-full">
-                  {vMeta.description}
-                </p>
-              </div>
-
               <div className="mt-3 sm:mt-4 grid grid-cols-2 gap-2.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl">
                 <Link to="/test-drive" className="w-full min-w-0">
                   <Button variant="hero" size="lg" className="w-full rounded-full !py-3.5 !text-xs sm:!py-6 sm:!text-base">
@@ -552,6 +503,50 @@ const ModelVF7 = () => {
                   </Button>
                 </Link>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-border/60 bg-background/95 py-5 sm:py-6">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="flex flex-col gap-4">
+            <div>
+              <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-1">Select variant</p>
+              <p className="text-sm text-muted-foreground">{vMeta.name}</p>
+            </div>
+            <div className="hidden sm:flex flex-wrap items-center gap-2">
+              {vf7Variants.map((v) => (
+                <button
+                  key={v.id}
+                  type="button"
+                  onClick={() => setVariant(v.id)}
+                  className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                    variant === v.id
+                      ? "bg-foreground text-background border-foreground"
+                      : "bg-background text-foreground border-border/80 hover:bg-muted"
+                  }`}
+                >
+                  {v.shortLabel}
+                </button>
+              ))}
+            </div>
+            <div className="sm:hidden">
+              <label htmlFor="vf7-variant-selector" className="sr-only">
+                Select VF 7 variant
+              </label>
+              <select
+                id="vf7-variant-selector"
+                value={variant}
+                onChange={(e) => setVariant(e.target.value as VariantId)}
+                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
+              >
+                {vf7Variants.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
@@ -840,7 +835,7 @@ const ModelVF7 = () => {
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Specifications</p>
             <h2 className="font-display font-bold text-3xl md:text-5xl mb-4">VF 7 — all five variants</h2>
             <p className="text-muted-foreground text-sm md:text-base">
-              Technical brief: FWD Earth (59.6 kWh); Wind & Wind Infinity (70 kWh); AWD Sky / Sky Infinity (70.8 kWh, 353 PS).
+              Technical brief: FWD Earth (59.6 kWh); Wind & Wind Infinity (70 kWh); AWD Sky / Sky Infinity (70 kWh, 353 PS).
             </p>
           </div>
 

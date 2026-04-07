@@ -15,6 +15,8 @@ export async function submitPublicLead(payload: {
   financeNeeded?: boolean;
   exchangeNeeded?: boolean;
   pageSource?: string;
+  /** Google reCAPTCHA v3 token (required when API has RECAPTCHA_SECRET_KEY). */
+  recaptchaToken?: string;
 }): Promise<void> {
   const city = payload.city === "Other" ? "Other" : payload.city.trim();
   const otherCity = payload.city === "Other" ? (payload.otherCity || "").trim() : "";
@@ -24,6 +26,7 @@ export async function submitPublicLead(payload: {
     .filter(Boolean)
     .join(" | ");
 
+  const recaptchaToken = payload.recaptchaToken?.trim();
   await publicPost("/leads", {
     name: payload.name.trim(),
     mobile: payload.mobile.trim(),
@@ -32,11 +35,12 @@ export async function submitPublicLead(payload: {
     otherCity,
     model,
     interest: payload.interest?.trim() || undefined,
-    source: (payload.source?.trim() || "Website"),
+    source: payload.source?.trim() || "Website",
     remarks: remarks || undefined,
     financeNeeded: payload.financeNeeded ?? false,
     exchangeNeeded: payload.exchangeNeeded ?? false,
     pageSource: payload.pageSource,
+    ...(recaptchaToken ? { recaptchaToken } : {}),
   });
 }
 
@@ -56,8 +60,10 @@ export async function submitPublicTestDrive(payload: {
   ownsCar: string;
   currentCarDetails?: string;
   purchaseTimeline: string;
+  recaptchaToken?: string;
 }): Promise<void> {
   const display = leadModelLabel(payload.model, payload.variant);
+  const recaptchaToken = payload.recaptchaToken?.trim();
   await publicPost("/test-drives", {
     customerName: payload.customerName.trim(),
     mobile: payload.mobile.trim(),
@@ -74,6 +80,7 @@ export async function submitPublicTestDrive(payload: {
     purchaseTimeline: payload.purchaseTimeline,
     remarks: [payload.remarks?.trim(), `Trim: ${display}`].filter(Boolean).join(" | ") || undefined,
     pageSource: payload.pageSource,
+    ...(recaptchaToken ? { recaptchaToken } : {}),
   });
 }
 
@@ -87,8 +94,10 @@ export async function submitPublicEnquiry(payload: {
   interest: string;
   message?: string;
   source?: string;
+  recaptchaToken?: string;
 }): Promise<void> {
   const display = payload.model && payload.variant !== undefined ? leadModelLabel(payload.model, payload.variant) : "";
+  const recaptchaToken = payload.recaptchaToken?.trim();
   await publicPost("/enquiries", {
     name: payload.name.trim(),
     mobile: payload.mobile.trim(),
@@ -98,5 +107,6 @@ export async function submitPublicEnquiry(payload: {
     interest: payload.interest,
     message: payload.message?.trim() || undefined,
     source: payload.source ?? "Contact Form",
+    ...(recaptchaToken ? { recaptchaToken } : {}),
   });
 }

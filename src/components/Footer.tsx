@@ -133,9 +133,32 @@ const Footer = () => {
       {/* Bottom bar — extra bottom padding below lg so legal links sit above StickyMobileCTA (fixed z-40) */}
       <div className="border-t border-border/30">
         <div className="container mx-auto px-4 lg:px-8 pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] lg:pb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <p className="text-muted-foreground text-xs text-center sm:text-left">
-            © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast Dealer, Bihar.
-          </p>
+          <div className="text-center sm:text-left space-y-2">
+            <p className="text-muted-foreground text-xs">
+              © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast Dealer, Bihar.
+            </p>
+            <p className="text-muted-foreground text-[10px] leading-snug max-w-xl">
+              This site is protected by reCAPTCHA and the Google{" "}
+              <a
+                href="https://policies.google.com/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                Privacy Policy
+              </a>{" "}
+              and{" "}
+              <a
+                href="https://policies.google.com/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground"
+              >
+                Terms of Service
+              </a>{" "}
+              apply.
+            </p>
+          </div>
           <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-6">
             <Link
               to="/about#privacy"
