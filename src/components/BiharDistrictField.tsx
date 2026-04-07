@@ -54,7 +54,6 @@ export function BiharDistrictField({
       onChange={(e) => {
         const v = e.target.value;
         onDistrictChange(v);
-        if (v !== DISTRICT_OTHER) onOtherChange("");
       }}
       className={selectClassName}
       aria-label={label ? undefined : "District (Bihar)"}
