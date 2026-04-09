@@ -14,7 +14,7 @@ const navLinks = [
   { label: "VF 6", href: "/models/vf6" },
   { label: "VF MPV 7", href: "/models/mpv7" },
   { label: "Compare", href: "/compare" },
-  { label: "Pre Book", href: "/book-now" },
+  { label: "Pre-Booking", href: "/book-now" },
   { label: "Test Drive", href: "/test-drive" },
   { label: "EMI Calculator", href: "/emi-calculator" },
   { label: "About", href: "/about" },
@@ -80,7 +80,7 @@ const Navbar = () => {
                 <MessageCircle className="w-4 h-4" />
               </a>
               <Link to="/book-now">
-                <Button variant="hero" size="sm">Pre Book</Button>
+                <Button variant="hero" size="sm">Pre-Booking</Button>
               </Link>
             </div>
 
@@ -117,7 +117,7 @@ const Navbar = () => {
               ))}
               <div className="mt-6 flex flex-col gap-3">
                 <Link to="/book-now">
-                  <Button variant="hero" size="lg" className="w-full">Pre Book</Button>
+                  <Button variant="hero" size="lg" className="w-full">Pre-Booking</Button>
                 </Link>
                 <Link to="/test-drive">
                   <Button variant="outline" size="lg" className="w-full">Book Test Drive</Button>

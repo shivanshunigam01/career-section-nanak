@@ -21,6 +21,7 @@ function populatedName(ref: unknown): string {
 /** Website forms used legacy `source` strings that are not in the admin CRM dropdown — map them to "Website". */
 const LEGACY_WEBSITE_LEAD_SOURCES = new Set([
   "Book Now",
+  "Pre-Booking",
   "Test Drive",
   "Brochure download",
   "VF MPV 7 Pre-book",

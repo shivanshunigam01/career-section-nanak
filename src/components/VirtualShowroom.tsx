@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import stepInsideLuxuryV6 from "@/assets/step-inside-luxury-v6-upload.png";
 import vf7Interior from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
-import mpv7Interior from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
+import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
 import leadInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 
 const interiorModels = [
@@ -23,9 +23,9 @@ const interiorModels = [
   {
     href: "/models/mpv7",
     label: "VF MPV 7",
-    image: mpv7Interior,
-    alt: "VinFast VF MPV 7 cabin — three-row interior",
-    objectClass: "object-cover object-[center_45%]",
+    image: mpv7Hero,
+    alt: "VinFast VF MPV 7 — studio exterior, seven-seat electric MPV",
+    objectClass: "object-cover object-[48%_top]",
   },
 ] as const;
 

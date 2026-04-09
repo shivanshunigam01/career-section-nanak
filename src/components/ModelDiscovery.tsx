@@ -29,7 +29,7 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
     image: vf7FrontHero,
     href: "/models/vf7",
     specs: [
-      { icon: Battery, label: "Battery", value: "70.8 kWh" },
+      { icon: Battery, label: "Battery", value: "70 kWh" },
       { icon: Gauge, label: "Range", value: "532 km" },
       { icon: Zap, label: "0–100", value: "5.8s" },
       { icon: Shield, label: "Safety", value: "5-Star" },
@@ -165,7 +165,9 @@ const ModelDiscovery = () => {
                 <img
                   src={model.image}
                   alt={`VinFast ${model.name}`}
-                  className="w-full h-full object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]"
+                  className={`w-full h-full object-cover transition-[filter] duration-500 group-hover:brightness-[1.06]${
+                    model.href.includes("mpv7") ? " object-[48%_top]" : ""
+                  }`}
                   loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />

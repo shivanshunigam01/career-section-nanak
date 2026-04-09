@@ -80,7 +80,8 @@ function buildMpv7LaunchSlide(): HeroSlideView {
       "",
       "",
     ],
-    objectPosition: "center 48%",
+    /* Align to top of artwork so baked-in headline (“THE ALL-NEW”, etc.) stays in frame */
+    objectPosition: "48% top",
   };
 }
 

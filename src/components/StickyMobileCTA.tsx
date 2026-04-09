@@ -55,7 +55,7 @@ const StickyMobileCTA = () => {
             className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-primary text-primary-foreground text-xs font-medium"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
-            {onMpv7Page ? "Pre-book" : "Pre Book"}
+            Pre-Booking
           </Link>
           <Link
             to="/test-drive"

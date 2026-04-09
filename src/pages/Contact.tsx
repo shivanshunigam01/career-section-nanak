@@ -21,6 +21,7 @@ import {
   resolvedDistrictLabel,
 } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { mapsDirectionsHref, mapsEmbedSrc } from "@/lib/dealerMap";
 
@@ -37,6 +38,7 @@ const getLocalISODate = () => {
 
 const ContactPage = () => {
   const { dealer, siteConfig } = usePublicSite();
+  const { getToken } = usePublicFormRecaptcha();
   const address = dealer.address;
   const mapLink = mapsDirectionsHref(address, dealer.mapEmbedUrl);
   const embedSrc = mapsEmbedSrc(address, dealer.mapEmbedUrl);
@@ -79,6 +81,15 @@ const ContactPage = () => {
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
+      let enquiryToken: string | undefined;
+      let leadToken: string | undefined;
+      try {
+        enquiryToken = await getToken("contact_enquiry");
+        leadToken = await getToken("contact_lead");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Security verification failed.");
+        return;
+      }
       try {
         await submitPublicEnquiry({
           name: formData.name,
@@ -89,6 +100,7 @@ const ContactPage = () => {
           variant: formData.variant,
           interest: formData.interest,
           message: formData.message,
+          recaptchaToken: enquiryToken,
         });
         await submitPublicLead({
           name: formData.name,
@@ -101,6 +113,7 @@ const ContactPage = () => {
           email: formData.email,
           remarks: formData.message.trim() || `Interest: ${formData.interest}`,
           pageSource: "Contact Page",
+          recaptchaToken: leadToken,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));

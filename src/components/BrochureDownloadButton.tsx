@@ -18,6 +18,7 @@ import { leadModelLabel } from "@/data/vinfastModels";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -57,6 +58,7 @@ export function BrochureDownloadButton({
   disabled,
   ...buttonProps
 }: BrochureDownloadButtonProps) {
+  const { getToken } = usePublicFormRecaptcha();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [name, setName] = useState("");
@@ -109,6 +111,13 @@ export function BrochureDownloadButton({
     setSubmitting(true);
     try {
       if (hasApi()) {
+        let recaptchaToken: string | undefined;
+        try {
+          recaptchaToken = await getToken("brochure_download");
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : "Security verification failed.");
+          return;
+        }
         await submitPublicLead({
           name: name.trim(),
           mobile,
@@ -120,6 +129,7 @@ export function BrochureDownloadButton({
           interest: "Brochure download",
           remarks,
           pageSource,
+          recaptchaToken,
         });
       } else {
         try {
