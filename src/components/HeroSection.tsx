@@ -7,10 +7,9 @@ import heroVf7LedHighway from "@/assets/hero-slideshow/hero-vf7-led-highway.png"
 import heroVf7Cockpit from "@/assets/hero-slideshow/hero-vf7-cockpit.png";
 import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
 import heroSlide06 from "@/assets/vf6-earth-hero-family.png";
-import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero.png";
+import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
-import { usePublicSite } from "@/context/PublicSiteContext";
 import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
 
 export type HeroSlideView = {
@@ -156,7 +155,6 @@ function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
 }
 
 const HeroSection = () => {
-  const { dealer, siteConfig } = usePublicSite();
   const fallbackSlides = useMemo(() => buildHeroFallbackSlides(), []);
   const [apiSlides, setApiSlides] = useState<HeroSlideView[] | null>(null);
   const slides = apiSlides ?? fallbackSlides;
@@ -198,12 +196,6 @@ const HeroSection = () => {
     return () => clearInterval(timer);
   }, [next, slides.length]);
 
-  const dealerTopStrip = useMemo(() => {
-    const name = dealer.dealerName.trim().toUpperCase();
-    const tag = siteConfig.heroTagline.trim().toUpperCase();
-    return `${name} • ${tag}`;
-  }, [dealer.dealerName, siteConfig.heroTagline]);
-
   const slide = slides[current] ?? fallbackSlides[0];
 
   return (
@@ -231,15 +223,6 @@ const HeroSection = () => {
             />
           </div>
         ))}
-
-        {/* Top branding — desktop: below nav; mobile: safe area + breathing room like desktop rhythm */}
-        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 max-lg:pt-3 sm:max-lg:pt-4 lg:pt-28">
-          <div className="container mx-auto px-4 lg:px-8">
-            <p className="text-white font-display font-semibold text-[10px] sm:text-[11px] uppercase tracking-[0.22em] drop-shadow-[0_1px_8px_rgba(0,0,0,0.85)]">
-              {slide.badge?.trim() ? `${slide.badge.trim().toUpperCase()} • ${siteConfig.heroTagline.trim().toUpperCase()}` : dealerTopStrip}
-            </p>
-          </div>
-        </div>
 
         {/* Carousel arrows — centered on left / right edges */}
         <div
