@@ -33,6 +33,7 @@ import {
   PURCHASE_TIMELINE_OPTIONS,
   TEST_DRIVE_LOCATION_OPTIONS,
 } from "@/data/testDriveFormOptions";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -65,6 +66,7 @@ const getLocalISODate = () => {
 };
 
 const TestDrivePage = () => {
+  const { getToken } = usePublicFormRecaptcha();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -164,6 +166,13 @@ const TestDrivePage = () => {
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
+      let recaptchaToken: string | undefined;
+      try {
+        recaptchaToken = await getToken("test_drive");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Security verification failed.");
+        return;
+      }
       try {
         await submitPublicTestDrive({
           customerName: formData.name.trim(),
@@ -182,6 +191,7 @@ const TestDrivePage = () => {
           currentCarDetails:
             formData.ownsCar === "Yes" ? formData.currentCarDetails.trim() : undefined,
           purchaseTimeline: formData.purchaseTimeline,
+          recaptchaToken,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));
@@ -314,7 +324,7 @@ const TestDrivePage = () => {
               <p className="text-muted-foreground text-lg mb-6 max-w-lg">
                 Schedule a complimentary test drive with a date and time. For buying or reserving a vehicle, use{" "}
                 <Link to="/book-now" className="text-primary font-medium hover:underline">
-                  Pre Book
+                  Pre-Booking
                 </Link>
                 .
               </p>
@@ -602,7 +612,7 @@ const TestDrivePage = () => {
                 <p className="text-center text-muted-foreground text-xs pt-1">
                   Ready to buy?{" "}
                   <Link to="/book-now" className="text-primary font-medium hover:underline">
-                    Go to Pre Book
+                    Go to Pre-Booking
                   </Link>
                 </p>
               </div>

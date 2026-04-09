@@ -13,6 +13,7 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -31,6 +32,7 @@ type LeadCaptureStripProps = {
 
 const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStripProps) => {
   const { siteConfig } = usePublicSite();
+  const { getToken } = usePublicFormRecaptcha();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -84,6 +86,13 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
     }
     if (hasApi()) {
       const cityVal = formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city;
+      let recaptchaToken: string | undefined;
+      try {
+        recaptchaToken = await getToken("homepage_lead_strip");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Security verification failed.");
+        return;
+      }
       try {
         await submitPublicLead({
           name: formData.name,
@@ -95,6 +104,7 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
           interest: formData.interest,
           remarks: `Interest: ${formData.interest}`,
           pageSource: "Homepage Lead Strip",
+          recaptchaToken,
         });
       } catch (err) {
         toast.error(formatApiErrors(err));

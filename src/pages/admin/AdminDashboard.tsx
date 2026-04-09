@@ -127,7 +127,7 @@ const AdminDashboard = () => {
     if (useRemote && stats?.leadsBySource?.length) {
       return stats.leadsBySource.map((s) => ({ source: s._id || "Unknown", count: s.count }));
     }
-    return ["Google Ads", "Website", "WhatsApp", "Meta Ads", "Walk-in", "Referral", "Book Now", "Test Drive"].map((source) => ({
+    return ["Google Ads", "Website", "WhatsApp", "Meta Ads", "Walk-in", "Referral", "Pre-Booking", "Book Now", "Test Drive"].map((source) => ({
       source,
       count: leads.filter((l) => l.source === source).length,
     }));
