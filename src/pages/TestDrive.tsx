@@ -36,6 +36,8 @@ import {
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
+const HOME_TEST_DRIVE_OPTION = "Home Test Drive";
+const DEALERSHIP_VISIT_OPTION = "Dealership Visit";
 
 /** First calendar day of each month that accepts test-drive bookings (days 1–9 are blocked). */
 const MIN_TEST_DRIVE_DAY_OF_MONTH = 10;
@@ -429,7 +431,21 @@ const TestDrivePage = () => {
                     otherInputClassName={`${inputClass} border-primary/50`}
                     value={formData.city}
                     otherValue={formData.otherCity}
-                    onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
+                    onDistrictChange={(city) => {
+                      const patna = isPatnaDistrict(city);
+                      setFormData((prev) => ({
+                        ...prev,
+                        city,
+                        otherCity: "",
+                        preferredTestDriveLocation:
+                          !patna && prev.preferredTestDriveLocation === HOME_TEST_DRIVE_OPTION
+                            ? DEALERSHIP_VISIT_OPTION
+                            : prev.preferredTestDriveLocation,
+                      }));
+                      if (!patna && formData.preferredTestDriveLocation === HOME_TEST_DRIVE_OPTION) {
+                        toast.info("Home Test Drive is available only in Patna. Switched to Dealership Visit.");
+                      }
+                    }}
                     onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
                     fullWidthOtherRow
                     otherFieldLabel="City / state / district *"
@@ -449,21 +465,37 @@ const TestDrivePage = () => {
                   <span className={labelClass}>Preferred test drive location *</span>
                   <RadioGroup
                     value={formData.preferredTestDriveLocation}
-                    onValueChange={(v) => update("preferredTestDriveLocation", v)}
+                    onValueChange={(v) => {
+                      if (!isPatnaSelected && v === HOME_TEST_DRIVE_OPTION) {
+                        toast.info("Home Test Drive is available only for Patna. Please select Dealership Visit.");
+                        update("preferredTestDriveLocation", DEALERSHIP_VISIT_OPTION);
+                        return;
+                      }
+                      update("preferredTestDriveLocation", v);
+                    }}
                     className="grid gap-2 sm:grid-cols-2"
                   >
                     {TEST_DRIVE_LOCATION_OPTIONS.map((opt) => (
                       <div
                         key={opt}
-                        className="flex items-center gap-2 rounded-xl border px-3 py-2.5 border-border/60 bg-background/30"
+                        className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 ${
+                          !isPatnaSelected && opt === HOME_TEST_DRIVE_OPTION
+                            ? "border-border/40 bg-muted/40 opacity-60"
+                            : "border-border/60 bg-background/30"
+                        }`}
                       >
                         <RadioGroupItem
                           value={opt}
                           id={`td-loc-${opt.replace(/\s+/g, "-")}`}
+                          disabled={!isPatnaSelected && opt === HOME_TEST_DRIVE_OPTION}
                         />
                         <Label
                           htmlFor={`td-loc-${opt.replace(/\s+/g, "-")}`}
-                          className="text-sm font-normal cursor-pointer leading-snug"
+                          className={`text-sm font-normal leading-snug ${
+                            !isPatnaSelected && opt === HOME_TEST_DRIVE_OPTION
+                              ? "cursor-not-allowed text-muted-foreground"
+                              : "cursor-pointer"
+                          }`}
                         >
                           {opt}
                         </Label>

@@ -353,7 +353,10 @@ const ModelVF6 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      <section className="relative min-h-[85vh]" aria-label="VF 6 hero">
+      <section
+        className="relative min-h-[85vh] overflow-hidden pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        aria-label="VF 6 hero"
+      >
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf6Hero}

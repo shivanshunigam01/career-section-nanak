@@ -18,7 +18,7 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
-import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-desktop.png";
+import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
@@ -187,20 +187,25 @@ const ModelMPV7 = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-36 pt-[4.25rem] lg:pt-20 lg:pb-0">
+    <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      {/* Hero — single asset directly under fixed navbar */}
-      <section className="relative w-full leading-none" aria-label="VF MPV 7 hero">
+      {/* Hero — aligned dimensions with other model pages */}
+      <section
+        className="relative min-h-[85vh] overflow-hidden pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        aria-label="VF MPV 7 hero"
+      >
         <h1 className="sr-only">VinFast VF MPV 7</h1>
-        <img
-          src={mpv7HeroDesktop}
-          alt="VinFast VF MPV 7"
-          className="block h-auto w-full max-w-full object-contain object-top"
-          sizes="100vw"
-          fetchPriority="high"
-          decoding="async"
-        />
+        <div className="hero-media-scrim absolute inset-0 overflow-hidden">
+          <img
+            src={mpv7HeroDesktop}
+            alt="VinFast VF MPV 7"
+            className="h-full w-full object-cover object-[50%_45%]"
+            sizes="100vw"
+            fetchPriority="high"
+            decoding="async"
+          />
+        </div>
       </section>
 
       <section className="relative border-b border-border/50 bg-gradient-to-b from-background via-background to-muted/30">
