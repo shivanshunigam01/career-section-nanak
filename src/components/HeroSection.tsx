@@ -199,8 +199,8 @@ const HeroSection = () => {
   const slide = slides[current] ?? fallbackSlides[0];
 
   return (
-    <section className="relative z-0 overflow-hidden bg-zinc-950 pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
-      <div className="relative w-full shrink-0 overflow-hidden max-lg:min-h-[min(68svh,720px)] max-lg:max-h-[min(88svh,900px)] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
+    <section className="relative z-0 overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
+      <div className="relative w-full shrink-0 overflow-hidden min-h-[52svh] max-h-[68svh] sm:min-h-[58svh] sm:max-h-[72svh] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
         {slides.map((s, i) => (
           <div
             key={`${s.image}-${i}`}
@@ -214,7 +214,7 @@ const HeroSection = () => {
             <img
               src={s.image}
               alt={`${s.title} — VinFast hero`}
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+              className="hero-slider-image h-full w-full min-h-full min-w-full object-contain sm:object-cover"
               style={{ objectPosition: s.objectPosition }}
               sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
               loading={i <= 1 ? "eager" : "lazy"}

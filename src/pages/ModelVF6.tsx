@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
@@ -344,6 +344,14 @@ const ModelVF6 = () => {
   const [selectedColor, setSelectedColor] = useState(0);
   const [variant, setVariant] = useState<VariantId>("earth");
 
+  useEffect(() => {
+    // Preload all colour images so palette switches feel instant.
+    colors.forEach((color) => {
+      const img = new Image();
+      img.src = color.image;
+    });
+  }, []);
+
   const stats = variantHeroStats[variant];
   const vMeta = vf6Variants.find((v) => v.id === variant)!;
   const displayExShowroom =
@@ -354,14 +362,14 @@ const ModelVF6 = () => {
       <Navbar />
 
       <section
-        className="relative min-h-[85vh] overflow-hidden pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        className="relative min-h-[42vh] sm:min-h-[52vh] overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF 6 hero"
       >
         <div className="hero-media-scrim absolute inset-0 overflow-hidden">
           <img
             src={vf6Hero}
             alt="Silver VinFast VF 6 electric SUV on a modern patio with a family and coastal bay view in the background"
-            className="h-full w-full object-cover object-[38%_52%]"
+            className="h-full w-full object-contain object-center sm:object-cover sm:object-[38%_52%]"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
@@ -499,8 +507,9 @@ const ModelVF6 = () => {
                     alt={`VF 6 ${vMeta.shortLabel} in ${colors[selectedColor].name}`}
                     className="image-high-quality absolute inset-0 h-full w-full object-contain object-center p-6 sm:p-8"
                     sizes="(max-width: 1024px) 100vw, 58vw"
-                    loading="lazy"
+                    loading="eager"
                     decoding="async"
+                    fetchPriority="high"
                   />
                 </div>
                 <p className="text-center text-xs text-muted-foreground px-4 py-3 border-t border-border/40 bg-background/60">
