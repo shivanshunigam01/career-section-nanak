@@ -215,7 +215,12 @@ const HeroSection = () => {
               src={s.image}
               alt={`${s.title} — VinFast hero`}
               className="hero-slider-image h-full w-full min-h-full min-w-full object-contain sm:object-cover"
-              style={{ objectPosition: s.objectPosition }}
+              style={{
+                objectPosition:
+                  !isLg && s.image === heroSlide01
+                    ? "76% 48%"
+                    : s.objectPosition,
+              }}
               sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
               loading={i <= 1 ? "eager" : "lazy"}
               decoding="async"
