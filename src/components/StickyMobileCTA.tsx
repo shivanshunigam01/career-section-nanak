@@ -7,6 +7,9 @@ import { telHref, waMeUrl } from "@/lib/contactLinks";
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
 const MPV7_PREBOOK_UNLOCK_EVENT = "vinfast-mpv7-prebook-unlock";
 
+/** Show sticky bar only after the user scrolls past this offset (px). */
+const STICKY_CTA_SCROLL_THRESHOLD = 48;
+
 const StickyMobileCTA = () => {
   const location = useLocation();
   const { dealer, siteConfig } = usePublicSite();
@@ -14,6 +17,7 @@ const StickyMobileCTA = () => {
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
   const onMpv7Page = location.pathname === "/models/mpv7";
   const [mpv7PrebookUnlocked, setMpv7PrebookUnlocked] = useState(false);
+  const [showBar, setShowBar] = useState(false);
 
   useEffect(() => {
     const sync = () => setMpv7PrebookUnlocked(sessionStorage.getItem(MPV7_PREBOOK_SESSION_KEY) === "1");
@@ -21,6 +25,17 @@ const StickyMobileCTA = () => {
     window.addEventListener(MPV7_PREBOOK_UNLOCK_EVENT, sync);
     return () => window.removeEventListener(MPV7_PREBOOK_UNLOCK_EVENT, sync);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setShowBar(window.scrollY >= STICKY_CTA_SCROLL_THRESHOLD);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [location.pathname]);
+
+  if (!showBar) return null;
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 lg:hidden bg-background border-t border-border/50 px-3 py-2.5 pb-[max(0.625rem,env(safe-area-inset-bottom))]">
