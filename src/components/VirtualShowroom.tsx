@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import stepInsideLuxuryV6 from "@/assets/step-inside-luxury-v6-upload.png";
 import vf7Interior from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
-import mpv7Hero from "@/assets/mpv7-gallery/mpv7-hero.png";
+import mpv7Hero from "@/assets/mpv7-gallery/mpv7-new.png";
 import leadInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 
 const interiorModels = [

@@ -542,7 +542,7 @@ const ModelVF7 = () => {
       </section>
 
       {/* Exterior colour + selected variant (aligned with VF 6) */}
-      <section className="py-10 sm:py-14 lg:py-20 border-b border-border/60 bg-muted/25">
+      {/* <section className="py-10 sm:py-14 lg:py-20 border-b border-border/60 bg-muted/25">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="mb-10 lg:mb-12 rounded-2xl border border-border/60 bg-card/90 shadow-sm p-5 sm:p-6 lg:p-8">
             <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
@@ -713,7 +713,7 @@ const ModelVF7 = () => {
             </div>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Gallery */}
       <section className="py-12 sm:py-16 lg:py-24 bg-background border-y border-border/50">
