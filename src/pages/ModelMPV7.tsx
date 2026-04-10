@@ -386,6 +386,8 @@ const ModelMPV7 = () => {
                 </div>
                 <BiharDistrictField
                   id="mpv7-pb-district"
+                  label="District (Bihar)"
+                  labelClassName="sr-only"
                   selectClassName={inputClass}
                   otherInputClassName={`${inputClass} border-primary/50`}
                   value={interestForm.city}
