@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   id?: string;
   label?: string;
+  /** Merged with default label styles; use `sr-only` to match placeholder-only inputs in a grid row. */
+  labelClassName?: string;
   selectClassName: string;
   otherInputClassName?: string;
   value: string;
@@ -31,6 +33,7 @@ type Props = {
 export function BiharDistrictField({
   id,
   label,
+  labelClassName,
   selectClassName,
   otherInputClassName,
   value,
@@ -56,7 +59,7 @@ export function BiharDistrictField({
         onDistrictChange(v);
       }}
       className={selectClassName}
-      aria-label={label ? undefined : "District (Bihar)"}
+      aria-label={label && !labelClassName?.includes("sr-only") ? undefined : "District (Bihar)"}
     >
       {BIHAR_DISTRICTS.map((d) => (
         <option key={d} value={d}>
