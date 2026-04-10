@@ -11,6 +11,7 @@ import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
+import { useMediaQuery } from "react-responsive";
 
 export type HeroSlideView = {
   image: string;
@@ -28,21 +29,35 @@ export type HeroSlideView = {
 function subtitleToThreeLines(raw: string): readonly [string, string, string] {
   const t = raw.trim();
   if (!t) return ["", "", ""];
-  const byNl = t.split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
+  const byNl = t
+    .split(/\r?\n/)
+    .map((s) => s.trim())
+    .filter(Boolean);
   if (byNl.length >= 3) return [byNl[0], byNl[1], byNl.slice(2).join(" ")];
   if (byNl.length === 2) return [byNl[0], byNl[1], ""];
-  const sentences =
-    t.match(/[^.!?]+(?:[.!?]+|$)/g)?.map((s) => s.trim()).filter(Boolean) ?? [t];
-  if (sentences.length >= 3) return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
+  const sentences = t
+    .match(/[^.!?]+(?:[.!?]+|$)/g)
+    ?.map((s) => s.trim())
+    .filter(Boolean) ?? [t];
+  if (sentences.length >= 3)
+    return [sentences[0], sentences[1], sentences.slice(2).join(" ")];
   if (sentences.length === 2) return [sentences[0], sentences[1], ""];
-  const dashParts = t.split(/\s*[—–]\s*/).map((s) => s.trim()).filter(Boolean);
-  if (dashParts.length >= 3) return [dashParts[0], dashParts[1], dashParts.slice(2).join(" — ")];
+  const dashParts = t
+    .split(/\s*[—–]\s*/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (dashParts.length >= 3)
+    return [dashParts[0], dashParts[1], dashParts.slice(2).join(" — ")];
   if (dashParts.length === 2) return [dashParts[0], dashParts[1], ""];
   const commaParts = t.split(/,\s+/);
   if (commaParts.length >= 3) {
     const a = Math.ceil(commaParts.length / 3);
     const b = Math.ceil((2 * commaParts.length) / 3);
-    return [commaParts.slice(0, a).join(", "), commaParts.slice(a, b).join(", "), commaParts.slice(b).join(", ")];
+    return [
+      commaParts.slice(0, a).join(", "),
+      commaParts.slice(a, b).join(", "),
+      commaParts.slice(b).join(", "),
+    ];
   }
   const words = t.split(/\s+/);
   if (words.length >= 6) {
@@ -126,13 +141,21 @@ const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   {
     image: heroSlide06,
     title: "Built for your family",
-    subLines: ["VF 6 — space, safety, and zero tailpipe emissions for every journey.", "", ""],
+    subLines: [
+      "VF 6 — space, safety, and zero tailpipe emissions for every journey.",
+      "",
+      "",
+    ],
     objectPosition: "28% 45%",
   },
 ];
 
 function buildHeroFallbackSlides(): HeroSlideView[] {
-  return [buildDealerOpeningSlide(), buildMpv7LaunchSlide(), ...HERO_FALLBACK_TAIL];
+  return [
+    buildDealerOpeningSlide(),
+    buildMpv7LaunchSlide(),
+    ...HERO_FALLBACK_TAIL,
+  ];
 }
 
 function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
@@ -159,16 +182,20 @@ const HeroSection = () => {
   const [apiSlides, setApiSlides] = useState<HeroSlideView[] | null>(null);
   const slides = apiSlides ?? fallbackSlides;
   const [current, setCurrent] = useState(0);
-
+  const isLg = useMediaQuery({ query: "(min-width: 1024px)" });
   const loadSlidesFromApi = useCallback(async () => {
     if (!hasApi()) return;
     const raw = await publicGet<unknown[]>("/public/hero-slides");
     if (!Array.isArray(raw) || raw.length === 0) return;
-    const mapped = (raw as Record<string, unknown>[]).map(mapHeroFromApi).filter(Boolean) as HeroSlideView[];
+    const mapped = (raw as Record<string, unknown>[])
+      .map(mapHeroFromApi)
+      .filter(Boolean) as HeroSlideView[];
     if (mapped.length > 0) {
       const opening = buildDealerOpeningSlide();
       const mpv7 = buildMpv7LaunchSlide();
-      const withoutDupes = mapped.filter((s) => s.image !== heroMpv7 && s.image !== opening.image);
+      const withoutDupes = mapped.filter(
+        (s) => s.image !== heroMpv7 && s.image !== opening.image,
+      );
       setApiSlides([opening, mpv7, ...withoutDupes]);
     }
   }, []);
@@ -184,9 +211,15 @@ const HeroSection = () => {
     setCurrent((c) => (slides.length ? Math.min(c, slides.length - 1) : 0));
   }, [slides.length]);
 
-  const next = useCallback(() => setCurrent((c) => (slides.length ? (c + 1) % slides.length : 0)), [slides.length]);
+  const next = useCallback(
+    () => setCurrent((c) => (slides.length ? (c + 1) % slides.length : 0)),
+    [slides.length],
+  );
   const prev = useCallback(
-    () => setCurrent((c) => (slides.length ? (c - 1 + slides.length) % slides.length : 0)),
+    () =>
+      setCurrent((c) =>
+        slides.length ? (c - 1 + slides.length) % slides.length : 0,
+      ),
     [slides.length],
   );
 
