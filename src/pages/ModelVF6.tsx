@@ -440,9 +440,44 @@ const ModelVF6 = () => {
         </div>
       </section>
 
-      {/* Selected variant first; exterior colour picker below (syncs with Color Studio) */}
+      {/* Exterior colour + selected variant (aligned with VF 7) */}
       <section className="py-10 sm:py-14 lg:py-20 border-b border-border/60 bg-muted/25">
         <div className="container mx-auto px-4 lg:px-8">
+          <div className="mb-10 lg:mb-12 rounded-2xl border border-border/60 bg-card/90 shadow-sm p-5 sm:p-6 lg:p-8">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
+              <div className="min-w-0">
+                <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-2">Exterior colour</p>
+                <p className="font-display font-bold text-xl sm:text-2xl text-foreground">{colors[selectedColor].name}</p>
+                <p className="text-muted-foreground text-sm mt-2 max-w-xl leading-relaxed">
+                  Pick a paint for your VF 6 preview. Selection stays in sync with{" "}
+                  <span className="text-foreground/80 font-medium">Color Studio</span> below.
+                </p>
+              </div>
+              <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5 sm:gap-3">
+                {colors.map((c, i) => (
+                  <button
+                    key={c.name}
+                    type="button"
+                    onClick={() => setSelectedColor(i)}
+                    className={`relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-all ${
+                      i === selectedColor
+                        ? "border-primary scale-105 ring-2 ring-primary/30 shadow-md"
+                        : "border-foreground/20 hover:border-foreground/40 hover:scale-[1.02]"
+                    }`}
+                    style={{ backgroundColor: c.hex }}
+                    title={c.name}
+                    aria-label={`Select colour ${c.name}`}
+                    aria-pressed={i === selectedColor}
+                  >
+                    {i === selectedColor && (
+                      <Check className="h-4 w-4 text-white drop-shadow-md mix-blend-difference" strokeWidth={3} aria-hidden />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="grid items-start gap-10 lg:gap-14 lg:grid-cols-12">
             <div className="lg:col-span-5 xl:col-span-5 space-y-6">
               <div>
@@ -607,40 +642,6 @@ const ModelVF6 = () => {
                 </div>
               </div>
 
-            </div>
-          </div>
-
-          <div className="mt-10 lg:mt-12 rounded-2xl border border-border/60 bg-card/90 shadow-sm p-5 sm:p-6 lg:p-8">
-            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between lg:gap-10">
-              <div className="min-w-0">
-                <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-2">Exterior colour</p>
-                <p className="font-display font-bold text-xl sm:text-2xl text-foreground">{colors[selectedColor].name}</p>
-                <p className="text-muted-foreground text-sm mt-2 max-w-xl leading-relaxed">
-                  Choose a paint for your VF 6 preview. The same selection stays in sync with <span className="text-foreground/80 font-medium">Color Studio</span> further down the page.
-                </p>
-              </div>
-              <div className="flex flex-shrink-0 flex-wrap items-center gap-2.5 sm:gap-3">
-                {colors.map((c, i) => (
-                  <button
-                    key={c.name}
-                    type="button"
-                    onClick={() => setSelectedColor(i)}
-                    className={`relative flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border-2 transition-all ${
-                      i === selectedColor
-                        ? "border-primary scale-105 ring-2 ring-primary/30 shadow-md"
-                        : "border-foreground/20 hover:border-foreground/40 hover:scale-[1.02]"
-                    }`}
-                    style={{ backgroundColor: c.hex }}
-                    title={c.name}
-                    aria-label={`Select colour ${c.name}`}
-                    aria-pressed={i === selectedColor}
-                  >
-                    {i === selectedColor && (
-                      <Check className="h-4 w-4 text-white drop-shadow-md mix-blend-difference" strokeWidth={3} aria-hidden />
-                    )}
-                  </button>
-                ))}
-              </div>
             </div>
           </div>
         </div>
