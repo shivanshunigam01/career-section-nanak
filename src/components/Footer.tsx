@@ -5,14 +5,16 @@ import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { mapsDirectionsHref } from "@/lib/dealerMap";
-
+//test
 const Footer = () => {
   const { dealer, siteConfig } = usePublicSite();
   const address = dealer.address;
   const mapHref = mapsDirectionsHref(address, dealer.mapEmbedUrl);
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
-  const mailTo = dealer.email ? `mailto:${dealer.email}` : "mailto:info@patliputravinfast.com";
+  const mailTo = dealer.email
+    ? `mailto:${dealer.email}`
+    : "mailto:info@patliputravinfast.com";
 
   return (
     <footer className="section-surface border-t border-border/50">
@@ -20,31 +22,52 @@ const Footer = () => {
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-10 lg:gap-8">
           {/* Brand */}
           <div className="lg:col-span-2">
-            <Link to="/" className="flex items-center gap-2 sm:gap-3 mb-4 w-fit shrink-0 min-w-0">
+            <Link
+              to="/"
+              className="flex items-center gap-2 sm:gap-3 mb-4 w-fit shrink-0 min-w-0"
+            >
               <img
                 src={vinfastLogo}
                 alt={dealer.dealerName}
                 className="h-10 sm:h-12 lg:h-16 w-auto max-h-full object-contain object-left"
               />
-              <span className="hidden sm:block w-px h-4 sm:h-5 lg:h-7 self-center bg-border shrink-0" aria-hidden />
+              <span
+                className="hidden sm:block w-px h-4 sm:h-5 lg:h-7 self-center bg-border shrink-0"
+                aria-hidden
+              />
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
                 className="h-4 sm:h-5 lg:h-8 w-auto max-h-full object-contain object-left"
               />
             </Link>
-            <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">Authorized Dealer, Bihar</p>
+            <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">
+              Authorized Dealer, Bihar
+            </p>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mb-6">
-              {dealer.dealerName} — Bihar&apos;s authorized {dealer.brand} dealer. Experience electric SUVs and the seven-seat VF MPV 7 — world-class safety, technology, and support.
+              {dealer.dealerName} — Bihar&apos;s authorized {dealer.brand}{" "}
+              dealer. Experience electric SUVs and the seven-seat VF MPV 7 —
+              world-class safety, technology, and support.
             </p>
             <div className="flex gap-4">
-              <a href={wa} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a
+                href={wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+              >
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <a href={tel} className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a
+                href={tel}
+                className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+              >
                 <Phone className="w-4 h-4" />
               </a>
-              <a href={mailTo} className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all">
+              <a
+                href={mailTo}
+                className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/10 transition-all"
+              >
                 <Mail className="w-4 h-4" />
               </a>
             </div>
@@ -52,7 +75,9 @@ const Footer = () => {
 
           {/* Quick Links */}
           <div>
-            <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">Quick Links</h4>
+            <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">
+              Quick Links
+            </h4>
             <ul className="space-y-3">
               {[
                 { label: "Home", href: "/" },
@@ -65,7 +90,10 @@ const Footer = () => {
                 { label: "EMI Calculator", href: "/emi-calculator" },
               ].map((link) => (
                 <li key={link.href}>
-                  <Link to={link.href} className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  <Link
+                    to={link.href}
+                    className="text-muted-foreground text-sm hover:text-foreground transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -75,7 +103,9 @@ const Footer = () => {
 
           {/* More */}
           <div>
-            <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">More</h4>
+            <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">
+              More
+            </h4>
             <ul className="space-y-3">
               {[
                 { label: "About Us", href: "/about" },
@@ -86,7 +116,10 @@ const Footer = () => {
                 { label: "Contact Us", href: "/contact" },
               ].map((link) => (
                 <li key={link.label}>
-                  <Link to={link.href} className="text-muted-foreground text-sm hover:text-foreground transition-colors">
+                  <Link
+                    to={link.href}
+                    className="text-muted-foreground text-sm hover:text-foreground transition-colors"
+                  >
                     {link.label}
                   </Link>
                 </li>
@@ -96,7 +129,9 @@ const Footer = () => {
 
           {/* Contact */}
           <div>
-            <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">Contact Us</h4>
+            <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">
+              Contact Us
+            </h4>
             <ul className="space-y-4">
               <li className="flex gap-3 text-sm">
                 <MapPin className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
@@ -111,19 +146,27 @@ const Footer = () => {
               </li>
               <li className="flex gap-3 text-sm">
                 <Phone className="w-4 h-4 text-primary flex-shrink-0" />
-                <a href={tel} className="text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href={tel}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   {siteConfig.phoneNumber || dealer.phone}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
                 <Mail className="w-4 h-4 text-primary flex-shrink-0" />
-                <a href={mailTo} className="text-muted-foreground hover:text-foreground transition-colors">
+                <a
+                  href={mailTo}
+                  className="text-muted-foreground hover:text-foreground transition-colors"
+                >
                   {dealer.email}
                 </a>
               </li>
               <li className="flex gap-3 text-sm">
                 <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-                <span className="text-muted-foreground">{dealer.showroomHours}</span>
+                <span className="text-muted-foreground">
+                  {dealer.showroomHours}
+                </span>
               </li>
             </ul>
           </div>
@@ -135,7 +178,8 @@ const Footer = () => {
         <div className="container mx-auto px-4 lg:px-8 pt-6 pb-[calc(8.5rem+env(safe-area-inset-bottom,0px))] lg:pb-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="text-center sm:text-left space-y-2">
             <p className="text-muted-foreground text-xs">
-              © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast Dealer, Bihar.
+              © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast
+              Dealer, Bihar.
             </p>
             <p className="text-muted-foreground text-[10px] leading-snug max-w-xl">
               This site is protected by reCAPTCHA and the Google{" "}
