@@ -8,6 +8,12 @@ import heroVf7Cockpit from "@/assets/hero-slideshow/hero-vf7-cockpit.png";
 import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
 import heroSlide06 from "@/assets/vf6-earth-hero-family.png";
 import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
+import heroMobileDealerLineup from "@/assets/hero-slideshow/mobile/hero-mobile-dealer-lineup.png";
+import heroMobileRearSignature from "@/assets/hero-slideshow/mobile/hero-mobile-rear-signature.png";
+import heroMobileMpv7 from "@/assets/hero-slideshow/mobile/hero-mobile-mpv7.png";
+import heroMobileVf6Family from "@/assets/hero-slideshow/mobile/hero-mobile-vf6-family.png";
+import heroMobileCockpit from "@/assets/hero-slideshow/mobile/hero-mobile-cockpit.png";
+import heroMobileVf7City from "@/assets/hero-slideshow/mobile/hero-mobile-vf7-city.png";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
@@ -15,6 +21,10 @@ import { useMediaQuery } from "react-responsive";
 
 export type HeroSlideView = {
   image: string;
+  /** Portrait / mobile-optimized art; used below `lg` when set. */
+  imageMobile?: string;
+  /** Optional focal point when `imageMobile` is shown. */
+  objectPositionMobile?: string;
   title: string;
   /** Three subtitle lines under the title (CMS / API subtitles are split automatically). */
   subLines?: readonly [string, string, string];
@@ -74,6 +84,8 @@ function subtitleToThreeLines(raw: string): readonly [string, string, string] {
 function buildDealerOpeningSlide(): HeroSlideView {
   return {
     image: heroSlide01,
+    imageMobile: heroMobileDealerLineup,
+    objectPositionMobile: "center 42%",
     title: "VF 6, VF 7 & VF MPV 7",
     subLines: [
       "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7. Exclusively at Patliputra VinFast, Bihar's only authorized VinFast dealer.",
@@ -88,6 +100,8 @@ function buildDealerOpeningSlide(): HeroSlideView {
 function buildMpv7LaunchSlide(): HeroSlideView {
   return {
     image: heroMpv7,
+    imageMobile: heroMobileMpv7,
+    objectPositionMobile: "center 38%",
     title: "The all-new VF MPV 7",
     subLines: [
       "Seven-seat electric MPV · 60.13 kWh battery · Pre-booking open.",
@@ -102,6 +116,8 @@ function buildMpv7LaunchSlide(): HeroSlideView {
 const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   {
     image: heroSlide02,
+    imageMobile: heroMobileVf7City,
+    objectPositionMobile: "center 44%",
     title: "VinFast VF 7",
     subLines: [
       "Urban performance and electric sophistication — crafted for highways, city streets, and everything between.",
@@ -112,24 +128,32 @@ const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   },
   {
     image: heroSlide03,
+    imageMobile: heroMobileRearSignature,
+    objectPositionMobile: "center 48%",
     title: "Precision in every detail",
     subLines: ["Alloys, colour, unmistakable VF form.", "", ""],
     objectPosition: "center 55%",
   },
   {
     image: heroVf7LedHighway,
+    imageMobile: heroMobileDealerLineup,
+    objectPositionMobile: "center 40%",
     title: "Signature LED presence",
     subLines: ["Full-width light signature, front to rear.", "", ""],
     objectPosition: "center 50%",
   },
   {
     image: heroVf7Cockpit,
+    imageMobile: heroMobileCockpit,
+    objectPositionMobile: "center 45%",
     title: "Your command centre",
     subLines: ["Touchscreen, connected services, refined cabin.", "", ""],
     objectPosition: "center 48%",
   },
   {
     image: heroSlide05,
+    imageMobile: heroMobileVf6Family,
+    objectPositionMobile: "center 42%",
     title: "VinFast VF 6",
     subLines: [
       "Compact, smart, and electrifying — minimal dash, large screen, driver-focused layout.",
@@ -140,6 +164,8 @@ const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   },
   {
     image: heroSlide06,
+    imageMobile: heroMobileVf6Family,
+    objectPositionMobile: "center 42%",
     title: "Built for your family",
     subLines: [
       "VF 6 — space, safety, and zero tailpipe emissions for every journey.",
@@ -161,11 +187,15 @@ function buildHeroFallbackSlides(): HeroSlideView[] {
 function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
   const img = String(doc.bgImage ?? "").trim();
   if (!img) return null;
+  const imgMobile = String(doc.bgImageMobile ?? "").trim();
   const subtitle = String(doc.subtitle ?? "").trim();
   const triplet = subtitle ? subtitleToThreeLines(subtitle) : undefined;
   const subLines = triplet?.some((l) => l.trim()) ? triplet : undefined;
+  const objMob = String(doc.objectPositionMobile ?? "").trim();
   return {
     image: img,
+    imageMobile: imgMobile || undefined,
+    objectPositionMobile: objMob || undefined,
     title: String(doc.title ?? "VinFast"),
     subLines,
     objectPosition: String(doc.objectPosition ?? "center 50%"),
@@ -175,6 +205,19 @@ function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
     ctaSecondary: String(doc.ctaSecondary ?? "").trim() || undefined,
     ctaSecondaryLink: String(doc.ctaSecondaryLink ?? "").trim() || undefined,
   };
+}
+
+function heroImageSrc(slide: HeroSlideView, isLg: boolean): string {
+  return !isLg && slide.imageMobile ? slide.imageMobile : slide.image;
+}
+
+function heroImageObjectPosition(slide: HeroSlideView, isLg: boolean): string {
+  if (!isLg) {
+    if (slide.imageMobile)
+      return slide.objectPositionMobile ?? slide.objectPosition;
+    if (slide.image === heroSlide01) return "76% 48%";
+  }
+  return slide.objectPosition;
 }
 
 const HeroSection = () => {
@@ -233,7 +276,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative z-0 overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
-      <div className="relative w-full shrink-0 overflow-hidden min-h-[52svh] max-h-[68svh] sm:min-h-[58svh] sm:max-h-[72svh] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
+      <div className="relative w-full shrink-0 overflow-hidden h-[75vh] lg:h-screen sm:min-h-[58svh] sm:max-h-[72svh] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
         {slides.map((s, i) => (
           <div
             key={`${s.image}-${i}`}
@@ -245,14 +288,11 @@ const HeroSection = () => {
             aria-hidden={i !== current}
           >
             <img
-              src={s.image}
+              src={heroImageSrc(s, isLg)}
               alt={`${s.title} — VinFast hero`}
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-contain sm:object-cover"
+              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
               style={{
-                objectPosition:
-                  !isLg && s.image === heroSlide01
-                    ? "76% 48%"
-                    : s.objectPosition,
+                objectPosition: heroImageObjectPosition(s, isLg),
               }}
               sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
               loading={i <= 1 ? "eager" : "lazy"}

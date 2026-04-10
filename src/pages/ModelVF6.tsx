@@ -5,7 +5,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf6Hero from "@/assets/vf6-product-hero.png";
+import vf6HeroPagePortrait from "@/assets/vf6-hero-page-portrait.png";
 import vf6WhyInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
@@ -362,18 +362,21 @@ const ModelVF6 = () => {
       <Navbar />
 
       <section
-        className="relative min-h-[42vh] sm:min-h-[52vh] overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        className="relative z-0 overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF 6 hero"
       >
-        <div className="hero-media-scrim absolute inset-0 overflow-hidden">
-          <img
-            src={vf6Hero}
-            alt="Silver VinFast VF 6 electric SUV on a modern patio with a family and coastal bay view in the background"
-            className="h-full w-full object-contain object-center sm:object-cover sm:object-[38%_52%]"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
+        <div className="relative w-full shrink-0 overflow-hidden h-[75vh] lg:h-screen sm:min-h-[58svh] sm:max-h-[72svh] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
+          <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
+            <img
+              src={vf6HeroPagePortrait}
+              alt="Silver VinFast VF 6 electric SUV with family and wildflower field under a bright sky"
+              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+              style={{ objectPosition: "center 42%" }}
+              sizes="100vw"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </div>
         </div>
         <h1 className="sr-only">VinFast VF 6</h1>
       </section>
