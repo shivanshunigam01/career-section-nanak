@@ -59,7 +59,7 @@ export function BiharDistrictField({
         onDistrictChange(v);
       }}
       className={selectClassName}
-      aria-label={label && !labelClassName?.includes("sr-only") ? undefined : "District (Bihar)"}
+      aria-label={label ? undefined : "District (Bihar)"}
     >
       {BIHAR_DISTRICTS.map((d) => (
         <option key={d} value={d}>
@@ -84,11 +84,15 @@ export function BiharDistrictField({
       />
     ) : null;
 
+  const labelCn = label
+    ? cn("text-xs font-medium text-muted-foreground", labelClassName)
+    : "";
+
   if (!fullWidthOtherRow) {
     return (
       <div className="flex min-w-0 w-full flex-col gap-2">
         {label ? (
-          <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+          <label htmlFor={id} className={labelCn}>
             {label}
           </label>
         ) : null}
@@ -102,7 +106,7 @@ export function BiharDistrictField({
     <>
       <div className={cn("flex min-w-0 w-full flex-col gap-2", selectWrapperClassName)}>
         {label ? (
-          <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+          <label htmlFor={id} className={labelCn}>
             {label}
           </label>
         ) : null}
