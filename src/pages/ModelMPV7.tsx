@@ -18,6 +18,7 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
+import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import mpv7HeroPagePortrait from "@/assets/mpv7-hero-page-portrait.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 
@@ -190,18 +191,29 @@ const ModelMPV7 = () => {
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
       <Navbar />
 
-      {/* Hero — same shell as HeroSection.tsx / VF 6 & VF 7 model pages */}
+      {/* Mobile: HeroSection-style portrait; lg+: original shared wide hero */}
       <section
         className="relative z-0 overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF MPV 7 hero"
       >
-        <div className="relative w-full shrink-0 overflow-hidden h-[75vh] lg:h-screen sm:min-h-[58svh] sm:max-h-[72svh] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
+        <div className="relative w-full shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
               src={mpv7HeroPagePortrait}
               alt="Black VinFast VF MPV 7 electric MPV on a coastal road above the ocean"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
-              style={{ objectPosition: "center 38%" }}
+              className="hero-slider-image h-full w-full object-contain object-center"
+              sizes="100vw"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </div>
+        </div>
+        <div className="relative hidden lg:block lg:absolute lg:inset-0 lg:min-h-0">
+          <div className="hero-media-scrim absolute inset-0 overflow-hidden">
+            <img
+              src={mpv7HeroDesktop}
+              alt="VinFast VF MPV 7"
+              className="hero-slider-image h-full w-full object-contain object-center"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"

@@ -5,6 +5,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import vf7FrontHero from "@/assets/VF7 Front Page.png";
 import vf7HeroPagePortrait from "@/assets/vf7-hero-page-portrait.png";
 import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
 import vf7CrimsonRed from "@/assets/vf7-crimson-red.png";
@@ -463,16 +464,30 @@ const ModelVF7 = () => {
       <Navbar />
 
       <section
-        className="relative z-0 overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF 7 hero"
       >
-        <div className="relative w-full shrink-0 overflow-hidden h-[75vh] lg:h-screen sm:min-h-[58svh] sm:max-h-[72svh] lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
+        {/* Mobile only: HeroSection-style shell + portrait art */}
+        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
               src={vf7HeroPagePortrait}
               alt="VinFast VF 7 — red electric SUV on a city avenue"
               className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
               style={{ objectPosition: "center 42%" }}
+              sizes="100vw"
+              fetchPriority="high"
+              decoding="async"
+            />
+          </div>
+        </div>
+        {/* lg and up: original wide hero */}
+        <div className="relative hidden min-h-[42vh] sm:min-h-[52vh] lg:block lg:absolute lg:inset-0 lg:min-h-0">
+          <div className="hero-media-scrim absolute inset-0 overflow-hidden">
+            <img
+              src={vf7FrontHero}
+              alt="VinFast VF 7"
+              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover object-[42%_48%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
