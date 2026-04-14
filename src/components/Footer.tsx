@@ -216,6 +216,18 @@ const Footer = () => {
             >
               Terms of Service
             </Link>
+            <Link
+              to="/terms-and-conditions"
+              className="text-muted-foreground text-xs hover:text-foreground transition-colors inline-flex min-h-11 min-w-[44px] items-center justify-center px-3 py-2 rounded-md active:bg-foreground/5"
+            >
+              Terms and Conditions
+            </Link>
+            <Link
+              to="/payment-refund-policy"
+              className="text-muted-foreground text-xs hover:text-foreground transition-colors inline-flex min-h-11 min-w-[44px] items-center justify-center px-3 py-2 rounded-md active:bg-foreground/5"
+            >
+              Payment &amp; Refund Policy
+            </Link>
           </div>
         </div>
       </div>

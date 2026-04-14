@@ -304,8 +304,8 @@ const ContactPage = () => {
                   <option value="Service">Service & Support</option>
                 </select>
                 <textarea placeholder="Your Message (Optional)" value={formData.message} onChange={(e) => update("message", e.target.value)} className={`${inputClass} h-24 py-3 resize-none`} />
-                <Button type="submit" variant="hero" size="lg" className="w-full">Submit Enquiry</Button>
                 <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
+                <Button type="submit" variant="hero" size="lg" className="w-full">Submit Enquiry</Button>
                 <p className="text-center text-muted-foreground text-xs">We respect your privacy. No spam, ever.</p>
               </div>
             </motion.form>

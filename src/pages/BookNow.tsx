@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { toast } from "sonner";
-import { Car, CreditCard, Headphones, CalendarDays } from "lucide-react";
+import { Car, CreditCard, Headphones, CalendarDays, Share2 } from "lucide-react";
+import html2canvas from "html2canvas";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
 import { hasApi } from "@/lib/apiConfig";
@@ -22,8 +23,10 @@ import vf7Real from "@/assets/vf7-real.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import bookNowCabinGrid from "@/assets/book-now-cabin-grid.png";
 import slideVf7Interior from "@/assets/slide-vf7-interior.png";
+import bookNowPaymentQr from "@/assets/book-now-payment-qr.png";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
+const ITR_NUMBER = "206508881857";
 
 const getLocalISODate = () => {
   const d = new Date();
@@ -35,7 +38,9 @@ const getLocalISODate = () => {
 
 const BookNowPage = () => {
   const { getToken } = usePublicFormRecaptcha();
+  const paymentCardRef = useRef<HTMLDivElement | null>(null);
   const [searchParams] = useSearchParams();
+  const [isSharingScreenshot, setIsSharingScreenshot] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -196,6 +201,53 @@ const BookNowPage = () => {
 
   const update = (field: string, value: string | boolean) =>
     setFormData({ ...formData, [field]: value });
+
+  const handleShareScreenshot = async () => {
+    if (!paymentCardRef.current) return;
+
+    setIsSharingScreenshot(true);
+    try {
+      const canvas = await html2canvas(paymentCardRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 2,
+        useCORS: true,
+      });
+      const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 1));
+      if (!blob) {
+        toast.error("Could not prepare screenshot. Please try again.");
+        return;
+      }
+
+      const file = new File([blob], "vinfast-book-now-payment-qr.png", { type: "image/png" });
+      const canShareFile =
+        typeof navigator !== "undefined" &&
+        typeof navigator.share === "function" &&
+        typeof navigator.canShare === "function" &&
+        navigator.canShare({ files: [file] });
+
+      if (canShareFile) {
+        await navigator.share({
+          title: "VinFast Book Now Payment QR",
+          text: `Scan and pay using this QR. ITR Number: ${ITR_NUMBER}`,
+          files: [file],
+        });
+        toast.success("Screenshot shared successfully.");
+        return;
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "vinfast-book-now-payment-qr.png";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Screenshot downloaded. You can now share it.");
+    } catch {
+      toast.error("Screenshot share failed. Please try again.");
+    } finally {
+      setIsSharingScreenshot(false);
+    }
+  };
 
   const inputClass =
     "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
@@ -391,10 +443,33 @@ const BookNowPage = () => {
                   onChange={(e) => update("remarks", e.target.value)}
                   className={`${inputClass} h-24 py-3 resize-none`}
                 />
+                <div ref={paymentCardRef} className="rounded-xl border border-border bg-card/70 p-4 space-y-3">
+                  <p className="font-display text-base font-semibold">Book Now QR Payment</p>
+                  <img
+                    src={bookNowPaymentQr}
+                    alt="Scan and pay QR code for book now payment"
+                    className="w-full max-w-[320px] mx-auto rounded-md border border-border/70"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <p className="text-xs text-muted-foreground text-center">
+                    ITR Number: <span className="font-semibold text-foreground">{ITR_NUMBER}</span>
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleShareScreenshot}
+                  disabled={isSharingScreenshot}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  {isSharingScreenshot ? "Preparing screenshot..." : "Share screenshot"}
+                </Button>
+                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <Button type="submit" variant="hero" size="lg" className="w-full">
                   Submit pre-booking request
                 </Button>
-                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>
               </div>
             </motion.form>

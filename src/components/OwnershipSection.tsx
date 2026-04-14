@@ -5,9 +5,9 @@ import vf7Street from "@/assets/vf7-street.jpg";
 /** Offer messaging as text cards — no promotional bitmap tiles. */
 const valueProgramCards: { title: string; body: string; footnote?: string; className?: string }[] = [
   {
-    title: "10 years* corrosion warranty",
-    body: "Long-term protection for your VinFast — full terms and coverage at the showroom.",
-    footnote: "*As per official warranty documentation.",
+    title: "Free Maintenance upto 3 years",
+    body: "Enjoy hassle-free ownership with complimentary periodic maintenance for up to 3 years.",
+    footnote: "*As per programme terms at Patliputra VinFast.",
     className: "bg-gradient-to-br from-red-950/40 via-card/80 to-card/60",
   },
   {
@@ -49,7 +49,7 @@ const ownershipItems = [
   {
     icon: ShieldCheck,
     title: "Warranty & Value Assured",
-    description: "10 Years* Corrosion Warranty, up to 1.54 Lakhs* ICE to EV savings, and Value Assured buyback up to 75%*.",
+    description: "Free Maintenance upto 3 years, up to 1.54 Lakhs* ICE to EV savings, and Value Assured buyback up to 75%*.",
   },
 ];
 
