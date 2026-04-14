@@ -212,13 +212,13 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
               className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               includeMpv7={includeMpv7InModelSelect}
             />
-            <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0">
-              Get in Touch
-            </Button>
           </div>
           <div className="mt-4">
             <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
           </div>
+          <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0 mt-4">
+            Get in Touch
+          </Button>
           <p className="text-center text-muted-foreground text-xs mt-4">
             By submitting, you agree to our privacy policy. We respect your data.
           </p>

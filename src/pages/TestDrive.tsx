@@ -636,10 +636,10 @@ const TestDrivePage = () => {
                     className={`${inputClass} h-24 py-3 resize-none`}
                   />
                 </div>
+                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <Button type="submit" variant="hero" size="lg" className="w-full">
                   Confirm Test Drive
                 </Button>
-                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <p className="text-center text-muted-foreground text-xs">By submitting, you agree to our privacy policy.</p>
                 <p className="text-center text-muted-foreground text-xs pt-1">
                   Ready to buy?{" "}
