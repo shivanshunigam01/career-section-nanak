@@ -9,7 +9,7 @@ import {
 } from "@/lib/vfLocalStorage";
 import { hasApi } from "@/lib/apiConfig";
 import { adminDeleteJson, adminGet, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
-import { leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
+import { formatLeadSubmittedAt, leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
 import { fetchAllAdminRows } from "@/lib/adminFetchAll";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -28,7 +28,7 @@ const CRM_LEAD_SOURCES = ["Website", "Google Ads", "Meta Ads", "WhatsApp", "Walk
 const AdminLeads = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [leads, setLeads] = useState<Lead[]>(mockLeads);
+  const [leads, setLeads] = useState<Lead[]>(() => (hasApi() ? [] : mockLeads));
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editLead, setEditLead] = useState<Lead | null>(null);
@@ -145,6 +145,7 @@ const AdminLeads = () => {
           <td>${l.city}</td>
           <td>${l.source}</td>
           <td>${l.status}</td>
+          <td>${formatLeadSubmittedAt(l.createdAt)}</td>
           <td>${l.nextFollowUp || "-"}</td>
         </tr>`,
         )
@@ -167,7 +168,7 @@ const AdminLeads = () => {
           <table>
             <thead>
               <tr>
-                <th>Name</th><th>Mobile</th><th>Email</th><th>Model</th><th>City</th><th>Source</th><th>Status</th><th>Next Follow-up</th>
+                <th>Name</th><th>Mobile</th><th>Email</th><th>Model</th><th>City</th><th>Source</th><th>Status</th><th>Submitted</th><th>Next Follow-up</th>
               </tr>
             </thead>
             <tbody>${htmlRows}</tbody>
@@ -300,6 +301,7 @@ const AdminLeads = () => {
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Model</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">Source</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Status</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell whitespace-nowrap">Submitted</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden lg:table-cell">Follow-up</th>
                 <th className="text-right p-3 text-xs text-muted-foreground font-medium">Actions</th>
               </tr>
@@ -310,6 +312,7 @@ const AdminLeads = () => {
                   <td className="p-3">
                     <p className="font-medium text-foreground">{lead.name}</p>
                     <p className="text-xs text-muted-foreground sm:hidden">{lead.mobile}</p>
+                    <p className="text-[10px] text-muted-foreground md:hidden mt-0.5 whitespace-nowrap">{formatLeadSubmittedAt(lead.createdAt)}</p>
                   </td>
                   <td className="p-3 hidden sm:table-cell">
                     <div className="flex items-center gap-2">
@@ -330,6 +333,7 @@ const AdminLeads = () => {
                       "bg-secondary text-muted-foreground"
                     }`}>{lead.status}</span>
                   </td>
+                  <td className="p-3 hidden md:table-cell text-muted-foreground text-xs whitespace-nowrap">{formatLeadSubmittedAt(lead.createdAt)}</td>
                   <td className="p-3 hidden lg:table-cell text-muted-foreground text-xs">{lead.nextFollowUp || "—"}</td>
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end gap-1">

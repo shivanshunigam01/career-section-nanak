@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
@@ -45,6 +46,8 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
   const [mobileError, setMobileError] = useState("");
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const [waToken, setWaToken] = useState<string | null>(null);
+  const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Allow digits only, max 10 characters
@@ -84,6 +87,10 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
       toast.error("Please complete captcha verification.");
       return;
     }
+    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
+      return;
+    }
     if (hasApi()) {
       const cityVal = formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city;
       let recaptchaToken: string | undefined;
@@ -94,7 +101,7 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
         return;
       }
       try {
-        await submitPublicLead({
+        const res = await submitPublicLead({
           name: formData.name,
           mobile: formData.mobile,
           city: cityVal,
@@ -105,12 +112,13 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
           remarks: `Interest: ${formData.interest}`,
           pageSource: "Homepage Lead Strip",
           recaptchaToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
+        toast.success(res.message ?? "Our EV advisor will get in touch with you shortly.");
       } catch (err) {
         toast.error(formatApiErrors(err));
         return;
       }
-      toast.success("Our EV advisor will get in touch with you shortly.");
       setFormData({ name: "", mobile: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "", model: "VF 7", variant: DEFAULT_VF7_TRIM, interest: "Test Drive" });
       setMobileError("");
       setCaptchaResetSignal((n) => n + 1);
@@ -212,13 +220,29 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
               className="h-12 min-w-0 w-full px-4 rounded-xl bg-background/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
               includeMpv7={includeMpv7InModelSelect}
             />
-            <Button type="submit" variant="hero" className="h-12 w-full sm:w-auto lg:w-full shrink-0">
+            <Button
+              type="submit"
+              variant="hero"
+              className="h-12 w-full sm:w-auto lg:w-full shrink-0"
+              disabled={Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)}
+            >
               Get in Touch
             </Button>
           </div>
           <div className="mt-4">
             <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
           </div>
+          {hasApi() && siteConfig.features?.whatsappOtp && (
+            <div className="mt-4">
+              <WhatsAppOtpVerify
+                mobile={formData.mobile.replace(/\D/g, "").slice(0, 10)}
+                displayName={formData.name.trim() || "Customer"}
+                recaptchaAction="homepage_lead_whatsapp_otp"
+                enabled
+                onTokenChange={onWaTokenChange}
+              />
+            </div>
+          )}
           <p className="text-center text-muted-foreground text-xs mt-4">
             By submitting, you agree to our privacy policy. We respect your data.
           </p>

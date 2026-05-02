@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,6 +19,8 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 
@@ -58,6 +60,7 @@ export function BrochureDownloadButton({
   disabled,
   ...buttonProps
 }: BrochureDownloadButtonProps) {
+  const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -68,6 +71,8 @@ export function BrochureDownloadButton({
   const [otherCity, setOtherCity] = useState("");
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const [waToken, setWaToken] = useState<string | null>(null);
+  const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
 
   useEffect(() => {
     if (!open) {
@@ -78,6 +83,7 @@ export function BrochureDownloadButton({
       setOtherCity("");
       setSubmitting(false);
       setCaptchaResetSignal((n) => n + 1);
+      setWaToken(null);
     }
   }, [open]);
 
@@ -103,6 +109,10 @@ export function BrochureDownloadButton({
       toast.error("Please complete captcha verification.");
       return;
     }
+    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
+      return;
+    }
 
     const cityVal = city === DISTRICT_OTHER ? DISTRICT_OTHER : city;
     const modelLine = leadModelLabel(modelDisplay, "");
@@ -118,7 +128,7 @@ export function BrochureDownloadButton({
           toast.error(err instanceof Error ? err.message : "Security verification failed.");
           return;
         }
-        await submitPublicLead({
+        const res = await submitPublicLead({
           name: name.trim(),
           mobile,
           city: cityVal,
@@ -130,7 +140,13 @@ export function BrochureDownloadButton({
           remarks,
           pageSource,
           recaptchaToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
+        triggerBrochureDownload(brochureHref, downloadFileName);
+        toast.success(
+          res.message ?? "Your brochure download has started. We'll be in touch soon.",
+        );
+        setOpen(false);
       } else {
         try {
           const todayStr = getLocalISODate();
@@ -157,11 +173,10 @@ export function BrochureDownloadButton({
           toast.error("Could not save your details. Please try again or contact us by phone.");
           return;
         }
+        triggerBrochureDownload(brochureHref, downloadFileName);
+        toast.success("Your brochure download has started. We'll be in touch soon.");
+        setOpen(false);
       }
-
-      triggerBrochureDownload(brochureHref, downloadFileName);
-      toast.success("Your brochure download has started. We'll be in touch soon.");
-      setOpen(false);
     } catch (err) {
       toast.error(formatApiErrors(err));
     } finally {
@@ -231,6 +246,15 @@ export function BrochureDownloadButton({
                 placeholder="you@example.com"
               />
             </div>
+            {hasApi() && siteConfig.features?.whatsappOtp && (
+              <WhatsAppOtpVerify
+                mobile={mobile.replace(/\D/g, "").slice(0, 10)}
+                displayName={name.trim() || "Customer"}
+                recaptchaAction="brochure_whatsapp_otp"
+                enabled
+                onTokenChange={onWaTokenChange}
+              />
+            )}
             <BiharDistrictField
               label="District (Bihar)"
               selectClassName={inputClass}
@@ -249,7 +273,14 @@ export function BrochureDownloadButton({
               <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={submitting}>
                 Cancel
               </Button>
-              <Button type="submit" variant="hero" disabled={submitting}>
+              <Button
+                type="submit"
+                variant="hero"
+                disabled={
+                  submitting ||
+                  Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)
+                }
+              >
                 {submitting ? "Saving…" : "Download PDF"}
               </Button>
             </DialogFooter>

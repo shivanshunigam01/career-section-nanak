@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,7 +8,7 @@ import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
 import { adminLogin, ApiRequestError, formatApiErrors } from "@/lib/api";
-import { setAdminSession, type AdminUser } from "@/lib/adminAuth";
+import { markAdminSessionStart, setAdminSession, type AdminUser } from "@/lib/adminAuth";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -17,6 +17,8 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const sessionExpired = searchParams.get("reason") === "session-expired";
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +43,7 @@ const AdminLogin = () => {
     }
 
     localStorage.setItem("admin_logged_in", "true");
+    markAdminSessionStart();
     navigate("/admin/dashboard");
   };
 
@@ -63,6 +66,11 @@ const AdminLogin = () => {
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
+            {sessionExpired && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
+                Your session has expired (after 1 hour). Please sign in again to continue — your access token is no longer valid.
+              </div>
+            )}
             {error && (
               <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
                 {error}

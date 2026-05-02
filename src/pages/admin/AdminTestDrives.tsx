@@ -50,7 +50,7 @@ const getLocalISODate = () => {
 const AdminTestDrives = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [bookings, setBookings] = useState<TestDriveBooking[]>(mockTestDrives);
+  const [bookings, setBookings] = useState<TestDriveBooking[]>(() => (hasApi() ? [] : mockTestDrives));
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [editBooking, setEditBooking] = useState<TestDriveBooking | null>(null);

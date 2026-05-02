@@ -1,4 +1,4 @@
-import { publicPost } from "@/lib/api";
+import { publicPost, type PublicPostResult } from "@/lib/api";
 import { normalizeLeadModel, normalizeTestDriveModel } from "@/lib/apiMappers";
 import { leadModelLabel } from "@/data/vinfastModels";
 
@@ -17,7 +17,9 @@ export async function submitPublicLead(payload: {
   pageSource?: string;
   /** Google reCAPTCHA v3 token (required when API has RECAPTCHA_SECRET_KEY). */
   recaptchaToken?: string;
-}): Promise<void> {
+  /** Required when server has WHATSAPP_OTP_ENABLED=true; from WhatsAppOtpVerify. */
+  whatsappVerificationToken?: string;
+}): Promise<PublicPostResult> {
   const city = payload.city === "Other" ? "Other" : payload.city.trim();
   const otherCity = payload.city === "Other" ? (payload.otherCity || "").trim() : "";
   const model = normalizeLeadModel(payload.modelDisplay);
@@ -27,7 +29,7 @@ export async function submitPublicLead(payload: {
     .join(" | ");
 
   const recaptchaToken = payload.recaptchaToken?.trim();
-  await publicPost("/leads", {
+  return publicPost("/leads", {
     name: payload.name.trim(),
     mobile: payload.mobile.trim(),
     email: payload.email?.trim() || undefined,
@@ -41,6 +43,9 @@ export async function submitPublicLead(payload: {
     exchangeNeeded: payload.exchangeNeeded ?? false,
     pageSource: payload.pageSource,
     ...(recaptchaToken ? { recaptchaToken } : {}),
+    ...(payload.whatsappVerificationToken
+      ? { whatsappVerificationToken: payload.whatsappVerificationToken }
+      : {}),
   });
 }
 
@@ -61,10 +66,11 @@ export async function submitPublicTestDrive(payload: {
   currentCarDetails?: string;
   purchaseTimeline: string;
   recaptchaToken?: string;
-}): Promise<void> {
+  whatsappVerificationToken?: string;
+}): Promise<PublicPostResult> {
   const display = leadModelLabel(payload.model, payload.variant);
   const recaptchaToken = payload.recaptchaToken?.trim();
-  await publicPost("/test-drives", {
+  return publicPost("/test-drives", {
     customerName: payload.customerName.trim(),
     mobile: payload.mobile.trim(),
     email: payload.email?.trim() || undefined,
@@ -81,6 +87,9 @@ export async function submitPublicTestDrive(payload: {
     remarks: [payload.remarks?.trim(), `Trim: ${display}`].filter(Boolean).join(" | ") || undefined,
     pageSource: payload.pageSource,
     ...(recaptchaToken ? { recaptchaToken } : {}),
+    ...(payload.whatsappVerificationToken
+      ? { whatsappVerificationToken: payload.whatsappVerificationToken }
+      : {}),
   });
 }
 
@@ -95,10 +104,11 @@ export async function submitPublicEnquiry(payload: {
   message?: string;
   source?: string;
   recaptchaToken?: string;
-}): Promise<void> {
+  whatsappVerificationToken?: string;
+}): Promise<PublicPostResult> {
   const display = payload.model && payload.variant !== undefined ? leadModelLabel(payload.model, payload.variant) : "";
   const recaptchaToken = payload.recaptchaToken?.trim();
-  await publicPost("/enquiries", {
+  return publicPost("/enquiries", {
     name: payload.name.trim(),
     mobile: payload.mobile.trim(),
     email: payload.email?.trim() || undefined,
@@ -108,5 +118,8 @@ export async function submitPublicEnquiry(payload: {
     message: payload.message?.trim() || undefined,
     source: payload.source ?? "Contact Form",
     ...(recaptchaToken ? { recaptchaToken } : {}),
+    ...(payload.whatsappVerificationToken
+      ? { whatsappVerificationToken: payload.whatsappVerificationToken }
+      : {}),
   });
 }
