@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import mpv7HeroPagePortrait from "@/assets/mpv7-hero-page-portrait.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
@@ -67,6 +69,7 @@ const inputClass =
   "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
 
 const ModelMPV7 = () => {
+  const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();
   const [prebookUnlocked, setPrebookUnlocked] = useState(
@@ -82,6 +85,8 @@ const ModelMPV7 = () => {
   const [mobileError, setMobileError] = useState("");
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const [waToken, setWaToken] = useState<string | null>(null);
+  const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
   const todayStr = getLocalISODate();
 
   useEffect(() => {
@@ -119,9 +124,14 @@ const ModelMPV7 = () => {
       toast.error("Please complete captcha verification.");
       return;
     }
+    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
+      return;
+    }
 
     const modelDisplay = leadModelLabel("VF MPV 7", DEFAULT_MPV7_TRIM);
 
+    let apiSuccessMessage: string | undefined;
     if (hasApi()) {
       let recaptchaToken: string | undefined;
       try {
@@ -131,7 +141,7 @@ const ModelMPV7 = () => {
         return;
       }
       try {
-        await submitPublicLead({
+        const res = await submitPublicLead({
           name: interestForm.name.trim(),
           mobile: interestForm.mobile,
           city: interestForm.city === DISTRICT_OTHER ? DISTRICT_OTHER : interestForm.city,
@@ -145,7 +155,9 @@ const ModelMPV7 = () => {
           exchangeNeeded: false,
           pageSource: "VF MPV 7 Model Page",
           recaptchaToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
+        apiSuccessMessage = res.message;
       } catch (err) {
         toast.error(formatApiErrors(err));
         return;
@@ -181,7 +193,9 @@ const ModelMPV7 = () => {
     sessionStorage.setItem(MPV7_PREBOOK_SESSION_KEY, "1");
     window.dispatchEvent(new Event(MPV7_PREBOOK_UNLOCK_EVENT));
     setPrebookUnlocked(true);
-    toast.success("Thank you! You can now continue to complete your VF MPV 7 pre-booking.");
+    toast.success(
+      apiSuccessMessage ?? "Thank you! You can now continue to complete your VF MPV 7 pre-booking.",
+    );
     setInterestForm({ name: "", mobile: "", email: "", city: BIHAR_DEFAULT_DISTRICT, otherCity: "" });
     setMobileError("");
     setCaptchaResetSignal((n) => n + 1);
@@ -384,6 +398,17 @@ const ModelMPV7 = () => {
                     autoComplete="email"
                   />
                 </div>
+                {hasApi() && siteConfig.features?.whatsappOtp && (
+                  <div className="sm:col-span-2 lg:col-span-12">
+                    <WhatsAppOtpVerify
+                      mobile={interestForm.mobile.replace(/\D/g, "").slice(0, 10)}
+                      displayName={interestForm.name.trim() || "Customer"}
+                      recaptchaAction="mpv7_prebook_whatsapp_otp"
+                      enabled
+                      onTokenChange={onWaTokenChange}
+                    />
+                  </div>
+                )}
                 <BiharDistrictField
                   id="mpv7-pb-district"
                   label="District (Bihar)"
@@ -400,7 +425,13 @@ const ModelMPV7 = () => {
                   otherRowClassName="sm:col-span-2 lg:col-span-12"
                 />
                 <div className="sm:col-span-2 lg:col-span-2 flex lg:pt-0">
-                  <Button type="submit" variant="hero" size="lg" className="w-full lg:w-auto lg:shrink-0">
+                  <Button
+                    type="submit"
+                    variant="hero"
+                    size="lg"
+                    className="w-full lg:w-auto lg:shrink-0"
+                    disabled={Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)}
+                  >
                     Submit
                   </Button>
                 </div>

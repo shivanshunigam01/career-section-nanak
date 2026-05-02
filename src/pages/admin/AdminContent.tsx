@@ -54,9 +54,9 @@ const emptyTestimonial: Testimonial = { id: "", name: "", city: "", model: "VF 7
 
 const AdminContent = () => {
   const [hydrated, setHydrated] = useState(false);
-  const [banners, setBanners] = useState<Banner[]>(initialBanners);
-  const [faqs, setFaqs] = useState<FAQ[]>(initialFaqs);
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(initialTestimonials);
+  const [banners, setBanners] = useState<Banner[]>(() => (hasApi() ? [] : initialBanners));
+  const [faqs, setFaqs] = useState<FAQ[]>(() => (hasApi() ? [] : initialFaqs));
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(() => (hasApi() ? [] : initialTestimonials));
 
   const [editBanner, setEditBanner] = useState<Banner | null>(null);
   const [editFaq, setEditFaq] = useState<FAQ | null>(null);
@@ -71,8 +71,7 @@ const AdminContent = () => {
           const bRaw = await adminGetData<unknown[]>("/admin/banners?limit=200&page=1");
           if (!cancelled && Array.isArray(bRaw)) {
             hadApiSuccess = true;
-            if (bRaw.length > 0) setBanners(bRaw.map((doc) => adminBannerFromApi(doc as Record<string, unknown>)));
-            else setBanners(initialBanners);
+            setBanners(bRaw.map((doc) => adminBannerFromApi(doc as Record<string, unknown>)));
           }
         } catch {
           /* keep initial */
@@ -81,8 +80,7 @@ const AdminContent = () => {
           const fRaw = await adminGetData<unknown[]>("/admin/faqs?limit=200&page=1");
           if (!cancelled && Array.isArray(fRaw)) {
             hadApiSuccess = true;
-            if (fRaw.length > 0) setFaqs(fRaw.map((doc) => adminFaqFromApi(doc as Record<string, unknown>)));
-            else setFaqs(initialFaqs);
+            setFaqs(fRaw.map((doc) => adminFaqFromApi(doc as Record<string, unknown>)));
           }
         } catch {
           /* keep initial */
@@ -91,19 +89,15 @@ const AdminContent = () => {
           const tRaw = await adminGetData<unknown[]>("/admin/testimonials?limit=200&page=1");
           if (!cancelled && Array.isArray(tRaw)) {
             hadApiSuccess = true;
-            if (tRaw.length > 0) setTestimonials(tRaw.map((doc) => adminTestimonialFromApi(doc as Record<string, unknown>)));
-            else setTestimonials(initialTestimonials);
+            setTestimonials(tRaw.map((doc) => adminTestimonialFromApi(doc as Record<string, unknown>)));
           }
         } catch {
           /* keep initial */
         }
         if (!cancelled && !hadApiSuccess) {
-          const stored = getStoredState<{ banners: Banner[]; faqs: FAQ[]; testimonials: Testimonial[] } | null>(STORAGE_KEY, null);
-          if (stored) {
-            setBanners(stored.banners ?? initialBanners);
-            setFaqs(stored.faqs ?? initialFaqs);
-            setTestimonials(stored.testimonials ?? initialTestimonials);
-          }
+          setBanners([]);
+          setFaqs([]);
+          setTestimonials([]);
         }
       } else {
         const stored = getStoredState<{ banners: Banner[]; faqs: FAQ[]; testimonials: Testimonial[] } | null>(STORAGE_KEY, null);

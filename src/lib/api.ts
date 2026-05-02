@@ -35,8 +35,14 @@ export async function publicGet<T>(path: string): Promise<T | null> {
   }
 }
 
+export type PublicPostResult = {
+  data: unknown;
+  message?: string;
+  meta?: Record<string, unknown>;
+};
+
 /** Public (unauthenticated) POST — paths like `/leads`, `/test-drives`. */
-export async function publicPost(path: string, body: unknown): Promise<{ data: unknown; message?: string }> {
+export async function publicPost(path: string, body: unknown): Promise<PublicPostResult> {
   if (!API_BASE) {
     throw new ApiRequestError(
       "API is not configured. Set VITE_API_URL in .env (must end with /api/v1).",
@@ -56,7 +62,11 @@ export async function publicPost(path: string, body: unknown): Promise<{ data: u
       json.errors as ApiRequestError["errors"],
     );
   }
-  return { data: json.data, message: json.message as string | undefined };
+  return {
+    data: json.data,
+    message: json.message as string | undefined,
+    meta: json.meta as Record<string, unknown> | undefined,
+  };
 }
 
 function mergeAuthHeaders(headers: Headers) {
@@ -78,7 +88,16 @@ export async function adminRequest(
   mergeAuthHeaders(headers);
   const res = await fetch(`${API_BASE}${path}`, { ...rest, headers, body });
   const json = await parseJson(res);
-  if (res.status === 401) clearAdminSession();
+  if (res.status === 401) {
+    clearAdminSession();
+    if (
+      typeof window !== "undefined" &&
+      window.location.pathname.startsWith("/admin") &&
+      !window.location.pathname.includes("/admin/login")
+    ) {
+      window.location.assign(`${window.location.origin}/admin/login?reason=session-expired`);
+    }
+  }
   return { res, json };
 }
 

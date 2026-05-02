@@ -68,6 +68,19 @@ const initialConfig: SiteConfig = {
   vf6Range: "468 km",
 };
 
+/** Empty shell until `/admin/homepage/*` loads — avoids flashing local defaults when API is configured. */
+const emptySiteConfig: SiteConfig = {
+  whatsappNumber: "",
+  phoneNumber: "",
+  heroTagline: "",
+  leadStripTitle: "",
+  leadStripSubtitle: "",
+  vf7Price: "",
+  vf6Price: "",
+  vf7Range: "",
+  vf6Range: "",
+};
+
 const emptySlide: HeroSlide = {
   id: "", title: "", subtitle: "", badge: "", ctaPrimary: "Book Test Drive", ctaPrimaryLink: "/test-drive",
   ctaSecondary: "Learn More", ctaSecondaryLink: "/", bgImage: "", active: true, order: 99,
@@ -121,8 +134,8 @@ function siteConfigFromApi(doc: Record<string, unknown>): SiteConfig {
 const AdminHomepage = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
-  const [config, setConfig] = useState<SiteConfig>(initialConfig);
+  const [slides, setSlides] = useState<HeroSlide[]>(() => (useRemote ? [] : initialSlides));
+  const [config, setConfig] = useState<SiteConfig>(() => (useRemote ? emptySiteConfig : initialConfig));
   const [editSlide, setEditSlide] = useState<HeroSlide | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [saved, setSaved] = useState(false);

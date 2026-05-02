@@ -13,6 +13,33 @@ function isoDateOnly(value: unknown): string {
   return d.toISOString().slice(0, 10);
 }
 
+const DATE_ONLY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Display lead submission time in admin (API ISO) or date-only mock/local rows. Uses Asia/Kolkata. */
+export function formatLeadSubmittedAt(value: string): string {
+  const s = value?.trim() ?? "";
+  if (!s) return "—";
+  let d: Date;
+  if (DATE_ONLY_RE.test(s)) {
+    const [y, m, day] = s.split("-").map(Number);
+    d = new Date(y, m - 1, day);
+  } else {
+    d = new Date(s);
+  }
+  if (Number.isNaN(d.getTime())) return "—";
+  if (DATE_ONLY_RE.test(s)) {
+    return d.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata", year: "numeric", month: "short", day: "numeric" });
+  }
+  return d.toLocaleString("en-IN", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 function populatedName(ref: unknown): string {
   if (ref && typeof ref === "object" && "name" in ref) return String((ref as { name?: string }).name ?? "");
   return "";
@@ -78,7 +105,8 @@ export function leadFromApi(doc: Record<string, unknown>): Lead {
     source: normalizeLeadSourceFromApi(doc.source),
     status: (doc.status as LeadStatus) || "New Lead",
     assignedTo: assigned,
-    createdAt: isoDateOnly(doc.createdAt),
+    createdAt:
+      doc.createdAt != null && String(doc.createdAt).trim() !== "" ? String(doc.createdAt) : "",
     nextFollowUp: isoDateOnly(doc.nextFollowUp),
     remarks: String(doc.remarks ?? ""),
     financeNeeded: Boolean(doc.financeNeeded),

@@ -225,6 +225,9 @@ const HeroSection = () => {
   const [apiSlides, setApiSlides] = useState<HeroSlideView[] | null>(null);
   const slides = apiSlides ?? fallbackSlides;
   const [current, setCurrent] = useState(0);
+  const [loadedSlideIndices, setLoadedSlideIndices] = useState<Set<number>>(
+    () => new Set([0, 1]),
+  );
   const isLg = useMediaQuery({ query: "(min-width: 1024px)" });
   const loadSlidesFromApi = useCallback(async () => {
     if (!hasApi()) return;
@@ -254,6 +257,27 @@ const HeroSection = () => {
     setCurrent((c) => (slides.length ? Math.min(c, slides.length - 1) : 0));
   }, [slides.length]);
 
+  useEffect(() => {
+    if (!slides.length) {
+      setLoadedSlideIndices(new Set());
+      return;
+    }
+    setLoadedSlideIndices(new Set([0, slides.length > 1 ? 1 : 0]));
+  }, [slides.length]);
+
+  useEffect(() => {
+    if (!slides.length) return;
+    const nextIdx = (current + 1) % slides.length;
+    const prevIdx = (current - 1 + slides.length) % slides.length;
+    setLoadedSlideIndices((prev) => {
+      const next = new Set(prev);
+      next.add(current);
+      next.add(nextIdx);
+      next.add(prevIdx);
+      return next;
+    });
+  }, [current, slides.length]);
+
   const next = useCallback(
     () => setCurrent((c) => (slides.length ? (c + 1) % slides.length : 0)),
     [slides.length],
@@ -277,7 +301,11 @@ const HeroSection = () => {
   return (
     <section className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
       <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:h-screen lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
-        {slides.map((s, i) => (
+        {slides.map((s, i) => {
+          // Keep cross-fade wrappers mounted, but only request nearby slide images.
+          // This avoids front-loading all hero assets on first paint.
+          const shouldLoadImage = loadedSlideIndices.has(i) || i === current;
+          return (
           <div
             key={`${s.image}-${i}`}
             className="hero-media-scrim absolute inset-0 transition-opacity duration-1000 ease-in-out [transform:translateZ(0)]"
@@ -288,17 +316,18 @@ const HeroSection = () => {
             aria-hidden={i !== current}
           >
             <img
-              src={heroImageSrc(s, isLg)}
+              src={shouldLoadImage ? heroImageSrc(s, isLg) : undefined}
               alt={`${s.title} — VinFast hero`}
               className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
               style={{ objectPosition: heroImageObjectPosition(s, isLg) }}
               sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
-              loading={i <= 1 ? "eager" : "lazy"}
+              loading={i === current ? "eager" : "lazy"}
               decoding="async"
-              fetchPriority={i === 0 ? "high" : i === 1 ? "auto" : "low"}
+              fetchPriority={i === current ? "high" : loadedSlideIndices.has(i) ? "auto" : "low"}
             />
           </div>
-        ))}
+          );
+        })}
 
         {/* Carousel arrows — centered on left / right edges */}
         <div

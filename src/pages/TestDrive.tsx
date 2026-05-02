@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -34,6 +34,8 @@ import {
   TEST_DRIVE_LOCATION_OPTIONS,
 } from "@/data/testDriveFormOptions";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 
 const MOBILE_REGEX = /^[6-9]\d{9}$/;
 const HOME_TEST_DRIVE_OPTION = "Home Test Drive";
@@ -89,6 +91,8 @@ const TestDrivePage = () => {
   const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const [waToken, setWaToken] = useState<string | null>(null);
+  const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
   const todayStr = getLocalISODate();
   const selectedCalendarDate = formData.date
     ? new Date(`${formData.date}T12:00:00`)
@@ -163,6 +167,10 @@ const TestDrivePage = () => {
       toast.error("Please complete captcha verification.");
       return;
     }
+    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
+      return;
+    }
 
     const modelLine = leadModelLabel(formData.model, formData.variant);
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
@@ -176,7 +184,7 @@ const TestDrivePage = () => {
         return;
       }
       try {
-        await submitPublicTestDrive({
+        const res = await submitPublicTestDrive({
           customerName: formData.name.trim(),
           mobile: formData.mobile,
           email: formData.email.trim(),
@@ -194,12 +202,15 @@ const TestDrivePage = () => {
             formData.ownsCar === "Yes" ? formData.currentCarDetails.trim() : undefined,
           purchaseTimeline: formData.purchaseTimeline,
           recaptchaToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
+        toast.success(
+          res.message ?? "Test drive booked! We'll confirm your slot shortly via SMS.",
+        );
       } catch (err) {
         toast.error(formatApiErrors(err));
         return;
       }
-      toast.success("Test drive booked! We'll confirm your slot shortly via SMS.");
       setFormData({
         name: "",
         mobile: "",
@@ -364,9 +375,14 @@ const TestDrivePage = () => {
               className="glass-card p-5 sm:p-8 min-w-0"
             >
               <h3 className="font-display font-bold text-xl mb-2">Schedule your test drive</h3>
-              <p className="text-muted-foreground text-sm mb-6">
+              <p className={`text-muted-foreground text-sm ${hasApi() ? "mb-3" : "mb-6"}`}>
                 {`Date and time apply only to test drives. The first selectable day each month is the ${MIN_TEST_DRIVE_DAY_OF_MONTH}th (days 1–9 are blocked).`}
               </p>
+              {hasApi() && (
+                <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+                  Request is stored in the CRM; with server mail enabled, your dealership inbox receives the same details for quick follow-up.
+                </p>
+              )}
               <div className="space-y-4">
                 <div className={fieldBlockClass}>
                   <label htmlFor="td-name" className={labelClass}>
@@ -410,6 +426,15 @@ const TestDrivePage = () => {
                     className={inputClass}
                   />
                 </div>
+                {hasApi() && siteConfig.features?.whatsappOtp && (
+                  <WhatsAppOtpVerify
+                    mobile={formData.mobile.replace(/\D/g, "").slice(0, 10)}
+                    displayName={formData.name.trim() || "Customer"}
+                    recaptchaAction="test_drive_whatsapp_otp"
+                    enabled
+                    onTokenChange={onWaTokenChange}
+                  />
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                   <div className={fieldBlockClass}>
                     <label htmlFor="td-model-trim" className={labelClass}>
@@ -636,7 +661,13 @@ const TestDrivePage = () => {
                     className={`${inputClass} h-24 py-3 resize-none`}
                   />
                 </div>
-                <Button type="submit" variant="hero" size="lg" className="w-full">
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  className="w-full"
+                  disabled={Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)}
+                >
                   Confirm Test Drive
                 </Button>
                 <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />

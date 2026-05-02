@@ -6,7 +6,11 @@ import {
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
-import { clearAdminSession, getAdminToken, getAdminUser } from "@/lib/adminAuth";
+import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut } from "@/lib/adminAuth";
+import { toast } from "sonner";
+
+const ADMIN_SESSION_EXPIRED_TOAST =
+  "Your session has expired. Please sign in again — your access token is no longer valid after one hour.";
 
 const navItems = [
   { label: "Dashboard",   icon: LayoutDashboard, path: "/admin/dashboard" },
@@ -29,7 +33,25 @@ const AdminLayout = () => {
   useEffect(() => {
     const api = hasApi();
     const tokenOk = api ? Boolean(getAdminToken()) : localStorage.getItem("admin_logged_in") === "true";
-    if (!tokenOk) navigate("/admin/login");
+    if (!tokenOk) {
+      navigate("/admin/login");
+      return;
+    }
+    if (isAdminSessionTimedOut()) {
+      clearAdminSession();
+      toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
+      navigate("/admin/login?reason=session-expired");
+    }
+  }, [navigate, location.pathname]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (!isAdminSessionTimedOut()) return;
+      clearAdminSession();
+      toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
+      navigate("/admin/login?reason=session-expired");
+    }, 60_000);
+    return () => clearInterval(id);
   }, [navigate]);
 
   const handleLogout = () => {

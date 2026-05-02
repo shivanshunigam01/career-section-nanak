@@ -26,6 +26,8 @@ export type SiteConfigPublic = {
   vf6Price: string;
   vf7Range: string;
   vf6Range: string;
+  /** Set by API from env when WhatsApp OTP is enabled on the server. */
+  features?: { whatsappOtp?: boolean };
 };
 
 const DEFAULT_DEALER: DealerInfo = {
@@ -49,6 +51,7 @@ const DEFAULT_SITE: SiteConfigPublic = {
   vf6Price: "₹17,29,000*",
   vf7Range: "532 km",
   vf6Range: "468 km",
+  features: { whatsappOtp: false },
 };
 
 type PublicSiteContextValue = {
@@ -95,6 +98,8 @@ function mergeDealer(doc: Record<string, unknown> | null): DealerInfo {
 
 function mergeSite(doc: Record<string, unknown> | null): SiteConfigPublic {
   if (!doc) return DEFAULT_SITE;
+  const feat = doc.features;
+  const featObj = feat && typeof feat === "object" ? (feat as Record<string, unknown>) : null;
   return {
     whatsappNumber: coalesceStr(doc.whatsappNumber, DEFAULT_SITE.whatsappNumber),
     phoneNumber: coalesceStr(doc.phoneNumber, DEFAULT_SITE.phoneNumber),
@@ -105,6 +110,9 @@ function mergeSite(doc: Record<string, unknown> | null): SiteConfigPublic {
     vf6Price: coalesceStr(doc.vf6Price, DEFAULT_SITE.vf6Price),
     vf7Range: coalesceStr(doc.vf7Range, DEFAULT_SITE.vf7Range),
     vf6Range: coalesceStr(doc.vf6Range, DEFAULT_SITE.vf6Range),
+    features: {
+      whatsappOtp: Boolean(featObj?.whatsappOtp),
+    },
   };
 }
 

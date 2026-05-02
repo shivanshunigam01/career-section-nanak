@@ -1,5 +1,9 @@
 const TOKEN_KEY = "vf_admin_token";
 const USER_KEY = "vf_admin_user";
+const SESSION_START_KEY = "vf_admin_session_started_at";
+
+/** Admin panel session length (client-enforced; aligns with typical JWT refresh expectations). */
+export const ADMIN_SESSION_DURATION_MS = 60 * 60 * 1000;
 
 export type AdminUser = { _id?: string; name: string; email: string; role: string };
 
@@ -19,18 +23,42 @@ export function getAdminUser(): AdminUser | null {
   }
 }
 
+function getSessionStartedAt(): number | null {
+  if (typeof localStorage === "undefined") return null;
+  const raw = localStorage.getItem(SESSION_START_KEY);
+  if (!raw) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+}
+
+/** Call when starting any admin session (JWT login or local demo login). */
+export function markAdminSessionStart() {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(SESSION_START_KEY, String(Date.now()));
+}
+
 export function setAdminSession(token: string, admin: AdminUser) {
   localStorage.setItem(TOKEN_KEY, token);
   localStorage.setItem(USER_KEY, JSON.stringify(admin));
   localStorage.setItem("admin_logged_in", "true");
+  markAdminSessionStart();
 }
 
 export function clearAdminSession() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
   localStorage.removeItem("admin_logged_in");
+  localStorage.removeItem(SESSION_START_KEY);
 }
 
 export function isAdminSession(): boolean {
   return Boolean(getAdminToken()) || localStorage.getItem("admin_logged_in") === "true";
+}
+
+/** True when logged in and session age exceeds {@link ADMIN_SESSION_DURATION_MS}, or session has no start time (invalid legacy state). */
+export function isAdminSessionTimedOut(): boolean {
+  if (!isAdminSession()) return false;
+  const start = getSessionStartedAt();
+  if (start == null) return true;
+  return Date.now() - start >= ADMIN_SESSION_DURATION_MS;
 }

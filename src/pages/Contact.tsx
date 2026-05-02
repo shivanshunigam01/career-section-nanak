@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
@@ -21,6 +21,7 @@ import {
   resolvedDistrictLabel,
 } from "@/data/biharDistricts";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { mapsDirectionsHref, mapsEmbedSrc } from "@/lib/dealerMap";
@@ -58,6 +59,8 @@ const ContactPage = () => {
   });
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const [waToken, setWaToken] = useState<string | null>(null);
+  const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,6 +81,10 @@ const ContactPage = () => {
       toast.error("Please complete captcha verification.");
       return;
     }
+    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
+      return;
+    }
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
@@ -91,7 +98,7 @@ const ContactPage = () => {
         return;
       }
       try {
-        await submitPublicEnquiry({
+        const enquiryRes = await submitPublicEnquiry({
           name: formData.name,
           mobile: mobileDigits,
           email: formData.email,
@@ -101,8 +108,9 @@ const ContactPage = () => {
           interest: formData.interest,
           message: formData.message,
           recaptchaToken: enquiryToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
-        await submitPublicLead({
+        const leadRes = await submitPublicLead({
           name: formData.name,
           mobile: mobileDigits,
           city: formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city,
@@ -114,12 +122,15 @@ const ContactPage = () => {
           remarks: formData.message.trim() || `Interest: ${formData.interest}`,
           pageSource: "Contact Page",
           recaptchaToken: leadToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
+        toast.success(
+          leadRes.message || enquiryRes.message || "Our EV advisor will get in touch with you shortly.",
+        );
       } catch (err) {
         toast.error(formatApiErrors(err));
         return;
       }
-      toast.success("Our EV advisor will get in touch with you shortly.");
       setFormData({
         name: "",
         mobile: "",
@@ -267,11 +278,25 @@ const ContactPage = () => {
               initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}
               onSubmit={handleSubmit} className="glass-card p-5 sm:p-8 scroll-mt-24"
             >
-              <h3 className="font-display font-bold text-xl mb-6">Send an Enquiry</h3>
+              <h3 className="font-display font-bold text-xl mb-2">Send an Enquiry</h3>
+              {hasApi() && (
+                <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+                  Submissions go to our CRM and trigger an email alert to your dealership team when outgoing mail is configured on the server.
+                </p>
+              )}
               <div className="space-y-4">
                 <input type="text" placeholder="Full Name *" value={formData.name} onChange={(e) => update("name", e.target.value)} className={inputClass} />
                 <input type="tel" placeholder="Mobile Number *" value={formData.mobile} onChange={(e) => update("mobile", e.target.value)} className={inputClass} />
                 <input type="email" placeholder="Email (Optional)" value={formData.email} onChange={(e) => update("email", e.target.value)} className={inputClass} />
+                {hasApi() && siteConfig.features?.whatsappOtp && (
+                  <WhatsAppOtpVerify
+                    mobile={formData.mobile.replace(/\D/g, "").slice(0, 10)}
+                    displayName={formData.name.trim() || "Customer"}
+                    recaptchaAction="contact_whatsapp_otp"
+                    enabled
+                    onTokenChange={onWaTokenChange}
+                  />
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                   <ModelTrimSelect
                     model={formData.model}
@@ -304,7 +329,17 @@ const ContactPage = () => {
                   <option value="Service">Service & Support</option>
                 </select>
                 <textarea placeholder="Your Message (Optional)" value={formData.message} onChange={(e) => update("message", e.target.value)} className={`${inputClass} h-24 py-3 resize-none`} />
-                <Button type="submit" variant="hero" size="lg" className="w-full">Submit Enquiry</Button>
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  className="w-full"
+                  disabled={
+                    Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)
+                  }
+                >
+                  Submit Enquiry
+                </Button>
                 <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 <p className="text-center text-muted-foreground text-xs">We respect your privacy. No spam, ever.</p>
               </div>

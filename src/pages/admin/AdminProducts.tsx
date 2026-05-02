@@ -66,7 +66,7 @@ const emptyProduct: Product = {
 
 const AdminProducts = () => {
   const [hydrated, setHydrated] = useState(false);
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(() => (hasApi() ? [] : initialProducts));
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [showForm, setShowForm] = useState(false);
   const STORAGE_KEY = "vf_admin_products";
@@ -77,18 +77,15 @@ const AdminProducts = () => {
       if (hasApi()) {
         try {
           const data = await adminGetData<unknown[]>("/admin/products?limit=200&page=1");
-          if (!cancelled && Array.isArray(data) && data.length > 0) {
+          if (!cancelled && Array.isArray(data)) {
             setProducts(data.map((doc) => adminProductFromApi(doc as Record<string, unknown>)));
             setHydrated(true);
             return;
           }
         } catch {
-          /* fallback below */
+          /* leave empty — do not flash localStorage when API is configured */
         }
-        if (!cancelled) {
-          const stored = getStoredState<Product[] | null>(STORAGE_KEY, null);
-          setProducts(stored && stored.length > 0 ? stored : initialProducts);
-        }
+        if (!cancelled) setProducts([]);
       } else {
         const stored = getStoredState<Product[] | null>(STORAGE_KEY, null);
         if (!cancelled && stored && stored.length > 0) setProducts(stored);

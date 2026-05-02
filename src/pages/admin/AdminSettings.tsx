@@ -34,10 +34,22 @@ const defaultSettings: DealerForm = {
   mapEmbedUrl: "",
 };
 
+const emptySettings: DealerForm = {
+  dealerName: "",
+  brand: "",
+  phone: "",
+  email: "",
+  whatsapp: "",
+  address: "",
+  gstNo: "",
+  showroomHours: "",
+  mapEmbedUrl: "",
+};
+
 const AdminSettings = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [settings, setSettings] = useState<DealerForm>(defaultSettings);
+  const [settings, setSettings] = useState<DealerForm>(() => (hasApi() ? emptySettings : defaultSettings));
   const [saving, setSaving] = useState(false);
 
   const loadFromApi = useCallback(async () => {

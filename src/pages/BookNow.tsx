@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,8 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
+import { usePublicSite } from "@/context/PublicSiteContext";
+import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import vf7Real from "@/assets/vf7-real.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import bookNowCabinGrid from "@/assets/book-now-cabin-grid.png";
@@ -34,6 +36,7 @@ const getLocalISODate = () => {
 };
 
 const BookNowPage = () => {
+  const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
@@ -51,6 +54,8 @@ const BookNowPage = () => {
   const [mobileError, setMobileError] = useState("");
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
+  const [waToken, setWaToken] = useState<string | null>(null);
+  const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
   const todayStr = getLocalISODate();
 
   useEffect(() => {
@@ -97,6 +102,10 @@ const BookNowPage = () => {
       toast.error("Please complete captcha verification.");
       return;
     }
+    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
+      return;
+    }
 
     const extras = [
       formData.financeNeeded ? "Finance assistance requested." : "",
@@ -114,7 +123,7 @@ const BookNowPage = () => {
         return;
       }
       try {
-        await submitPublicLead({
+        const res = await submitPublicLead({
           name: formData.name.trim(),
           mobile: formData.mobile,
           city: formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city,
@@ -128,12 +137,15 @@ const BookNowPage = () => {
           exchangeNeeded: formData.exchangeNeeded,
           pageSource: "Pre-Booking Page",
           recaptchaToken,
+          whatsappVerificationToken: waToken ?? undefined,
         });
+        toast.success(
+          res.message ?? "Request received! Our team will call you shortly to complete your booking.",
+        );
       } catch (err) {
         toast.error(formatApiErrors(err));
         return;
       }
-      toast.success("Request received! Our team will call you shortly to complete your booking.");
       setFormData({
         name: "",
         mobile: "",
@@ -310,7 +322,14 @@ const BookNowPage = () => {
               className="glass-card p-5 sm:p-8 min-w-0"
             >
               <h3 className="font-display font-bold text-xl mb-2">Complete your Pre-Booking</h3>
-              <p className="text-muted-foreground text-sm mb-6">No date or time here — those are for test drives only.</p>
+              <p className={`text-muted-foreground text-sm ${hasApi() ? "mb-3" : "mb-6"}`}>
+                No date or time here — those are for test drives only.
+              </p>
+              {hasApi() && (
+                <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
+                  Your request is saved to the CRM; with mail configured on the server, the team receives it by email as well.
+                </p>
+              )}
               <div className="space-y-4">
                 <input
                   type="text"
@@ -338,6 +357,15 @@ const BookNowPage = () => {
                   onChange={(e) => update("email", e.target.value)}
                   className={inputClass}
                 />
+                {hasApi() && siteConfig.features?.whatsappOtp && (
+                  <WhatsAppOtpVerify
+                    mobile={formData.mobile.replace(/\D/g, "").slice(0, 10)}
+                    displayName={formData.name.trim() || "Customer"}
+                    recaptchaAction="book_now_whatsapp_otp"
+                    enabled
+                    onTokenChange={onWaTokenChange}
+                  />
+                )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
                   <div className="space-y-1.5 min-w-0">
                     <label htmlFor="booknow-model-trim" className="text-xs font-medium text-muted-foreground">
@@ -391,7 +419,13 @@ const BookNowPage = () => {
                   onChange={(e) => update("remarks", e.target.value)}
                   className={`${inputClass} h-24 py-3 resize-none`}
                 />
-                <Button type="submit" variant="hero" size="lg" className="w-full">
+                <Button
+                  type="submit"
+                  variant="hero"
+                  size="lg"
+                  className="w-full"
+                  disabled={Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)}
+                >
                   Submit pre-booking request
                 </Button>
                 <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />

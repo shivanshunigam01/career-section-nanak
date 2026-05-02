@@ -37,7 +37,7 @@ function mediaFromApi(doc: Record<string, unknown>): MediaItem {
 const AdminMedia = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [media, setMedia] = useState<MediaItem[]>(initialMedia);
+  const [media, setMedia] = useState<MediaItem[]>(() => (hasApi() ? [] : initialMedia));
   const [search, setSearch] = useState("");
   const [activeTag, setActiveTag] = useState("All");
   const [copiedId, setCopiedId] = useState<string | null>(null);

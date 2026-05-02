@@ -97,6 +97,20 @@ const AdminDashboard = () => {
       ];
     }
 
+    if (useRemote && !stats) {
+      const ph = "—";
+      return [
+        { label: "Total Leads", value: ph, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
+        { label: "Leads Today", value: ph, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10" },
+        { label: "Pending / Scheduled TD", value: ph, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10" },
+        { label: "Open Enquiries", value: ph, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10" },
+        { label: "Hot Leads", value: ph, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10" },
+        { label: "Bookings", value: ph, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10" },
+        { label: "Contact Pending", value: ph, icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10" },
+        { label: "Model groups", value: ph, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+      ];
+    }
+
     return [
       { label: "Total Leads", value: leads.length, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
       { label: "Test Drives", value: testDrives.length, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10" },
@@ -117,6 +131,10 @@ const AdminDashboard = () => {
         count: map.get(status) ?? 0,
       }));
     }
+    if (useRemote && !stats) {
+      const ph: number | string = "—";
+      return LEAD_STATUSES.map((status) => ({ status, count: ph }));
+    }
     return LEAD_STATUSES.map((status) => ({
       status,
       count: leads.filter((l) => l.status === status).length,
@@ -126,6 +144,9 @@ const AdminDashboard = () => {
   const sourceBreakdown = useMemo(() => {
     if (useRemote && stats?.leadsBySource?.length) {
       return stats.leadsBySource.map((s) => ({ source: s._id || "Unknown", count: s.count }));
+    }
+    if (useRemote && !stats) {
+      return [];
     }
     return ["Google Ads", "Website", "WhatsApp", "Meta Ads", "Walk-in", "Referral", "Pre-Booking", "Book Now", "Test Drive"].map((source) => ({
       source,
@@ -174,60 +195,72 @@ const AdminDashboard = () => {
         <Card className="bg-card border-border/50 p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Recent Leads</h3>
           <div className="space-y-3">
-            {leads.slice(0, 5).map((lead) => (
-              <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{lead.name}</p>
-                  <p className="text-xs text-muted-foreground">{lead.model} · {lead.source}</p>
+            {useRemote && apiLoading && leads.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">Loading…</p>
+            ) : (
+              leads.slice(0, 5).map((lead) => (
+                <div key={lead.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{lead.name}</p>
+                    <p className="text-xs text-muted-foreground">{lead.model} · {lead.source}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
+                    lead.status === "New Lead" ? "bg-blue-400/10 text-blue-400" :
+                    lead.status === "Interested" ? "bg-green-400/10 text-green-400" :
+                    lead.status === "Booked" ? "bg-primary/10 text-primary" :
+                    lead.status === "Lost" ? "bg-destructive/10 text-destructive" :
+                    "bg-secondary text-muted-foreground"
+                  }`}>
+                    {lead.status}
+                  </span>
                 </div>
-                <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
-                  lead.status === "New Lead" ? "bg-blue-400/10 text-blue-400" :
-                  lead.status === "Interested" ? "bg-green-400/10 text-green-400" :
-                  lead.status === "Booked" ? "bg-primary/10 text-primary" :
-                  lead.status === "Lost" ? "bg-destructive/10 text-destructive" :
-                  "bg-secondary text-muted-foreground"
-                }`}>
-                  {lead.status}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
 
         <Card className="bg-card border-border/50 p-5">
           <h3 className="font-display font-semibold text-foreground mb-4">Test Drive Bookings</h3>
           <div className="space-y-3">
-            {testDrives.slice(0, 5).map((td) => (
-              <div key={td.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
-                <div>
-                  <p className="text-sm font-medium text-foreground">{td.customerName}</p>
-                  <p className="text-xs text-muted-foreground">{td.model} · {td.preferredDate} {td.preferredTime}</p>
+            {useRemote && apiLoading && testDrives.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-2">Loading…</p>
+            ) : (
+              testDrives.slice(0, 5).map((td) => (
+                <div key={td.id} className="flex items-center justify-between py-2 border-b border-border/30 last:border-0">
+                  <div>
+                    <p className="text-sm font-medium text-foreground">{td.customerName}</p>
+                    <p className="text-xs text-muted-foreground">{td.model} · {td.preferredDate} {td.preferredTime}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
+                    td.status === "Scheduled" ? "bg-green-400/10 text-green-400" :
+                    td.status === "Completed" ? "bg-primary/10 text-primary" :
+                    td.status === "Cancelled" ? "bg-destructive/10 text-destructive" :
+                    td.status === "No Show" ? "bg-muted text-muted-foreground" :
+                    "bg-amber-400/10 text-amber-400"
+                  }`}>
+                    {td.status}
+                  </span>
                 </div>
-                <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
-                  td.status === "Scheduled" ? "bg-green-400/10 text-green-400" :
-                  td.status === "Completed" ? "bg-primary/10 text-primary" :
-                  td.status === "Cancelled" ? "bg-destructive/10 text-destructive" :
-                  td.status === "No Show" ? "bg-muted text-muted-foreground" :
-                  "bg-amber-400/10 text-amber-400"
-                }`}>
-                  {td.status}
-                </span>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </Card>
       </div>
 
       <Card className="bg-card border-border/50 p-5">
         <h3 className="font-display font-semibold text-foreground mb-4">Lead Sources</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {sourceBreakdown.map(({ source, count }) => (
-            <div key={source} className="text-center p-3 rounded-lg bg-secondary/30">
-              <p className="text-lg font-bold text-foreground">{count}</p>
-              <p className="text-[11px] text-muted-foreground">{source}</p>
-            </div>
-          ))}
-        </div>
+        {sourceBreakdown.length === 0 && useRemote && !stats ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {sourceBreakdown.map(({ source, count }) => (
+              <div key={source} className="text-center p-3 rounded-lg bg-secondary/30">
+                <p className="text-lg font-bold text-foreground">{count}</p>
+                <p className="text-[11px] text-muted-foreground">{source}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   );

@@ -28,7 +28,7 @@ const statusColors: Record<string, string> = {
 const AdminEnquiries = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [enquiries, setEnquiries] = useState<Enquiry[]>(mockEnquiries);
+  const [enquiries, setEnquiries] = useState<Enquiry[]>(() => (hasApi() ? [] : mockEnquiries));
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
