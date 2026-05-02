@@ -19,6 +19,8 @@ import AboutPage from "./pages/About";
 import ContactPage from "./pages/Contact";
 import PrivacyPolicyPage from "./pages/PrivacyPolicy";
 import TermsOfServicePage from "./pages/TermsOfService";
+import PaymentRefundPolicyPage from "./pages/PaymentRefundPolicy";
+import TermsAndConditionsPage from "./pages/TermsAndConditions";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -71,6 +73,8 @@ const App = () => {
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+          <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
+          <Route path="/payment-refund-policy" element={<PaymentRefundPolicyPage />} />
 
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
