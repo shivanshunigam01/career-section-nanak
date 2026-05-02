@@ -424,6 +424,9 @@ const ModelMPV7 = () => {
                   selectWrapperClassName="sm:col-span-1 lg:col-span-2"
                   otherRowClassName="sm:col-span-2 lg:col-span-12"
                 />
+                <div className="sm:col-span-2 lg:col-span-12">
+                  <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
+                </div>
                 <div className="sm:col-span-2 lg:col-span-2 flex lg:pt-0">
                   <Button
                     type="submit"
@@ -434,9 +437,6 @@ const ModelMPV7 = () => {
                   >
                     Submit
                   </Button>
-                </div>
-                <div className="sm:col-span-2 lg:col-span-12">
-                  <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
                 </div>
                 <p className="sm:col-span-2 lg:col-span-12 text-center lg:text-left text-muted-foreground text-xs">
                   By submitting, you agree to be contacted about VF MPV 7.
