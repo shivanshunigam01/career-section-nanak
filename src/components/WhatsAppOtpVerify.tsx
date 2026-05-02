@@ -48,6 +48,8 @@ export function WhatsAppOtpVerify({
     onTokenChange(null);
   }, [mobile, onTokenChange]);
 
+  const otpGateActive = enabled && !verified;
+
   const mobileOk = MOBILE_OK.test(mobile);
 
   const handleSend = async () => {
@@ -118,6 +120,14 @@ export function WhatsAppOtpVerify({
           <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
             We&apos;ll send a one-time code to your WhatsApp on this number so we know it&apos;s really you.
           </p>
+          {otpGateActive ? (
+            <p
+              className="text-xs text-amber-800 dark:text-amber-200/90 mt-2 rounded-lg border border-amber-500/35 bg-amber-500/10 px-3 py-2 leading-snug"
+              role="status"
+            >
+              The main form submit button stays disabled until you verify the code here first.
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -141,7 +151,7 @@ export function WhatsAppOtpVerify({
             )}
           </Button>
           {sent && (
-            <>
+            <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <Input
                 inputMode="numeric"
                 autoComplete="one-time-code"
@@ -151,6 +161,7 @@ export function WhatsAppOtpVerify({
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
                 className="sm:max-w-[9rem] bg-background/80"
                 aria-label="WhatsApp verification code"
+                aria-required="true"
               />
               <Button
                 type="button"
@@ -161,7 +172,10 @@ export function WhatsAppOtpVerify({
               >
                 {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
               </Button>
-            </>
+              <p className="w-full text-[11px] text-muted-foreground leading-snug">
+                Enter the code from WhatsApp, tap Verify, then submit the form.
+              </p>
+            </div>
           )}
         </div>
       ) : (

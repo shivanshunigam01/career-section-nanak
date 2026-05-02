@@ -12,6 +12,13 @@ dist
 dist-ssr
 *.local
 
+# Root `.env` — local only; use `.env.development` / `.env.production` for shared values
+.env
+
+# Optional local overrides
+.env.development.local
+.env.production.local
+
 # Local form capture (dev API)
 server/data/*.jsonl
 
