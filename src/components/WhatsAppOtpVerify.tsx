@@ -12,7 +12,7 @@ const MOBILE_OK = /^[6-9]\d{9}$/;
 type WhatsAppOtpVerifyProps = {
   /** 10-digit Indian mobile (digits only). */
   mobile: string;
-  /** Used in AiSensy template (FirstName / greeting). */
+  /** Full name from the form (sent as `name` to /whatsapp-otp/send for the template). */
   displayName: string;
   /** reCAPTCHA v3 action name for send endpoint. */
   recaptchaAction: string;
