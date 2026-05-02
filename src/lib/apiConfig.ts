@@ -16,3 +16,12 @@ export const API_BASE = resolveApiBase();
 export function hasApi(): boolean {
   return Boolean(API_BASE);
 }
+
+/** Admin-facing email alerts from form submissions are disabled; WhatsApp OTP still calls the API. */
+export const PUBLIC_FORM_POST_DISABLED_MESSAGE =
+  "Online lead submission is paused. WhatsApp verification still works.";
+
+/** Default: public POST /leads, /test-drives, /enquiries are skipped. Set `VITE_PUBLIC_FORM_POST_DISABLED=false` to turn submissions back on. */
+export function isPublicFormPostDisabled(): boolean {
+  return import.meta.env.VITE_PUBLIC_FORM_POST_DISABLED !== "false";
+}

@@ -1,6 +1,11 @@
 import { publicPost, type PublicPostResult } from "@/lib/api";
+import { isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { normalizeLeadModel, normalizeTestDriveModel } from "@/lib/apiMappers";
 import { leadModelLabel } from "@/data/vinfastModels";
+
+function skipWhenPublicFormPostDisabled(): PublicPostResult {
+  return { data: null, message: PUBLIC_FORM_POST_DISABLED_MESSAGE };
+}
 
 export async function submitPublicLead(payload: {
   name: string;
@@ -20,6 +25,7 @@ export async function submitPublicLead(payload: {
   /** Required when server has WHATSAPP_OTP_ENABLED=true; from WhatsAppOtpVerify. */
   whatsappVerificationToken?: string;
 }): Promise<PublicPostResult> {
+  if (isPublicFormPostDisabled()) return skipWhenPublicFormPostDisabled();
   const city = payload.city === "Other" ? "Other" : payload.city.trim();
   const otherCity = payload.city === "Other" ? (payload.otherCity || "").trim() : "";
   const model = normalizeLeadModel(payload.modelDisplay);
@@ -68,6 +74,7 @@ export async function submitPublicTestDrive(payload: {
   recaptchaToken?: string;
   whatsappVerificationToken?: string;
 }): Promise<PublicPostResult> {
+  if (isPublicFormPostDisabled()) return skipWhenPublicFormPostDisabled();
   const display = leadModelLabel(payload.model, payload.variant);
   const recaptchaToken = payload.recaptchaToken?.trim();
   return publicPost("/test-drives", {
@@ -106,6 +113,7 @@ export async function submitPublicEnquiry(payload: {
   recaptchaToken?: string;
   whatsappVerificationToken?: string;
 }): Promise<PublicPostResult> {
+  if (isPublicFormPostDisabled()) return skipWhenPublicFormPostDisabled();
   const display = payload.model && payload.variant !== undefined ? leadModelLabel(payload.model, payload.variant) : "";
   const recaptchaToken = payload.recaptchaToken?.trim();
   return publicPost("/enquiries", {

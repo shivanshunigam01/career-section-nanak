@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { MapPin, Phone, Mail, Clock, MessageCircle } from "lucide-react";
 import { addEnquiry, addLead } from "@/lib/vfLocalStorage";
 import type { Enquiry, Lead } from "@/data/mockData";
-import { hasApi } from "@/lib/apiConfig";
+import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicEnquiry, submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
@@ -88,6 +88,22 @@ const ContactPage = () => {
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
+      if (isPublicFormPostDisabled()) {
+        toast.info(PUBLIC_FORM_POST_DISABLED_MESSAGE);
+        setFormData({
+          name: "",
+          mobile: "",
+          email: "",
+          city: BIHAR_DEFAULT_DISTRICT,
+          otherCity: "",
+          model: "VF 7",
+          variant: DEFAULT_VF7_TRIM,
+          interest: "General Enquiry",
+          message: "",
+        });
+        setCaptchaResetSignal((n) => n + 1);
+        return;
+      }
       let enquiryToken: string | undefined;
       let leadToken: string | undefined;
       try {

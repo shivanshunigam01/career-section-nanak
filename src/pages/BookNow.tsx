@@ -10,7 +10,7 @@ import { Car, CreditCard, Headphones, CalendarDays, Share2 } from "lucide-react"
 import html2canvas from "html2canvas";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
-import { hasApi } from "@/lib/apiConfig";
+import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
@@ -120,6 +120,24 @@ const BookNowPage = () => {
       .join(" ");
 
     if (hasApi()) {
+      if (isPublicFormPostDisabled()) {
+        toast.info(PUBLIC_FORM_POST_DISABLED_MESSAGE);
+        setFormData({
+          name: "",
+          mobile: "",
+          email: "",
+          city: BIHAR_DEFAULT_DISTRICT,
+          otherCity: "",
+          model: "VF 7",
+          variant: DEFAULT_VF7_TRIM,
+          remarks: "",
+          financeNeeded: false,
+          exchangeNeeded: false,
+        });
+        setMobileError("");
+        setCaptchaResetSignal((n) => n + 1);
+        return;
+      }
       let recaptchaToken: string | undefined;
       try {
         recaptchaToken = await getToken("book_now");

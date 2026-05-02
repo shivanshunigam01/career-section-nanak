@@ -11,7 +11,7 @@ import {
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
-import { hasApi } from "@/lib/apiConfig";
+import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { leadModelLabel } from "@/data/vinfastModels";
@@ -121,6 +121,12 @@ export function BrochureDownloadButton({
     setSubmitting(true);
     try {
       if (hasApi()) {
+        if (isPublicFormPostDisabled()) {
+          triggerBrochureDownload(brochureHref, downloadFileName);
+          toast.info(PUBLIC_FORM_POST_DISABLED_MESSAGE);
+          setOpen(false);
+          return;
+        }
         let recaptchaToken: string | undefined;
         try {
           recaptchaToken = await getToken("brochure_download");

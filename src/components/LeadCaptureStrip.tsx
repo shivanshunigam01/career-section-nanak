@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
-import { hasApi } from "@/lib/apiConfig";
+import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
@@ -92,6 +92,21 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStrip
       return;
     }
     if (hasApi()) {
+      if (isPublicFormPostDisabled()) {
+        toast.info(PUBLIC_FORM_POST_DISABLED_MESSAGE);
+        setFormData({
+          name: "",
+          mobile: "",
+          city: BIHAR_DEFAULT_DISTRICT,
+          otherCity: "",
+          model: "VF 7",
+          variant: DEFAULT_VF7_TRIM,
+          interest: "Test Drive",
+        });
+        setMobileError("");
+        setCaptchaResetSignal((n) => n + 1);
+        return;
+      }
       const cityVal = formData.city === DISTRICT_OTHER ? DISTRICT_OTHER : formData.city;
       let recaptchaToken: string | undefined;
       try {

@@ -13,7 +13,7 @@ import { CalendarDays, Calendar as CalendarIcon, MapPin, Car } from "lucide-reac
 import { cn } from "@/lib/utils";
 import { addLead, addTestDriveBooking } from "@/lib/vfLocalStorage";
 import type { Lead, TestDriveBooking } from "@/data/mockData";
-import { hasApi } from "@/lib/apiConfig";
+import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicTestDrive } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
@@ -176,6 +176,28 @@ const TestDrivePage = () => {
     const cityResolved = resolvedDistrictLabel(formData.city, formData.otherCity);
 
     if (hasApi()) {
+      if (isPublicFormPostDisabled()) {
+        toast.info(PUBLIC_FORM_POST_DISABLED_MESSAGE);
+        setFormData({
+          name: "",
+          mobile: "",
+          email: "",
+          city: BIHAR_DEFAULT_DISTRICT,
+          otherCity: "",
+          model: "VF 7",
+          variant: DEFAULT_VF7_TRIM,
+          preferredTestDriveLocation: "",
+          ownsCar: "",
+          currentCarDetails: "",
+          purchaseTimeline: "",
+          date: "",
+          time: "",
+          remarks: "",
+        });
+        setMobileError("");
+        setCaptchaResetSignal((n) => n + 1);
+        return;
+      }
       let recaptchaToken: string | undefined;
       try {
         recaptchaToken = await getToken("test_drive");
