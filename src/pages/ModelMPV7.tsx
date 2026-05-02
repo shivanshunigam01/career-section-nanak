@@ -10,7 +10,7 @@ import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
-import { hasApi } from "@/lib/apiConfig";
+import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
@@ -132,7 +132,7 @@ const ModelMPV7 = () => {
     const modelDisplay = leadModelLabel("VF MPV 7", DEFAULT_MPV7_TRIM);
 
     let apiSuccessMessage: string | undefined;
-    if (hasApi()) {
+    if (hasApi() && !isPublicFormPostDisabled()) {
       let recaptchaToken: string | undefined;
       try {
         recaptchaToken = await getToken("mpv7_prebook");
@@ -162,6 +162,8 @@ const ModelMPV7 = () => {
         toast.error(formatApiErrors(err));
         return;
       }
+    } else if (hasApi() && isPublicFormPostDisabled()) {
+      apiSuccessMessage = PUBLIC_FORM_POST_DISABLED_MESSAGE;
     } else {
       try {
         const lead: Lead = {
