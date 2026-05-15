@@ -32,35 +32,49 @@ const Navbar = () => {
     setIsMobileOpen(false);
   }, [location]);
 
+  useEffect(() => {
+    if (!isMobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsMobileOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [isMobileOpen]);
+
   return (
     <>
       <nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white border-b border-gray-200 py-0 shadow-sm"
       >
         <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex items-center justify-between min-h-[4.25rem] h-[4.25rem] lg:h-20 lg:min-h-0">
+          <div className="flex items-center justify-between min-h-[4.25rem] h-[4.25rem] xl:h-20 xl:min-h-0">
             {/* Logos: VinFast lockup + Patliputra outline (outline slightly smaller); larger on small screens */}
             <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
               <img
                 src={vinfastLogo}
                 alt={dealer.dealerName}
-                className="h-[3.25rem] sm:h-14 lg:h-16 w-auto max-h-full object-contain object-left"
+                className="h-[3.25rem] sm:h-14 xl:h-16 w-auto max-h-full object-contain object-left"
               />
-              <span className="w-px h-7 sm:h-8 lg:h-8 self-center bg-border shrink-0" aria-hidden />
+              <span className="w-px h-7 sm:h-8 xl:h-8 self-center bg-border shrink-0" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
-                className="h-7 sm:h-8 lg:h-8 w-auto max-h-full object-contain object-left"
+                className="h-7 sm:h-8 xl:h-8 w-auto max-h-full object-contain object-left"
               />
             </Link>
 
-            {/* Desktop Nav */}
-            <div className="hidden lg:flex items-center gap-1">
+            {/* Desktop Nav — xl+ so 13" laptops with display scaling use the drawer */}
+            <div className="hidden xl:flex items-center gap-1 min-w-0 flex-1 justify-center">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-3 py-2 text-sm font-medium transition-colors rounded-lg ${
+                  className={`px-2.5 py-2 text-sm font-medium transition-colors rounded-lg whitespace-nowrap ${
                     location.pathname === link.href
                       ? "text-primary"
                       : "text-foreground/70 hover:text-foreground"
@@ -72,20 +86,27 @@ const Navbar = () => {
             </div>
 
             {/* Desktop CTAs */}
-            <div className="hidden lg:flex items-center gap-3">
-              <a href={tel} className="transition-colors text-foreground/60 hover:text-foreground">
+            <div className="hidden xl:flex items-center gap-3 shrink-0">
+              <a href={tel} className="transition-colors text-foreground/60 hover:text-foreground" aria-label="Call us">
                 <Phone className="w-4 h-4" />
               </a>
-              <a href={wa} target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground">
+              <a href={wa} target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground" aria-label="WhatsApp">
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <Link to="/book-now">
-                <Button variant="hero" size="sm">Pre-Booking</Button>
-              </Link>
+              <Button variant="hero" size="sm" asChild>
+                <Link to="/book-now">Pre-Booking</Link>
+              </Button>
             </div>
 
             {/* Mobile toggle */}
-            <button onClick={() => setIsMobileOpen(!isMobileOpen)} className="lg:hidden p-2 transition-colors text-foreground">
+            <button
+              type="button"
+              onClick={() => setIsMobileOpen((open) => !open)}
+              className="xl:hidden p-2 transition-colors text-foreground"
+              aria-expanded={isMobileOpen}
+              aria-controls="mobile-nav-panel"
+              aria-label={isMobileOpen ? "Close menu" : "Open menu"}
+            >
               {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -96,37 +117,44 @@ const Navbar = () => {
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
+            key="mobile-nav-panel"
+            id="mobile-nav-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site navigation"
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 bg-background pt-20"
+            className="fixed inset-0 z-40 flex flex-col bg-background pt-[4.25rem] xl:hidden"
           >
-            <div className="container mx-auto px-4 py-8 flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`px-4 py-3 text-lg font-medium rounded-xl transition-colors ${
-                    location.pathname === link.href
-                      ? "text-primary bg-primary/10"
-                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
-              <div className="mt-6 flex flex-col gap-3">
-                <Link to="/book-now">
-                  <Button variant="hero" size="lg" className="w-full">Pre-Booking</Button>
-                </Link>
-                <Link to="/test-drive">
-                  <Button variant="outline" size="lg" className="w-full">Book Test Drive</Button>
-                </Link>
-                <a href={wa} target="_blank" rel="noopener noreferrer">
-                  <Button variant="whatsapp" size="lg" className="w-full">
-                    <MessageCircle className="w-5 h-5" /> WhatsApp
+            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
+              <div className="container mx-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-2">
+                {navLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={`px-4 py-3 text-lg font-medium rounded-xl transition-colors ${
+                      location.pathname === link.href
+                        ? "text-primary bg-primary/10"
+                        : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+                <div className="mt-6 flex flex-col gap-3">
+                  <Button variant="hero" size="lg" className="w-full" asChild>
+                    <Link to="/book-now">Pre-Booking</Link>
                   </Button>
-                </a>
+                  <Button variant="outline" size="lg" className="w-full" asChild>
+                    <Link to="/test-drive">Book Test Drive</Link>
+                  </Button>
+                  <Button variant="whatsapp" size="lg" className="w-full" asChild>
+                    <a href={wa} target="_blank" rel="noopener noreferrer">
+                      <MessageCircle className="w-5 h-5" /> WhatsApp
+                    </a>
+                  </Button>
+                </div>
               </div>
             </div>
           </motion.div>
