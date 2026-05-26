@@ -1,14 +1,23 @@
 /**
  * Public + admin API base (must include `/api/v1`).
- * Override with env; production builds fall back to the Patliputra server if unset.
+ *
+ * Local dev (`npm run dev`): `http://localhost:2000/api/v1` (backend `PORT` in `backend/.env`).
+ * Production build: set `VITE_API_URL` in `.env.production` or falls back to `LIVE_API_BASE`.
  */
 export const LIVE_API_BASE = "https://apivnfast.patliputragroup.com/api/v1";
 
+/** Local backend — matches `backend/.env` PORT (default 2000). */
+export const LOCAL_API_BASE = "http://localhost:2000/api/v1";
+
 function resolveApiBase(): string {
   const fromEnv = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, "").trim();
+
+  if (import.meta.env.DEV) {
+    return fromEnv || LOCAL_API_BASE;
+  }
+
   if (fromEnv) return fromEnv;
-  if (import.meta.env.PROD) return LIVE_API_BASE;
-  return "";
+  return LIVE_API_BASE;
 }
 
 export const API_BASE = resolveApiBase();

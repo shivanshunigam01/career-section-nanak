@@ -1,5 +1,62 @@
 import { adminGet } from "@/lib/api";
 
+/** Paginated leads — GET /admin/leads */
+export const ADMIN_LEADS_PATH = "/admin/leads";
+
+/** Unpaginated leads — GET /admin/All_leads */
+export const ADMIN_ALL_LEADS_PATH = "/admin/All_leads";
+
+export type AdminLeadsPageParams = {
+  page?: number;
+  limit?: number;
+  status?: string;
+  model?: string;
+  source?: string;
+  search?: string;
+  from?: string;
+  to?: string;
+};
+
+/** First page (or custom page) from the paginated leads API. */
+export async function fetchLeadsPage<T>(
+  mapper: (doc: Record<string, unknown>) => T,
+  params: AdminLeadsPageParams = {},
+): Promise<{ rows: T[]; meta?: { page: number; limit: number; total: number } }> {
+  const qs = new URLSearchParams({
+    page: String(params.page ?? 1),
+    limit: String(params.limit ?? 500),
+  });
+  if (params.status) qs.set("status", params.status);
+  if (params.model) qs.set("model", params.model);
+  if (params.source) qs.set("source", params.source);
+  if (params.search) qs.set("search", params.search);
+  if (params.from) qs.set("from", params.from);
+  if (params.to) qs.set("to", params.to);
+
+  const { data, meta } = await adminGet<unknown[]>(`${ADMIN_LEADS_PATH}?${qs}`);
+  const batch = (data ?? []) as Record<string, unknown>[];
+  return { rows: batch.map(mapper), meta };
+}
+
+export async function fetchAllLeadsFromApi<T>(
+  mapper: (doc: Record<string, unknown>) => T,
+): Promise<T[]> {
+  const { data } = await adminGet<unknown[]>(ADMIN_ALL_LEADS_PATH);
+  const batch = (data ?? []) as Record<string, unknown>[];
+  return batch.map(mapper);
+}
+
+/** Export/bulk: prefer All_leads; fall back to paging through /admin/leads. */
+export async function fetchAllLeadsForExport<T>(
+  mapper: (doc: Record<string, unknown>) => T,
+): Promise<T[]> {
+  try {
+    return await fetchAllLeadsFromApi(mapper);
+  } catch {
+    return fetchAllAdminRows(ADMIN_LEADS_PATH, mapper);
+  }
+}
+
 const PAGE_LIMIT = 2500;
 const MAX_PAGES = 500;
 
