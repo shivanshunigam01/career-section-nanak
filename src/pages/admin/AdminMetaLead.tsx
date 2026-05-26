@@ -29,10 +29,16 @@ const AdminMetaLead = () => {
     } catch (e) {
       setPayload(null);
       if (isAxiosError(e)) {
-        const msg =
-          (e.response?.data as { message?: string } | undefined)?.message ??
-          e.message ??
-          `Request failed (${e.response?.status ?? "network"})`;
+        const status = e.response?.status;
+        const apiMsg = (e.response?.data as { message?: string } | undefined)?.message;
+        let msg = apiMsg ?? e.message ?? `Request failed (${status ?? "network"})`;
+        if (status === 404) {
+          msg =
+            "404 — this route is not on the live server yet. Redeploy the backend folder (needs GET /api/v1/admin/All_leads without JWT).";
+        } else if (status === 401) {
+          msg =
+            "401 — live server still requires login for All_leads. Redeploy backend so All_leads is registered before the auth middleware.";
+        }
         setError(msg);
         toast.error(msg);
       } else {

@@ -4,9 +4,10 @@
  *
  * Set `VITE_META_LEADS_API_URL` to your Meta leads endpoint (must allow CORS from this site).
  */
+/** Live server must deploy backend with GET /admin/All_leads before JWT middleware. */
 export const META_LEADS_API_URL =
   (import.meta.env.VITE_META_LEADS_API_URL as string | undefined)?.replace(/\/$/, "").trim() ||
-  "https://apivnfast.patliputragroup.com/api/v1/public/All_leads";
+  "https://apivnfast.patliputragroup.com/api/v1/admin/All_leads";
 
 export type MetaLeadsApiPayload = {
   success?: boolean;
