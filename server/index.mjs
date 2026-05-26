@@ -4,7 +4,8 @@
  * Mounted at /api/v1, /v1, and root aliases (see app.use below).
  *
  * Run: npm run api
- * Frontend: VITE_API_URL=https://apivnfast.patliputragroup.com/api/v1
+ * Local frontend: VITE_API_URL=http://localhost:2000/api/v1
+ * Production: VITE_API_URL=https://apivnfast.patliputragroup.com/api/v1
  */
 import express from "express";
 import cors from "cors";

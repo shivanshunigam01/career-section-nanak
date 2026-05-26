@@ -8,9 +8,9 @@ import {
   VF_STORAGE_KEYS,
 } from "@/lib/vfLocalStorage";
 import { hasApi } from "@/lib/apiConfig";
-import { adminDeleteJson, adminGet, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import { adminDeleteJson, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
 import { formatLeadSubmittedAt, leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
-import { fetchAllAdminRows } from "@/lib/adminFetchAll";
+import { fetchAllLeadsForExport, fetchLeadsPage } from "@/lib/adminFetchAll";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,8 +53,8 @@ const AdminLeads = () => {
   };
 
   const refreshFromApi = useCallback(async () => {
-    const { data } = await adminGet<unknown[]>("/admin/leads?limit=500&page=1");
-    setLeads((data as Record<string, unknown>[]).map((d) => leadFromApi(d)));
+    const { rows } = await fetchLeadsPage((d) => leadFromApi(d), { limit: 500, page: 1 });
+    setLeads(rows);
   }, []);
 
   useEffect(() => {
@@ -95,7 +95,7 @@ const AdminLeads = () => {
 
   const loadAllLeadsForExport = async (): Promise<Lead[]> => {
     if (useRemote) {
-      return fetchAllAdminRows("/admin/leads", (d) => leadFromApi(d));
+      return fetchAllLeadsForExport((d) => leadFromApi(d));
     }
     return leads;
   };
