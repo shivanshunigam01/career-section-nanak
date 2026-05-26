@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios, { isAxiosError } from "axios";
+import { isAxiosError } from "axios";
 import {
   META_LEADS_API_URL,
   cellDisplay,
+  fetchMetaLeadsPayload,
   metaLeadsRows,
   tableColumns,
   type MetaLeadsApiPayload,
@@ -15,29 +16,32 @@ import { toast } from "sonner";
 const AdminMetaLead = () => {
   const [loading, setLoading] = useState(true);
   const [payload, setPayload] = useState<MetaLeadsApiPayload | null>(null);
+  const [authMode, setAuthMode] = useState<"open" | "admin-session" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMetaLeads = useCallback(async () => {
     setLoading(true);
     setError(null);
+    setAuthMode(null);
 
     try {
-      const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, {
-        headers: { Accept: "application/json" },
-      });
-      setPayload(data);
+      const result = await fetchMetaLeadsPayload();
+      setPayload(result.data);
+      setAuthMode(result.authMode);
+      if (result.authMode === "admin-session") {
+        toast.message("Loaded with admin login — redeploy backend for open /All_leads (no token).");
+      }
     } catch (e) {
       setPayload(null);
       if (isAxiosError(e)) {
         const status = e.response?.status;
         const apiMsg = (e.response?.data as { message?: string } | undefined)?.message;
         let msg = apiMsg ?? e.message ?? `Request failed (${status ?? "network"})`;
-        if (status === 404) {
+        if (status === 401) {
           msg =
-            "404 — this route is not on the live server yet. Redeploy the backend folder (needs GET /api/v1/admin/All_leads without JWT).";
-        } else if (status === 401) {
-          msg =
-            "401 — live server still requires login for All_leads. Redeploy backend so All_leads is registered before the auth middleware.";
+            "401 — sign in at /admin/login first, or redeploy backend so GET /admin/All_leads is registered before auth middleware.";
+        } else if (status === 404) {
+          msg = "404 — route missing on live API. Redeploy the backend folder and restart the server.";
         }
         setError(msg);
         toast.error(msg);
@@ -67,11 +71,16 @@ const AdminMetaLead = () => {
             Meta Lead
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Direct frontend axios — no admin login token, not your CRM <code className="text-xs bg-secondary px-1 rounded">/admin/leads</code> API.
+            GET <code className="text-xs bg-secondary px-1 rounded break-all">{META_LEADS_API_URL}</code>
           </p>
-          <p className="text-muted-foreground text-xs mt-1 break-all">
-            GET <code className="bg-secondary px-1 rounded">{META_LEADS_API_URL}</code>
-          </p>
+          {authMode === "admin-session" && (
+            <p className="text-amber-600 dark:text-amber-400 text-xs mt-2">
+              Live API still requires login — loaded using your admin session. Redeploy backend for token-free access.
+            </p>
+          )}
+          {authMode === "open" && (
+            <p className="text-green-600 dark:text-green-400 text-xs mt-2">Open access (no token required).</p>
+          )}
         </div>
         <Button onClick={() => void fetchMetaLeads()} variant="outline" disabled={loading} className="bg-secondary/50">
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
