@@ -1,13 +1,35 @@
+import axios, { isAxiosError } from "axios";
+import { getAdminToken } from "@/lib/adminAuth";
+
 /**
- * Meta Lead page — direct browser axios call only.
- * Not routed through api.ts / admin JWT / CRM lead mappers.
- *
- * Set `VITE_META_LEADS_API_URL` to your Meta leads endpoint (must allow CORS from this site).
+ * Meta Lead page — browser axios only (not api.ts).
+ * After backend redeploy, works with no token. Until then, retries with admin JWT if logged in.
  */
-/** Live server must deploy backend with GET /admin/All_leads before JWT middleware. */
 export const META_LEADS_API_URL =
-  (import.meta.env.VITE_META_LEADS_API_URL as string | undefined)?.replace(/\/$/, "").trim() ||
   "https://apivnfast.patliputragroup.com/api/v1/admin/All_leads";
+
+export type MetaLeadsFetchResult = {
+  data: MetaLeadsApiPayload;
+  /** `open` once server has All_leads before protect middleware */
+  authMode: "open" | "admin-session";
+};
+
+export async function fetchMetaLeadsPayload(): Promise<MetaLeadsFetchResult> {
+  const headers = { Accept: "application/json" };
+
+  try {
+    const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, { headers });
+    return { data, authMode: "open" };
+  } catch (e) {
+    if (!isAxiosError(e) || e.response?.status !== 401) throw e;
+    const token = getAdminToken();
+    if (!token) throw e;
+    const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, {
+      headers: { ...headers, Authorization: `Bearer ${token}` },
+    });
+    return { data, authMode: "admin-session" };
+  }
+}
 
 export type MetaLeadsApiPayload = {
   success?: boolean;
