@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
-  TestTube, MessageSquare, Tag, Bell, Home, Image
+  TestTube, MessageSquare, Tag, Bell, Home, Image, Megaphone
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
@@ -16,6 +16,7 @@ const navItems = [
   { label: "Dashboard",   icon: LayoutDashboard, path: "/admin/dashboard" },
   { label: "Homepage",    icon: Home,             path: "/admin/homepage" },
   { label: "Leads",       icon: Users,            path: "/admin/leads" },
+  { label: "Meta Lead",   icon: Megaphone,        path: "/admin/meta-lead" },
   { label: "Test Drives", icon: TestTube,         path: "/admin/test-drives" },
   { label: "Products",    icon: Car,              path: "/admin/products" },
   { label: "Enquiries",   icon: MessageSquare,    path: "/admin/enquiries" },

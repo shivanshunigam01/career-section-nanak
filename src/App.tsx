@@ -35,6 +35,7 @@ import AdminContent from "./pages/admin/AdminContent";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import AdminMedia from "./pages/admin/AdminMedia";
+import AdminMetaLead from "./pages/admin/AdminMetaLead";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,7 @@ const App = () => {
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="leads" element={<AdminLeads />} />
+            <Route path="meta-lead" element={<AdminMetaLead />} />
             <Route path="test-drives" element={<AdminTestDrives />} />
             <Route path="enquiries" element={<AdminEnquiries />} />
             <Route path="products" element={<AdminProducts />} />

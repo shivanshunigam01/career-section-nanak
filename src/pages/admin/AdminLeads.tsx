@@ -10,7 +10,7 @@ import {
 import { hasApi } from "@/lib/apiConfig";
 import { adminDeleteJson, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
 import { formatLeadSubmittedAt, leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
-import { fetchAllLeadsForExport, fetchLeadsPage } from "@/lib/adminFetchAll";
+import { ADMIN_LEADS_PATH, fetchAllAdminRows, fetchLeadsPage } from "@/lib/adminFetchAll";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ const AdminLeads = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
   const [leads, setLeads] = useState<Lead[]>(() => (hasApi() ? [] : mockLeads));
+  const [leadsTotal, setLeadsTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [editLead, setEditLead] = useState<Lead | null>(null);
@@ -53,8 +54,9 @@ const AdminLeads = () => {
   };
 
   const refreshFromApi = useCallback(async () => {
-    const { rows } = await fetchLeadsPage((d) => leadFromApi(d), { limit: 500, page: 1 });
+    const { rows, meta } = await fetchLeadsPage((d) => leadFromApi(d), { page: 1, limit: 20 });
     setLeads(rows);
+    setLeadsTotal(meta?.total ?? rows.length);
   }, []);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ const AdminLeads = () => {
 
   const loadAllLeadsForExport = async (): Promise<Lead[]> => {
     if (useRemote) {
-      return fetchAllLeadsForExport((d) => leadFromApi(d));
+      return fetchAllAdminRows(ADMIN_LEADS_PATH, (d) => leadFromApi(d));
     }
     return leads;
   };
@@ -213,14 +215,11 @@ const AdminLeads = () => {
       try {
         const payload = leadToApiPayload(lead);
         if (lead.id) {
-          const updated = await adminPutJson<Record<string, unknown>>(`/admin/leads/${lead.id}`, payload);
-          const mapped = leadFromApi(updated);
-          setLeads((prev) => prev.map((l) => (l.id === lead.id ? mapped : l)));
+          await adminPutJson<Record<string, unknown>>(`/admin/leads/${lead.id}`, payload);
         } else {
-          const created = await adminPostJson<Record<string, unknown>>("/admin/leads", payload);
-          const mapped = leadFromApi(created);
-          setLeads((prev) => [mapped, ...prev]);
+          await adminPostJson<Record<string, unknown>>("/admin/leads", payload);
         }
+        await refreshFromApi();
         toast.success("Lead saved");
         setShowForm(false);
         setEditLead(null);
@@ -242,7 +241,7 @@ const AdminLeads = () => {
     if (useRemote) {
       try {
         await adminDeleteJson(`/admin/leads/${id}`);
-        setLeads((prev) => prev.filter((l) => l.id !== id));
+        await refreshFromApi();
         toast.success("Lead deleted");
       } catch (e) {
         toast.error(formatApiErrors(e));
@@ -257,7 +256,11 @@ const AdminLeads = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground">Leads</h1>
-          <p className="text-muted-foreground text-sm">{leads.length} total leads</p>
+          <p className="text-muted-foreground text-sm">
+            {useRemote
+              ? `Showing ${leads.length} of ${leadsTotal} leads`
+              : `${leads.length} total leads`}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2 items-center">
           <Button onClick={() => { setEditLead(emptyLead); setShowForm(true); }} className="bg-primary text-primary-foreground">
