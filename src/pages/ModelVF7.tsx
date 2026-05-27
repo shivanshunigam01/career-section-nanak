@@ -468,12 +468,12 @@ const ModelVF7 = () => {
         aria-label="VF 7 hero"
       >
         {/* Mobile only: HeroSection-style shell + portrait art */}
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:hidden">
+        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
               src={vf7HeroPagePortrait}
               alt="VinFast VF 7 — red electric SUV on a city avenue"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+              className="hero-slider-image h-full w-full object-cover"
               style={{ objectPosition: "center 42%" }}
               sizes="100vw"
               fetchPriority="high"
@@ -487,7 +487,7 @@ const ModelVF7 = () => {
             <img
               src={vf7FrontHero}
               alt="VinFast VF 7"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover object-[42%_48%]"
+              className="hero-slider-image h-full w-full object-cover object-[42%_48%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
