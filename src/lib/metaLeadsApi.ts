@@ -1,35 +1,10 @@
 import axios, { isAxiosError } from "axios";
-import { getAdminToken } from "@/lib/adminAuth";
 
 /**
- * Meta Lead page — browser axios only (not api.ts).
- * After backend redeploy, works with no token. Until then, retries with admin JWT if logged in.
+ * Public Meta leads — no JWT. Backend proxies META_LEADS_UPSTREAM_URL (your Meta API).
  */
 export const META_LEADS_API_URL =
-  "https://apivnfast.patliputragroup.com/api/v1/admin/All_leads";
-
-export type MetaLeadsFetchResult = {
-  data: MetaLeadsApiPayload;
-  /** `open` once server has All_leads before protect middleware */
-  authMode: "open" | "admin-session";
-};
-
-export async function fetchMetaLeadsPayload(): Promise<MetaLeadsFetchResult> {
-  const headers = { Accept: "application/json" };
-
-  try {
-    const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, { headers });
-    return { data, authMode: "open" };
-  } catch (e) {
-    if (!isAxiosError(e) || e.response?.status !== 401) throw e;
-    const token = getAdminToken();
-    if (!token) throw e;
-    const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, {
-      headers: { ...headers, Authorization: `Bearer ${token}` },
-    });
-    return { data, authMode: "admin-session" };
-  }
-}
+  "https://apivnfast.patliputragroup.com/api/v1/public/All_leads";
 
 export type MetaLeadsApiPayload = {
   success?: boolean;
@@ -38,6 +13,13 @@ export type MetaLeadsApiPayload = {
   message?: string;
   [key: string]: unknown;
 };
+
+export async function fetchMetaLeadsPayload(): Promise<MetaLeadsApiPayload> {
+  const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, {
+    headers: { Accept: "application/json" },
+  });
+  return data;
+}
 
 /** Normalize `data` to an array of row objects for the table. */
 export function metaLeadsRows(payload: MetaLeadsApiPayload | null): Record<string, unknown>[] {
@@ -59,7 +41,6 @@ export function cellDisplay(value: unknown): string {
   return JSON.stringify(value);
 }
 
-/** Preferred columns when present on Meta / lead objects. */
 export const META_LEAD_TABLE_KEYS = [
   "name",
   "full_name",

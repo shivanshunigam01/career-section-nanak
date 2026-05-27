@@ -16,32 +16,26 @@ import { toast } from "sonner";
 const AdminMetaLead = () => {
   const [loading, setLoading] = useState(true);
   const [payload, setPayload] = useState<MetaLeadsApiPayload | null>(null);
-  const [authMode, setAuthMode] = useState<"open" | "admin-session" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const fetchMetaLeads = useCallback(async () => {
     setLoading(true);
     setError(null);
-    setAuthMode(null);
 
     try {
-      const result = await fetchMetaLeadsPayload();
-      setPayload(result.data);
-      setAuthMode(result.authMode);
-      if (result.authMode === "admin-session") {
-        toast.message("Loaded with admin login — redeploy backend for open /All_leads (no token).");
-      }
+      const data = await fetchMetaLeadsPayload();
+      setPayload(data);
     } catch (e) {
       setPayload(null);
       if (isAxiosError(e)) {
         const status = e.response?.status;
         const apiMsg = (e.response?.data as { message?: string } | undefined)?.message;
         let msg = apiMsg ?? e.message ?? `Request failed (${status ?? "network"})`;
-        if (status === 401) {
+        if (status === 503) {
           msg =
-            "401 — sign in at /admin/login first, or redeploy backend so GET /admin/All_leads is registered before auth middleware.";
+            "Meta API not configured on server. Set META_LEADS_UPSTREAM_URL in backend .env to your Meta leads URL, then restart the API.";
         } else if (status === 404) {
-          msg = "404 — route missing on live API. Redeploy the backend folder and restart the server.";
+          msg = "404 — deploy the latest backend (public All_leads route missing on live server).";
         }
         setError(msg);
         toast.error(msg);
@@ -71,16 +65,10 @@ const AdminMetaLead = () => {
             Meta Lead
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            GET <code className="text-xs bg-secondary px-1 rounded break-all">{META_LEADS_API_URL}</code>
+            Public API — no login token. Data comes from Meta via{" "}
+            <code className="text-xs bg-secondary px-1 rounded">META_LEADS_UPSTREAM_URL</code> on the server.
           </p>
-          {authMode === "admin-session" && (
-            <p className="text-amber-600 dark:text-amber-400 text-xs mt-2">
-              Live API still requires login — loaded using your admin session. Redeploy backend for token-free access.
-            </p>
-          )}
-          {authMode === "open" && (
-            <p className="text-green-600 dark:text-green-400 text-xs mt-2">Open access (no token required).</p>
-          )}
+          <p className="text-muted-foreground text-xs mt-1 break-all font-mono">{META_LEADS_API_URL}</p>
         </div>
         <Button onClick={() => void fetchMetaLeads()} variant="outline" disabled={loading} className="bg-secondary/50">
           <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
@@ -94,7 +82,7 @@ const AdminMetaLead = () => {
 
       {metaBlock != null && Object.keys(metaBlock).length > 0 && (
         <Card className="p-4 bg-primary/5 border-primary/20">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Response meta (from API)</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Response meta (from Meta / API)</p>
           <pre className="text-xs overflow-auto">{JSON.stringify(metaBlock, null, 2)}</pre>
         </Card>
       )}
