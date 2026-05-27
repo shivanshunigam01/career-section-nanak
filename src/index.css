@@ -235,6 +235,17 @@
     transform: translateZ(0);
   }
 
+  /*
+   * On short landscape mobile viewports (after rotate), keep the full hero
+   * image visible instead of aggressively cropping with object-cover.
+   */
+  @media (max-width: 1024px) and (orientation: landscape) and (max-height: 520px) {
+    .hero-slider-image {
+      object-fit: contain;
+      background-color: #000;
+    }
+  }
+
   /**
    * Hero media wrapper without visual overlay, to keep imagery clear.
    */
