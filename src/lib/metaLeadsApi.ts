@@ -65,7 +65,8 @@ function parseFlowToken(flowToken: unknown): Record<string, unknown> {
 }
 
 export type MetaLeadRow = {
-  id: string;
+  id: string; // meta row id
+  leadId: string; // linked CRM Lead id
   createdAt: string;
   name: string;
   mobile: string;
@@ -74,6 +75,14 @@ export type MetaLeadRow = {
   state: string;
   pin: string;
   interestedModel: string;
+  status: string;
+  source: string;
+  model: string;
+  nextFollowUp: string;
+  existingVehicle: string;
+  remarks: string;
+  financeNeeded: boolean;
+  exchangeNeeded: boolean;
 };
 
 /**
@@ -107,6 +116,15 @@ export function mapMetaLeadRow(doc: Record<string, unknown>): MetaLeadRow {
   const state = stripPrefix(doc.screen_0_State_2) || "—";
   const pin = displayValue(doc.screen_0_PIN_3 || doc.pin);
   const interestedModel = stripPrefix(doc.screen_0_Interested_Model_5) || "—";
+  const status = displayValue(doc.status);
+  const source = displayValue(doc.source) === "—" ? "Meta Ads" : displayValue(doc.source);
+  const model = displayValue(doc.model) === "—" ? interestedModel : displayValue(doc.model);
+  const nextFollowUp = displayValue(doc.nextFollowUp);
+  const leadId = typeof doc.leadId === "string" ? doc.leadId : "—";
+  const existingVehicle = displayValue(doc.screen_0_Existing_Vehicle__6 || doc.existingVehicle);
+  const remarks = displayValue(doc.remarks) === "—" ? "" : displayValue(doc.remarks);
+  const financeNeeded = Boolean(doc.financeNeeded);
+  const exchangeNeeded = Boolean(doc.exchangeNeeded);
 
   const candidateId = doc.uniqueId ?? doc._id;
   const candidateIdStr = typeof candidateId === "string" ? candidateId.trim() : "";
@@ -122,5 +140,14 @@ export function mapMetaLeadRow(doc: Record<string, unknown>): MetaLeadRow {
     state,
     pin,
     interestedModel,
+    status,
+    source,
+    model,
+    nextFollowUp,
+    leadId,
+    existingVehicle,
+    remarks,
+    financeNeeded,
+    exchangeNeeded,
   };
 }
