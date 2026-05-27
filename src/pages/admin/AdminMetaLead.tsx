@@ -2,10 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { isAxiosError } from "axios";
 import {
   META_LEADS_API_URL,
-  cellDisplay,
   fetchMetaLeadsPayload,
   metaLeadsRows,
-  tableColumns,
+  mapMetaLeadRow,
   type MetaLeadsApiPayload,
 } from "@/lib/metaLeadsApi";
 import { Card } from "@/components/ui/card";
@@ -52,8 +51,7 @@ const AdminMetaLead = () => {
     void fetchMetaLeads();
   }, [fetchMetaLeads]);
 
-  const rows = useMemo(() => metaLeadsRows(payload), [payload]);
-  const columns = useMemo(() => tableColumns(rows), [rows]);
+  const rows = useMemo(() => metaLeadsRows(payload).map((d) => mapMetaLeadRow(d)), [payload]);
   const metaBlock = payload?.meta;
 
   return (
@@ -96,47 +94,53 @@ const AdminMetaLead = () => {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border/50 bg-secondary/30">
-                {columns.map((col) => (
-                  <th key={col} className="text-left p-3 text-xs text-muted-foreground font-medium whitespace-nowrap">
-                    {col}
-                  </th>
-                ))}
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium whitespace-nowrap">Name</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium whitespace-nowrap">WhatsApp / Mobile</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">Email</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">State</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">PIN</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Interested Model</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden lg:table-cell whitespace-nowrap">
+                  Submitted
+                </th>
               </tr>
             </thead>
             <tbody>
-              {loading ? (
+              {loading && (
                 <tr>
-                  <td colSpan={Math.max(columns.length, 1)} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     Fetching Meta leads…
                   </td>
                 </tr>
-              ) : rows.length === 0 ? (
+              )}
+              {!loading && rows.length === 0 && (
                 <tr>
-                  <td colSpan={Math.max(columns.length, 1)} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={7} className="p-8 text-center text-muted-foreground">
                     No rows in <code className="text-xs">data</code>
                   </td>
                 </tr>
-              ) : (
-                rows.map((row, i) => (
-                  <tr key={String(row._id ?? row.id ?? i)} className="border-b border-border/20 hover:bg-secondary/20">
-                    {columns.map((col) => (
-                      <td key={col} className="p-3 text-foreground max-w-[200px] truncate" title={cellDisplay(row[col])}>
-                        {cellDisplay(row[col])}
-                      </td>
-                    ))}
-                  </tr>
-                ))
+              )}
+              {!loading && rows.length > 0 && (
+                <>
+                  {rows.map((row, i) => {
+                    const whatsappOrMobile = row.whatsappNumber === "—" ? row.mobile : row.whatsappNumber;
+                    return (
+                      <tr key={row.id || String(i)} className="border-b border-border/20 hover:bg-secondary/20">
+                        <td className="p-3 font-medium">{row.name}</td>
+                        <td className="p-3 text-muted-foreground whitespace-nowrap">{whatsappOrMobile}</td>
+                        <td className="p-3 hidden md:table-cell text-muted-foreground">{row.email}</td>
+                        <td className="p-3 text-muted-foreground">{row.state}</td>
+                        <td className="p-3 text-muted-foreground">{row.pin}</td>
+                        <td className="p-3">{row.interestedModel}</td>
+                        <td className="p-3 hidden lg:table-cell text-muted-foreground whitespace-nowrap">{row.createdAt}</td>
+                      </tr>
+                    );
+                  })}
+                </>
               )}
             </tbody>
           </table>
         </div>
-      </Card>
-
-      <Card className="p-4 bg-card border-border/50">
-        <p className="text-xs font-medium text-muted-foreground mb-2">Full JSON response</p>
-        <pre className="text-xs overflow-auto max-h-96 p-3 rounded-lg bg-secondary/30 text-foreground">
-          {loading ? "…" : JSON.stringify(payload, null, 2)}
-        </pre>
       </Card>
     </div>
   );
