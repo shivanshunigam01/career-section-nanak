@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { mockLeads, LEAD_STATUSES, type Lead, type LeadStatus } from "@/data/mockData";
+import { LEAD_STATUSES } from "@/data/mockData";
 import { hasApi } from "@/lib/apiConfig";
-import { adminDeleteJson, adminPostJson, adminPutJson, formatApiErrors, publicGet } from "@/lib/api";
-import { formatLeadSubmittedAt, leadFromApi, leadToApiPayload } from "@/lib/apiMappers";
-import { fetchLeadsPage } from "@/lib/adminFetchAll";
+import { adminPutJson, formatApiErrors } from "@/lib/api";
+import { formatLeadSubmittedAt } from "@/lib/apiMappers";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,49 +11,26 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Edit2, Trash2, Phone, Mail, Download } from "lucide-react";
-import { parseStoredModelLine, leadModelLabel } from "@/data/vinfastModels";
-import { ModelTrimSelect } from "@/components/ModelTrimSelect";
-
-const CRM_LEAD_SOURCES = ["Website", "Google Ads", "Meta Ads", "WhatsApp", "Walk-in", "Referral"] as const;
+import { Search, Edit2, Phone, Mail, Download } from "lucide-react";
+import { fetchMetaLeadsPayload, mapMetaLeadRow, metaLeadsRows, type MetaLeadRow } from "@/lib/metaLeadsApi";
 
 const AdminMetaLeadCRM = () => {
   const useRemote = hasApi();
   const [hydrated, setHydrated] = useState(false);
-  const [leads, setLeads] = useState<Lead[]>(() => (useRemote ? [] : mockLeads.filter((l) => l.source === "Meta Ads")));
+  const [leads, setLeads] = useState<MetaLeadRow[]>([]);
 
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterModel, setFilterModel] = useState<string>("all");
 
-  const [editLead, setEditLead] = useState<Lead | null>(null);
-  const [showForm, setShowForm] = useState(false);
-
-  const emptyLead: Lead = {
-    id: "",
-    name: "",
-    mobile: "",
-    email: "",
-    city: "",
-    otherCity: "",
-    model: "VF 7",
-    source: "Meta Ads",
-    status: "New Lead",
-    assignedTo: "",
-    createdAt: new Date().toISOString().split("T")[0],
-    nextFollowUp: "",
-    remarks: "",
-    financeNeeded: false,
-    exchangeNeeded: false,
-  };
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [editLead, setEditLead] = useState<MetaLeadRow | null>(null);
+  const [showEdit, setShowEdit] = useState(false);
 
   const refreshFromApi = useCallback(async () => {
-    const { rows } = await fetchLeadsPage((d) => leadFromApi(d), {
-      limit: 500,
-      page: 1,
-      source: "Meta Ads",
-    });
-    setLeads(rows);
+    const payload = await fetchMetaLeadsPayload();
+    const mapped = metaLeadsRows(payload).map((d) => mapMetaLeadRow(d));
+    setLeads(mapped);
   }, []);
 
   useEffect(() => {
@@ -64,8 +40,6 @@ const AdminMetaLeadCRM = () => {
     }
     (async () => {
       try {
-        // Triggers backend disk-to-Mongo backfill for older webhook payloads (no UI usage).
-        await publicGet<unknown>("/public/All_leads");
         await refreshFromApi();
       } catch (e) {
         toast.error(formatApiErrors(e));
@@ -81,42 +55,61 @@ const AdminMetaLeadCRM = () => {
       l.mobile.includes(search) ||
       l.email.toLowerCase().includes(search.toLowerCase());
     const matchStatus = filterStatus === "all" || l.status === filterStatus;
-    const matchModel = filterModel === "all" || l.model === filterModel;
+    const matchModel = filterModel === "all" || l.model === filterModel || l.interestedModel === filterModel;
     return matchSearch && matchStatus && matchModel;
   });
 
   const models = useMemo(() => {
     const set = new Set<string>();
-    for (const l of leads) set.add(l.model);
+    for (const l of leads) set.add(l.model === "—" ? l.interestedModel : l.model);
     return Array.from(set).sort();
   }, [leads]);
 
-  const handleSave = async (lead: Lead) => {
+  const updateStatus = async (lead: MetaLeadRow, status: string) => {
     if (!useRemote) return;
+    if (!lead.leadId || lead.leadId === "—") {
+      toast.error("Lead is not linked in CRM yet.");
+      return;
+    }
+    setSavingId(lead.id);
     try {
-      const payload = leadToApiPayload(lead);
-      if (lead.id) {
-        await adminPutJson(`/admin/leads/${lead.id}`, payload);
-      } else {
-        await adminPostJson("/admin/leads", payload);
-      }
-      toast.success("Lead saved");
-      setShowForm(false);
+      await adminPutJson(`/admin/leads/${lead.leadId}`, { status });
+      toast.success("Lead status updated");
+      await refreshFromApi();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const saveMetaLead = async (next: MetaLeadRow) => {
+    if (!useRemote) return;
+    setSavingId(next.id);
+    try {
+      await adminPutJson(`/admin/meta-leads/${next.id}`, {
+        name: next.name,
+        mobile: next.mobile,
+        whatsappNumber: next.whatsappNumber,
+        email: next.email,
+        state: next.state,
+        pin: next.pin,
+        interestedModel: next.interestedModel,
+        existingVehicle: next.existingVehicle,
+        status: next.status,
+        nextFollowUp: next.nextFollowUp === "—" ? null : next.nextFollowUp,
+        remarks: next.remarks,
+        financeNeeded: next.financeNeeded,
+        exchangeNeeded: next.exchangeNeeded,
+      });
+      toast.success("Meta lead updated");
+      setShowEdit(false);
       setEditLead(null);
       await refreshFromApi();
     } catch (e) {
       toast.error(formatApiErrors(e));
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!useRemote) return;
-    try {
-      await adminDeleteJson(`/admin/leads/${id}`);
-      toast.success("Lead deleted");
-      await refreshFromApi();
-    } catch (e) {
-      toast.error(formatApiErrors(e));
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -131,7 +124,6 @@ const AdminMetaLeadCRM = () => {
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Intentionally no "Add Lead" here; Meta leads should come from provider webhook. */}
           <Button
             onClick={() => void refreshFromApi()}
             variant="outline"
@@ -192,10 +184,11 @@ const AdminMetaLeadCRM = () => {
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden sm:table-cell">
                   Contact
                 </th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Model</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">
-                  Source
-                </th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">State</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">PIN</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Interested Model</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">Existing Vehicle</th>
+                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">Email</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium">Status</th>
                 <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell whitespace-nowrap">
                   Submitted
@@ -209,7 +202,7 @@ const AdminMetaLeadCRM = () => {
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={11} className="p-8 text-center text-muted-foreground">
                     No Meta leads found
                   </td>
                 </tr>
@@ -243,26 +236,28 @@ const AdminMetaLeadCRM = () => {
                         <span className="text-xs text-muted-foreground">{lead.mobile}</span>
                       </div>
                     </td>
-                    <td className="p-3 text-foreground">{lead.model}</td>
-                    <td className="p-3 hidden md:table-cell text-muted-foreground">{lead.source}</td>
+                    <td className="p-3 text-muted-foreground">{lead.state}</td>
+                    <td className="p-3 text-muted-foreground">{lead.pin}</td>
+                    <td className="p-3 text-foreground">{lead.interestedModel}</td>
+                    <td className="p-3 hidden md:table-cell text-muted-foreground">{lead.existingVehicle}</td>
+                    <td className="p-3 hidden md:table-cell text-muted-foreground">{lead.email}</td>
                     <td className="p-3">
-                      <span
-                        className={`text-[10px] px-2 py-1 rounded-full font-medium whitespace-nowrap ${
-                          lead.status === "New Lead"
-                            ? "bg-blue-400/10 text-blue-400"
-                            : lead.status === "Interested"
-                              ? "bg-green-400/10 text-green-400"
-                              : lead.status === "Booked"
-                                ? "bg-primary/10 text-primary"
-                                : lead.status === "Lost"
-                                  ? "bg-destructive/10 text-destructive"
-                                  : lead.status === "Negotiation"
-                                    ? "bg-amber-400/10 text-amber-400"
-                                    : "bg-secondary text-muted-foreground"
-                        }`}
+                      <Select
+                        value={lead.status}
+                        onValueChange={(v) => void updateStatus(lead, v)}
+                        disabled={savingId === lead.id}
                       >
-                        {lead.status}
-                      </span>
+                        <SelectTrigger className="h-7 w-40 bg-secondary/50 text-[11px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {LEAD_STATUSES.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="p-3 hidden md:table-cell text-muted-foreground text-xs whitespace-nowrap">
                       {formatLeadSubmittedAt(lead.createdAt)}
@@ -275,17 +270,13 @@ const AdminMetaLeadCRM = () => {
                         <button
                           onClick={() => {
                             setEditLead(lead);
-                            setShowForm(true);
+                            setShowEdit(true);
                           }}
                           className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
+                          disabled={savingId === lead.id}
+                          title="Edit"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => void handleDelete(lead.id)}
-                          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
@@ -297,41 +288,36 @@ const AdminMetaLeadCRM = () => {
         </div>
       </Card>
 
-      {/* Lead Form Dialog */}
       <Dialog
-        open={showForm}
+        open={showEdit}
         onOpenChange={(open) => {
-          setShowForm(open);
+          setShowEdit(open);
           if (!open) setEditLead(null);
         }}
       >
-        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogContent className="bg-card border-border max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="font-display">{editLead?.id ? "Edit Lead" : "Add Lead"}</DialogTitle>
+            <DialogTitle className="font-display">Edit Meta Lead</DialogTitle>
           </DialogHeader>
-          {editLead && (
-            <LeadForm lead={editLead} onSave={(l) => void handleSave(l)} onCancel={() => { setShowForm(false); setEditLead(null); }} />
-          )}
+          {editLead && <MetaLeadForm lead={editLead} onSave={(l) => void saveMetaLead(l)} onCancel={() => setShowEdit(false)} />}
         </DialogContent>
       </Dialog>
     </div>
   );
 };
 
-const LeadForm = ({
+const MetaLeadForm = ({
   lead,
   onSave,
   onCancel,
 }: {
-  lead: Lead;
-  onSave: (l: Lead) => void | Promise<void>;
+  lead: MetaLeadRow;
+  onSave: (next: MetaLeadRow) => void | Promise<void>;
   onCancel: () => void;
 }) => {
-  const [form, setForm] = useState(lead);
-  const update = (key: keyof Lead, value: string | boolean) => setForm((prev) => ({ ...prev, [key]: value }));
-
-  const sourceChoices: string[] = [...CRM_LEAD_SOURCES];
-  if (form.source && !sourceChoices.includes(form.source)) sourceChoices.push(form.source);
+  const [form, setForm] = useState<MetaLeadRow>(lead);
+  const update = (key: keyof MetaLeadRow, value: string | boolean) =>
+    setForm((prev) => ({ ...prev, [key]: value as never }));
 
   return (
     <div className="space-y-4">
@@ -345,49 +331,44 @@ const LeadForm = ({
           <Input value={form.mobile} onChange={(e) => update("mobile", e.target.value)} className="bg-secondary/50" />
         </div>
         <div className="space-y-1.5">
+          <Label className="text-xs">WhatsApp Number</Label>
+          <Input
+            value={form.whatsappNumber}
+            onChange={(e) => update("whatsappNumber", e.target.value)}
+            className="bg-secondary/50"
+          />
+        </div>
+        <div className="space-y-1.5">
           <Label className="text-xs">Email</Label>
           <Input value={form.email} onChange={(e) => update("email", e.target.value)} className="bg-secondary/50" />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs">City</Label>
-          <Input value={form.city} onChange={(e) => update("city", e.target.value)} className="bg-secondary/50" />
+          <Label className="text-xs">State</Label>
+          <Input value={form.state} onChange={(e) => update("state", e.target.value)} className="bg-secondary/50" />
         </div>
-
-        <div className="space-y-1.5 col-span-2">
-          <Label className="text-xs">Model &amp; trim</Label>
-          {(() => {
-            const { model: tm, variant: tv } = parseStoredModelLine(form.model);
-            return (
-              <ModelTrimSelect
-                model={tm}
-                variant={tv}
-                onChange={(m, v) => update("model", leadModelLabel(m, v))}
-                includeNotSureBoth
-                className="h-10 w-full px-3 rounded-lg bg-secondary/50 border border-border text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-              />
-            );
-          })()}
-        </div>
-
         <div className="space-y-1.5">
-          <Label className="text-xs">Source</Label>
-          <Select value={form.source || "Meta Ads"} onValueChange={(v) => update("source", v)}>
-            <SelectTrigger className="bg-secondary/50">
-              <SelectValue placeholder="Source" />
-            </SelectTrigger>
-            <SelectContent>
-              {sourceChoices.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Label className="text-xs">PIN</Label>
+          <Input value={form.pin} onChange={(e) => update("pin", e.target.value)} className="bg-secondary/50" />
         </div>
-
+        <div className="space-y-1.5">
+          <Label className="text-xs">Interested Model</Label>
+          <Input
+            value={form.interestedModel}
+            onChange={(e) => update("interestedModel", e.target.value)}
+            className="bg-secondary/50"
+          />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Existing Vehicle</Label>
+          <Input
+            value={form.existingVehicle}
+            onChange={(e) => update("existingVehicle", e.target.value)}
+            className="bg-secondary/50"
+          />
+        </div>
         <div className="space-y-1.5">
           <Label className="text-xs">Status</Label>
-          <Select value={form.status} onValueChange={(v) => update("status", v as LeadStatus)}>
+          <Select value={form.status} onValueChange={(v) => update("status", v)}>
             <SelectTrigger className="bg-secondary/50">
               <SelectValue />
             </SelectTrigger>
@@ -400,10 +381,14 @@ const LeadForm = ({
             </SelectContent>
           </Select>
         </div>
-
-        <div className="space-y-1.5 col-span-2">
+        <div className="space-y-1.5">
           <Label className="text-xs">Next Follow-up</Label>
-          <Input type="date" value={form.nextFollowUp} onChange={(e) => update("nextFollowUp", e.target.value)} className="bg-secondary/50" />
+          <Input
+            type="date"
+            value={form.nextFollowUp === "—" ? "" : form.nextFollowUp}
+            onChange={(e) => update("nextFollowUp", e.target.value)}
+            className="bg-secondary/50"
+          />
         </div>
       </div>
 
