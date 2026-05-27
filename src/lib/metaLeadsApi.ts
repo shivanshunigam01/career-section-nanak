@@ -1,7 +1,9 @@
 import axios from "axios";
+import { adminPostJson } from "@/lib/api";
+import type { MetaLeadImportRow } from "@/lib/metaLeadImport";
 
 /**
- * Public Meta leads — no JWT. Backend proxies META_LEADS_UPSTREAM_URL (your Meta API).
+ * Public Meta leads — no JWT.
  */
 export const META_LEADS_API_URL =
   "https://apivnfast.patliputragroup.com/api/v1/public/All_leads";
@@ -94,6 +96,41 @@ export type MetaLeadRow = {
  * - screen_0_PIN_3
  * - screen_0_Interested_Model_5 (e.g. "1_VF7")
  */
+export type MetaLeadCreateInput = {
+  name: string;
+  mobile: string;
+  whatsappNumber?: string;
+  email?: string;
+  state?: string;
+  pin?: string;
+  interestedModel?: string;
+  existingVehicle?: string;
+  status?: string;
+  nextFollowUp?: string | null;
+  remarks?: string;
+  financeNeeded?: boolean;
+  exchangeNeeded?: boolean;
+  source?: string;
+};
+
+export async function createMetaLead(input: MetaLeadCreateInput): Promise<MetaLeadRow> {
+  const doc = await adminPostJson<Record<string, unknown>>("/admin/meta-leads", {
+    ...input,
+    nextFollowUp: input.nextFollowUp || null,
+  });
+  return mapMetaLeadRow(doc);
+}
+
+export type MetaLeadBulkResult = {
+  created: number;
+  failed: { row: number; name?: string; mobile?: string; message: string }[];
+};
+
+export async function bulkCreateMetaLeads(leads: MetaLeadImportRow[]): Promise<MetaLeadBulkResult> {
+  const data = await adminPostJson<MetaLeadBulkResult>("/admin/meta-leads/bulk", { leads });
+  return data;
+}
+
 export function mapMetaLeadRow(doc: Record<string, unknown>): MetaLeadRow {
   const flow = parseFlowToken(doc.flow_token);
 
@@ -126,9 +163,9 @@ export function mapMetaLeadRow(doc: Record<string, unknown>): MetaLeadRow {
   const financeNeeded = Boolean(doc.financeNeeded);
   const exchangeNeeded = Boolean(doc.exchangeNeeded);
 
-  const candidateId = doc.uniqueId ?? doc._id;
-  const candidateIdStr = typeof candidateId === "string" ? candidateId.trim() : "";
-  const id = candidateIdStr ? candidateIdStr : `${whatsappNumber}-${createdAt}`;
+  const mongoId = doc._id != null ? String(doc._id) : "";
+  const uniqueId = doc.uniqueId != null ? String(doc.uniqueId).trim() : "";
+  const id = mongoId || uniqueId || `${whatsappNumber}-${createdAt}`;
 
   return {
     id: id || String(Math.random()),
