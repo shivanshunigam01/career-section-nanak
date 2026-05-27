@@ -212,12 +212,12 @@ const ModelMPV7 = () => {
         className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF MPV 7 hero"
       >
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:hidden">
+        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
               src={mpv7HeroPagePortrait}
               alt="Black VinFast VF MPV 7 electric MPV on a coastal road above the ocean"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+              className="hero-slider-image h-full w-full object-cover"
               style={{ objectPosition: "center 38%" }}
               sizes="100vw"
               fetchPriority="high"
@@ -230,7 +230,7 @@ const ModelMPV7 = () => {
             <img
               src={mpv7HeroDesktop}
               alt="VinFast VF MPV 7"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover object-[50%_45%]"
+              className="hero-slider-image h-full w-full object-cover object-[50%_45%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"

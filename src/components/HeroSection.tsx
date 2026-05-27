@@ -300,7 +300,7 @@ const HeroSection = () => {
 
   return (
     <section className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0">
-      <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:h-screen lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
+      <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:h-screen lg:absolute lg:inset-0 lg:z-0 lg:min-h-[500px] lg:max-h-none">
         {slides.map((s, i) => {
           // Keep cross-fade wrappers mounted, but only request nearby slide images.
           // This avoids front-loading all hero assets on first paint.
@@ -318,7 +318,7 @@ const HeroSection = () => {
             <img
               src={shouldLoadImage ? heroImageSrc(s, isLg) : undefined}
               alt={`${s.title} — VinFast hero`}
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+                className="hero-slider-image h-full w-full object-cover"
               style={{ objectPosition: heroImageObjectPosition(s, isLg) }}
               sizes="(max-width: 768px) 100vw, (max-width: 1536px) 100vw, 1920px"
               loading={i === current ? "eager" : "lazy"}

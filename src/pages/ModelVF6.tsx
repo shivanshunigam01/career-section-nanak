@@ -367,12 +367,12 @@ const ModelVF6 = () => {
         aria-label="VF 6 hero"
       >
         {/* Mobile only: HeroSection-style shell + portrait art */}
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100svh-4.25rem)] lg:hidden">
+        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
               src={vf6HeroPagePortrait}
               alt="Silver VinFast VF 6 electric SUV with family and wildflower field under a bright sky"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover"
+              className="hero-slider-image h-full w-full object-cover"
               style={{ objectPosition: "center 42%" }}
               sizes="100vw"
               fetchPriority="high"
@@ -386,7 +386,7 @@ const ModelVF6 = () => {
             <img
               src={vf6Hero}
               alt="Silver VinFast VF 6 electric SUV on a modern patio with a family and coastal bay view in the background"
-              className="hero-slider-image h-full w-full min-h-full min-w-full object-cover object-[38%_52%]"
+              className="hero-slider-image h-full w-full object-cover object-[38%_52%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
