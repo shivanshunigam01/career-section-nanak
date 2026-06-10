@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
-  TestTube, MessageSquare, Tag, Bell, Home, Image, Megaphone
+  TestTube, MessageSquare, Tag, Bell, Home, Image, Megaphone,
+  CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 const ADMIN_SESSION_EXPIRED_TOAST =
   "Your session has expired. Please sign in again — your access token is no longer valid after one hour.";
 
-const navItems = [
+const coreNavItems = [
   { label: "Dashboard",   icon: LayoutDashboard, path: "/admin/dashboard" },
   { label: "Homepage",    icon: Home,             path: "/admin/homepage" },
   { label: "Leads",       icon: Users,            path: "/admin/leads" },
@@ -26,10 +27,18 @@ const navItems = [
   { label: "Settings",    icon: Settings,         path: "/admin/settings" },
 ];
 
+const tdNavItems = [
+  { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings" },
+  { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles" },
+  { label: "TD Reports",     icon: BarChart3,     path: "/admin/td/reports" },
+  { label: "Slot Config",    icon: Building2,     path: "/admin/td/config" },
+];
+
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [tdExpanded, setTdExpanded] = useState(location.pathname.startsWith("/admin/td"));
 
   useEffect(() => {
     const api = hasApi();
@@ -111,7 +120,7 @@ const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-3 sm:p-4 overscroll-contain">
-          {navItems.map((item) => {
+          {coreNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -129,6 +138,42 @@ const AdminLayout = () => {
               </Link>
             );
           })}
+
+          {/* TD Management Section */}
+          <div className="pt-2">
+            <button
+              onClick={() => setTdExpanded(!tdExpanded)}
+              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <CalendarCheck className="w-3.5 h-3.5 text-primary" />
+                TD Management
+              </span>
+              {tdExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevRight className="w-3.5 h-3.5" />}
+            </button>
+            {tdExpanded && (
+              <div className="mt-1 space-y-0.5">
+                {tdNavItems.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ml-2 ${
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      }`}
+                    >
+                      <item.icon className="w-3.5 h-3.5" />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </nav>
 
         <div className="shrink-0 border-t border-border p-3 sm:p-4">

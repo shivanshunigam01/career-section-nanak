@@ -36,6 +36,10 @@ import AdminSettings from "./pages/admin/AdminSettings";
 import AdminHomepage from "./pages/admin/AdminHomepage";
 import AdminMedia from "./pages/admin/AdminMedia";
 import AdminMetaLeadCRM from "./pages/admin/AdminMetaLeadCRM";
+import AdminTDBookings from "./pages/admin/AdminTDBookings";
+import AdminTDDemoVehicles from "./pages/admin/AdminTDDemoVehicles";
+import AdminTDReports from "./pages/admin/AdminTDReports";
+import AdminTDSlotConfig from "./pages/admin/AdminTDSlotConfig";
 
 const queryClient = new QueryClient();
 
@@ -91,6 +95,12 @@ const App = () => {
             <Route path="homepage" element={<AdminHomepage />} />
             <Route path="media" element={<AdminMedia />} />
             <Route path="settings" element={<AdminSettings />} />
+
+            {/* Test Drive Management Module */}
+            <Route path="td/bookings" element={<AdminTDBookings />} />
+            <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
+            <Route path="td/reports" element={<AdminTDReports />} />
+            <Route path="td/config" element={<AdminTDSlotConfig />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />
