@@ -140,19 +140,25 @@ const AdminLayout = () => {
           })}
 
           {/* TD Management Section */}
-          <div className="pt-2">
+          <div className="pt-1">
+            <div className="mx-1 my-2 border-t border-border/50" />
             <button
+              type="button"
               onClick={() => setTdExpanded(!tdExpanded)}
-              className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+              className={`w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                location.pathname.startsWith("/admin/td")
+                  ? "bg-primary/10 text-primary"
+                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+              }`}
             >
-              <span className="flex items-center gap-2">
-                <CalendarCheck className="w-3.5 h-3.5 text-primary" />
-                TD Management
-              </span>
-              {tdExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevRight className="w-3.5 h-3.5" />}
+              <CalendarCheck className="h-5 w-5 shrink-0 opacity-90" />
+              <span className="truncate flex-1 text-left">TD Management</span>
+              {tdExpanded
+                ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+                : <ChevRight className="h-4 w-4 shrink-0 opacity-60" />}
             </button>
             {tdExpanded && (
-              <div className="mt-1 space-y-0.5">
+              <div className="ml-4 border-l border-border/40 pl-1 space-y-0.5 mt-0.5">
                 {tdNavItems.map((item) => {
                   const isActive = location.pathname === item.path;
                   return (
@@ -160,14 +166,14 @@ const AdminLayout = () => {
                       key={item.path}
                       to={item.path}
                       onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ml-2 ${
+                      className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
                         isActive
                           ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                          : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                       }`}
                     >
-                      <item.icon className="w-3.5 h-3.5" />
-                      {item.label}
+                      <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                      <span className="truncate">{item.label}</span>
                     </Link>
                   );
                 })}
