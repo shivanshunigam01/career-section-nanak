@@ -1,96 +1,114 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { adminGet, adminPatchJson, adminPostJson, formatApiErrors } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Search, Calendar, Clock, User, Car, CheckCircle, XCircle,
-  UserCheck, Phone, Mail, MapPin, ChevronRight, AlertCircle,
-  RefreshCw, Filter, Eye, Edit2, Play, StopCircle
+  CalendarCheck, Search, RefreshCw, Car, User, Clock, Building2,
+  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban
 } from "lucide-react";
+import { toast } from "sonner";
 
-type BookingStatus =
-  | "Pending Approval" | "Approved" | "Assigned" | "Confirmed"
-  | "In Progress" | "Completed" | "Cancelled" | "No Show" | "Rescheduled";
-
-interface TDBooking {
-  id: string;
-  bookingRef: string;
-  customerName: string;
-  customerMobile: string;
-  customerEmail?: string;
-  model: "VF 6" | "VF 7";
-  variant?: string;
-  branch: string;
-  date: string;
-  slotStart: string;
-  slotEnd: string;
-  status: BookingStatus;
-  vehicleId?: string;
-  executive?: string;
-  licenseVerified: boolean;
-  leadId?: string;
+type Booking = {
+  _id: string;
+  bookingId: string;
+  bookingStatus: string;
+  slotDate: string;
+  slotTime: string;
+  slotDuration: number;
+  dlVerified: boolean;
+  preferredModel: string;
+  customerId: { _id: string; name: string; mobile: string; customerId: string } | null;
+  vehicleId: { vehicleId: string; model: string; registrationNo: string; color: string } | null;
+  assignedExecutive: { _id: string; name: string; email: string } | null;
+  branchId: { name: string; code: string } | null;
   createdAt: string;
-}
-
-const STATUS_STYLE: Record<BookingStatus, string> = {
-  "Pending Approval": "bg-amber-400/10 text-amber-400 border-amber-400/30",
-  Approved: "bg-blue-400/10 text-blue-400 border-blue-400/30",
-  Assigned: "bg-indigo-400/10 text-indigo-400 border-indigo-400/30",
-  Confirmed: "bg-cyan-400/10 text-cyan-400 border-cyan-400/30",
-  "In Progress": "bg-orange-400/10 text-orange-400 border-orange-400/30",
-  Completed: "bg-green-400/10 text-green-400 border-green-400/30",
-  Cancelled: "bg-red-400/10 text-red-400 border-red-400/30",
-  "No Show": "bg-secondary text-muted-foreground border-border",
-  Rescheduled: "bg-purple-400/10 text-purple-400 border-purple-400/30",
+  cancellationReason?: string;
 };
 
-const MOCK_BOOKINGS: TDBooking[] = [
-  { id: "1", bookingRef: "TDB-20250401-A1B2", customerName: "Vikram Sharma", customerMobile: "9876543210", customerEmail: "vikram@gmail.com", model: "VF 7", variant: "Plus", branch: "Patna Main", date: "2025-04-02", slotStart: "10:00", slotEnd: "10:45", status: "Pending Approval", licenseVerified: false, createdAt: "2025-04-01" },
-  { id: "2", bookingRef: "TDB-20250401-C3D4", customerName: "Priya Kumari", customerMobile: "9123456780", model: "VF 6", variant: "Eco", branch: "Patna Main", date: "2025-04-02", slotStart: "11:00", slotEnd: "11:45", status: "Assigned", vehicleId: "VF6-2001", executive: "Rahul Kumar", licenseVerified: true, leadId: "LEAD001", createdAt: "2025-04-01" },
-  { id: "3", bookingRef: "TDB-20250401-E5F6", customerName: "Arun Singh", customerMobile: "9988776655", model: "VF 7", variant: "Plus", branch: "Patna Main", date: "2025-04-02", slotStart: "12:00", slotEnd: "12:45", status: "In Progress", vehicleId: "VF7-1003", executive: "Priya Singh", licenseVerified: true, createdAt: "2025-04-01" },
-  { id: "4", bookingRef: "TDB-20250401-G7H8", customerName: "Sunita Devi", customerMobile: "9765432100", model: "VF 6", branch: "Patna Main", date: "2025-04-01", slotStart: "14:00", slotEnd: "14:45", status: "Completed", vehicleId: "VF6-2001", executive: "Rahul Kumar", licenseVerified: true, createdAt: "2025-03-31" },
-  { id: "5", bookingRef: "TDB-20250331-I9J0", customerName: "Rajesh Gupta", customerMobile: "9654321098", model: "VF 7", branch: "Patna Main", date: "2025-04-03", slotStart: "09:00", slotEnd: "09:45", status: "Approved", vehicleId: "VF7-1001", licenseVerified: true, createdAt: "2025-03-31" },
-  { id: "6", bookingRef: "TDB-20250330-K1L2", customerName: "Meena Tiwari", customerMobile: "9543210987", model: "VF 7", branch: "Patna Main", date: "2025-04-01", slotStart: "15:00", slotEnd: "15:45", status: "Cancelled", licenseVerified: false, createdAt: "2025-03-30" },
-];
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20",
+  CONFIRMED: "bg-blue-400/10 text-blue-400 border-blue-400/20",
+  IN_PROGRESS: "bg-purple-400/10 text-purple-400 border-purple-400/20",
+  COMPLETED: "bg-green-400/10 text-green-400 border-green-400/20",
+  CANCELLED: "bg-red-400/10 text-red-400 border-red-400/20",
+  RESCHEDULED: "bg-orange-400/10 text-orange-400 border-orange-400/20",
+  MISSED: "bg-gray-400/10 text-gray-400 border-gray-400/20",
+};
 
-const ALL_STATUSES: BookingStatus[] = ["Pending Approval", "Approved", "Assigned", "Confirmed", "In Progress", "Completed", "Cancelled", "No Show", "Rescheduled"];
+const ALL_STATUSES = ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "RESCHEDULED", "MISSED"];
 
-const AdminTDBookings = () => {
-  const [bookings, setBookings] = useState<TDBooking[]>(MOCK_BOOKINGS);
+export default function AdminTDBookings() {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [dateFilter, setDateFilter] = useState("");
-  const [selected, setSelected] = useState<TDBooking | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterDate, setFilterDate] = useState("");
+  const [selected, setSelected] = useState<Booking | null>(null);
+  const [cancelDialog, setCancelDialog] = useState<Booking | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const statusCounts = ALL_STATUSES.reduce((acc, s) => {
-    acc[s] = bookings.filter(b => b.status === s).length;
-    return acc;
-  }, {} as Record<string, number>);
+  const fetchBookings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({ limit: "100" });
+      if (filterStatus !== "all") params.set("status", filterStatus);
+      if (filterDate) params.set("date", filterDate);
+      const { data } = await adminGet<Booking[]>(`/admin/td/bookings?${params}`);
+      setBookings(data ?? []);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [filterStatus, filterDate]);
 
-  const filtered = bookings.filter(b => {
-    const matchSearch = !search ||
-      b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      b.customerMobile.includes(search) ||
-      b.bookingRef.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === "all" || b.status === statusFilter;
-    const matchDate = !dateFilter || b.date === dateFilter;
-    return matchSearch && matchStatus && matchDate;
+  useEffect(() => { void fetchBookings(); }, [fetchBookings]);
+
+  const filtered = bookings.filter((b) => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return (
+      b.bookingId?.toLowerCase().includes(s) ||
+      b.customerId?.name?.toLowerCase().includes(s) ||
+      b.customerId?.mobile?.includes(s) ||
+      b.vehicleId?.registrationNo?.toLowerCase().includes(s)
+    );
   });
 
-  const openDetail = (b: TDBooking) => { setSelected(b); setShowDetail(true); };
-
-  const approveBooking = (id: string) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "Approved" as BookingStatus } : b));
+  const handleCancel = async () => {
+    if (!cancelDialog) return;
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${cancelDialog._id}/cancel`, { reason: cancelReason });
+      toast.success("Booking cancelled");
+      setCancelDialog(null);
+      setCancelReason("");
+      void fetchBookings();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
   };
 
-  const cancelBooking = (id: string) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, status: "Cancelled" as BookingStatus } : b));
+  const handleStatusUpdate = async (id: string, status: string) => {
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}`, { bookingStatus: status });
+      toast.success(`Booking marked as ${status}`);
+      void fetchBookings();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   return (
@@ -98,230 +116,169 @@ const AdminTDBookings = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Test Drive Bookings</h1>
-          <p className="text-muted-foreground text-sm">{bookings.length} total · {statusCounts["Pending Approval"]} pending approval · {statusCounts["In Progress"]} in progress</p>
+          <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
+            <CalendarCheck className="w-6 h-6 text-primary" /> TD Bookings
+          </h1>
+          <p className="text-muted-foreground text-sm">{filtered.length} booking(s)</p>
         </div>
-      </div>
-
-      {/* Status Quick Filters */}
-      <div className="flex flex-wrap gap-2">
-        <button
-          onClick={() => setStatusFilter("all")}
-          className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${statusFilter === "all" ? "bg-primary/10 text-primary border-primary/30" : "bg-secondary/50 text-muted-foreground border-border/40 hover:border-border"}`}
-        >
-          All ({bookings.length})
-        </button>
-        {(["Pending Approval", "Approved", "Assigned", "In Progress", "Completed", "Cancelled"] as BookingStatus[]).map(s => (
-          <button
-            key={s}
-            onClick={() => setStatusFilter(statusFilter === s ? "all" : s)}
-            className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${statusFilter === s ? STATUS_STYLE[s] : "bg-secondary/50 text-muted-foreground border-border/40"}`}
-          >
-            {s} ({statusCounts[s] || 0})
-          </button>
-        ))}
+        <Button onClick={() => void fetchBookings()} variant="outline" size="sm" className="shrink-0">
+          <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+        </Button>
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1 max-w-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search name, mobile, booking ref..." value={search} onChange={e => setSearch(e.target.value)} className="pl-10 bg-secondary/50" />
+          <Input placeholder="Search booking / customer..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50" />
         </div>
-        <Input type="date" value={dateFilter} onChange={e => setDateFilter(e.target.value)} className="bg-secondary/50 w-full sm:w-44" />
-        {(search || dateFilter || statusFilter !== "all") && (
-          <Button variant="outline" size="sm" onClick={() => { setSearch(""); setDateFilter(""); setStatusFilter("all"); }}>
-            <RefreshCw className="w-3.5 h-3.5 mr-1" /> Clear
-          </Button>
-        )}
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {ALL_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
+        <Input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="bg-secondary/50" />
       </div>
 
-      {/* Bookings Table */}
-      <Card className="bg-card border-border/50 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border/50 bg-secondary/30">
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Booking Ref</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Customer</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden md:table-cell">Model</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Date & Slot</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden lg:table-cell">Vehicle</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium hidden lg:table-cell">Executive</th>
-                <th className="text-left p-3 text-xs text-muted-foreground font-medium">Status</th>
-                <th className="text-right p-3 text-xs text-muted-foreground font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map(b => (
-                <tr key={b.id} className="border-b border-border/20 hover:bg-secondary/20 transition-colors">
-                  <td className="p-3">
-                    <p className="font-mono text-xs text-foreground font-medium">{b.bookingRef}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{b.createdAt}</p>
-                  </td>
-                  <td className="p-3">
-                    <p className="font-medium text-foreground text-sm">{b.customerName}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Phone className="w-2.5 h-2.5" />{b.customerMobile}
-                    </p>
-                    {!b.licenseVerified && (
-                      <span className="text-[9px] text-amber-400 flex items-center gap-0.5 mt-0.5">
-                        <AlertCircle className="w-2.5 h-2.5" /> License pending
-                      </span>
-                    )}
-                  </td>
-                  <td className="p-3 hidden md:table-cell">
-                    <span className="text-foreground font-medium">{b.model}</span>
-                    {b.variant && <span className="text-xs text-muted-foreground block">{b.variant}</span>}
-                  </td>
-                  <td className="p-3">
-                    <p className="text-sm text-foreground flex items-center gap-1"><Calendar className="w-3 h-3 text-muted-foreground" />{b.date}</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="w-3 h-3" />{b.slotStart} – {b.slotEnd}</p>
-                  </td>
-                  <td className="p-3 hidden lg:table-cell text-xs text-muted-foreground">{b.vehicleId || "—"}</td>
-                  <td className="p-3 hidden lg:table-cell text-xs text-muted-foreground">{b.executive || "—"}</td>
-                  <td className="p-3">
-                    <span className={`text-[10px] px-2 py-1 rounded-full font-medium border whitespace-nowrap ${STATUS_STYLE[b.status]}`}>
-                      {b.status}
-                    </span>
-                  </td>
-                  <td className="p-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        onClick={() => openDetail(b)}
-                        className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"
-                        title="View Details"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                      </button>
-                      {b.status === "Pending Approval" && (
-                        <button
-                          onClick={() => approveBooking(b.id)}
-                          className="p-1.5 rounded hover:bg-green-400/10 text-muted-foreground hover:text-green-400"
-                          title="Approve"
-                        >
-                          <CheckCircle className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                      {!["Completed", "Cancelled"].includes(b.status) && (
-                        <button
-                          onClick={() => cancelBooking(b.id)}
-                          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
-                          title="Cancel"
-                        >
-                          <XCircle className="w-3.5 h-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {filtered.length === 0 && (
-            <p className="text-center text-muted-foreground py-10 text-sm">No bookings match the current filters</p>
-          )}
+      {/* Content */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16 text-muted-foreground">
+          <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading bookings...
         </div>
-      </Card>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground">
+          <CalendarCheck className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>No bookings found</p>
+        </div>
+      ) : (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((b) => (
+            <Card key={b._id} className="bg-card border-border/50 p-4 space-y-3 hover:border-primary/30 transition-colors">
+              {/* Top row */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground font-mono">{b.bookingId}</p>
+                  <p className="font-semibold text-foreground truncate">{b.customerId?.name ?? "Unknown"}</p>
+                  <p className="text-xs text-muted-foreground">{b.customerId?.mobile}</p>
+                </div>
+                <Badge className={`shrink-0 text-[10px] border ${STATUS_COLORS[b.bookingStatus] ?? "bg-secondary"}`}>
+                  {b.bookingStatus}
+                </Badge>
+              </div>
 
-      {/* Booking Detail Dialog */}
-      <Dialog open={showDetail} onOpenChange={setShowDetail}>
-        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display">Booking Detail — {selected?.bookingRef}</DialogTitle>
-          </DialogHeader>
-          {selected && <BookingDetailPanel booking={selected} />}
+              {/* Details grid */}
+              <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/30 pt-3">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Clock className="w-3.5 h-3.5 shrink-0" />
+                  <span>{new Date(b.slotDate).toLocaleDateString("en-IN")} {b.slotTime}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Car className="w-3.5 h-3.5 shrink-0" />
+                  <span>{b.vehicleId ? `${b.vehicleId.model} — ${b.vehicleId.registrationNo}` : b.preferredModel || "TBD"}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <UserCheck className="w-3.5 h-3.5 shrink-0" />
+                  <span>{b.assignedExecutive?.name ?? "Unassigned"}</span>
+                </div>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Building2 className="w-3.5 h-3.5 shrink-0" />
+                  <span>{b.branchId?.name ?? "—"}</span>
+                </div>
+              </div>
+
+              {/* DL badge */}
+              <div className="flex items-center gap-1.5 text-xs">
+                {b.dlVerified ? (
+                  <span className="flex items-center gap-1 text-green-400"><CheckCircle2 className="w-3 h-3" /> DL Verified</span>
+                ) : (
+                  <span className="flex items-center gap-1 text-yellow-400"><AlertTriangle className="w-3 h-3" /> DL Pending</span>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-1.5 border-t border-border/30 pt-3">
+                <Button size="sm" variant="ghost" className="flex-1 text-xs h-8" onClick={() => setSelected(b)}>
+                  <Eye className="w-3.5 h-3.5 mr-1" /> View
+                </Button>
+                {b.bookingStatus === "CONFIRMED" && (
+                  <Button size="sm" variant="ghost" className="text-xs h-8 text-green-400 hover:text-green-300 hover:bg-green-400/10"
+                    onClick={() => void handleStatusUpdate(b._id, "COMPLETED")} disabled={actionLoading}>
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Complete
+                  </Button>
+                )}
+                {!["COMPLETED", "CANCELLED", "MISSED"].includes(b.bookingStatus) && (
+                  <Button size="sm" variant="ghost" className="text-xs h-8 text-red-400 hover:text-red-300 hover:bg-red-400/10"
+                    onClick={() => { setCancelDialog(b); setCancelReason(""); }}>
+                    <Ban className="w-3.5 h-3.5 mr-1" /> Cancel
+                  </Button>
+                )}
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Detail Dialog */}
+      <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
+        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader><DialogTitle className="font-display">Booking Details</DialogTitle></DialogHeader>
+          {selected && (
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  ["Booking ID", selected.bookingId],
+                  ["Status", selected.bookingStatus],
+                  ["Customer", selected.customerId?.name],
+                  ["Mobile", selected.customerId?.mobile],
+                  ["Customer ID", selected.customerId?.customerId],
+                  ["Vehicle", selected.vehicleId ? `${selected.vehicleId.model} (${selected.vehicleId.registrationNo})` : selected.preferredModel || "TBD"],
+                  ["Color", selected.vehicleId?.color || "—"],
+                  ["Executive", selected.assignedExecutive?.name ?? "Unassigned"],
+                  ["Date", new Date(selected.slotDate).toLocaleDateString("en-IN")],
+                  ["Time", selected.slotTime],
+                  ["Duration", `${selected.slotDuration} min`],
+                  ["Branch", selected.branchId?.name],
+                  ["DL Verified", selected.dlVerified ? "Yes ✅" : "No ❌"],
+                  ["Booked On", new Date(selected.createdAt).toLocaleString("en-IN")],
+                ].map(([label, val]) => (
+                  <div key={label}>
+                    <p className="text-xs text-muted-foreground">{label}</p>
+                    <p className="font-medium text-foreground">{val ?? "—"}</p>
+                  </div>
+                ))}
+              </div>
+              {selected.cancellationReason && (
+                <div className="rounded-lg bg-red-400/5 border border-red-400/20 p-3">
+                  <p className="text-xs text-red-400 font-medium">Cancellation Reason</p>
+                  <p className="text-foreground text-sm mt-1">{selected.cancellationReason}</p>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Dialog */}
+      <Dialog open={!!cancelDialog} onOpenChange={(o) => !o && setCancelDialog(null)}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader><DialogTitle>Cancel Booking</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">Cancelling <span className="text-foreground font-mono">{cancelDialog?.bookingId}</span> for <span className="text-foreground">{cancelDialog?.customerId?.name}</span>.</p>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Reason (optional)</Label>
+              <Textarea value={cancelReason} onChange={(e) => setCancelReason(e.target.value)} className="bg-secondary/50" rows={3} placeholder="e.g. Customer requested cancellation" />
+            </div>
+            <div className="flex gap-3">
+              <Button variant="destructive" className="flex-1" onClick={() => void handleCancel()} disabled={actionLoading}>
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <XCircle className="w-4 h-4 mr-2" />} Confirm Cancel
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setCancelDialog(null)}>Keep Booking</Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-const BookingDetailPanel = ({ booking }: { booking: TDBooking }) => (
-  <Tabs defaultValue="info" className="mt-2">
-    <TabsList className="bg-secondary/50 w-full">
-      <TabsTrigger value="info" className="flex-1 text-xs">Booking Info</TabsTrigger>
-      <TabsTrigger value="assign" className="flex-1 text-xs">Assign</TabsTrigger>
-      <TabsTrigger value="checklist" className="flex-1 text-xs">Checklist</TabsTrigger>
-    </TabsList>
-
-    <TabsContent value="info" className="mt-4 space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        {[
-          ["Customer", booking.customerName],
-          ["Mobile", booking.customerMobile],
-          ["Email", booking.customerEmail || "—"],
-          ["Model", `${booking.model}${booking.variant ? " " + booking.variant : ""}`],
-          ["Branch", booking.branch],
-          ["Date", booking.date],
-          ["Slot", `${booking.slotStart} – ${booking.slotEnd}`],
-          ["Vehicle", booking.vehicleId || "Not assigned"],
-          ["Executive", booking.executive || "Not assigned"],
-          ["License", booking.licenseVerified ? "✅ Verified" : "⚠️ Pending"],
-        ].map(([k, v]) => (
-          <div key={k} className="bg-secondary/30 rounded-lg p-3">
-            <p className="text-[10px] text-muted-foreground">{k}</p>
-            <p className="text-sm font-medium text-foreground">{v}</p>
-          </div>
-        ))}
-      </div>
-      <div className="flex items-center gap-2">
-        <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${STATUS_STYLE[booking.status]}`}>
-          {booking.status}
-        </span>
-      </div>
-    </TabsContent>
-
-    <TabsContent value="assign" className="mt-4 space-y-4">
-      <div className="space-y-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Assign Demo Vehicle</Label>
-          <Select>
-            <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select available vehicle" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="vf7-1001">VF7-1001 · VF 7 Plus · White (87% battery)</SelectItem>
-              <SelectItem value="vf7-1002">VF7-1002 · VF 7 Plus · Black (72% battery)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Assign Sales Executive</Label>
-          <Select>
-            <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select executive" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="exec1">Rahul Kumar</SelectItem>
-              <SelectItem value="exec2">Priya Singh</SelectItem>
-              <SelectItem value="exec3">Amit Verma</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Internal Remarks</Label>
-          <Textarea placeholder="Notes for executive..." className="bg-secondary/50" rows={2} />
-        </div>
-        <Button className="bg-primary text-primary-foreground w-full">
-          <UserCheck className="w-4 h-4 mr-2" /> Confirm Assignment
-        </Button>
-      </div>
-    </TabsContent>
-
-    <TabsContent value="checklist" className="mt-4 space-y-3">
-      <p className="text-xs text-muted-foreground font-medium">Pre-drive checklist status:</p>
-      {[
-        ["Customer Confirmed", true],
-        ["Driving License Verified", booking.licenseVerified],
-        ["Vehicle Assigned", !!booking.vehicleId],
-        ["Executive Assigned", !!booking.executive],
-        ["Opening Odometer Captured", booking.status === "In Progress" || booking.status === "Completed"],
-        ["Opening Battery Captured", booking.status === "In Progress" || booking.status === "Completed"],
-      ].map(([label, done]) => (
-        <div key={label as string} className={`flex items-center gap-3 p-3 rounded-lg border ${done ? "bg-green-400/5 border-green-400/20" : "bg-secondary/30 border-border/30"}`}>
-          {done ? <CheckCircle className="w-4 h-4 text-green-400 shrink-0" /> : <AlertCircle className="w-4 h-4 text-muted-foreground shrink-0" />}
-          <span className={`text-sm ${done ? "text-foreground" : "text-muted-foreground"}`}>{label as string}</span>
-        </div>
-      ))}
-    </TabsContent>
-  </Tabs>
-);
-
-export default AdminTDBookings;
+}

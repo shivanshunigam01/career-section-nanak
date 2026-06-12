@@ -1,416 +1,300 @@
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { adminGet, adminPatchJson, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import {
-  Plus, Car, Battery, Zap, Wrench, AlertTriangle, CheckCircle,
-  Clock, MapPin, Gauge, TrendingUp, RefreshCw, ChevronRight, Activity
+  Car, Search, RefreshCw, Zap, Gauge, Loader2, Plus, Edit2,
+  Battery, MapPin, Wrench, BatteryCharging, AlertTriangle
 } from "lucide-react";
+import { toast } from "sonner";
 
-type VehicleStatus = "Available" | "Booked" | "Running" | "Charging" | "Under Repair" | "Battery Low";
-
-interface DemoVehicle {
-  id: string;
+type Vehicle = {
+  _id: string;
   vehicleId: string;
-  model: "VF 6" | "VF 7";
+  model: string;
   variant: string;
+  registrationNo: string;
+  vinNo: string;
   color: string;
-  registrationNumber: string;
-  vinNumber: string;
-  year: number;
-  status: VehicleStatus;
-  batteryPercentage: number;
-  chargingStatus: "Not Charging" | "Charging" | "Full";
+  batteryPercent: number;
   currentOdometer: number;
-  totalKmDriven: number;
-  dailyKm: number;
-  monthlyKm: number;
+  status: string;
+  totalTestDriveKM: number;
   totalTestDrives: number;
-  totalChargingCycles: number;
-  underRepair: boolean;
-  replacementRecommended: boolean;
-  depletionPct: number;
-  branch: string;
-  assignedExecutive?: string;
-  estimatedAvailableAt?: string;
-  lastServiceAt?: string;
-}
-
-const STATUS_CONFIG: Record<VehicleStatus, { label: string; color: string; bg: string; icon: React.ElementType }> = {
-  Available: { label: "Available", color: "text-green-400", bg: "bg-green-400/15 border-green-400/30", icon: CheckCircle },
-  Booked: { label: "Booked", color: "text-blue-400", bg: "bg-blue-400/15 border-blue-400/30", icon: Car },
-  Running: { label: "Running", color: "text-orange-400", bg: "bg-orange-400/15 border-orange-400/30", icon: Activity },
-  Charging: { label: "Charging", color: "text-purple-400", bg: "bg-purple-400/15 border-purple-400/30", icon: Zap },
-  "Under Repair": { label: "Under Repair", color: "text-red-400", bg: "bg-red-400/15 border-red-400/30", icon: Wrench },
-  "Battery Low": { label: "Battery Low", color: "text-yellow-400", bg: "bg-yellow-400/15 border-yellow-400/30", icon: AlertTriangle },
+  isLocked: boolean;
+  branchId: { _id: string; name: string; code: string } | null;
+  insuranceValidity: string;
+  serviceDueDate: string;
 };
 
-const MOCK_VEHICLES: DemoVehicle[] = [
-  { id: "1", vehicleId: "VF7-1001", model: "VF 7", variant: "Plus", color: "Pearl White", registrationNumber: "BR01AX0001", vinNumber: "VF7IND2024001", year: 2024, status: "Available", batteryPercentage: 87, chargingStatus: "Not Charging", currentOdometer: 4210, totalKmDriven: 4210, dailyKm: 32, monthlyKm: 890, totalTestDrives: 67, totalChargingCycles: 42, underRepair: false, replacementRecommended: false, depletionPct: 5, branch: "Patna Main", lastServiceAt: "2025-12-01" },
-  { id: "2", vehicleId: "VF7-1002", model: "VF 7", variant: "Plus", color: "Jet Black", registrationNumber: "BR01AX0002", vinNumber: "VF7IND2024002", year: 2024, status: "Booked", batteryPercentage: 72, chargingStatus: "Not Charging", currentOdometer: 6540, totalKmDriven: 6540, dailyKm: 45, monthlyKm: 1200, totalTestDrives: 102, totalChargingCycles: 65, underRepair: false, replacementRecommended: false, depletionPct: 8, branch: "Patna Main", assignedExecutive: "Rahul Kumar" },
-  { id: "3", vehicleId: "VF6-2001", model: "VF 6", variant: "Eco", color: "Urban Mint", registrationNumber: "BR01BX0001", vinNumber: "VF6IND2024001", year: 2024, status: "Charging", batteryPercentage: 28, chargingStatus: "Charging", currentOdometer: 8900, totalKmDriven: 8900, dailyKm: 60, monthlyKm: 1650, totalTestDrives: 148, totalChargingCycles: 90, underRepair: false, replacementRecommended: false, depletionPct: 11, branch: "Patna Main", estimatedAvailableAt: "2:30 PM" },
-  { id: "4", vehicleId: "VF7-1003", model: "VF 7", variant: "Plus", color: "Crimson Red", registrationNumber: "BR01AX0003", vinNumber: "VF7IND2024003", year: 2024, status: "Running", batteryPercentage: 61, chargingStatus: "Not Charging", currentOdometer: 3100, totalKmDriven: 3100, dailyKm: 28, monthlyKm: 720, totalTestDrives: 48, totalChargingCycles: 31, underRepair: false, replacementRecommended: false, depletionPct: 4, branch: "Patna Main", assignedExecutive: "Priya Singh" },
-  { id: "5", vehicleId: "VF6-2002", model: "VF 6", variant: "Plus", color: "Zenith Grey", registrationNumber: "BR01BX0002", vinNumber: "VF6IND2024002", year: 2024, status: "Under Repair", batteryPercentage: 45, chargingStatus: "Not Charging", currentOdometer: 12400, totalKmDriven: 12400, dailyKm: 0, monthlyKm: 980, totalTestDrives: 215, totalChargingCycles: 112, underRepair: true, replacementRecommended: false, depletionPct: 16, branch: "Patna Main", estimatedAvailableAt: "Tomorrow 10 AM" },
-  { id: "6", vehicleId: "VF7-1004", model: "VF 7", variant: "Eco", color: "Desat Silver", registrationNumber: "BR01AX0004", vinNumber: "VF7IND2024004", year: 2023, status: "Battery Low", batteryPercentage: 14, chargingStatus: "Not Charging", currentOdometer: 18200, totalKmDriven: 18200, dailyKm: 0, monthlyKm: 1100, totalTestDrives: 298, totalChargingCycles: 188, underRepair: false, replacementRecommended: false, depletionPct: 23, branch: "Patna Main" },
-];
+type Branch = { _id: string; name: string; code: string };
 
-const StatusBadge = ({ status }: { status: VehicleStatus }) => {
-  const cfg = STATUS_CONFIG[status];
-  const Icon = cfg.icon;
-  return (
-    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${cfg.color} ${cfg.bg}`}>
-      <Icon className="w-3 h-3" />
-      {cfg.label}
-    </span>
-  );
+const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
+  AVAILABLE: { color: "bg-green-400/10 text-green-400 border-green-400/20", icon: <Car className="w-3 h-3" /> },
+  BOOKED: { color: "bg-blue-400/10 text-blue-400 border-blue-400/20", icon: <Car className="w-3 h-3" /> },
+  RUNNING: { color: "bg-purple-400/10 text-purple-400 border-purple-400/20", icon: <Gauge className="w-3 h-3" /> },
+  CHARGING: { color: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20", icon: <BatteryCharging className="w-3 h-3" /> },
+  REPAIR: { color: "bg-red-400/10 text-red-400 border-red-400/20", icon: <Wrench className="w-3 h-3" /> },
+  BATTERY_LOW: { color: "bg-orange-400/10 text-orange-400 border-orange-400/20", icon: <Battery className="w-3 h-3" /> },
+  SERVICE_DUE: { color: "bg-rose-400/10 text-rose-400 border-rose-400/20", icon: <AlertTriangle className="w-3 h-3" /> },
 };
 
-const BatteryBar = ({ pct }: { pct: number }) => {
-  const color = pct <= 20 ? "bg-red-400" : pct <= 40 ? "bg-yellow-400" : pct <= 60 ? "bg-orange-400" : "bg-green-400";
-  return (
-    <div className="flex items-center gap-2">
-      <div className="w-24 h-2 bg-secondary rounded-full overflow-hidden">
-        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${pct}%` }} />
-      </div>
-      <span className="text-xs text-muted-foreground">{pct}%</span>
-    </div>
-  );
-};
+const emptyVehicle = { model: "VF 7", variant: "", registrationNo: "", vinNo: "", color: "", batteryPercent: 100, currentOdometer: 0, branchId: "" };
 
-const STATUSES: VehicleStatus[] = ["Available", "Booked", "Running", "Charging", "Under Repair", "Battery Low"];
-
-const AdminTDDemoVehicles = () => {
-  const [vehicles, setVehicles] = useState<DemoVehicle[]>(MOCK_VEHICLES);
-  const [filter, setFilter] = useState<string>("all");
+export default function AdminTDDemoVehicles() {
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterModel, setFilterModel] = useState("all");
   const [showForm, setShowForm] = useState(false);
-  const [selected, setSelected] = useState<DemoVehicle | null>(null);
-  const [showDetail, setShowDetail] = useState(false);
+  const [editVehicle, setEditVehicle] = useState<Vehicle | null>(null);
+  const [form, setForm] = useState<typeof emptyVehicle & { _id?: string }>(emptyVehicle);
+  const [statusDialog, setStatusDialog] = useState<Vehicle | null>(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusReason, setStatusReason] = useState("");
+  const [statusBattery, setStatusBattery] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
-  const statusCounts = STATUSES.reduce((acc, s) => {
-    acc[s] = vehicles.filter(v => v.status === s).length;
-    return acc;
-  }, {} as Record<string, number>);
+  const fetchData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const params = new URLSearchParams({ limit: "100" });
+      if (filterStatus !== "all") params.set("status", filterStatus);
+      if (filterModel !== "all") params.set("model", filterModel);
+      const [vRes, bRes] = await Promise.all([
+        adminGet<Vehicle[]>(`/admin/td/vehicles?${params}`),
+        adminGet<Branch[]>("/admin/td/branches/public")
+      ]);
+      setVehicles(vRes.data ?? []);
+      setBranches(bRes.data ?? []);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [filterStatus, filterModel]);
 
-  const filtered = vehicles.filter(v => {
-    const matchFilter = filter === "all" || v.status === filter;
-    const matchSearch = !search || v.vehicleId.toLowerCase().includes(search.toLowerCase()) ||
-      v.registrationNumber.toLowerCase().includes(search.toLowerCase()) ||
-      v.model.toLowerCase().includes(search.toLowerCase());
-    return matchFilter && matchSearch;
+  useEffect(() => { void fetchData(); }, [fetchData]);
+
+  const filtered = vehicles.filter((v) => {
+    if (!search) return true;
+    const s = search.toLowerCase();
+    return v.vehicleId?.toLowerCase().includes(s) || v.registrationNo?.toLowerCase().includes(s) || v.model?.toLowerCase().includes(s) || v.color?.toLowerCase().includes(s);
   });
 
-  const openDetail = (v: DemoVehicle) => { setSelected(v); setShowDetail(true); };
+  const handleSave = async () => {
+    setActionLoading(true);
+    try {
+      if (form._id) {
+        await adminPutJson(`/admin/td/vehicles/${form._id}`, form);
+        toast.success("Vehicle updated");
+      } else {
+        await adminPostJson("/admin/td/vehicles", form);
+        toast.success("Vehicle created");
+      }
+      setShowForm(false);
+      void fetchData();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async () => {
+    if (!statusDialog || !newStatus) return;
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/vehicles/${statusDialog._id}/status`, {
+        status: newStatus,
+        reason: statusReason,
+        battery: statusBattery ? Number(statusBattery) : undefined
+      });
+      toast.success(`Vehicle status → ${newStatus}`);
+      setStatusDialog(null);
+      void fetchData();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const batteryColor = (pct: number) => pct > 50 ? "bg-green-500" : pct > 20 ? "bg-yellow-500" : "bg-red-500";
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="font-display text-2xl font-bold text-foreground">Demo Vehicle Fleet</h1>
-          <p className="text-muted-foreground text-sm">{vehicles.length} vehicles · {statusCounts["Available"] || 0} available</p>
+          <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
+            <Car className="w-6 h-6 text-primary" /> Demo Fleet
+          </h1>
+          <p className="text-muted-foreground text-sm">{filtered.length} vehicle(s)</p>
         </div>
-        <Button onClick={() => setShowForm(true)} className="bg-primary text-primary-foreground">
-          <Plus className="w-4 h-4 mr-2" /> Add Vehicle
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => void fetchData()} variant="outline" size="sm"><RefreshCw className="w-4 h-4" /></Button>
+          <Button onClick={() => { setForm(emptyVehicle); setEditVehicle(null); setShowForm(true); }} size="sm" className="bg-primary text-primary-foreground">
+            <Plus className="w-4 h-4 mr-2" /> Add Vehicle
+          </Button>
+        </div>
       </div>
 
-      {/* Status Summary Cards */}
-      <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        {STATUSES.map(s => {
-          const cfg = STATUS_CONFIG[s];
-          const Icon = cfg.icon;
+      {/* Fleet summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+        {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
+          const count = vehicles.filter((v) => v.status === status).length;
           return (
-            <button
-              key={s}
-              onClick={() => setFilter(filter === s ? "all" : s)}
-              className={`p-3 rounded-xl border text-center transition-all ${filter === s ? cfg.bg + " border-current" : "bg-card border-border/40 hover:border-border"}`}
-            >
-              <Icon className={`w-4 h-4 mx-auto mb-1 ${cfg.color}`} />
-              <p className={`text-lg font-bold ${cfg.color}`}>{statusCounts[s] || 0}</p>
-              <p className="text-[9px] text-muted-foreground leading-tight">{s}</p>
+            <button key={status} onClick={() => setFilterStatus(filterStatus === status ? "all" : status)}
+              className={`rounded-lg border p-3 text-center transition-all ${filterStatus === status ? cfg.color : "bg-secondary/30 border-border/30 text-muted-foreground hover:bg-secondary/50"}`}>
+              <div className="flex items-center justify-center gap-1 mb-1">{cfg.icon}<span className="text-[10px] font-semibold uppercase">{status.replace("_", " ")}</span></div>
+              <p className="text-xl font-bold">{count}</p>
             </button>
           );
         })}
       </div>
 
-      {/* Search */}
-      <div className="flex gap-3">
-        <Input
-          placeholder="Search by Vehicle ID, Reg. No., Model..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className="bg-secondary/50 max-w-sm"
-        />
-        {filter !== "all" && (
-          <Button variant="outline" size="sm" onClick={() => setFilter("all")}>
-            Clear Filter
-          </Button>
-        )}
+      {/* Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Search vehicle..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-secondary/50" />
+        </div>
+        <Select value={filterModel} onValueChange={setFilterModel}>
+          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Model" /></SelectTrigger>
+          <SelectContent><SelectItem value="all">All Models</SelectItem><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent>
+        </Select>
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Status" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {Object.keys(STATUS_CONFIG).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Vehicle Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {filtered.map(vehicle => {
-          const cfg = STATUS_CONFIG[vehicle.status];
-          return (
-            <Card
-              key={vehicle.id}
-              className={`bg-card border overflow-hidden hover:shadow-lg transition-all cursor-pointer ${vehicle.replacementRecommended ? "border-yellow-400/40" : "border-border/40"}`}
-              onClick={() => openDetail(vehicle)}
-            >
-              {/* Card Header */}
-              <div className={`px-4 py-3 border-b border-border/30 flex items-center justify-between ${cfg.bg}`}>
-                <div>
-                  <p className="font-display font-bold text-foreground text-sm">{vehicle.vehicleId}</p>
-                  <p className="text-xs text-muted-foreground">{vehicle.model} {vehicle.variant} · {vehicle.color}</p>
-                </div>
-                <StatusBadge status={vehicle.status} />
-              </div>
-
-              {/* Card Body */}
-              <div className="p-4 space-y-3">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground flex items-center gap-1"><MapPin className="w-3 h-3" /> {vehicle.branch}</span>
-                  <span className="text-muted-foreground">{vehicle.registrationNumber}</span>
+      {/* Vehicles grid */}
+      {loading ? (
+        <div className="flex items-center justify-center py-16 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading fleet...</div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-muted-foreground"><Car className="w-12 h-12 mx-auto mb-3 opacity-30" /><p>No vehicles found</p></div>
+      ) : (
+        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {filtered.map((v) => {
+            const cfg = STATUS_CONFIG[v.status] ?? { color: "bg-secondary text-foreground", icon: null };
+            return (
+              <Card key={v._id} className="bg-card border-border/50 p-4 space-y-3">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs text-muted-foreground font-mono">{v.vehicleId}</p>
+                    <p className="font-semibold text-foreground">{v.model} <span className="text-muted-foreground font-normal">{v.variant}</span></p>
+                    <p className="text-xs text-muted-foreground">{v.color} • {v.registrationNo}</p>
+                  </div>
+                  <Badge className={`text-[10px] border flex items-center gap-1 ${cfg.color}`}>{cfg.icon}{v.status.replace("_", " ")}</Badge>
                 </div>
 
                 {/* Battery */}
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-muted-foreground flex items-center gap-1"><Battery className="w-3 h-3" /> Battery</span>
-                    {vehicle.status === "Charging" && (
-                      <span className="text-[10px] text-purple-400 flex items-center gap-0.5"><Zap className="w-2.5 h-2.5" /> Charging{vehicle.estimatedAvailableAt ? ` · ETA ${vehicle.estimatedAvailableAt}` : ""}</span>
-                    )}
+                <div className="space-y-1">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> Battery</span>
+                    <span className="font-medium text-foreground">{v.batteryPercent}%</span>
                   </div>
-                  <BatteryBar pct={vehicle.batteryPercentage} />
+                  <Progress value={v.batteryPercent} className="h-1.5" style={{ "--progress-background": batteryColor(v.batteryPercent) } as React.CSSProperties} />
                 </div>
 
-                {/* Stats row */}
-                <div className="grid grid-cols-3 gap-2 pt-1">
-                  <div className="text-center">
-                    <p className="text-xs font-semibold text-foreground">{vehicle.currentOdometer.toLocaleString()}</p>
-                    <p className="text-[9px] text-muted-foreground">Odometer KM</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-semibold text-foreground">{vehicle.totalTestDrives}</p>
-                    <p className="text-[9px] text-muted-foreground">Total TDs</p>
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-semibold text-foreground">{vehicle.depletionPct}%</p>
-                    <p className="text-[9px] text-muted-foreground">Depletion</p>
-                  </div>
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1"><Gauge className="w-3.5 h-3.5" /><span>{v.currentOdometer.toLocaleString()} km</span></div>
+                  <div className="flex items-center gap-1"><Car className="w-3.5 h-3.5" /><span>{v.totalTestDrives} TDs ({v.totalTestDriveKM} km)</span></div>
+                  <div className="flex items-center gap-1 col-span-2"><MapPin className="w-3.5 h-3.5" /><span>{v.branchId?.name ?? "—"}</span></div>
                 </div>
 
-                {/* Depletion Bar */}
-                <div className="w-full h-1 bg-secondary rounded-full overflow-hidden">
-                  <div
-                    className={`h-full rounded-full ${vehicle.depletionPct >= 75 ? "bg-red-400" : vehicle.depletionPct >= 50 ? "bg-yellow-400" : "bg-green-400"}`}
-                    style={{ width: `${vehicle.depletionPct}%` }}
-                  />
-                </div>
+                {v.isLocked && <p className="text-[10px] text-yellow-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Temporarily locked</p>}
 
-                {/* Footer flags */}
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex gap-2">
-                    {vehicle.replacementRecommended && (
-                      <span className="text-[9px] bg-yellow-400/10 text-yellow-400 border border-yellow-400/30 px-1.5 py-0.5 rounded font-medium">REPLACEMENT DUE</span>
-                    )}
-                    {vehicle.assignedExecutive && (
-                      <span className="text-[9px] text-muted-foreground">{vehicle.assignedExecutive}</span>
-                    )}
-                    {vehicle.status === "Under Repair" && vehicle.estimatedAvailableAt && (
-                      <span className="text-[9px] text-red-400">ETA: {vehicle.estimatedAvailableAt}</span>
-                    )}
-                  </div>
-                  <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                <div className="flex gap-1.5 border-t border-border/30 pt-3">
+                  <Button size="sm" variant="ghost" className="flex-1 text-xs h-8" onClick={() => { setForm({ ...emptyVehicle, ...v, branchId: v.branchId?._id ?? "", _id: v._id }); setEditVehicle(v); setShowForm(true); }}>
+                    <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
+                  </Button>
+                  <Button size="sm" variant="ghost" className="flex-1 text-xs h-8 text-primary" onClick={() => { setStatusDialog(v); setNewStatus(v.status); setStatusReason(""); setStatusBattery(String(v.batteryPercent)); }}>
+                    <Gauge className="w-3.5 h-3.5 mr-1" /> Status
+                  </Button>
                 </div>
-              </div>
-            </Card>
-          );
-        })}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="text-center py-16 text-muted-foreground">
-          <Car className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p>No vehicles match the current filter</p>
+              </Card>
+            );
+          })}
         </div>
       )}
 
-      {/* Vehicle Detail Dialog */}
-      <Dialog open={showDetail} onOpenChange={setShowDetail}>
-        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display flex items-center gap-2">
-              <Car className="w-5 h-5 text-primary" />
-              {selected?.vehicleId} — {selected?.model} {selected?.variant}
-            </DialogTitle>
-          </DialogHeader>
-          {selected && <VehicleDetailPanel vehicle={selected} onClose={() => setShowDetail(false)} />}
-        </DialogContent>
-      </Dialog>
-
-      {/* Add Vehicle Dialog */}
-      <Dialog open={showForm} onOpenChange={setShowForm}>
+      {/* Add/Edit Dialog */}
+      <Dialog open={showForm} onOpenChange={(o) => !o && setShowForm(false)}>
         <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="font-display">Add Demo Vehicle</DialogTitle>
-          </DialogHeader>
-          <AddVehicleForm onClose={() => setShowForm(false)} />
+          <DialogHeader><DialogTitle>{form._id ? "Edit Vehicle" : "Add Vehicle"}</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs">Model</Label>
+                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v }))}>
+                  <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
+                  <SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Variant</Label><Input value={form.variant} onChange={(e) => setForm((p) => ({ ...p, variant: e.target.value }))} className="bg-secondary/50" placeholder="Plus / Eco" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Registration No</Label><Input value={form.registrationNo} onChange={(e) => setForm((p) => ({ ...p, registrationNo: e.target.value }))} className="bg-secondary/50" placeholder="BR01AB1234" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">VIN No</Label><Input value={form.vinNo} onChange={(e) => setForm((p) => ({ ...p, vinNo: e.target.value }))} className="bg-secondary/50" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Color</Label><Input value={form.color} onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))} className="bg-secondary/50" placeholder="Pearl White" /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Branch</Label>
+                <Select value={form.branchId} onValueChange={(v) => setForm((p) => ({ ...p, branchId: v }))}>
+                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select branch" /></SelectTrigger>
+                  <SelectContent>{branches.map((b) => <SelectItem key={b._id} value={b._id}>{b.name}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Battery %</Label><Input type="number" min={0} max={100} value={form.batteryPercent} onChange={(e) => setForm((p) => ({ ...p, batteryPercent: Number(e.target.value) }))} className="bg-secondary/50" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Odometer (km)</Label><Input type="number" min={0} value={form.currentOdometer} onChange={(e) => setForm((p) => ({ ...p, currentOdometer: Number(e.target.value) }))} className="bg-secondary/50" /></div>
+            </div>
+            <div className="flex gap-3">
+              <Button onClick={() => void handleSave()} disabled={actionLoading} className="flex-1 bg-primary text-primary-foreground">
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Save
+              </Button>
+              <Button onClick={() => setShowForm(false)} variant="outline" className="flex-1">Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Status Update Dialog */}
+      <Dialog open={!!statusDialog} onOpenChange={(o) => !o && setStatusDialog(null)}>
+        <DialogContent className="bg-card border-border max-w-sm">
+          <DialogHeader><DialogTitle>Update Vehicle Status</DialogTitle></DialogHeader>
+          {statusDialog && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground"><span className="text-foreground font-mono">{statusDialog.vehicleId}</span> — {statusDialog.model} {statusDialog.variant}</p>
+              <div className="space-y-1.5">
+                <Label className="text-xs">New Status</Label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
+                  <SelectContent>{Object.keys(STATUS_CONFIG).map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5"><Label className="text-xs">Battery % (optional)</Label><Input type="number" min={0} max={100} value={statusBattery} onChange={(e) => setStatusBattery(e.target.value)} className="bg-secondary/50" /></div>
+              <div className="space-y-1.5"><Label className="text-xs">Reason</Label><Input value={statusReason} onChange={(e) => setStatusReason(e.target.value)} className="bg-secondary/50" placeholder="e.g. Sent for charging" /></div>
+              <div className="flex gap-3">
+                <Button onClick={() => void handleStatusUpdate()} disabled={actionLoading} className="flex-1 bg-primary text-primary-foreground">
+                  {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Update
+                </Button>
+                <Button onClick={() => setStatusDialog(null)} variant="outline" className="flex-1">Cancel</Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
   );
-};
-
-const VehicleDetailPanel = ({ vehicle, onClose }: { vehicle: DemoVehicle; onClose: () => void }) => {
-  const cfg = STATUS_CONFIG[vehicle.status];
-  return (
-    <Tabs defaultValue="overview" className="mt-2">
-      <TabsList className="bg-secondary/50 w-full">
-        <TabsTrigger value="overview" className="flex-1 text-xs">Overview</TabsTrigger>
-        <TabsTrigger value="utilization" className="flex-1 text-xs">Utilization</TabsTrigger>
-        <TabsTrigger value="actions" className="flex-1 text-xs">Actions</TabsTrigger>
-      </TabsList>
-
-      <TabsContent value="overview" className="mt-4 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          {[
-            ["Registration", vehicle.registrationNumber],
-            ["VIN", vehicle.vinNumber],
-            ["Model", `${vehicle.model} ${vehicle.variant}`],
-            ["Color", vehicle.color],
-            ["Year", vehicle.year],
-            ["Branch", vehicle.branch],
-          ].map(([k, v]) => (
-            <div key={k} className="bg-secondary/30 rounded-lg p-3">
-              <p className="text-[10px] text-muted-foreground">{k}</p>
-              <p className="text-sm font-medium text-foreground">{v}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-secondary/30 rounded-lg p-3">
-            <p className="text-[10px] text-muted-foreground mb-2 flex items-center gap-1"><Battery className="w-3 h-3" /> Battery Level</p>
-            <BatteryBar pct={vehicle.batteryPercentage} />
-          </div>
-          <div className="bg-secondary/30 rounded-lg p-3">
-            <p className="text-[10px] text-muted-foreground">Status</p>
-            <div className="mt-1"><StatusBadge status={vehicle.status} /></div>
-          </div>
-        </div>
-      </TabsContent>
-
-      <TabsContent value="utilization" className="mt-4 space-y-3">
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {[
-            ["Odometer", `${vehicle.currentOdometer.toLocaleString()} km`, Gauge],
-            ["Total KM", `${vehicle.totalKmDriven.toLocaleString()} km`, TrendingUp],
-            ["Daily KM", `${vehicle.dailyKm} km`, Activity],
-            ["Monthly KM", `${vehicle.monthlyKm.toLocaleString()} km`, Activity],
-            ["Total TDs", vehicle.totalTestDrives, Car],
-            ["Charge Cycles", vehicle.totalChargingCycles, RefreshCw],
-          ].map(([label, val, Icon]) => (
-            <div key={label as string} className="bg-secondary/30 rounded-lg p-3 text-center">
-              <p className="text-lg font-bold text-foreground">{val}</p>
-              <p className="text-[10px] text-muted-foreground mt-0.5">{label as string}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="bg-secondary/30 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-muted-foreground font-medium">Fleet Depletion</p>
-            <p className="text-xs font-bold text-foreground">{vehicle.depletionPct}%</p>
-          </div>
-          <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full ${vehicle.depletionPct >= 75 ? "bg-red-400" : vehicle.depletionPct >= 50 ? "bg-yellow-400" : "bg-green-400"}`}
-              style={{ width: `${vehicle.depletionPct}%` }}
-            />
-          </div>
-          <p className="text-[10px] text-muted-foreground mt-1">{vehicle.totalKmDriven.toLocaleString()} / {(80000).toLocaleString()} km threshold</p>
-        </div>
-
-        {vehicle.replacementRecommended && (
-          <div className="flex items-center gap-2 p-3 bg-yellow-400/10 border border-yellow-400/30 rounded-lg">
-            <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0" />
-            <p className="text-xs text-yellow-300">Replacement recommended — vehicle has exceeded utilization threshold</p>
-          </div>
-        )}
-      </TabsContent>
-
-      <TabsContent value="actions" className="mt-4 space-y-3">
-        <div className="grid grid-cols-2 gap-3">
-          <Button variant="outline" className="border-purple-400/30 text-purple-400 hover:bg-purple-400/10">
-            <Zap className="w-4 h-4 mr-2" /> Start Charging
-          </Button>
-          <Button variant="outline" className="border-red-400/30 text-red-400 hover:bg-red-400/10">
-            <Wrench className="w-4 h-4 mr-2" /> Log Repair
-          </Button>
-          <Button variant="outline" className="border-green-400/30 text-green-400 hover:bg-green-400/10">
-            <CheckCircle className="w-4 h-4 mr-2" /> Mark Available
-          </Button>
-          <Button variant="outline" className="border-border text-muted-foreground">
-            <Clock className="w-4 h-4 mr-2" /> View History
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground text-center pt-2">
-          Connect backend API to enable real-time status updates
-        </p>
-      </TabsContent>
-    </Tabs>
-  );
-};
-
-const AddVehicleForm = ({ onClose }: { onClose: () => void }) => {
-  const [form, setForm] = useState({ model: "VF 7", variant: "", color: "", registrationNumber: "", vinNumber: "", year: new Date().getFullYear() });
-  const update = (k: string, v: string | number) => setForm(p => ({ ...p, [k]: v }));
-
-  return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-1.5">
-          <Label className="text-xs">Model</Label>
-          <Select value={form.model} onValueChange={v => update("model", v)}>
-            <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
-            <SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Variant</Label>
-          <Input value={form.variant} onChange={e => update("variant", e.target.value)} placeholder="e.g. Plus, Eco" className="bg-secondary/50" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Color</Label>
-          <Input value={form.color} onChange={e => update("color", e.target.value)} placeholder="e.g. Pearl White" className="bg-secondary/50" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Year</Label>
-          <Input type="number" value={form.year} onChange={e => update("year", Number(e.target.value))} className="bg-secondary/50" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">Registration Number</Label>
-          <Input value={form.registrationNumber} onChange={e => update("registrationNumber", e.target.value)} placeholder="BR01AX0001" className="bg-secondary/50 uppercase" />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-xs">VIN Number</Label>
-          <Input value={form.vinNumber} onChange={e => update("vinNumber", e.target.value)} placeholder="VIN..." className="bg-secondary/50 uppercase" />
-        </div>
-      </div>
-      <div className="flex gap-3 pt-2">
-        <Button className="bg-primary text-primary-foreground flex-1">Add Vehicle</Button>
-        <Button variant="outline" onClick={onClose} className="flex-1">Cancel</Button>
-      </div>
-    </div>
-  );
-};
-
-export default AdminTDDemoVehicles;
+}
