@@ -11,7 +11,7 @@ import {
 import { hasApi } from "@/lib/apiConfig";
 import { adminGet, formatApiErrors } from "@/lib/api";
 import type { DashboardStats } from "@/lib/apiMappers";
-import { leadFromApi, testDriveFromApi } from "@/lib/apiMappers";
+import { dashboardStatsFromApi, leadFromApi, testDriveFromApi } from "@/lib/apiMappers";
 import { Card } from "@/components/ui/card";
 import { Users, Car, TestTube, MessageSquare, TrendingUp, Clock, Phone, CalendarCheck } from "lucide-react";
 import { toast } from "sonner";
@@ -41,13 +41,13 @@ const AdminDashboard = () => {
     (async () => {
       setApiLoading(true);
       try {
-        const s = await adminGet<DashboardStats>("/admin/dashboard/stats");
+        const s = await adminGet<Record<string, unknown>>("/admin/dashboard/stats");
         const [leadsRes, tdRes] = await Promise.all([
           adminGet<unknown[]>("/admin/leads?limit=5&page=1"),
           adminGet<unknown[]>("/admin/test-drives?limit=5&page=1"),
         ]);
         if (cancelled) return;
-        setStats(s.data);
+        setStats(dashboardStatsFromApi(s.data));
         setApiRecentLeads((leadsRes.data as Record<string, unknown>[]).map((d) => leadFromApi(d)));
         setApiRecentTd((tdRes.data as Record<string, unknown>[]).map((d) => testDriveFromApi(d)));
       } catch (e) {
@@ -83,8 +83,7 @@ const AdminDashboard = () => {
     if (useRemote && stats) {
       const byStatus = (id: string) => stats.leadsByStatus?.[id] ?? 0;
       const tdByStatus = stats.testDrivesByStatus ?? {};
-      const pendingTestDrives =
-        (tdByStatus.Pending ?? 0) + (tdByStatus.Confirmed ?? 0) + (tdByStatus.Rescheduled ?? 0);
+      const pendingTestDrives = (tdByStatus.Pending ?? 0) + (tdByStatus.Scheduled ?? 0);
       return [
         { label: "Total Leads", value: stats.totalLeads, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
         { label: "Leads Today", value: stats.newLeadsToday, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10" },
