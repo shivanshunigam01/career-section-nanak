@@ -1,12 +1,10 @@
 import axios from "axios";
-import { adminPostJson } from "@/lib/api";
+import { adminDeleteJson, adminPostJson } from "@/lib/api";
+import { API_BASE } from "@/lib/apiConfig";
 import type { MetaLeadImportRow } from "@/lib/metaLeadImport";
 
-/**
- * Public Meta leads — no JWT.
- */
-export const META_LEADS_API_URL =
-  "https://apivnfast.patliputragroup.com/api/v1/public/All_leads";
+/** Public Meta leads list — uses configured API when available. */
+export const META_LEADS_API_URL = API_BASE ? `${API_BASE}/public/All_leads` : "";
 
 export type MetaLeadsApiPayload = {
   success?: boolean;
@@ -17,6 +15,9 @@ export type MetaLeadsApiPayload = {
 };
 
 export async function fetchMetaLeadsPayload(): Promise<MetaLeadsApiPayload> {
+  if (!META_LEADS_API_URL) {
+    throw new Error("API is not configured.");
+  }
   const { data } = await axios.get<MetaLeadsApiPayload>(META_LEADS_API_URL, {
     headers: { Accept: "application/json" },
   });
@@ -129,6 +130,10 @@ export type MetaLeadBulkResult = {
 export async function bulkCreateMetaLeads(leads: MetaLeadImportRow[]): Promise<MetaLeadBulkResult> {
   const data = await adminPostJson<MetaLeadBulkResult>("/admin/meta-leads/bulk", { leads });
   return data;
+}
+
+export async function deleteMetaLead(id: string): Promise<void> {
+  await adminDeleteJson(`/admin/meta-leads/${encodeURIComponent(id)}`);
 }
 
 export function mapMetaLeadRow(doc: Record<string, unknown>): MetaLeadRow {

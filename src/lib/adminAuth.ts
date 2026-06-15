@@ -1,11 +1,18 @@
+export type AdminUser = {
+  _id?: string;
+  name: string;
+  email: string;
+  role: string;
+  designation?: string | null;
+  designationLabel?: string | null;
+};
+
 const TOKEN_KEY = "vf_admin_token";
 const USER_KEY = "vf_admin_user";
 const SESSION_START_KEY = "vf_admin_session_started_at";
 
 /** Admin panel session length (client-enforced; aligns with typical JWT refresh expectations). */
 export const ADMIN_SESSION_DURATION_MS = 60 * 60 * 1000;
-
-export type AdminUser = { _id?: string; name: string; email: string; role: string };
 
 export function getAdminToken(): string | null {
   if (typeof localStorage === "undefined") return null;
@@ -29,6 +36,21 @@ function getSessionStartedAt(): number | null {
   if (!raw) return null;
   const n = Number(raw);
   return Number.isFinite(n) ? n : null;
+}
+
+/** Sales executives use a focused portal (my assigned test drives only). */
+export function isFieldStaffUser(user: AdminUser | null | undefined): boolean {
+  if (!user) return false;
+  return user.role === "executive" || user.designation === "sales_executive";
+}
+
+export function getAdminLoginRedirect(user: AdminUser | null | undefined): string {
+  if (isFieldStaffUser(user)) return "/admin/td/my-bookings";
+  return "/admin/dashboard";
+}
+
+export function canAccessFullAdmin(user: AdminUser | null | undefined): boolean {
+  return !isFieldStaffUser(user);
 }
 
 /** Call when starting any admin session (JWT login or local demo login). */

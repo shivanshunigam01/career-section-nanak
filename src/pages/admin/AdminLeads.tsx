@@ -237,7 +237,9 @@ const AdminLeads = () => {
     setEditLead(null);
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, name: string) => {
+    if (!window.confirm(`Delete lead "${name || id}"? This cannot be undone.`)) return;
+
     if (useRemote) {
       try {
         await adminDeleteJson(`/admin/leads/${id}`);
@@ -341,7 +343,7 @@ const AdminLeads = () => {
                   <td className="p-3 text-right">
                     <div className="flex items-center justify-end gap-1">
                       <button onClick={() => { setEditLead(lead); setShowForm(true); }} className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"><Edit2 className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => handleDelete(lead.id)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"><Trash2 className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => handleDelete(lead.id, lead.name)} className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
                     </div>
                   </td>
                 </tr>

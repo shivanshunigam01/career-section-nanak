@@ -214,10 +214,16 @@ export function enquiryStatusPayload(status: Enquiry["status"]): Record<string, 
 
 export type DashboardStats = {
   totalLeads: number;
-  leadsToday: number;
-  pendingTestDrives: number;
+  newLeadsToday: number;
+  hotLeads: number;
+  bookings: number;
+  pendingFollowUps: number;
+  totalTestDrives: number;
+  testDrivesThisWeek: number;
+  totalEnquiries: number;
   openEnquiries: number;
-  leadsByStatus: { _id: string; count: number }[];
-  leadsBySource: { _id: string; count: number }[];
-  leadsByModel: { _id: string; count: number }[];
+  leadsBySource: Record<string, number>;
+  leadsByModel: Record<string, number>;
+  leadsByStatus: Record<string, number>;
+  testDrivesByStatus: Record<string, number>;
 };
