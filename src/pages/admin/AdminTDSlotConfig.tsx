@@ -9,9 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Building2, Clock, RefreshCw, Loader2, Save, Calendar,
-  Ban, CheckCircle2, Search, Zap
+  Ban, CheckCircle2, Search, Zap, Car, Plus, Trash2, Wand2
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  formatTime12h,
+  generateSlotTimesFromRules,
+  normalizeSlotTimesList,
+} from "@/lib/tdSlotSchedule";
+import { TdSlotGrid, type TdSlotGridItem } from "@/components/TdSlotGrid";
 
 type Branch = { _id: string; name: string; code: string };
 type SlotConfig = {
@@ -24,9 +30,19 @@ type SlotConfig = {
   maxConcurrentBookings: number;
   autoExpiry: boolean;
   blockedDates: string[];
+  slotTimes?: string[];
+  disabledSlotsByDate?: Record<string, string[]>;
 };
 
-type SlotAvailability = { time: string; available: boolean; bookings: number; maxBookings: number };
+type SlotAvailability = {
+  time: string;
+  label?: string;
+  available: boolean;
+  bookings: number;
+  maxBookings: number;
+  reason?: string | null;
+};
+type FleetSummary = { model: string; available: number; total: number };
 
 export default function AdminTDSlotConfig() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -37,8 +53,10 @@ export default function AdminTDSlotConfig() {
   const [form, setForm] = useState({
     branchId: "", slotDuration: 60, bufferTime: 15,
     workingStartTime: "09:00", workingEndTime: "18:00",
-    maxConcurrentBookings: 2, autoExpiry: true
+    maxConcurrentBookings: 2, autoExpiry: true,
+    slotTimes: [] as string[],
   });
+  const [newSlotTime, setNewSlotTime] = useState("10:00");
 
   // Slot preview
   const [previewDate, setPreviewDate] = useState("");
@@ -48,6 +66,39 @@ export default function AdminTDSlotConfig() {
   // Block date
   const [blockDate, setBlockDate] = useState("");
   const [blockLoading, setBlockLoading] = useState(false);
+  const [fleetSummary, setFleetSummary] = useState<FleetSummary[]>([]);
+
+  // Daily slot overrides (admin open/close per date)
+  const [dailyDate, setDailyDate] = useState("");
+  const [dailySlots, setDailySlots] = useState<TdSlotGridItem[]>([]);
+  const [dailyDisabled, setDailyDisabled] = useState<string[]>([]);
+  const [dailyLoading, setDailyLoading] = useState(false);
+  const [dailySaving, setDailySaving] = useState(false);
+
+  const fetchFleetSummary = useCallback(async (branchId: string) => {
+    if (!branchId) {
+      setFleetSummary([]);
+      return;
+    }
+    try {
+      const { data } = await adminGet<{ model: string; status: string }[]>(
+        `/admin/td/vehicles?branchId=${branchId}&limit=100`,
+      );
+      const rows = data ?? [];
+      const byModel = new Map<string, { available: number; total: number }>();
+      for (const v of rows) {
+        const cur = byModel.get(v.model) ?? { available: 0, total: 0 };
+        cur.total += 1;
+        if (v.status === "AVAILABLE") cur.available += 1;
+        byModel.set(v.model, cur);
+      }
+      setFleetSummary(
+        [...byModel.entries()].map(([model, counts]) => ({ model, ...counts })),
+      );
+    } catch {
+      setFleetSummary([]);
+    }
+  }, []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -70,6 +121,7 @@ export default function AdminTDSlotConfig() {
   // Load config when branch changes
   useEffect(() => {
     if (!selectedBranch) return;
+    void fetchFleetSummary(selectedBranch);
     const existing = configs.find((c) => c.branchId?._id === selectedBranch);
     if (existing) {
       setForm({
@@ -79,25 +131,62 @@ export default function AdminTDSlotConfig() {
         workingStartTime: existing.workingStartTime,
         workingEndTime: existing.workingEndTime,
         maxConcurrentBookings: existing.maxConcurrentBookings,
-        autoExpiry: existing.autoExpiry
+        autoExpiry: existing.autoExpiry,
+        slotTimes: existing.slotTimes?.length
+          ? [...existing.slotTimes]
+          : generateSlotTimesFromRules({
+              workingStartTime: existing.workingStartTime,
+              workingEndTime: existing.workingEndTime,
+              slotDuration: existing.slotDuration,
+              bufferTime: existing.bufferTime,
+            }),
       });
     } else {
-      setForm((p) => ({ ...p, branchId: selectedBranch }));
+      setForm((p) => ({
+        ...p,
+        branchId: selectedBranch,
+        slotTimes: generateSlotTimesFromRules(p),
+      }));
     }
-  }, [selectedBranch, configs]);
+  }, [selectedBranch, configs, fetchFleetSummary]);
 
   const handleSave = async () => {
     if (!form.branchId) { toast.error("Please select a branch"); return; }
+    if (form.slotTimes.length === 0) {
+      toast.error("Add at least one test drive time slot.");
+      return;
+    }
     setSaving(true);
     try {
-      await adminPostJson("/admin/td/slots/config", form);
-      toast.success("Slot configuration saved!");
+      await adminPostJson("/admin/td/slots/config", {
+        ...form,
+        slotTimes: normalizeSlotTimesList(form.slotTimes),
+      });
+      toast.success("Slot configuration saved! Website test drive page will use these timings.");
       void fetchData();
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleGenerateTimings = () => {
+    const generated = generateSlotTimesFromRules(form);
+    setForm((p) => ({ ...p, slotTimes: generated }));
+    toast.success(`Generated ${generated.length} time slot(s) from your duration & hours settings.`);
+  };
+
+  const handleAddSlotTime = () => {
+    if (!newSlotTime) return;
+    setForm((p) => ({
+      ...p,
+      slotTimes: normalizeSlotTimesList([...p.slotTimes, newSlotTime]),
+    }));
+  };
+
+  const handleRemoveSlotTime = (time: string) => {
+    setForm((p) => ({ ...p, slotTimes: p.slotTimes.filter((t) => t !== time) }));
   };
 
   const fetchSlotPreview = async () => {
@@ -110,6 +199,58 @@ export default function AdminTDSlotConfig() {
       toast.error(formatApiErrors(e));
     } finally {
       setSlotsLoading(false);
+    }
+  };
+
+  const loadDailySlots = async () => {
+    if (!selectedBranch || !dailyDate) {
+      toast.error("Select a branch and date first");
+      return;
+    }
+    setDailyLoading(true);
+    try {
+      const { data } = await adminGet<SlotAvailability[]>(
+        `/admin/td/slots/available?branchId=${selectedBranch}&date=${dailyDate}`,
+      );
+      setDailySlots(data ?? []);
+      const cfg = configs.find((c) => c.branchId?._id === selectedBranch);
+      const map = cfg?.disabledSlotsByDate ?? {};
+      setDailyDisabled(map[dailyDate] ?? []);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setDailyLoading(false);
+    }
+  };
+
+  const toggleDailySlot = (time: string) => {
+    const slot = dailySlots.find((s) => s.time === time);
+    const fullFromBookings = slot?.reason === "full" || (slot?.bookings ?? 0) >= (slot?.maxBookings ?? 1);
+    if (fullFromBookings) {
+      toast.info("This slot is already booked — it stays unavailable for new customers.");
+      return;
+    }
+    setDailyDisabled((prev) =>
+      prev.includes(time) ? prev.filter((t) => t !== time) : normalizeSlotTimesList([...prev, time]),
+    );
+  };
+
+  const saveDailyOverrides = async () => {
+    if (!selectedBranch || !dailyDate) return;
+    setDailySaving(true);
+    try {
+      await adminPostJson("/admin/td/slots/date-overrides", {
+        branchId: selectedBranch,
+        date: dailyDate,
+        disabledTimes: dailyDisabled,
+      });
+      toast.success("Daily slot availability saved — website will reflect this immediately.");
+      void fetchData();
+      void loadDailySlots();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setDailySaving(false);
     }
   };
 
@@ -140,7 +281,9 @@ export default function AdminTDSlotConfig() {
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
             <Building2 className="w-6 h-6 text-primary" /> Slot Configuration
           </h1>
-          <p className="text-muted-foreground text-sm">Configure test drive slots, timings, and blocked dates</p>
+          <p className="text-muted-foreground text-sm">
+            Manage test drive timings here — the website test drive page loads these exact slots via API.
+          </p>
         </div>
         <Button onClick={() => void fetchData()} variant="outline" size="sm"><RefreshCw className="w-4 h-4 mr-2" /> Refresh</Button>
       </div>
@@ -161,18 +304,173 @@ export default function AdminTDSlotConfig() {
               {!selectedBranch && <p className="text-xs text-muted-foreground">Select a branch to view or edit its slot configuration.</p>}
             </Card>
 
+            {selectedBranch && fleetSummary.length > 0 && (
+              <Card className="bg-card border-border/50 p-4 space-y-3">
+                <h3 className="font-semibold text-sm flex items-center gap-2">
+                  <Car className="w-4 h-4 text-primary" /> Demo fleet capacity (website slots)
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Each time slot allows up to{" "}
+                  <span className="text-foreground font-medium">{form.maxConcurrentBookings}</span> booking(s),
+                  but never more than available demo cars for that model. Manage vehicles under{" "}
+                  <span className="text-primary">TD → Demo Fleet</span>.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {fleetSummary.map((f) => (
+                    <Badge key={f.model} className="bg-secondary/80 text-foreground border-border/40">
+                      {f.model}: {f.available}/{f.total} available
+                    </Badge>
+                  ))}
+                </div>
+              </Card>
+            )}
+
             {selectedBranch && (
-              <Tabs defaultValue="config">
+              <Tabs defaultValue="timings">
                 <TabsList className="bg-secondary/50">
-                  <TabsTrigger value="config">Slot Config</TabsTrigger>
-                  <TabsTrigger value="preview">Slot Preview</TabsTrigger>
+                  <TabsTrigger value="timings">Manage Timings</TabsTrigger>
+                  <TabsTrigger value="daily">Daily availability</TabsTrigger>
+                  <TabsTrigger value="config">Rules & Capacity</TabsTrigger>
+                  <TabsTrigger value="preview">Live Preview</TabsTrigger>
                   <TabsTrigger value="blocked">Blocked Dates</TabsTrigger>
                 </TabsList>
+
+                {/* Manage Timings — shown on website */}
+                <TabsContent value="timings" className="mt-4">
+                  <Card className="bg-card border-border/50 p-5 space-y-5">
+                    <div>
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-primary" /> Test drive time slots
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        These are the exact times customers see on the test drive booking page.
+                        Remove a time to stop offering it; add custom times as needed.
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={handleGenerateTimings}>
+                        <Wand2 className="w-4 h-4 mr-2" /> Generate from rules below
+                      </Button>
+                      <Badge variant="outline" className="text-xs">
+                        {form.slotTimes.length} slot(s) configured
+                      </Badge>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                      {form.slotTimes.map((t) => (
+                        <div
+                          key={t}
+                          className="box-border flex h-[4.25rem] flex-col items-center justify-center rounded-xl border-2 border-primary/60 bg-background px-2 py-2 text-center relative group"
+                        >
+                          <p className="text-sm font-semibold">{formatTime12h(t)}</p>
+                          <p className="text-[10px] text-emerald-500 font-medium mt-1">On website</p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1 right-1 h-7 w-7 text-red-400 opacity-0 group-hover:opacity-100 hover:bg-red-400/10"
+                            onClick={() => handleRemoveSlotTime(t)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {form.slotTimes.length === 0 ? (
+                      <p className="text-sm text-amber-500 text-center py-4">
+                        No timings yet. Generate from rules or add a time manually.
+                      </p>
+                    ) : null}
+
+                    <div className="flex flex-col sm:flex-row gap-2 pt-2 border-t border-border/40">
+                      <Input
+                        type="time"
+                        value={newSlotTime}
+                        onChange={(e) => setNewSlotTime(e.target.value)}
+                        className="bg-secondary/50 sm:max-w-[10rem]"
+                      />
+                      <Button type="button" variant="outline" onClick={handleAddSlotTime}>
+                        <Plus className="w-4 h-4 mr-2" /> Add time slot
+                      </Button>
+                    </div>
+
+                    <Button onClick={() => void handleSave()} disabled={saving} className="bg-primary text-primary-foreground w-full">
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                      Save timings to website
+                    </Button>
+                  </Card>
+                </TabsContent>
+
+                {/* Daily availability — toggle open/closed per date (same UX as website) */}
+                <TabsContent value="daily" className="mt-4">
+                  <Card className="bg-card border-border/50 p-5 space-y-4">
+                    <div>
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-primary" /> Daily slot availability
+                      </h3>
+                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                        Pick a date and tap slots to open or close them — same grid customers see on the test drive page.
+                        Booked slots stay locked. One booking per slot closes it for new customers.
+                      </p>
+                    </div>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Input
+                        type="date"
+                        value={dailyDate}
+                        onChange={(e) => setDailyDate(e.target.value)}
+                        className="bg-secondary/50 flex-1"
+                      />
+                      <Button
+                        onClick={() => void loadDailySlots()}
+                        disabled={dailyLoading}
+                        className="bg-primary text-primary-foreground shrink-0"
+                      >
+                        {dailyLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4 mr-2" />}
+                        Load slots
+                      </Button>
+                    </div>
+                    {dailySlots.length > 0 ? (
+                      <>
+                        <TdSlotGrid
+                          slots={dailySlots.map((s) => {
+                            const full = (s.bookings ?? 0) >= (s.maxBookings ?? 1);
+                            const adminOff = dailyDisabled.includes(s.time);
+                            return {
+                              ...s,
+                              available: !full && !adminOff,
+                              reason: full ? "full" : adminOff ? "blocked" : s.reason,
+                            };
+                          })}
+                          toggleMode
+                          adminDisabledTimes={dailyDisabled}
+                          onToggleAdmin={toggleDailySlot}
+                        />
+                        <Button
+                          onClick={() => void saveDailyOverrides()}
+                          disabled={dailySaving}
+                          className="w-full bg-primary text-primary-foreground"
+                        >
+                          {dailySaving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+                          Save availability for {dailyDate}
+                        </Button>
+                      </>
+                    ) : dailyDate && !dailyLoading ? (
+                      <p className="text-sm text-muted-foreground text-center py-6">
+                        Click Load slots to manage availability for this date.
+                      </p>
+                    ) : null}
+                  </Card>
+                </TabsContent>
 
                 {/* Config Tab */}
                 <TabsContent value="config" className="mt-4">
                   <Card className="bg-card border-border/50 p-5 space-y-5">
-                    <h3 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Timing Configuration</h3>
+                    <h3 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-primary" /> Booking rules</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Use these to auto-generate timings, or set capacity limits. Customer-facing times are managed in the Timings tab.
+                    </p>
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <Label className="text-xs">Slot Duration (minutes)</Label>
@@ -211,7 +509,7 @@ export default function AdminTDSlotConfig() {
                       <p className="flex items-center gap-1.5 font-medium text-foreground mb-1"><Zap className="w-3.5 h-3.5 text-primary" /> Configuration Preview</p>
                       <p>Slots run from <span className="text-foreground">{form.workingStartTime}</span> to <span className="text-foreground">{form.workingEndTime}</span></p>
                       <p>Each slot: <span className="text-foreground">{form.slotDuration} min</span> + <span className="text-foreground">{form.bufferTime} min buffer</span></p>
-                      <p>Max <span className="text-foreground">{form.maxConcurrentBookings}</span> concurrent booking(s) per slot</p>
+                      <p>Max <span className="text-foreground">{form.maxConcurrentBookings}</span> booking(s) per slot — use <span className="text-foreground">1</span> so each customer booking closes the slot for others.</p>
                       <p>Double booking: <span className="text-red-400">Not Allowed</span></p>
                     </div>
 
@@ -221,10 +519,13 @@ export default function AdminTDSlotConfig() {
                   </Card>
                 </TabsContent>
 
-                {/* Preview Tab */}
+                {/* Preview Tab — same API as website */}
                 <TabsContent value="preview" className="mt-4">
                   <Card className="bg-card border-border/50 p-5 space-y-4">
-                    <h3 className="font-semibold flex items-center gap-2"><Search className="w-4 h-4 text-primary" /> Preview Available Slots</h3>
+                    <h3 className="font-semibold flex items-center gap-2"><Search className="w-4 h-4 text-primary" /> Website preview (live API)</h3>
+                    <p className="text-xs text-muted-foreground">
+                      This uses the same API as the public test drive page for the selected date.
+                    </p>
                     <div className="flex gap-3">
                       <Input type="date" value={previewDate} onChange={(e) => setPreviewDate(e.target.value)} className="bg-secondary/50 flex-1" />
                       <Button onClick={() => void fetchSlotPreview()} disabled={slotsLoading} className="bg-primary text-primary-foreground shrink-0">
@@ -232,17 +533,7 @@ export default function AdminTDSlotConfig() {
                       </Button>
                     </div>
                     {slots.length > 0 && (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                        {slots.map((slot) => (
-                          <div key={slot.time} className={`rounded-lg border p-3 text-center ${slot.available ? "bg-green-400/5 border-green-400/20" : "bg-red-400/5 border-red-400/20"}`}>
-                            <p className="font-mono font-semibold text-foreground">{slot.time}</p>
-                            <p className={`text-xs mt-0.5 ${slot.available ? "text-green-400" : "text-red-400"}`}>
-                              {slot.available ? `${slot.bookings}/${slot.maxBookings} booked` : "Full"}
-                            </p>
-                            {slot.available ? <CheckCircle2 className="w-3.5 h-3.5 text-green-400 mx-auto mt-1" /> : <Ban className="w-3.5 h-3.5 text-red-400 mx-auto mt-1" />}
-                          </div>
-                        ))}
-                      </div>
+                      <TdSlotGrid slots={slots} disabled />
                     )}
                     {slots.length === 0 && previewDate && !slotsLoading && (
                       <p className="text-muted-foreground text-sm text-center py-6">No slots available for this date (may be blocked)</p>
@@ -300,7 +591,7 @@ export default function AdminTDSlotConfig() {
                   </div>
                   <div className="text-xs text-muted-foreground space-y-0.5">
                     <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{c.workingStartTime} – {c.workingEndTime}</div>
-                    <div className="flex items-center gap-1.5"><Zap className="w-3 h-3" />{c.slotDuration}min slots + {c.bufferTime}min buffer</div>
+                    <div className="flex items-center gap-1.5"><Zap className="w-3 h-3" />{(c.slotTimes?.length ?? 0) || "—"} website slot(s)</div>
                     <div>Max concurrent: {c.maxConcurrentBookings}</div>
                     {c.blockedDates.length > 0 && (
                       <div className="text-red-400 flex items-center gap-1"><Ban className="w-3 h-3" />{c.blockedDates.length} date(s) blocked</div>

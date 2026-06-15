@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Progress } from "@/components/ui/progress";
 import {
   Car, Search, RefreshCw, Zap, Gauge, Loader2, Plus, Edit2,
-  Battery, MapPin, Wrench, BatteryCharging, AlertTriangle
+  Battery, MapPin, Wrench, BatteryCharging, AlertTriangle, Clock
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,9 +31,37 @@ type Vehicle = {
   branchId: { _id: string; name: string; code: string } | null;
   insuranceValidity: string;
   serviceDueDate: string;
+  availableAgainAt?: string | null;
 };
 
 type Branch = { _id: string; name: string; code: string };
+
+function toDatetimeLocal(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function formatAvailableAgain(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function datetimeLocalToIso(value: string): string | null {
+  if (!value.trim()) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+}
 
 const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = {
   AVAILABLE: { color: "bg-green-400/10 text-green-400 border-green-400/20", icon: <Car className="w-3 h-3" /> },
@@ -45,7 +73,21 @@ const STATUS_CONFIG: Record<string, { color: string; icon: React.ReactNode }> = 
   SERVICE_DUE: { color: "bg-rose-400/10 text-rose-400 border-rose-400/20", icon: <AlertTriangle className="w-3 h-3" /> },
 };
 
-const emptyVehicle = { model: "VF 7", variant: "", registrationNo: "", vinNo: "", color: "", batteryPercent: 100, currentOdometer: 0, branchId: "" };
+const emptyVehicle = {
+  model: "VF 7",
+  variant: "Wind",
+  registrationNo: "",
+  vinNo: "",
+  color: "",
+  batteryPercent: 100,
+  currentOdometer: 0,
+  branchId: "",
+  availableAgainAt: "",
+};
+
+const VF6_VARIANTS = ["Earth", "Wind", "Wind Infinity"];
+const VF7_VARIANTS = ["Earth", "Wind", "Wind Infinity", "Sky", "Sky Infinity"];
+const WEBSITE_COLORS = ["Infinity Blanc", "Crimson Red", "Jet Black", "Desert Silver", "Zenith Grey", "Urban Mint"];
 
 export default function AdminTDDemoVehicles() {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
@@ -61,6 +103,7 @@ export default function AdminTDDemoVehicles() {
   const [newStatus, setNewStatus] = useState("");
   const [statusReason, setStatusReason] = useState("");
   const [statusBattery, setStatusBattery] = useState("");
+  const [statusAvailableAgain, setStatusAvailableAgain] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -93,11 +136,17 @@ export default function AdminTDDemoVehicles() {
   const handleSave = async () => {
     setActionLoading(true);
     try {
+      const payload = {
+        ...form,
+        availableAgainAt: datetimeLocalToIso(form.availableAgainAt),
+      };
+      delete (payload as { _id?: string })._id;
+
       if (form._id) {
-        await adminPutJson(`/admin/td/vehicles/${form._id}`, form);
+        await adminPutJson(`/admin/td/vehicles/${form._id}`, payload);
         toast.success("Vehicle updated");
       } else {
-        await adminPostJson("/admin/td/vehicles", form);
+        await adminPostJson("/admin/td/vehicles", payload);
         toast.success("Vehicle created");
       }
       setShowForm(false);
@@ -116,7 +165,11 @@ export default function AdminTDDemoVehicles() {
       await adminPatchJson(`/admin/td/vehicles/${statusDialog._id}/status`, {
         status: newStatus,
         reason: statusReason,
-        battery: statusBattery ? Number(statusBattery) : undefined
+        battery: statusBattery ? Number(statusBattery) : undefined,
+        availableAgainAt:
+          newStatus === "AVAILABLE"
+            ? null
+            : datetimeLocalToIso(statusAvailableAgain),
       });
       toast.success(`Vehicle status → ${newStatus}`);
       setStatusDialog(null);
@@ -138,7 +191,7 @@ export default function AdminTDDemoVehicles() {
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
             <Car className="w-6 h-6 text-primary" /> Demo Fleet
           </h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} vehicle(s)</p>
+          <p className="text-muted-foreground text-sm">{filtered.length} vehicle(s) · fleet status controls website slot capacity</p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => void fetchData()} variant="outline" size="sm"><RefreshCw className="w-4 h-4" /></Button>
@@ -147,6 +200,13 @@ export default function AdminTDDemoVehicles() {
           </Button>
         </div>
       </div>
+
+      <Card className="bg-primary/5 border-primary/20 p-4 text-sm text-muted-foreground leading-relaxed">
+        <p className="font-medium text-foreground mb-1">Website test drive availability</p>
+        Vehicles marked <span className="text-green-400 font-medium">AVAILABLE</span> count toward live booking slots on the test drive page.
+        Slot timings and max bookings per slot are set under <span className="text-primary font-medium">TD → Slot Configuration</span>.
+        If all demo cars for a model are charging, booked, or in repair, that model&apos;s slots show as unavailable on the website.
+      </Card>
 
       {/* Fleet summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
@@ -217,12 +277,34 @@ export default function AdminTDDemoVehicles() {
                 </div>
 
                 {v.isLocked && <p className="text-[10px] text-yellow-400 flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> Temporarily locked</p>}
+                {v.status !== "AVAILABLE" && v.availableAgainAt && (
+                  <p className="text-[10px] text-amber-400 flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    Available again: {formatAvailableAgain(v.availableAgainAt)}
+                  </p>
+                )}
 
                 <div className="flex gap-1.5 border-t border-border/30 pt-3">
-                  <Button size="sm" variant="ghost" className="flex-1 text-xs h-8" onClick={() => { setForm({ ...emptyVehicle, ...v, branchId: v.branchId?._id ?? "", _id: v._id }); setEditVehicle(v); setShowForm(true); }}>
+                  <Button size="sm" variant="ghost" className="flex-1 text-xs h-8" onClick={() => {
+                    setForm({
+                      ...emptyVehicle,
+                      ...v,
+                      branchId: v.branchId?._id ?? "",
+                      _id: v._id,
+                      availableAgainAt: toDatetimeLocal(v.availableAgainAt),
+                    });
+                    setEditVehicle(v);
+                    setShowForm(true);
+                  }}>
                     <Edit2 className="w-3.5 h-3.5 mr-1" /> Edit
                   </Button>
-                  <Button size="sm" variant="ghost" className="flex-1 text-xs h-8 text-primary" onClick={() => { setStatusDialog(v); setNewStatus(v.status); setStatusReason(""); setStatusBattery(String(v.batteryPercent)); }}>
+                  <Button size="sm" variant="ghost" className="flex-1 text-xs h-8 text-primary" onClick={() => {
+                    setStatusDialog(v);
+                    setNewStatus(v.status);
+                    setStatusReason("");
+                    setStatusBattery(String(v.batteryPercent));
+                    setStatusAvailableAgain(toDatetimeLocal(v.availableAgainAt));
+                  }}>
                     <Gauge className="w-3.5 h-3.5 mr-1" /> Status
                   </Button>
                 </div>
@@ -240,15 +322,35 @@ export default function AdminTDDemoVehicles() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Model</Label>
-                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v }))}>
+                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v, variant: v === "VF 6" ? "Earth" : "Wind" }))}>
                   <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5"><Label className="text-xs">Variant</Label><Input value={form.variant} onChange={(e) => setForm((p) => ({ ...p, variant: e.target.value }))} className="bg-secondary/50" placeholder="Plus / Eco" /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Variant</Label>
+                <Select value={form.variant} onValueChange={(v) => setForm((p) => ({ ...p, variant: v }))}>
+                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select trim" /></SelectTrigger>
+                  <SelectContent>
+                    {(form.model === "VF 6" ? VF6_VARIANTS : VF7_VARIANTS).map((v) => (
+                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5"><Label className="text-xs">Registration No</Label><Input value={form.registrationNo} onChange={(e) => setForm((p) => ({ ...p, registrationNo: e.target.value }))} className="bg-secondary/50" placeholder="BR01AB1234" /></div>
               <div className="space-y-1.5"><Label className="text-xs">VIN No</Label><Input value={form.vinNo} onChange={(e) => setForm((p) => ({ ...p, vinNo: e.target.value }))} className="bg-secondary/50" /></div>
-              <div className="space-y-1.5"><Label className="text-xs">Color</Label><Input value={form.color} onChange={(e) => setForm((p) => ({ ...p, color: e.target.value }))} className="bg-secondary/50" placeholder="Pearl White" /></div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Color</Label>
+                <Select value={form.color} onValueChange={(v) => setForm((p) => ({ ...p, color: v }))}>
+                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select colour" /></SelectTrigger>
+                  <SelectContent>
+                    {WEBSITE_COLORS.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Branch</Label>
                 <Select value={form.branchId} onValueChange={(v) => setForm((p) => ({ ...p, branchId: v }))}>
@@ -258,6 +360,20 @@ export default function AdminTDDemoVehicles() {
               </div>
               <div className="space-y-1.5"><Label className="text-xs">Battery %</Label><Input type="number" min={0} max={100} value={form.batteryPercent} onChange={(e) => setForm((p) => ({ ...p, batteryPercent: Number(e.target.value) }))} className="bg-secondary/50" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Odometer (km)</Label><Input type="number" min={0} value={form.currentOdometer} onChange={(e) => setForm((p) => ({ ...p, currentOdometer: Number(e.target.value) }))} className="bg-secondary/50" /></div>
+              <div className="space-y-1.5 col-span-2">
+                <Label className="text-xs flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Available again (optional)
+                </Label>
+                <Input
+                  type="datetime-local"
+                  value={form.availableAgainAt}
+                  onChange={(e) => setForm((p) => ({ ...p, availableAgainAt: e.target.value }))}
+                  className="bg-secondary/50"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  When this vehicle is expected back for test drives (e.g. after repair or charging).
+                </p>
+              </div>
             </div>
             <div className="flex gap-3">
               <Button onClick={() => void handleSave()} disabled={actionLoading} className="flex-1 bg-primary text-primary-foreground">
@@ -285,6 +401,22 @@ export default function AdminTDDemoVehicles() {
               </div>
               <div className="space-y-1.5"><Label className="text-xs">Battery % (optional)</Label><Input type="number" min={0} max={100} value={statusBattery} onChange={(e) => setStatusBattery(e.target.value)} className="bg-secondary/50" /></div>
               <div className="space-y-1.5"><Label className="text-xs">Reason</Label><Input value={statusReason} onChange={(e) => setStatusReason(e.target.value)} className="bg-secondary/50" placeholder="e.g. Sent for charging" /></div>
+              {newStatus !== "AVAILABLE" && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs flex items-center gap-1">
+                    <Clock className="w-3 h-3" /> Available again
+                  </Label>
+                  <Input
+                    type="datetime-local"
+                    value={statusAvailableAgain}
+                    onChange={(e) => setStatusAvailableAgain(e.target.value)}
+                    className="bg-secondary/50"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    Expected date and time when this vehicle returns to the fleet.
+                  </p>
+                </div>
+              )}
               <div className="flex gap-3">
                 <Button onClick={() => void handleStatusUpdate()} disabled={actionLoading} className="flex-1 bg-primary text-primary-foreground">
                   {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Update

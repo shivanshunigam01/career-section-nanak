@@ -51,30 +51,30 @@ const Navbar = () => {
       <nav
         className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white border-b border-gray-200 py-0 shadow-sm"
       >
-        <div className="container mx-auto px-4 lg:px-8">
+        <div className="container mx-auto px-4 lg:px-6">
           <div className="flex items-center justify-between min-h-[4.25rem] h-[4.25rem] xl:h-20 xl:min-h-0">
-            {/* Logos: VinFast lockup + Patliputra outline (outline slightly smaller); larger on small screens */}
-            <Link to="/" className="flex items-center gap-2.5 sm:gap-3 shrink-0 min-w-0">
+            {/* Logo lockup */}
+            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0">
               <img
                 src={vinfastLogo}
                 alt={dealer.dealerName}
-                className="h-[3.25rem] sm:h-14 xl:h-16 w-auto max-h-full object-contain object-left"
+                className="h-12 lg:h-[3.25rem] xl:h-16 w-auto object-contain object-left"
               />
-              <span className="w-px h-7 sm:h-8 xl:h-8 self-center bg-border shrink-0" aria-hidden />
+              <span className="w-px h-7 self-center bg-border shrink-0" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
-                className="h-7 sm:h-8 xl:h-8 w-auto max-h-full object-contain object-left"
+                className="h-7 lg:h-8 w-auto object-contain object-left"
               />
             </Link>
 
-            {/* Desktop Nav — xl+ so 13" laptops with display scaling use the drawer */}
-            <div className="hidden xl:flex items-center gap-1 min-w-0 flex-1 justify-center">
+            {/* Desktop Nav — visible from lg (1024 px) upwards */}
+            <div className="hidden lg:flex items-center gap-0 xl:gap-0.5 min-w-0 flex-1 justify-center overflow-hidden">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-2.5 py-2 text-sm font-medium transition-colors rounded-lg whitespace-nowrap ${
+                  className={`px-1.5 xl:px-2.5 py-2 text-[0.7rem] xl:text-sm font-medium transition-colors rounded-lg whitespace-nowrap ${
                     location.pathname === link.href
                       ? "text-primary"
                       : "text-foreground/70 hover:text-foreground"
@@ -86,23 +86,23 @@ const Navbar = () => {
             </div>
 
             {/* Desktop CTAs */}
-            <div className="hidden xl:flex items-center gap-3 shrink-0">
-              <a href={tel} className="transition-colors text-foreground/60 hover:text-foreground" aria-label="Call us">
+            <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
+              <a href={tel} className="hidden xl:block transition-colors text-foreground/60 hover:text-foreground" aria-label="Call us">
                 <Phone className="w-4 h-4" />
               </a>
-              <a href={wa} target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground" aria-label="WhatsApp">
+              <a href={wa} target="_blank" rel="noopener noreferrer" className="hidden xl:block transition-colors text-foreground/60 hover:text-foreground" aria-label="WhatsApp">
                 <MessageCircle className="w-4 h-4" />
               </a>
-              <Button variant="hero" size="sm" asChild>
+              <Button variant="hero" size="sm" asChild className="text-xs xl:text-sm px-3 xl:px-4">
                 <Link to="/book-now">Pre-Booking</Link>
               </Button>
             </div>
 
-            {/* Mobile toggle */}
+            {/* Mobile / tablet toggle — hidden at lg+ */}
             <button
               type="button"
               onClick={() => setIsMobileOpen((open) => !open)}
-              className="xl:hidden p-2 transition-colors text-foreground"
+              className="lg:hidden p-2 transition-colors text-foreground"
               aria-expanded={isMobileOpen}
               aria-controls="mobile-nav-panel"
               aria-label={isMobileOpen ? "Close menu" : "Open menu"}
@@ -125,7 +125,7 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 flex flex-col bg-background pt-[4.25rem] xl:hidden"
+            className="fixed inset-0 z-40 flex flex-col bg-background pt-[4.25rem] lg:hidden"
           >
             <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
               <div className="container mx-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-2">

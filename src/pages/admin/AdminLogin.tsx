@@ -8,7 +8,7 @@ import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
 import { adminLogin, ApiRequestError, formatApiErrors } from "@/lib/api";
-import { markAdminSessionStart, setAdminSession, type AdminUser } from "@/lib/adminAuth";
+import { markAdminSessionStart, setAdminSession, getAdminLoginRedirect, type AdminUser } from "@/lib/adminAuth";
 
 const AdminLogin = () => {
   const [email, setEmail] = useState("");
@@ -32,8 +32,9 @@ const AdminLogin = () => {
       setError("");
       try {
         const { token, admin } = await adminLogin(email.trim(), password);
-        setAdminSession(token, admin as AdminUser);
-        navigate("/admin/dashboard");
+        const user = admin as AdminUser;
+        setAdminSession(token, user);
+        navigate(getAdminLoginRedirect(user));
       } catch (err) {
         setError(err instanceof ApiRequestError ? formatApiErrors(err) : "Invalid email or password");
       } finally {
@@ -61,8 +62,8 @@ const AdminLogin = () => {
               alt="Patliputra VinFast"
               className="mx-auto mb-4 h-16 w-auto max-w-[min(100%,280px)] object-contain sm:h-20 sm:max-w-[320px]"
             />
-            <h1 className="font-display text-2xl font-bold text-foreground">Admin Panel</h1>
-            <p className="text-muted-foreground text-sm mt-1">Patliputra Group Dealer Management</p>
+            <h1 className="font-display text-2xl font-bold text-foreground">Staff & Admin Login</h1>
+            <p className="text-muted-foreground text-sm mt-1">Sign in with your assigned email and password</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">

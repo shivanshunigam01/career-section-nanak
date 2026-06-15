@@ -11,10 +11,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Search, Edit2, Phone, Mail, Download, Plus, Upload, FileSpreadsheet } from "lucide-react";
+import { Search, Edit2, Trash2, Phone, Mail, Download, Plus, Upload, FileSpreadsheet } from "lucide-react";
 import {
   bulkCreateMetaLeads,
   createMetaLead,
+  deleteMetaLead,
   fetchMetaLeadsPayload,
   mapMetaLeadRow,
   metaLeadsRows,
@@ -221,6 +222,23 @@ const AdminMetaLeadCRM = () => {
     }
   };
 
+  const handleDelete = async (lead: MetaLeadRow) => {
+    if (!useRemote) return;
+    const label = lead.name || lead.mobile || "this lead";
+    if (!window.confirm(`Delete Meta lead "${label}"? This cannot be undone.`)) return;
+
+    setSavingId(lead.id);
+    try {
+      await deleteMetaLead(lead.id);
+      toast.success("Meta lead deleted");
+      await refreshFromApi();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -419,6 +437,14 @@ const AdminMetaLeadCRM = () => {
                           title="Edit"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => void handleDelete(lead)}
+                          className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive"
+                          disabled={savingId === lead.id}
+                          title="Delete"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>

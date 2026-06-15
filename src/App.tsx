@@ -40,6 +40,8 @@ import AdminTDBookings from "./pages/admin/AdminTDBookings";
 import AdminTDDemoVehicles from "./pages/admin/AdminTDDemoVehicles";
 import AdminTDReports from "./pages/admin/AdminTDReports";
 import AdminTDSlotConfig from "./pages/admin/AdminTDSlotConfig";
+import AdminTDUsers from "./pages/admin/AdminTDUsers";
+import AdminTDMyBookings from "./pages/admin/AdminTDMyBookings";
 
 const queryClient = new QueryClient();
 
@@ -98,9 +100,11 @@ const App = () => {
 
             {/* Test Drive Management Module */}
             <Route path="td/bookings" element={<AdminTDBookings />} />
+            <Route path="td/my-bookings" element={<AdminTDMyBookings />} />
             <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
             <Route path="td/reports" element={<AdminTDReports />} />
             <Route path="td/config" element={<AdminTDSlotConfig />} />
+            <Route path="td/users" element={<AdminTDUsers />} />
           </Route>
 
           <Route path="*" element={<NotFound />} />

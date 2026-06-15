@@ -81,19 +81,19 @@ const AdminDashboard = () => {
 
   const statCards = useMemo(() => {
     if (useRemote && stats) {
-      const byStatus = (id: string) => stats.leadsByStatus?.find((x) => x._id === id)?.count ?? 0;
-      const hot = byStatus("Interested") + byStatus("Negotiation");
-      const booked = byStatus("Booked");
-      const contact = byStatus("Contact Attempted");
+      const byStatus = (id: string) => stats.leadsByStatus?.[id] ?? 0;
+      const tdByStatus = stats.testDrivesByStatus ?? {};
+      const pendingTestDrives =
+        (tdByStatus.Pending ?? 0) + (tdByStatus.Confirmed ?? 0) + (tdByStatus.Rescheduled ?? 0);
       return [
         { label: "Total Leads", value: stats.totalLeads, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10" },
-        { label: "Leads Today", value: stats.leadsToday, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10" },
-        { label: "Pending / Scheduled TD", value: stats.pendingTestDrives, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10" },
+        { label: "Leads Today", value: stats.newLeadsToday, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10" },
+        { label: "Pending / Scheduled TD", value: pendingTestDrives, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10" },
         { label: "Open Enquiries", value: stats.openEnquiries, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10" },
-        { label: "Hot Leads", value: hot, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10" },
-        { label: "Bookings", value: booked, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10" },
-        { label: "Contact Pending", value: contact, icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10" },
-        { label: "Model groups", value: stats.leadsByModel?.length ?? 0, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10" },
+        { label: "Hot Leads", value: stats.hotLeads, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10" },
+        { label: "Bookings", value: stats.bookings, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10" },
+        { label: "Contact Pending", value: byStatus("Contact Attempted"), icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10" },
+        { label: "Model groups", value: Object.keys(stats.leadsByModel ?? {}).length, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10" },
       ];
     }
 
@@ -124,11 +124,10 @@ const AdminDashboard = () => {
   }, [useRemote, stats, leads, testDrives, enquiries]);
 
   const pipelineData = useMemo(() => {
-    if (useRemote && stats?.leadsByStatus?.length) {
-      const map = new Map(stats.leadsByStatus.map((x) => [x._id, x.count]));
+    if (useRemote && stats?.leadsByStatus) {
       return LEAD_STATUSES.map((status) => ({
         status,
-        count: map.get(status) ?? 0,
+        count: stats.leadsByStatus[status] ?? 0,
       }));
     }
     if (useRemote && !stats) {
@@ -142,8 +141,11 @@ const AdminDashboard = () => {
   }, [useRemote, stats, leads]);
 
   const sourceBreakdown = useMemo(() => {
-    if (useRemote && stats?.leadsBySource?.length) {
-      return stats.leadsBySource.map((s) => ({ source: s._id || "Unknown", count: s.count }));
+    if (useRemote && stats?.leadsBySource) {
+      return Object.entries(stats.leadsBySource).map(([source, count]) => ({
+        source: source || "Unknown",
+        count,
+      }));
     }
     if (useRemote && !stats) {
       return [];

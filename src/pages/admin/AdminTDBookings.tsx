@@ -9,10 +9,31 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  CalendarCheck, Search, RefreshCw, Car, User, Clock, Building2,
-  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban
+  CalendarCheck, Search, RefreshCw, Car, Clock, Building2,
+  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban, Play, CalendarClock, Lock
 } from "lucide-react";
 import { toast } from "sonner";
+
+import { formatTime12h } from "@/lib/tdSlotSchedule";
+import { designationLabel } from "@/lib/staffRoles";
+import { fetchTDFeedbackByBooking, type TDFeedbackRecord } from "@/lib/tdFeedbackApi";
+import { TDFeedbackForm } from "@/components/admin/TDFeedbackForm";
+
+type TestDriveDetails = {
+  _id: string;
+  customerName?: string;
+  mobile?: string;
+  email?: string;
+  city?: string;
+  model?: string;
+  variant?: string;
+  preferredTestDriveLocation?: string;
+  ownsCar?: string;
+  currentCarDetails?: string;
+  purchaseTimeline?: string;
+  remarks?: string;
+  status?: string;
+};
 
 type Booking = {
   _id: string;
@@ -23,13 +44,17 @@ type Booking = {
   slotDuration: number;
   dlVerified: boolean;
   preferredModel: string;
-  customerId: { _id: string; name: string; mobile: string; customerId: string } | null;
+  remarks?: string;
+  customerId: { _id: string; name: string; mobile: string; customerId: string; email?: string; city?: string } | null;
   vehicleId: { vehicleId: string; model: string; registrationNo: string; color: string } | null;
   assignedExecutive: { _id: string; name: string; email: string } | null;
-  branchId: { name: string; code: string } | null;
+  branchId: { _id?: string; name: string; code: string } | null;
+  testDriveId?: TestDriveDetails | null;
   createdAt: string;
   cancellationReason?: string;
 };
+
+type Executive = { _id: string; name: string; email: string; role: string; designation?: string; designationLabel?: string };
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20",
@@ -43,6 +68,14 @@ const STATUS_COLORS: Record<string, string> = {
 
 const ALL_STATUSES = ["PENDING", "CONFIRMED", "IN_PROGRESS", "COMPLETED", "CANCELLED", "RESCHEDULED", "MISSED"];
 
+const todayIso = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+};
+
 export default function AdminTDBookings() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,9 +83,23 @@ export default function AdminTDBookings() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterDate, setFilterDate] = useState("");
   const [selected, setSelected] = useState<Booking | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [executives, setExecutives] = useState<Executive[]>([]);
+  const [assignExecutiveId, setAssignExecutiveId] = useState("");
   const [cancelDialog, setCancelDialog] = useState<Booking | null>(null);
   const [cancelReason, setCancelReason] = useState("");
+  const [rescheduleDialog, setRescheduleDialog] = useState<Booking | null>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [rescheduleSlots, setRescheduleSlots] = useState<{ time: string; label?: string; available: boolean }[]>([]);
+  const [rescheduleSlotsLoading, setRescheduleSlotsLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [bookingFeedback, setBookingFeedback] = useState<TDFeedbackRecord | null>(null);
+  const [feedbackLoading, setFeedbackLoading] = useState(false);
+
+  const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
+
+  const isStep1Complete = (b: Booking) => Boolean(b.assignedExecutive?._id);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -70,6 +117,48 @@ export default function AdminTDBookings() {
   }, [filterStatus, filterDate]);
 
   useEffect(() => { void fetchBookings(); }, [fetchBookings]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { data } = await adminGet<Executive[]>("/admin/td/bookings/executives/list");
+        setExecutives(data ?? []);
+      } catch {
+        setExecutives([]);
+      }
+    })();
+  }, []);
+
+  const refreshSelected = useCallback(async (id: string) => {
+    try {
+      const { data } = await adminGet<Booking>(`/admin/td/bookings/${id}`);
+      if (data) {
+        setSelected(data);
+        setAssignExecutiveId(data.assignedExecutive?._id ?? "");
+      }
+    } catch {
+      /* keep current */
+    }
+  }, []);
+  const openBookingDetail = async (b: Booking) => {
+    setSelected(b);
+    setDetailLoading(true);
+    setAssignExecutiveId(b.assignedExecutive?._id ?? "");
+    setBookingFeedback(null);
+    try {
+      await refreshSelected(b._id);
+      if (b.bookingStatus === "COMPLETED") {
+        setFeedbackLoading(true);
+        const fb = await fetchTDFeedbackByBooking(b._id);
+        setBookingFeedback(fb);
+      }
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setDetailLoading(false);
+      setFeedbackLoading(false);
+    }
+  };
 
   const filtered = bookings.filter((b) => {
     if (!search) return true;
@@ -104,6 +193,110 @@ export default function AdminTDBookings() {
       await adminPatchJson(`/admin/td/bookings/${id}`, { bookingStatus: status });
       toast.success(`Booking marked as ${status}`);
       void fetchBookings();
+      if (selected?._id === id) {
+        await refreshSelected(id);
+        if (status === "COMPLETED") {
+          setFeedbackLoading(true);
+          const fb = await fetchTDFeedbackByBooking(id);
+          setBookingFeedback(fb);
+          setFeedbackLoading(false);
+        }
+      }
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleVerifyDl = async (id: string, verified: boolean) => {
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}`, { dlVerified: verified });
+      toast.success(verified ? "Driving licence marked verified" : "DL verification cleared");
+      if (selected?._id === id) await refreshSelected(id);
+      void fetchBookings();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAssignExecutive = async (id: string) => {
+    if (!assignExecutiveId) {
+      toast.error("Select an executive first");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/assign-executive`, { executiveId: assignExecutiveId });
+      toast.success("Executive assigned");
+      void fetchBookings();
+      if (selected?._id === id) await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartDriving = async (id: string) => {
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}`, { bookingStatus: "IN_PROGRESS" });
+      toast.success("Test drive started");
+      void fetchBookings();
+      if (selected?._id === id) await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const openRescheduleDialog = (b: Booking) => {
+    setRescheduleDialog(b);
+    const d = new Date(b.slotDate);
+    const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    setRescheduleDate(iso);
+    setRescheduleTime(b.slotTime);
+    setRescheduleSlots([]);
+  };
+
+  const loadRescheduleSlots = async () => {
+    if (!rescheduleDialog?.branchId?._id || !rescheduleDate) {
+      toast.error("Branch or date missing");
+      return;
+    }
+    setRescheduleSlotsLoading(true);
+    try {
+      const { data } = await adminGet<{ time: string; label?: string; available: boolean }[]>(
+        `/admin/td/slots/available?branchId=${rescheduleDialog.branchId._id}&date=${rescheduleDate}`,
+      );
+      setRescheduleSlots(data ?? []);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setRescheduleSlotsLoading(false);
+    }
+  };
+
+  const handleReschedule = async () => {
+    if (!rescheduleDialog || !rescheduleDate || !rescheduleTime) {
+      toast.error("Select a new date and time slot");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${rescheduleDialog._id}/reschedule`, {
+        slotDate: rescheduleDate,
+        slotTime: rescheduleTime,
+      });
+      toast.success("Booking rescheduled");
+      setRescheduleDialog(null);
+      setSelected(null);
+      void fetchBookings();
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -119,11 +312,29 @@ export default function AdminTDBookings() {
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
             <CalendarCheck className="w-6 h-6 text-primary" /> TD Bookings
           </h1>
-          <p className="text-muted-foreground text-sm">{filtered.length} booking(s)</p>
+          <p className="text-muted-foreground text-sm">
+            {filtered.length} booking(s) · website test drives sync here automatically
+          </p>
         </div>
-        <Button onClick={() => void fetchBookings()} variant="outline" size="sm" className="shrink-0">
-          <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-        </Button>
+        <div className="flex gap-2 shrink-0">
+          <Button
+            onClick={() => setFilterDate(todayIso())}
+            variant={filterDate === todayIso() ? "default" : "outline"}
+            size="sm"
+          >
+            Today
+          </Button>
+          <Button
+            onClick={() => setFilterDate("")}
+            variant={filterDate === "" ? "default" : "outline"}
+            size="sm"
+          >
+            All dates
+          </Button>
+          <Button onClick={() => void fetchBookings()} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -139,7 +350,13 @@ export default function AdminTDBookings() {
             {ALL_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Input type="date" value={filterDate} onChange={(e) => setFilterDate(e.target.value)} className="bg-secondary/50" />
+        <Input
+          type="date"
+          value={filterDate}
+          onChange={(e) => setFilterDate(e.target.value)}
+          className="bg-secondary/50"
+          title="Filter by scheduled slot date (not submission date)"
+        />
       </div>
 
       {/* Content */}
@@ -172,7 +389,7 @@ export default function AdminTDBookings() {
               <div className="grid grid-cols-2 gap-2 text-xs border-t border-border/30 pt-3">
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Clock className="w-3.5 h-3.5 shrink-0" />
-                  <span>{new Date(b.slotDate).toLocaleDateString("en-IN")} {b.slotTime}</span>
+                  <span>{new Date(b.slotDate).toLocaleDateString("en-IN")} {formatTime12h(b.slotTime)}</span>
                 </div>
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <Car className="w-3.5 h-3.5 shrink-0" />
@@ -188,32 +405,20 @@ export default function AdminTDBookings() {
                 </div>
               </div>
 
-              {/* DL badge */}
+              {/* DL badge (optional) */}
               <div className="flex items-center gap-1.5 text-xs">
                 {b.dlVerified ? (
                   <span className="flex items-center gap-1 text-green-400"><CheckCircle2 className="w-3 h-3" /> DL Verified</span>
                 ) : (
-                  <span className="flex items-center gap-1 text-yellow-400"><AlertTriangle className="w-3 h-3" /> DL Pending</span>
+                  <span className="flex items-center gap-1 text-muted-foreground">DL not verified (optional)</span>
                 )}
               </div>
 
-              {/* Actions */}
-              <div className="flex gap-1.5 border-t border-border/30 pt-3">
-                <Button size="sm" variant="ghost" className="flex-1 text-xs h-8" onClick={() => setSelected(b)}>
-                  <Eye className="w-3.5 h-3.5 mr-1" /> View
+              {/* Actions — open verify panel only */}
+              <div className="border-t border-border/30 pt-3">
+                <Button size="sm" variant="outline" className="w-full text-xs h-8" onClick={() => void openBookingDetail(b)}>
+                  <Eye className="w-3.5 h-3.5 mr-1" /> Verify & manage
                 </Button>
-                {b.bookingStatus === "CONFIRMED" && (
-                  <Button size="sm" variant="ghost" className="text-xs h-8 text-green-400 hover:text-green-300 hover:bg-green-400/10"
-                    onClick={() => void handleStatusUpdate(b._id, "COMPLETED")} disabled={actionLoading}>
-                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Complete
-                  </Button>
-                )}
-                {!["COMPLETED", "CANCELLED", "MISSED"].includes(b.bookingStatus) && (
-                  <Button size="sm" variant="ghost" className="text-xs h-8 text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                    onClick={() => { setCancelDialog(b); setCancelReason(""); }}>
-                    <Ban className="w-3.5 h-3.5 mr-1" /> Cancel
-                  </Button>
-                )}
               </div>
             </Card>
           ))}
@@ -222,39 +427,265 @@ export default function AdminTDBookings() {
 
       {/* Detail Dialog */}
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <DialogContent className="bg-card border-border max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle className="font-display">Booking Details</DialogTitle></DialogHeader>
+        <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display">Verify & manage booking</DialogTitle>
+          </DialogHeader>
           {selected && (
-            <div className="space-y-4 text-sm">
-              <div className="grid grid-cols-2 gap-3">
-                {[
-                  ["Booking ID", selected.bookingId],
-                  ["Status", selected.bookingStatus],
-                  ["Customer", selected.customerId?.name],
-                  ["Mobile", selected.customerId?.mobile],
-                  ["Customer ID", selected.customerId?.customerId],
-                  ["Vehicle", selected.vehicleId ? `${selected.vehicleId.model} (${selected.vehicleId.registrationNo})` : selected.preferredModel || "TBD"],
-                  ["Color", selected.vehicleId?.color || "—"],
-                  ["Executive", selected.assignedExecutive?.name ?? "Unassigned"],
-                  ["Date", new Date(selected.slotDate).toLocaleDateString("en-IN")],
-                  ["Time", selected.slotTime],
-                  ["Duration", `${selected.slotDuration} min`],
-                  ["Branch", selected.branchId?.name],
-                  ["DL Verified", selected.dlVerified ? "Yes ✅" : "No ❌"],
-                  ["Booked On", new Date(selected.createdAt).toLocaleString("en-IN")],
-                ].map(([label, val]) => (
-                  <div key={label}>
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                    <p className="font-medium text-foreground">{val ?? "—"}</p>
-                  </div>
-                ))}
-              </div>
-              {selected.cancellationReason && (
-                <div className="rounded-lg bg-red-400/5 border border-red-400/20 p-3">
-                  <p className="text-xs text-red-400 font-medium">Cancellation Reason</p>
-                  <p className="text-foreground text-sm mt-1">{selected.cancellationReason}</p>
+            <div className="space-y-5 text-sm">
+              {detailLoading ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading details…
                 </div>
+              ) : (
+                <>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge className={`border ${STATUS_COLORS[selected.bookingStatus] ?? "bg-secondary"}`}>
+                      {selected.bookingStatus}
+                    </Badge>
+                    <span className="font-mono text-xs text-muted-foreground">{selected.bookingId}</span>
+                  </div>
+
+                  <div className="rounded-lg border border-border/50 bg-secondary/20 p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">Customer (website form)</p>
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      {[
+                        ["Name", selected.testDriveId?.customerName ?? selected.customerId?.name],
+                        ["Mobile", selected.testDriveId?.mobile ?? selected.customerId?.mobile],
+                        ["Email", selected.testDriveId?.email ?? selected.customerId?.email],
+                        ["City", selected.testDriveId?.city ?? selected.customerId?.city],
+                        ["Model", selected.testDriveId?.model ?? selected.preferredModel],
+                        ["Variant", selected.testDriveId?.variant],
+                        ["TD location", selected.testDriveId?.preferredTestDriveLocation],
+                        ["Owns car", selected.testDriveId?.ownsCar],
+                        ["Current car", selected.testDriveId?.currentCarDetails],
+                        ["Purchase plan", selected.testDriveId?.purchaseTimeline],
+                        ["Slot", `${new Date(selected.slotDate).toLocaleDateString("en-IN")} · ${formatTime12h(selected.slotTime)}`],
+                        ["Branch", selected.branchId?.name],
+                      ].map(([label, val]) => (
+                        <div key={label}>
+                          <p className="text-[11px] text-muted-foreground">{label}</p>
+                          <p className="font-medium text-foreground">{val || "—"}</p>
+                        </div>
+                      ))}
+                    </div>
+                    {selected.testDriveId?.remarks || selected.remarks ? (
+                      <div>
+                        <p className="text-[11px] text-muted-foreground">Remarks</p>
+                        <p className="text-foreground text-xs leading-relaxed mt-0.5">
+                          {selected.testDriveId?.remarks || selected.remarks}
+                        </p>
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Step 1 — Assign staff</p>
+                    <div className="flex flex-wrap gap-3 text-xs">
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${selected.assignedExecutive?._id ? "border-green-400/40 bg-green-400/10 text-green-400" : "border-yellow-400/40 bg-yellow-400/10 text-yellow-400"}`}>
+                        {selected.assignedExecutive?._id ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                        Executive {selected.assignedExecutive?._id ? `· ${selected.assignedExecutive.name}` : "· not assigned"}
+                      </span>
+                      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${selected.dlVerified ? "border-green-400/40 bg-green-400/10 text-green-400" : "border-border/60 bg-muted/30 text-muted-foreground"}`}>
+                        {selected.dlVerified ? <CheckCircle2 className="w-3.5 h-3.5" /> : null}
+                        DL {selected.dlVerified ? "verified" : "optional · not verified"}
+                      </span>
+                    </div>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-xs">Assign staff</Label>
+                        <Select value={assignExecutiveId} onValueChange={setAssignExecutiveId}>
+                          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Choose staff member" /></SelectTrigger>
+                          <SelectContent>
+                            {executives.map((e) => (
+                              <SelectItem key={e._id} value={e._id}>
+                                {e.name} ({e.designationLabel || designationLabel(e.designation) || e.role})
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full"
+                          disabled={actionLoading || !assignExecutiveId}
+                          onClick={() => void handleAssignExecutive(selected._id)}
+                        >
+                          <UserCheck className="w-4 h-4 mr-2" /> Save executive
+                        </Button>
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-xs">Driving licence <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                        <p className="text-xs text-muted-foreground">
+                          You may verify the customer&apos;s licence if available — not required to start the drive.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant={selected.dlVerified ? "outline" : "secondary"}
+                          className="w-full"
+                          disabled={actionLoading || selected.dlVerified}
+                          onClick={() => void handleVerifyDl(selected._id, true)}
+                        >
+                          {selected.dlVerified ? "DL verified ✓" : "Mark DL verified (optional)"}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {!isTerminalStatus(selected.bookingStatus) ? (
+                    <div
+                      className={`rounded-lg border p-4 space-y-3 transition-opacity ${
+                        isStep1Complete(selected)
+                          ? "border-primary/25 bg-primary/5"
+                          : "border-dashed border-yellow-400/30 bg-yellow-400/5 opacity-75"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        {!isStep1Complete(selected) ? (
+                          <Lock className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
+                        ) : null}
+                        <p
+                          className={`text-xs font-semibold uppercase tracking-wide ${
+                            isStep1Complete(selected) ? "text-primary" : "text-muted-foreground"
+                          }`}
+                        >
+                          Step 2 — Manage test drive
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Button
+                          size="sm"
+                          className="h-10"
+                          disabled={!isStep1Complete(selected) || actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                          onClick={() => void handleStartDriving(selected._id)}
+                        >
+                          <Play className="w-4 h-4 mr-2" /> Start driving
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40"
+                          disabled={!isStep1Complete(selected) || actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
+                          onClick={() => void handleStatusUpdate(selected._id, "COMPLETED")}
+                        >
+                          <CheckCircle2 className="w-4 h-4 mr-2" /> Mark completed
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-10"
+                          disabled={!isStep1Complete(selected) || actionLoading}
+                          onClick={() => {
+                            openRescheduleDialog(selected);
+                            setSelected(null);
+                          }}
+                        >
+                          <CalendarClock className="w-4 h-4 mr-2" /> Reschedule
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="h-10"
+                          disabled={!isStep1Complete(selected) || actionLoading}
+                          onClick={() => {
+                            setCancelDialog(selected);
+                            setSelected(null);
+                          }}
+                        >
+                          <Ban className="w-4 h-4 mr-2" /> Cancel booking
+                        </Button>
+                      </div>
+                      {!isStep1Complete(selected) ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          Complete Step 1 first — save an assigned executive to unlock these actions.
+                        </p>
+                      ) : selected.bookingStatus === "IN_PROGRESS" ? (
+                        <p className="text-[11px] text-muted-foreground">Drive in progress — mark completed when the customer returns.</p>
+                      ) : (
+                        <p className="text-[11px] text-muted-foreground">Ready to go — tap Start driving when the customer begins the test drive.</p>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {isTerminalStatus(selected.bookingStatus) ? (
+                    selected.bookingStatus === "COMPLETED" ? (
+                      <div className="space-y-3">
+                        {feedbackLoading ? (
+                          <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
+                        ) : (
+                          <TDFeedbackForm
+                            bookingId={selected._id}
+                            customerId={selected.customerId?._id}
+                            preferredModel={selected.testDriveId?.model || selected.preferredModel}
+                            existing={bookingFeedback}
+                            onSubmitted={async () => {
+                              const fb = await fetchTDFeedbackByBooking(selected._id);
+                              setBookingFeedback(fb);
+                            }}
+                          />
+                        )}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                        This booking is <span className="font-medium text-foreground">{selected.bookingStatus}</span> — no further actions available.
+                      </div>
+                    )
+                  ) : null}
+                </>
               )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={!!rescheduleDialog} onOpenChange={(o) => !o && setRescheduleDialog(null)}>
+        <DialogContent className="bg-card border-border max-w-md">
+          <DialogHeader><DialogTitle>Reschedule booking</DialogTitle></DialogHeader>
+          {rescheduleDialog && (
+            <div className="space-y-4 text-sm">
+              <p className="text-muted-foreground">
+                {rescheduleDialog.bookingId} · {rescheduleDialog.customerId?.name}
+              </p>
+              <div className="space-y-1.5">
+                <Label className="text-xs">New date</Label>
+                <Input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => {
+                    setRescheduleDate(e.target.value);
+                    setRescheduleTime("");
+                    setRescheduleSlots([]);
+                  }}
+                  className="bg-secondary/50"
+                />
+              </div>
+              <Button type="button" variant="outline" size="sm" disabled={rescheduleSlotsLoading || !rescheduleDate} onClick={() => void loadRescheduleSlots()}>
+                {rescheduleSlotsLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                Load available slots
+              </Button>
+              {rescheduleSlots.length > 0 ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">New time slot</Label>
+                  <Select value={rescheduleTime} onValueChange={setRescheduleTime}>
+                    <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Pick time" /></SelectTrigger>
+                    <SelectContent>
+                      {rescheduleSlots.filter((s) => s.available || s.time === rescheduleDialog.slotTime).map((s) => (
+                        <SelectItem key={s.time} value={s.time} disabled={!s.available && s.time !== rescheduleDialog.slotTime}>
+                          {s.label ?? formatTime12h(s.time)} {!s.available ? "(full)" : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+              <div className="flex gap-3 pt-2">
+                <Button className="flex-1" disabled={actionLoading || !rescheduleDate || !rescheduleTime} onClick={() => void handleReschedule()}>
+                  {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CalendarClock className="w-4 h-4 mr-2" />}
+                  Save reschedule
+                </Button>
+                <Button variant="outline" className="flex-1" onClick={() => setRescheduleDialog(null)}>Close</Button>
+              </div>
             </div>
           )}
         </DialogContent>

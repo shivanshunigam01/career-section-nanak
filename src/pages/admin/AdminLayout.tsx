@@ -3,11 +3,11 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
   TestTube, MessageSquare, Tag, Bell, Home, Image, Megaphone,
-  CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight
+  CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight, User
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
-import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut } from "@/lib/adminAuth";
+import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut, canAccessFullAdmin, isFieldStaffUser } from "@/lib/adminAuth";
 import { toast } from "sonner";
 
 const ADMIN_SESSION_EXPIRED_TOAST =
@@ -28,10 +28,12 @@ const coreNavItems = [
 ];
 
 const tdNavItems = [
-  { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings" },
-  { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles" },
-  { label: "TD Reports",     icon: BarChart3,     path: "/admin/td/reports" },
-  { label: "Slot Config",    icon: Building2,     path: "/admin/td/config" },
+  { label: "My Test Drives", icon: User,         path: "/admin/td/my-bookings", staff: true },
+  { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
+  { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
+  { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles",    staff: false },
+  { label: "TD Reports",     icon: BarChart3,     path: "/admin/td/reports",     staff: false },
+  { label: "Slot Config",    icon: Building2,     path: "/admin/td/config",      staff: false },
 ];
 
 const AdminLayout = () => {
@@ -39,6 +41,10 @@ const AdminLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tdExpanded, setTdExpanded] = useState(location.pathname.startsWith("/admin/td"));
+
+  const adminUser = getAdminUser();
+  const fieldStaff = isFieldStaffUser(adminUser);
+  const fullAdmin = canAccessFullAdmin(adminUser);
 
   useEffect(() => {
     const api = hasApi();
@@ -51,8 +57,12 @@ const AdminLayout = () => {
       clearAdminSession();
       toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
       navigate("/admin/login?reason=session-expired");
+      return;
     }
-  }, [navigate, location.pathname]);
+    if (fieldStaff && !location.pathname.startsWith("/admin/td/my-bookings")) {
+      navigate("/admin/td/my-bookings", { replace: true });
+    }
+  }, [navigate, location.pathname, fieldStaff]);
 
   useEffect(() => {
     const id = window.setInterval(() => {
@@ -69,7 +79,8 @@ const AdminLayout = () => {
     navigate("/admin/login");
   };
 
-  const adminUser = getAdminUser();
+  const visibleTdItems = tdNavItems.filter((item) => item.staff || fullAdmin);
+
   const avatarLabel = adminUser?.name
     ? adminUser.name
         .split(/\s+/)
@@ -120,66 +131,88 @@ const AdminLayout = () => {
         </div>
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-3 sm:p-4 overscroll-contain">
-          {coreNavItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                }`}
-              >
-                <item.icon className="h-5 w-5 shrink-0 opacity-90" />
-                <span className="truncate">{item.label}</span>
-              </Link>
-            );
-          })}
+          {fieldStaff ? (
+            visibleTdItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  to={item.path}
+                  onClick={() => setSidebarOpen(false)}
+                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                  <span className="truncate">{item.label}</span>
+                </Link>
+              );
+            })
+          ) : (
+            <>
+              {coreNavItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
 
-          {/* TD Management Section */}
-          <div className="pt-1">
-            <div className="mx-1 my-2 border-t border-border/50" />
-            <button
-              type="button"
-              onClick={() => setTdExpanded(!tdExpanded)}
-              className={`w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
-                location.pathname.startsWith("/admin/td")
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-              }`}
-            >
-              <CalendarCheck className="h-5 w-5 shrink-0 opacity-90" />
-              <span className="truncate flex-1 text-left">TD Management</span>
-              {tdExpanded
-                ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
-                : <ChevRight className="h-4 w-4 shrink-0 opacity-60" />}
-            </button>
-            {tdExpanded && (
-              <div className="ml-4 border-l border-border/40 pl-1 space-y-0.5 mt-0.5">
-                {tdNavItems.map((item) => {
-                  const isActive = location.pathname === item.path;
-                  return (
-                    <Link
-                      key={item.path}
-                      to={item.path}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
-                        isActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                      }`}
-                    >
-                      <item.icon className="h-5 w-5 shrink-0 opacity-90" />
-                      <span className="truncate">{item.label}</span>
-                    </Link>
-                  );
-                })}
+              <div className="pt-1">
+                <div className="mx-1 my-2 border-t border-border/50" />
+                <button
+                  type="button"
+                  onClick={() => setTdExpanded(!tdExpanded)}
+                  className={`w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                    location.pathname.startsWith("/admin/td")
+                      ? "bg-primary/10 text-primary"
+                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                  }`}
+                >
+                  <CalendarCheck className="h-5 w-5 shrink-0 opacity-90" />
+                  <span className="truncate flex-1 text-left">TD Management</span>
+                  {tdExpanded
+                    ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
+                    : <ChevRight className="h-4 w-4 shrink-0 opacity-60" />}
+                </button>
+                {tdExpanded && (
+                  <div className="ml-4 border-l border-border/40 pl-1 space-y-0.5 mt-0.5">
+                    {visibleTdItems.map((item) => {
+                      const isActive = location.pathname === item.path;
+                      return (
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => setSidebarOpen(false)}
+                          className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                            isActive
+                              ? "bg-primary/10 text-primary"
+                              : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                          }`}
+                        >
+                          <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                          <span className="truncate">{item.label}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            </>
+          )}
         </nav>
 
         <div className="shrink-0 border-t border-border p-3 sm:p-4">
@@ -218,7 +251,7 @@ const AdminLayout = () => {
           </button>
           <div
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary sm:h-10 sm:w-10"
-            title={adminUser?.email ?? ""}
+            title={adminUser ? `${adminUser.email}${adminUser.designationLabel ? ` · ${adminUser.designationLabel}` : ""}` : ""}
           >
             {avatarLabel}
           </div>
