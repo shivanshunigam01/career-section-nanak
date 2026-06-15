@@ -227,3 +227,49 @@ export type DashboardStats = {
   leadsByStatus: Record<string, number>;
   testDrivesByStatus: Record<string, number>;
 };
+
+type AggregateRow = { _id?: unknown; count?: unknown };
+
+function countRecordFromApi(value: unknown): Record<string, number> {
+  if (value == null) return {};
+  if (Array.isArray(value)) {
+    const out: Record<string, number> = {};
+    for (const row of value as AggregateRow[]) {
+      const key = row?._id == null || row._id === "" ? "Unknown" : String(row._id);
+      out[key] = Number(row?.count) || 0;
+    }
+    return out;
+  }
+  if (typeof value === "object") {
+    const out: Record<string, number> = {};
+    for (const [key, count] of Object.entries(value as Record<string, unknown>)) {
+      if (count != null && typeof count === "object" && "count" in (count as AggregateRow)) {
+        out[key] = Number((count as AggregateRow).count) || 0;
+      } else {
+        out[key] = Number(count) || 0;
+      }
+    }
+    return out;
+  }
+  return {};
+}
+
+/** Normalize dashboard stats from API (handles legacy aggregate arrays). */
+export function dashboardStatsFromApi(raw: Record<string, unknown> | null | undefined): DashboardStats {
+  const d = raw ?? {};
+  return {
+    totalLeads: Number(d.totalLeads) || 0,
+    newLeadsToday: Number(d.newLeadsToday ?? d.leadsToday) || 0,
+    hotLeads: Number(d.hotLeads) || 0,
+    bookings: Number(d.bookings) || 0,
+    pendingFollowUps: Number(d.pendingFollowUps) || 0,
+    totalTestDrives: Number(d.totalTestDrives) || 0,
+    testDrivesThisWeek: Number(d.testDrivesThisWeek) || 0,
+    totalEnquiries: Number(d.totalEnquiries) || 0,
+    openEnquiries: Number(d.openEnquiries) || 0,
+    leadsBySource: countRecordFromApi(d.leadsBySource),
+    leadsByModel: countRecordFromApi(d.leadsByModel),
+    leadsByStatus: countRecordFromApi(d.leadsByStatus),
+    testDrivesByStatus: countRecordFromApi(d.testDrivesByStatus),
+  };
+}
