@@ -9,6 +9,7 @@ import {
   fetchPublicTdBranches,
   fetchPublicTdSlots,
   formatSlotLabel,
+  slotStatusLabel,
   type PublicTdSlot,
 } from "@/lib/publicTdApi";
 
@@ -56,6 +57,7 @@ export function TestDriveSlotPicker({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsMessage, setSlotsMessage] = useState<string | null>(null);
   const [workingHours, setWorkingHours] = useState<string | null>(null);
+  const [fleetCapacity, setFleetCapacity] = useState<number | null>(null);
 
   const selectedCalendarDate = date ? new Date(`${date}T12:00:00`) : undefined;
 
@@ -83,6 +85,7 @@ export function TestDriveSlotPicker({
     const res = await fetchPublicTdSlots({ branchId, date, model });
     setSlots(res.slots);
     setSlotsMessage(res.message ?? null);
+    setFleetCapacity(res.fleetCapacity ?? res.fleetAvailable ?? null);
     if (res.workingStartTime && res.workingEndTime) {
       setWorkingHours(`${res.workingStartTime} – ${res.workingEndTime}`);
     }
@@ -109,9 +112,16 @@ export function TestDriveSlotPicker({
   return (
     <div className="space-y-4 rounded-xl border border-primary/15 bg-primary/[0.04] p-4 sm:p-5">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        All slots for the day are shown below — like seat selection. Tap an available slot to book
-        {workingHours ? ` (${workingHours})` : ""}. Bookings open from the {minBookableDay}th of each month.
+        Slots are per vehicle model — if someone already booked {model || "this model"} at 10:15 AM, that time
+        stays unavailable for the same model, but other models may still have the slot open.
+        {workingHours ? ` Showroom hours: ${workingHours}.` : ""}
+        Bookings open from the {minBookableDay}th of each month.
       </p>
+      {date && fleetCapacity != null && fleetCapacity === 0 ? (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          No demo {model} is scheduled at the showroom for this date. Try another model or date.
+        </p>
+      ) : null}
 
       <div className={cn("flex flex-col gap-2 min-w-0", disabled && "opacity-60 pointer-events-none")}>
         <span id="td-date-label" className="text-xs font-medium text-muted-foreground">
@@ -225,7 +235,7 @@ export function TestDriveSlotPicker({
                     ) : (
                       <span className="mt-1 inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                         <Lock className="h-3 w-3 shrink-0" aria-hidden />
-                        Unavailable
+                        {slotStatusLabel(slot) ?? "Unavailable"}
                       </span>
                     )}
                   </button>
