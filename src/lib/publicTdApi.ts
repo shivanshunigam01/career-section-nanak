@@ -45,6 +45,7 @@ export type PublicTdSlotsResponse = {
   workingStartTime?: string;
   workingEndTime?: string;
   fleetAvailable?: number;
+  fleetCapacity?: number;
   maxConcurrentBookings?: number;
   message?: string;
 };
@@ -79,6 +80,7 @@ export async function fetchPublicTdSlots(params: {
       workingStartTime?: string;
       workingEndTime?: string;
       fleetAvailable?: number;
+      fleetCapacity?: number;
       maxConcurrentBookings?: number;
     };
     if (!res.ok || json.success === false) {
@@ -90,7 +92,8 @@ export async function fetchPublicTdSlots(params: {
       slotDuration: json.slotDuration,
       workingStartTime: json.workingStartTime,
       workingEndTime: json.workingEndTime,
-      fleetAvailable: json.fleetAvailable,
+      fleetAvailable: json.fleetCapacity ?? json.fleetAvailable,
+      fleetCapacity: json.fleetCapacity ?? json.fleetAvailable,
       maxConcurrentBookings: json.maxConcurrentBookings,
     };
   } catch {

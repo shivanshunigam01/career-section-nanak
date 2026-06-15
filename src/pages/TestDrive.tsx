@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -128,6 +128,23 @@ const TestDrivePage = () => {
   const whatsappOtpOn = Boolean(hasApi() && siteConfig.features?.whatsappOtp);
   const scheduleUnlocked = !whatsappOtpOn || Boolean(waToken);
   const useLiveSlots = hasApi() && scheduleUnlocked;
+
+  const canSubmit = useMemo(() => {
+    if (!formData.name.trim()) return false;
+    if (!MOBILE_REGEX.test(formData.mobile)) return false;
+    if (!formData.model.trim() || !formData.variant.trim()) return false;
+    if (!formData.date || !formData.time) return false;
+    const selected = new Date(`${formData.date}T12:00:00`);
+    if (Number.isNaN(selected.getTime()) || !isTestDriveBookableDate(selected)) return false;
+    if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) return false;
+    if (!formData.preferredTestDriveLocation) return false;
+    if (!formData.ownsCar) return false;
+    if (formData.ownsCar === "Yes" && !formData.currentCarDetails.trim()) return false;
+    if (!formData.purchaseTimeline) return false;
+    if (!captchaVerified) return false;
+    if (whatsappOtpOn && !waToken) return false;
+    return true;
+  }, [formData, captchaVerified, waToken, whatsappOtpOn]);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -860,8 +877,8 @@ const TestDrivePage = () => {
                   type="submit"
                   variant="hero"
                   size="lg"
-                  className="w-full"
-                  disabled={Boolean(hasApi() && siteConfig.features?.whatsappOtp && !waToken)}
+                  className="w-full disabled:opacity-50 disabled:pointer-events-none"
+                  disabled={!canSubmit}
                 >
                   Confirm Test Drive
                 </Button>

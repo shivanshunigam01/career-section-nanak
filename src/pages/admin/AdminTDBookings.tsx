@@ -46,7 +46,7 @@ type Booking = {
   preferredModel: string;
   remarks?: string;
   customerId: { _id: string; name: string; mobile: string; customerId: string; email?: string; city?: string } | null;
-  vehicleId: { vehicleId: string; model: string; registrationNo: string; color: string } | null;
+  vehicleId: { _id?: string; vehicleId: string; model: string; registrationNo: string; color: string } | null;
   assignedExecutive: { _id: string; name: string; email: string } | null;
   branchId: { _id?: string; name: string; code: string } | null;
   testDriveId?: TestDriveDetails | null;
@@ -55,6 +55,16 @@ type Booking = {
 };
 
 type Executive = { _id: string; name: string; email: string; role: string; designation?: string; designationLabel?: string };
+type DemoVehicleOption = {
+  _id: string;
+  vehicleId: string;
+  model: string;
+  variant: string;
+  registrationNo: string;
+  color: string;
+  status: string;
+  batteryPercent: number;
+};
 
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-400/10 text-yellow-400 border-yellow-400/20",
@@ -96,10 +106,15 @@ export default function AdminTDBookings() {
   const [actionLoading, setActionLoading] = useState(false);
   const [bookingFeedback, setBookingFeedback] = useState<TDFeedbackRecord | null>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [assignVehicleId, setAssignVehicleId] = useState("");
+  const [availableVehicles, setAvailableVehicles] = useState<DemoVehicleOption[]>([]);
+  const [vehiclesLoading, setVehiclesLoading] = useState(false);
 
   const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
 
   const isStep1Complete = (b: Booking) => Boolean(b.assignedExecutive?._id);
+  const isVehicleAssigned = (b: Booking) => Boolean(b.vehicleId?._id || b.vehicleId);
+  const isReadyForDrive = (b: Booking) => isStep1Complete(b) && isVehicleAssigned(b);
 
   const fetchBookings = useCallback(async () => {
     try {
@@ -135,18 +150,44 @@ export default function AdminTDBookings() {
       if (data) {
         setSelected(data);
         setAssignExecutiveId(data.assignedExecutive?._id ?? "");
+        setAssignVehicleId(data.vehicleId?._id ?? "");
       }
     } catch {
       /* keep current */
+    }
+  }, []);
+
+  const loadAvailableVehicles = useCallback(async (b: Booking) => {
+    if (!b.branchId?._id) {
+      setAvailableVehicles([]);
+      return;
+    }
+    setVehiclesLoading(true);
+    try {
+      const model = b.testDriveId?.model || b.preferredModel || "";
+      const params = new URLSearchParams({ branchId: b.branchId._id, limit: "50" });
+      if (model) params.set("model", model);
+      const { data } = await adminGet<DemoVehicleOption[]>(`/admin/td/vehicles?${params}`);
+      const list = (data ?? []).filter((v) =>
+        ["AVAILABLE", "BOOKED"].includes(v.status) ||
+        String(v._id) === String(b.vehicleId?._id),
+      );
+      setAvailableVehicles(list);
+    } catch {
+      setAvailableVehicles([]);
+    } finally {
+      setVehiclesLoading(false);
     }
   }, []);
   const openBookingDetail = async (b: Booking) => {
     setSelected(b);
     setDetailLoading(true);
     setAssignExecutiveId(b.assignedExecutive?._id ?? "");
+    setAssignVehicleId(b.vehicleId?._id ?? "");
     setBookingFeedback(null);
     try {
       await refreshSelected(b._id);
+      await loadAvailableVehicles(b);
       if (b.bookingStatus === "COMPLETED") {
         setFeedbackLoading(true);
         const fb = await fetchTDFeedbackByBooking(b._id);
@@ -241,6 +282,27 @@ export default function AdminTDBookings() {
     }
   };
 
+  const handleAssignVehicle = async (id: string) => {
+    if (!assignVehicleId) {
+      toast.error("Select a demo vehicle first");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/assign-vehicle`, { vehicleId: assignVehicleId });
+      toast.success("Demo vehicle assigned — booking confirmed when executive is also set");
+      void fetchBookings();
+      if (selected?._id === id) {
+        await refreshSelected(id);
+        if (selected) await loadAvailableVehicles(selected);
+      }
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   const handleStartDriving = async (id: string) => {
     setActionLoading(true);
     try {
@@ -271,8 +333,13 @@ export default function AdminTDBookings() {
     }
     setRescheduleSlotsLoading(true);
     try {
+      const q = new URLSearchParams({
+        branchId: rescheduleDialog.branchId._id,
+        date: rescheduleDate,
+        model: rescheduleDialog.preferredModel || rescheduleDialog.testDriveId?.model || "",
+      });
       const { data } = await adminGet<{ time: string; label?: string; available: boolean }[]>(
-        `/admin/td/slots/available?branchId=${rescheduleDialog.branchId._id}&date=${rescheduleDate}`,
+        `/admin/td/slots/available?${q}`,
       );
       setRescheduleSlots(data ?? []);
     } catch (e) {
@@ -533,21 +600,82 @@ export default function AdminTDBookings() {
                     </div>
                   </div>
 
+                  <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                      Step 1b — Assign demo vehicle
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Confirm a demo car is available for this customer&apos;s model. If none is free, use{" "}
+                      <span className="text-primary font-medium">Reschedule</span> to move them to another slot.
+                    </p>
+                    <div className="flex flex-wrap gap-2 text-xs">
+                      <span
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 border ${
+                          isVehicleAssigned(selected)
+                            ? "border-green-400/40 bg-green-400/10 text-green-400"
+                            : "border-yellow-400/40 bg-yellow-400/10 text-yellow-400"
+                        }`}
+                      >
+                        {isVehicleAssigned(selected) ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}
+                        Vehicle{" "}
+                        {isVehicleAssigned(selected)
+                          ? `· ${selected.vehicleId?.registrationNo} (${selected.vehicleId?.model})`
+                          : "· not assigned"}
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Available demo fleet ({selected.preferredModel || selected.testDriveId?.model || "all"})</Label>
+                      {vehiclesLoading ? (
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading vehicles…
+                        </p>
+                      ) : (
+                        <Select value={assignVehicleId || "none"} onValueChange={(v) => setAssignVehicleId(v === "none" ? "" : v)}>
+                          <SelectTrigger className="bg-secondary/50">
+                            <SelectValue placeholder="Choose demo vehicle" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— Select vehicle —</SelectItem>
+                            {availableVehicles.map((v) => (
+                              <SelectItem key={v._id} value={v._id}>
+                                {v.registrationNo} · {v.model} {v.variant} · {v.status} · {v.batteryPercent}%
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                      {availableVehicles.length === 0 && !vehiclesLoading ? (
+                        <p className="text-xs text-amber-600 dark:text-amber-400">
+                          No demo vehicle available for this model — reschedule the customer to another date/time.
+                        </p>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                        disabled={actionLoading || !assignVehicleId || isTerminalStatus(selected.bookingStatus)}
+                        onClick={() => void handleAssignVehicle(selected._id)}
+                      >
+                        <Car className="w-4 h-4 mr-2" /> Save vehicle assignment
+                      </Button>
+                    </div>
+                  </div>
+
                   {!isTerminalStatus(selected.bookingStatus) ? (
                     <div
                       className={`rounded-lg border p-4 space-y-3 transition-opacity ${
-                        isStep1Complete(selected)
+                        isReadyForDrive(selected)
                           ? "border-primary/25 bg-primary/5"
                           : "border-dashed border-yellow-400/30 bg-yellow-400/5 opacity-75"
                       }`}
                     >
                       <div className="flex items-center gap-2">
-                        {!isStep1Complete(selected) ? (
+                        {!isReadyForDrive(selected) ? (
                           <Lock className="w-3.5 h-3.5 text-yellow-500 shrink-0" />
                         ) : null}
                         <p
                           className={`text-xs font-semibold uppercase tracking-wide ${
-                            isStep1Complete(selected) ? "text-primary" : "text-muted-foreground"
+                            isReadyForDrive(selected) ? "text-primary" : "text-muted-foreground"
                           }`}
                         >
                           Step 2 — Manage test drive
@@ -557,7 +685,7 @@ export default function AdminTDBookings() {
                         <Button
                           size="sm"
                           className="h-10"
-                          disabled={!isStep1Complete(selected) || actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                          disabled={!isReadyForDrive(selected) || actionLoading || selected.bookingStatus === "IN_PROGRESS"}
                           onClick={() => void handleStartDriving(selected._id)}
                         >
                           <Play className="w-4 h-4 mr-2" /> Start driving
@@ -565,7 +693,7 @@ export default function AdminTDBookings() {
                         <Button
                           size="sm"
                           className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40"
-                          disabled={!isStep1Complete(selected) || actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
+                          disabled={!isReadyForDrive(selected) || actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
                           onClick={() => void handleStatusUpdate(selected._id, "COMPLETED")}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" /> Mark completed
@@ -595,9 +723,9 @@ export default function AdminTDBookings() {
                           <Ban className="w-4 h-4 mr-2" /> Cancel booking
                         </Button>
                       </div>
-                      {!isStep1Complete(selected) ? (
+                      {!isReadyForDrive(selected) ? (
                         <p className="text-[11px] text-muted-foreground">
-                          Complete Step 1 first — save an assigned executive to unlock these actions.
+                          Assign both an executive and a demo vehicle before starting the test drive.
                         </p>
                       ) : selected.bookingStatus === "IN_PROGRESS" ? (
                         <p className="text-[11px] text-muted-foreground">Drive in progress — mark completed when the customer returns.</p>

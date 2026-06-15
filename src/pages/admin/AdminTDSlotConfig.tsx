@@ -42,7 +42,7 @@ type SlotAvailability = {
   maxBookings: number;
   reason?: string | null;
 };
-type FleetSummary = { model: string; available: number; total: number };
+type FleetSummary = { model: string; available: number; total: number; capacity: number };
 
 export default function AdminTDSlotConfig() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -60,6 +60,7 @@ export default function AdminTDSlotConfig() {
 
   // Slot preview
   const [previewDate, setPreviewDate] = useState("");
+  const [previewModel, setPreviewModel] = useState("VF 7");
   const [slots, setSlots] = useState<SlotAvailability[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
 
@@ -70,6 +71,7 @@ export default function AdminTDSlotConfig() {
 
   // Daily slot overrides (admin open/close per date)
   const [dailyDate, setDailyDate] = useState("");
+  const [dailyModel, setDailyModel] = useState("VF 7");
   const [dailySlots, setDailySlots] = useState<TdSlotGridItem[]>([]);
   const [dailyDisabled, setDailyDisabled] = useState<string[]>([]);
   const [dailyLoading, setDailyLoading] = useState(false);
@@ -85,10 +87,11 @@ export default function AdminTDSlotConfig() {
         `/admin/td/vehicles?branchId=${branchId}&limit=100`,
       );
       const rows = data ?? [];
-      const byModel = new Map<string, { available: number; total: number }>();
+      const byModel = new Map<string, { available: number; total: number; capacity: number }>();
       for (const v of rows) {
-        const cur = byModel.get(v.model) ?? { available: 0, total: 0 };
+        const cur = byModel.get(v.model) ?? { available: 0, total: 0, capacity: 0 };
         cur.total += 1;
+        cur.capacity += 1;
         if (v.status === "AVAILABLE") cur.available += 1;
         byModel.set(v.model, cur);
       }
@@ -193,7 +196,12 @@ export default function AdminTDSlotConfig() {
     if (!selectedBranch || !previewDate) { toast.error("Select a branch and date first"); return; }
     setSlotsLoading(true);
     try {
-      const { data } = await adminGet<SlotAvailability[]>(`/admin/td/slots/available?branchId=${selectedBranch}&date=${previewDate}`);
+      const q = new URLSearchParams({
+        branchId: selectedBranch,
+        date: previewDate,
+        model: previewModel,
+      });
+      const { data } = await adminGet<SlotAvailability[]>(`/admin/td/slots/available?${q}`);
       setSlots(data ?? []);
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -209,9 +217,12 @@ export default function AdminTDSlotConfig() {
     }
     setDailyLoading(true);
     try {
-      const { data } = await adminGet<SlotAvailability[]>(
-        `/admin/td/slots/available?branchId=${selectedBranch}&date=${dailyDate}`,
-      );
+      const q = new URLSearchParams({
+        branchId: selectedBranch,
+        date: dailyDate,
+        model: dailyModel,
+      });
+      const { data } = await adminGet<SlotAvailability[]>(`/admin/td/slots/available?${q}`);
       setDailySlots(data ?? []);
       const cfg = configs.find((c) => c.branchId?._id === selectedBranch);
       const map = cfg?.disabledSlotsByDate ?? {};
@@ -311,14 +322,16 @@ export default function AdminTDSlotConfig() {
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   Each time slot allows up to{" "}
-                  <span className="text-foreground font-medium">{form.maxConcurrentBookings}</span> booking(s),
-                  but never more than available demo cars for that model. Manage vehicles under{" "}
+                  <span className="text-foreground font-medium">{form.maxConcurrentBookings}</span> booking(s) per{" "}
+                  <span className="text-foreground font-medium">model</span>, capped by demo cars for that model.
+                  Example: Customer A books VF 7 on 16 Jun at 10:15 — that slot closes for VF 7 only; VF 6 can still
+                  use 10:15 if a VF 6 demo car is free. Manage fleet under{" "}
                   <span className="text-primary">TD → Demo Fleet</span>.
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {fleetSummary.map((f) => (
                     <Badge key={f.model} className="bg-secondary/80 text-foreground border-border/40">
-                      {f.model}: {f.available}/{f.total} available
+                      {f.model}: {f.capacity} demo car(s) · {f.available} free now
                     </Badge>
                   ))}
                 </div>
@@ -411,8 +424,8 @@ export default function AdminTDSlotConfig() {
                         <Clock className="w-4 h-4 text-primary" /> Daily slot availability
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        Pick a date and tap slots to open or close them — same grid customers see on the test drive page.
-                        Booked slots stay locked. One booking per slot closes it for new customers.
+                        Pick a date and model, then tap slots to open or close them — same grid customers see.
+                        Booked slots stay locked for that model only.
                       </p>
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3">
@@ -422,6 +435,15 @@ export default function AdminTDSlotConfig() {
                         onChange={(e) => setDailyDate(e.target.value)}
                         className="bg-secondary/50 flex-1"
                       />
+                      <Select value={dailyModel} onValueChange={setDailyModel}>
+                        <SelectTrigger className="bg-secondary/50 w-full sm:w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="VF 6">VF 6</SelectItem>
+                          <SelectItem value="VF 7">VF 7</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button
                         onClick={() => void loadDailySlots()}
                         disabled={dailyLoading}
@@ -492,8 +514,11 @@ export default function AdminTDSlotConfig() {
                         <Input type="time" value={form.workingEndTime} onChange={(e) => setForm((p) => ({ ...p, workingEndTime: e.target.value }))} className="bg-secondary/50" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Max Concurrent Bookings per Slot</Label>
+                        <Label className="text-xs">Max bookings per slot (per model)</Label>
                         <Input type="number" min={1} max={10} value={form.maxConcurrentBookings} onChange={(e) => setForm((p) => ({ ...p, maxConcurrentBookings: Number(e.target.value) }))} className="bg-secondary/50" />
+                        <p className="text-[10px] text-muted-foreground">
+                          Use 1 so one customer per model per time closes the slot. Use 2+ only if you have multiple demo cars of the same model.
+                        </p>
                       </div>
                       <div className="space-y-1.5">
                         <Label className="text-xs">Auto-Expiry of Stale Bookings</Label>
@@ -509,8 +534,8 @@ export default function AdminTDSlotConfig() {
                       <p className="flex items-center gap-1.5 font-medium text-foreground mb-1"><Zap className="w-3.5 h-3.5 text-primary" /> Configuration Preview</p>
                       <p>Slots run from <span className="text-foreground">{form.workingStartTime}</span> to <span className="text-foreground">{form.workingEndTime}</span></p>
                       <p>Each slot: <span className="text-foreground">{form.slotDuration} min</span> + <span className="text-foreground">{form.bufferTime} min buffer</span></p>
-                      <p>Max <span className="text-foreground">{form.maxConcurrentBookings}</span> booking(s) per slot — use <span className="text-foreground">1</span> so each customer booking closes the slot for others.</p>
-                      <p>Double booking: <span className="text-red-400">Not Allowed</span></p>
+                      <p>Max <span className="text-foreground">{form.maxConcurrentBookings}</span> booking(s) per slot per model (VF 6 and VF 7 tracked separately).</p>
+                      <p>Same date + time + model: second customer sees slot as <span className="text-red-400">Full</span>.</p>
                     </div>
 
                     <Button onClick={() => void handleSave()} disabled={saving} className="bg-primary text-primary-foreground w-full">
@@ -524,10 +549,19 @@ export default function AdminTDSlotConfig() {
                   <Card className="bg-card border-border/50 p-5 space-y-4">
                     <h3 className="font-semibold flex items-center gap-2"><Search className="w-4 h-4 text-primary" /> Website preview (live API)</h3>
                     <p className="text-xs text-muted-foreground">
-                      This uses the same API as the public test drive page for the selected date.
+                      Same API as the public test drive page — pick model to preview VF 6 vs VF 7 availability.
                     </p>
-                    <div className="flex gap-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <Input type="date" value={previewDate} onChange={(e) => setPreviewDate(e.target.value)} className="bg-secondary/50 flex-1" />
+                      <Select value={previewModel} onValueChange={setPreviewModel}>
+                        <SelectTrigger className="bg-secondary/50 w-full sm:w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="VF 6">VF 6</SelectItem>
+                          <SelectItem value="VF 7">VF 7</SelectItem>
+                        </SelectContent>
+                      </Select>
                       <Button onClick={() => void fetchSlotPreview()} disabled={slotsLoading} className="bg-primary text-primary-foreground shrink-0">
                         {slotsLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
                       </Button>
