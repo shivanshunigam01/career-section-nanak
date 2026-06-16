@@ -30,6 +30,7 @@ const coreNavItems = [
 const tdNavItems = [
   { label: "My Test Drives", icon: User,         path: "/admin/td/my-bookings", staff: true },
   { label: "Lead Management", icon: Users,        path: "/admin/td/leads",       staff: true },
+  { label: "Lead Reports",    icon: BarChart3,    path: "/admin/td/leads/reports", staff: false },
   { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
   { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
   { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles",    staff: false },
