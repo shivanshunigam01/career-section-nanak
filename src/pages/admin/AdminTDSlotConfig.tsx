@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { adminGet, adminPostJson, formatApiErrors } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import {
+  DEFAULT_SLOT_SCHEDULE,
   formatTime12h,
   generateSlotTimesFromRules,
   normalizeSlotTimesList,
@@ -42,7 +43,7 @@ type SlotAvailability = {
   maxBookings: number;
   reason?: string | null;
 };
-type FleetSummary = { model: string; available: number; total: number; capacity: number };
+type FleetSummary = { model: string; variant?: string; label: string; available: number; total: number; capacity: number };
 
 export default function AdminTDSlotConfig() {
   const [branches, setBranches] = useState<Branch[]>([]);
@@ -51,10 +52,9 @@ export default function AdminTDSlotConfig() {
   const [saving, setSaving] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState("");
   const [form, setForm] = useState({
-    branchId: "", slotDuration: 60, bufferTime: 15,
-    workingStartTime: "09:00", workingEndTime: "18:00",
-    maxConcurrentBookings: 2, autoExpiry: true,
-    slotTimes: [] as string[],
+    branchId: "",
+    ...DEFAULT_SLOT_SCHEDULE,
+    slotTimes: generateSlotTimesFromRules(DEFAULT_SLOT_SCHEDULE),
   });
   const [newSlotTime, setNewSlotTime] = useState("10:00");
 
@@ -83,21 +83,27 @@ export default function AdminTDSlotConfig() {
       return;
     }
     try {
-      const { data } = await adminGet<{ model: string; status: string }[]>(
+      const { data } = await adminGet<{ model: string; variant?: string; status: string }[]>(
         `/admin/td/vehicles?branchId=${branchId}&limit=100`,
       );
       const rows = data ?? [];
-      const byModel = new Map<string, { available: number; total: number; capacity: number }>();
+      const byTrim = new Map<string, { model: string; variant?: string; label: string; available: number; total: number; capacity: number }>();
       for (const v of rows) {
-        const cur = byModel.get(v.model) ?? { available: 0, total: 0, capacity: 0 };
+        const key = `${v.model}::${v.variant || ""}`;
+        const cur = byTrim.get(key) ?? {
+          model: v.model,
+          variant: v.variant,
+          label: v.variant ? `${v.model} · ${v.variant}` : v.model,
+          available: 0,
+          total: 0,
+          capacity: 0,
+        };
         cur.total += 1;
         cur.capacity += 1;
         if (v.status === "AVAILABLE") cur.available += 1;
-        byModel.set(v.model, cur);
+        byTrim.set(key, cur);
       }
-      setFleetSummary(
-        [...byModel.entries()].map(([model, counts]) => ({ model, ...counts })),
-      );
+      setFleetSummary([...byTrim.values()]);
     } catch {
       setFleetSummary([]);
     }
@@ -145,13 +151,20 @@ export default function AdminTDSlotConfig() {
             }),
       });
     } else {
-      setForm((p) => ({
-        ...p,
+      setForm({
         branchId: selectedBranch,
-        slotTimes: generateSlotTimesFromRules(p),
-      }));
+        ...DEFAULT_SLOT_SCHEDULE,
+        slotTimes: generateSlotTimesFromRules(DEFAULT_SLOT_SCHEDULE),
+      });
     }
   }, [selectedBranch, configs, fetchFleetSummary]);
+
+  const previewGeneratedSlots = useMemo(
+    () => generateSlotTimesFromRules(form),
+    [form.workingStartTime, form.workingEndTime, form.slotDuration, form.bufferTime],
+  );
+
+  const scheduleStepMinutes = form.slotDuration + form.bufferTime;
 
   const handleSave = async () => {
     if (!form.branchId) { toast.error("Please select a branch"); return; }
@@ -175,9 +188,37 @@ export default function AdminTDSlotConfig() {
   };
 
   const handleGenerateTimings = () => {
-    const generated = generateSlotTimesFromRules(form);
+    const generated = previewGeneratedSlots;
     setForm((p) => ({ ...p, slotTimes: generated }));
-    toast.success(`Generated ${generated.length} time slot(s) from your duration & hours settings.`);
+    toast.success(`Generated ${generated.length} time slot(s) for all dates.`);
+  };
+
+  const handleSaveScheduleToWebsite = async () => {
+    if (!form.branchId) {
+      toast.error("Please select a branch");
+      return;
+    }
+    const generated = previewGeneratedSlots;
+    if (generated.length === 0) {
+      toast.error("No slots fit within your start/end times. Adjust the schedule rules.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await adminPostJson("/admin/td/slots/config", {
+        ...form,
+        slotTimes: normalizeSlotTimesList(generated),
+      });
+      setForm((p) => ({ ...p, slotTimes: generated }));
+      toast.success(
+        `Saved ${generated.length} slot(s) for all dates (${formatTime12h(form.workingStartTime)} – ${formatTime12h(form.workingEndTime)}).`,
+      );
+      void fetchData();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAddSlotTime = () => {
@@ -302,9 +343,9 @@ export default function AdminTDSlotConfig() {
       {loading ? (
         <div className="flex items-center justify-center py-16 text-muted-foreground"><Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading...</div>
       ) : (
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left: Config Form */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 max-w-4xl">
+          {/* Config Form */}
+          <div className="space-y-6">
             {/* Branch selector */}
             <Card className="bg-card border-border/50 p-4 space-y-4">
               <h3 className="font-semibold text-sm flex items-center gap-2"><Building2 className="w-4 h-4 text-primary" /> Select Branch</h3>
@@ -330,8 +371,8 @@ export default function AdminTDSlotConfig() {
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {fleetSummary.map((f) => (
-                    <Badge key={f.model} className="bg-secondary/80 text-foreground border-border/40">
-                      {f.model}: {f.capacity} demo car(s) · {f.available} free now
+                    <Badge key={f.label} className="bg-secondary/80 text-foreground border-border/40">
+                      {f.label}: {f.capacity} demo car(s) · {f.available} free now
                     </Badge>
                   ))}
                 </div>
@@ -353,21 +394,114 @@ export default function AdminTDSlotConfig() {
                   <Card className="bg-card border-border/50 p-5 space-y-5">
                     <div>
                       <h3 className="font-semibold flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-primary" /> Test drive time slots
+                        <Clock className="w-4 h-4 text-primary" /> Test drive schedule (all dates)
                       </h3>
                       <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        These are the exact times customers see on the test drive booking page.
-                        Remove a time to stop offering it; add custom times as needed.
+                        Set how slots are built for every bookable date. Each test drive lasts{" "}
+                        <span className="text-foreground">{form.slotDuration} minutes</span>, with a{" "}
+                        <span className="text-foreground">{form.bufferTime}-minute gap</span> before the next slot
+                        starts. Customers see the same times on the website until you change this setup.
                       </p>
                     </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={handleGenerateTimings}>
-                        <Wand2 className="w-4 h-4 mr-2" /> Generate from rules below
-                      </Button>
-                      <Badge variant="outline" className="text-xs">
-                        {form.slotTimes.length} slot(s) configured
-                      </Badge>
+                    <div className="rounded-lg border border-border/50 bg-secondary/20 p-4 space-y-4">
+                      <p className="text-xs font-medium text-foreground">Schedule rules</p>
+                      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">First slot starts</Label>
+                          <Input
+                            type="time"
+                            value={form.workingStartTime}
+                            onChange={(e) => setForm((p) => ({ ...p, workingStartTime: e.target.value }))}
+                            className="bg-background/80"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Last slot ends by</Label>
+                          <Input
+                            type="time"
+                            value={form.workingEndTime}
+                            onChange={(e) => setForm((p) => ({ ...p, workingEndTime: e.target.value }))}
+                            className="bg-background/80"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Test drive length</Label>
+                          <Select
+                            value={String(form.slotDuration)}
+                            onValueChange={(v) => setForm((p) => ({ ...p, slotDuration: Number(v) }))}
+                          >
+                            <SelectTrigger className="bg-background/80">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="30">30 min</SelectItem>
+                              <SelectItem value="45">45 min</SelectItem>
+                              <SelectItem value="60">60 min</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Gap between slots</Label>
+                          <Input
+                            type="number"
+                            min={0}
+                            max={60}
+                            value={form.bufferTime}
+                            onChange={(e) => setForm((p) => ({ ...p, bufferTime: Number(e.target.value) }))}
+                            className="bg-background/80"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground space-y-1">
+                        <p className="flex items-center gap-1.5 font-medium text-foreground">
+                          <Zap className="w-3.5 h-3.5 text-primary" /> Preview for all dates
+                        </p>
+                        <p>
+                          {previewGeneratedSlots.length} slot(s) · every {scheduleStepMinutes} min (
+                          {form.slotDuration} min drive + {form.bufferTime} min gap) ·{" "}
+                          {formatTime12h(form.workingStartTime)} – {formatTime12h(form.workingEndTime)}
+                        </p>
+                        <p className="text-[11px]">
+                          Example times:{" "}
+                          {previewGeneratedSlots.slice(0, 4).map(formatTime12h).join(", ")}
+                          {previewGeneratedSlots.length > 4 ? " …" : ""}
+                        </p>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="button" variant="outline" size="sm" onClick={handleGenerateTimings}>
+                          <Wand2 className="w-4 h-4 mr-2" /> Apply preview to slot list
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => void handleSaveScheduleToWebsite()}
+                          disabled={saving}
+                          className="bg-primary text-primary-foreground"
+                        >
+                          {saving ? (
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          ) : (
+                            <Save className="w-4 h-4 mr-2" />
+                          )}
+                          Save schedule to website (all dates)
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2 mb-3">
+                        <h4 className="text-sm font-medium">Website time slots</h4>
+                        <Badge variant="outline" className="text-xs">
+                          {form.slotTimes.length} slot(s) configured
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-3">
+                        These exact times appear on the test drive booking page. Remove or add individual times if
+                        needed; otherwise use the schedule rules above.
+                      </p>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
@@ -393,7 +527,7 @@ export default function AdminTDSlotConfig() {
 
                     {form.slotTimes.length === 0 ? (
                       <p className="text-sm text-amber-500 text-center py-4">
-                        No timings yet. Generate from rules or add a time manually.
+                        No timings yet. Set the schedule rules above and click Save schedule to website.
                       </p>
                     ) : null}
 
@@ -409,9 +543,9 @@ export default function AdminTDSlotConfig() {
                       </Button>
                     </div>
 
-                    <Button onClick={() => void handleSave()} disabled={saving} className="bg-primary text-primary-foreground w-full">
+                    <Button onClick={() => void handleSave()} disabled={saving} variant="outline" className="w-full">
                       {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
-                      Save timings to website
+                      Save manual slot list only
                     </Button>
                   </Card>
                 </TabsContent>
@@ -514,10 +648,10 @@ export default function AdminTDSlotConfig() {
                         <Input type="time" value={form.workingEndTime} onChange={(e) => setForm((p) => ({ ...p, workingEndTime: e.target.value }))} className="bg-secondary/50" />
                       </div>
                       <div className="space-y-1.5">
-                        <Label className="text-xs">Max bookings per slot (per model)</Label>
+                        <Label className="text-xs">Legacy max bookings (optional)</Label>
                         <Input type="number" min={1} max={10} value={form.maxConcurrentBookings} onChange={(e) => setForm((p) => ({ ...p, maxConcurrentBookings: Number(e.target.value) }))} className="bg-secondary/50" />
                         <p className="text-[10px] text-muted-foreground">
-                          Use 1 so one customer per model per time closes the slot. Use 2+ only if you have multiple demo cars of the same model.
+                          Website slot capacity is set automatically from demo fleet count per model + trim (e.g. 2 VF 7 Sky Infinity cars = 2 bookings at the same time).
                         </p>
                       </div>
                       <div className="space-y-1.5">
@@ -534,7 +668,7 @@ export default function AdminTDSlotConfig() {
                       <p className="flex items-center gap-1.5 font-medium text-foreground mb-1"><Zap className="w-3.5 h-3.5 text-primary" /> Configuration Preview</p>
                       <p>Slots run from <span className="text-foreground">{form.workingStartTime}</span> to <span className="text-foreground">{form.workingEndTime}</span></p>
                       <p>Each slot: <span className="text-foreground">{form.slotDuration} min</span> + <span className="text-foreground">{form.bufferTime} min buffer</span></p>
-                      <p>Max <span className="text-foreground">{form.maxConcurrentBookings}</span> booking(s) per slot per model (VF 6 and VF 7 tracked separately).</p>
+                      <p>Max concurrent bookings per slot follow demo fleet per trim (shown above).</p>
                       <p>Same date + time + model: second customer sees slot as <span className="text-red-400">Full</span>.</p>
                     </div>
 
@@ -605,34 +739,6 @@ export default function AdminTDSlotConfig() {
                   </Card>
                 </TabsContent>
               </Tabs>
-            )}
-          </div>
-
-          {/* Right: All branch configs summary */}
-          <div className="space-y-4">
-            <h3 className="font-semibold text-sm flex items-center gap-2"><Building2 className="w-4 h-4 text-primary" /> All Branch Configs</h3>
-            {configs.length === 0 ? (
-              <Card className="bg-card border-border/50 p-4 text-center text-muted-foreground text-sm">
-                No configurations yet.<br />Select a branch and save to create one.
-              </Card>
-            ) : (
-              configs.map((c) => (
-                <Card key={c._id} className={`bg-card border-border/50 p-4 space-y-2 cursor-pointer transition-colors ${selectedBranch === c.branchId?._id ? "border-primary/50" : "hover:border-border"}`}
-                  onClick={() => setSelectedBranch(c.branchId?._id ?? "")}>
-                  <div className="flex items-center justify-between">
-                    <p className="font-medium text-foreground text-sm">{c.branchId?.name ?? "Unknown Branch"}</p>
-                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[10px]">{c.branchId?.code}</Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-0.5">
-                    <div className="flex items-center gap-1.5"><Clock className="w-3 h-3" />{c.workingStartTime} – {c.workingEndTime}</div>
-                    <div className="flex items-center gap-1.5"><Zap className="w-3 h-3" />{(c.slotTimes?.length ?? 0) || "—"} website slot(s)</div>
-                    <div>Max concurrent: {c.maxConcurrentBookings}</div>
-                    {c.blockedDates.length > 0 && (
-                      <div className="text-red-400 flex items-center gap-1"><Ban className="w-3 h-3" />{c.blockedDates.length} date(s) blocked</div>
-                    )}
-                  </div>
-                </Card>
-              ))
             )}
           </div>
         </div>

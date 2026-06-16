@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Phone, MessageCircle } from "lucide-react";
+import { Menu, X, Phone, MessageCircle, UserCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
 import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
+import { getCustomerToken } from "@/lib/customerAuth";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -14,7 +15,7 @@ const navLinks = [
   { label: "VF 6", href: "/models/vf6" },
   { label: "VF MPV 7", href: "/models/mpv7" },
   { label: "Compare", href: "/compare" },
-  { label: "Pre-Booking", href: "/book-now" },
+  // { label: "Pre-Booking", href: "/book-now" },
   { label: "Test Drive", href: "/test-drive" },
   { label: "EMI Calculator", href: "/emi-calculator" },
   { label: "About", href: "/about" },
@@ -27,6 +28,8 @@ const Navbar = () => {
   const location = useLocation();
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
+  const customerLoggedIn = Boolean(getCustomerToken());
+  const customerPortalHref = customerLoggedIn ? "/customer/bookings" : "/customer/login";
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -87,6 +90,17 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden lg:flex items-center gap-2 xl:gap-3 shrink-0">
+              <Link
+                to={customerPortalHref}
+                className={`hidden xl:inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1.5 ${
+                  location.pathname.startsWith("/customer")
+                    ? "text-primary"
+                    : "text-foreground/70 hover:text-foreground"
+                }`}
+              >
+                <UserCircle className="w-4 h-4" />
+                {customerLoggedIn ? "" : "Login"}
+              </Link>
               <a href={tel} className="hidden xl:block transition-colors text-foreground/60 hover:text-foreground" aria-label="Call us">
                 <Phone className="w-4 h-4" />
               </a>
@@ -142,6 +156,16 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
+                <Link
+                  to={customerPortalHref}
+                  className={`px-4 py-3 text-lg font-medium rounded-xl transition-colors ${
+                    location.pathname.startsWith("/customer")
+                      ? "text-primary bg-primary/10"
+                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  {customerLoggedIn ? "My Bookings" : "Login"}
+                </Link>
                 <div className="mt-6 flex flex-col gap-3">
                   <Button variant="hero" size="lg" className="w-full" asChild>
                     <Link to="/book-now">Pre-Booking</Link>

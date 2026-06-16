@@ -59,12 +59,14 @@ export async function fetchPublicTdSlots(params: {
   branchId: string;
   date: string;
   model?: string;
+  variant?: string;
 }): Promise<PublicTdSlotsResponse> {
   const q = new URLSearchParams({
     branchId: params.branchId,
     date: params.date,
   });
   if (params.model) q.set("model", params.model);
+  if (params.variant) q.set("variant", params.variant);
 
   if (!API_BASE) {
     return { slots: [] };
@@ -77,6 +79,7 @@ export async function fetchPublicTdSlots(params: {
       data?: PublicTdSlot[];
       message?: string;
       slotDuration?: number;
+      bufferTime?: number;
       workingStartTime?: string;
       workingEndTime?: string;
       fleetAvailable?: number;
@@ -90,6 +93,7 @@ export async function fetchPublicTdSlots(params: {
       slots: json.data ?? [],
       message: json.message,
       slotDuration: json.slotDuration,
+      bufferTime: json.bufferTime,
       workingStartTime: json.workingStartTime,
       workingEndTime: json.workingEndTime,
       fleetAvailable: json.fleetCapacity ?? json.fleetAvailable,

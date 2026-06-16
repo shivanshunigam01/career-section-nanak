@@ -1,5 +1,15 @@
 /** Mirror backend slot schedule helpers for admin UI preview/generate. */
 
+/** Default: 30 min test drive + 15 min gap, 10:00 AM – 6:00 PM */
+export const DEFAULT_SLOT_SCHEDULE = {
+  slotDuration: 30,
+  bufferTime: 15,
+  workingStartTime: "10:00",
+  workingEndTime: "18:00",
+  maxConcurrentBookings: 2,
+  autoExpiry: true,
+} as const;
+
 export function toMinutes(timeStr: string): number {
   const [h, m] = timeStr.split(":").map(Number);
   return h * 60 + (m || 0);

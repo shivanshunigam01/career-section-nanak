@@ -38,7 +38,20 @@ function getSessionStartedAt(): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Sales executives use a focused portal (my assigned test drives only). */
+/** Paths executives can access in the staff portal. */
+export const STAFF_PORTAL_PREFIXES = ["/admin/td/my-bookings", "/admin/td/leads"] as const;
+
+export function isStaffPortalPath(pathname: string): boolean {
+  return STAFF_PORTAL_PREFIXES.some((p) => pathname.startsWith(p));
+}
+
+/** Executives and managers use the TD lead CRM module. */
+export function isCrmStaffUser(user: AdminUser | null | undefined): boolean {
+  if (!user) return false;
+  return user.role === "executive" || user.role === "manager";
+}
+
+/** Sales executives use a focused portal (test drives + assigned leads). */
 export function isFieldStaffUser(user: AdminUser | null | undefined): boolean {
   if (!user) return false;
   return user.role === "executive" || user.designation === "sales_executive";

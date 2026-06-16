@@ -7,7 +7,7 @@ import {
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
-import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut, canAccessFullAdmin, isFieldStaffUser } from "@/lib/adminAuth";
+import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut, canAccessFullAdmin, isFieldStaffUser, isStaffPortalPath } from "@/lib/adminAuth";
 import { toast } from "sonner";
 
 const ADMIN_SESSION_EXPIRED_TOAST =
@@ -29,6 +29,7 @@ const coreNavItems = [
 
 const tdNavItems = [
   { label: "My Test Drives", icon: User,         path: "/admin/td/my-bookings", staff: true },
+  { label: "Lead Management", icon: Users,        path: "/admin/td/leads",       staff: true },
   { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
   { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
   { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles",    staff: false },
@@ -59,7 +60,7 @@ const AdminLayout = () => {
       navigate("/admin/login?reason=session-expired");
       return;
     }
-    if (fieldStaff && !location.pathname.startsWith("/admin/td/my-bookings")) {
+    if (fieldStaff && !isStaffPortalPath(location.pathname)) {
       navigate("/admin/td/my-bookings", { replace: true });
     }
   }, [navigate, location.pathname, fieldStaff]);

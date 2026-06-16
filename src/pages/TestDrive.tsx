@@ -640,6 +640,7 @@ const TestDrivePage = () => {
                   ) : useLiveSlots ? (
                     <TestDriveSlotPicker
                       model={formData.model}
+                      variant={formData.variant}
                       date={formData.date}
                       time={formData.time}
                       onDateChange={handleDateChange}
