@@ -43,6 +43,7 @@ import AdminTDSlotConfig from "./pages/admin/AdminTDSlotConfig";
 import AdminTDUsers from "./pages/admin/AdminTDUsers";
 import AdminTDMyBookings from "./pages/admin/AdminTDMyBookings";
 import AdminTDLeads from "./pages/admin/AdminTDLeads";
+import AdminTDLeadReports from "./pages/admin/AdminTDLeadReports";
 import CustomerLogin from "./pages/customer/CustomerLogin";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerBookings from "./pages/customer/CustomerBookings";
@@ -113,6 +114,7 @@ const App = () => {
             <Route path="td/bookings" element={<AdminTDBookings />} />
             <Route path="td/my-bookings" element={<AdminTDMyBookings />} />
             <Route path="td/leads" element={<AdminTDLeads />} />
+            <Route path="td/leads/reports" element={<AdminTDLeadReports />} />
             <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
             <Route path="td/reports" element={<AdminTDReports />} />
             <Route path="td/config" element={<AdminTDSlotConfig />} />

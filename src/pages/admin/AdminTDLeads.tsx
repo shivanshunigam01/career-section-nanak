@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
-  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck,
+  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -254,9 +255,18 @@ export default function AdminTDLeads() {
               : "All showroom leads — track conversion and follow-ups."}
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={() => void loadLeads()}>
-          <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {!isExecutive ? (
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/admin/td/leads/reports">
+                <BarChart3 className="w-4 h-4 mr-2" /> Lead Reports
+              </Link>
+            </Button>
+          ) : null}
+          <Button variant="outline" size="sm" onClick={() => void loadLeads()}>
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2">

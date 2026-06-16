@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { adminGet, formatApiErrors } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -180,7 +181,8 @@ export default function AdminTDReports() {
             <BarChart3 className="w-6 h-6 text-primary" /> TD Reports & Analytics
           </h1>
           <p className="text-muted-foreground text-sm">
-            Test drives, vehicle usage, customer feedback & lead conversion
+            Test drives, vehicle usage, customer feedback & lead conversion ·{" "}
+            <Link to="/admin/td/leads/reports" className="text-primary hover:underline">Lead CRM reports</Link>
           </p>
         </div>
         <Button onClick={() => void fetchReport()} variant="outline" size="sm">
