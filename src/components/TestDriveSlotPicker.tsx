@@ -15,6 +15,7 @@ import {
 
 type TestDriveSlotPickerProps = {
   model: string;
+  variant?: string;
   date: string;
   time: string;
   onDateChange: (isoDate: string) => void;
@@ -42,6 +43,7 @@ function SlotLegend() {
 
 export function TestDriveSlotPicker({
   model,
+  variant = "",
   date,
   time,
   onDateChange,
@@ -57,6 +59,8 @@ export function TestDriveSlotPicker({
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [slotsMessage, setSlotsMessage] = useState<string | null>(null);
   const [workingHours, setWorkingHours] = useState<string | null>(null);
+  const [slotDuration, setSlotDuration] = useState<number | null>(null);
+  const [bufferTime, setBufferTime] = useState<number | null>(null);
   const [fleetCapacity, setFleetCapacity] = useState<number | null>(null);
 
   const selectedCalendarDate = date ? new Date(`${date}T12:00:00`) : undefined;
@@ -82,18 +86,20 @@ export function TestDriveSlotPicker({
     }
     setSlotsLoading(true);
     setSlotsMessage(null);
-    const res = await fetchPublicTdSlots({ branchId, date, model });
+    const res = await fetchPublicTdSlots({ branchId, date, model, variant: variant || undefined });
     setSlots(res.slots);
     setSlotsMessage(res.message ?? null);
     setFleetCapacity(res.fleetCapacity ?? res.fleetAvailable ?? null);
     if (res.workingStartTime && res.workingEndTime) {
       setWorkingHours(`${res.workingStartTime} – ${res.workingEndTime}`);
     }
+    setSlotDuration(res.slotDuration ?? null);
+    setBufferTime(res.bufferTime ?? null);
     if (res.slots.length === 0 && !res.message) {
       setSlotsMessage("No test drive times are configured yet. Please call the showroom to book.");
     }
     setSlotsLoading(false);
-  }, [branchId, date, model]);
+  }, [branchId, date, model, variant]);
 
   useEffect(() => {
     void loadSlots();
@@ -109,17 +115,25 @@ export function TestDriveSlotPicker({
   const availableCount = slots.filter((s) => s.available).length;
   const selectedSlot = time ? slots.find((s) => s.time === time) : undefined;
 
+  const exampleSlotLabel = slots[0] ? formatSlotLabel(slots[0]) : "that time";
+  const scheduleHint =
+    slotDuration != null && bufferTime != null
+      ? ` Each slot is ${slotDuration} minutes with a ${bufferTime}-minute gap before the next.`
+      : "";
+
   return (
     <div className="space-y-4 rounded-xl border border-primary/15 bg-primary/[0.04] p-4 sm:p-5">
-      <p className="text-xs text-muted-foreground leading-relaxed">
-        Slots are per vehicle model — if someone already booked {model || "this model"} at 10:15 AM, that time
-        stays unavailable for the same model, but other models may still have the slot open.
+      {/* <p className="text-xs text-muted-foreground leading-relaxed">
+        Slots are per vehicle model — if someone already booked {model || "this model"} at {exampleSlotLabel}, that
+        time stays unavailable for the same model, but other models may still have the slot open.
         {workingHours ? ` Showroom hours: ${workingHours}.` : ""}
-        Bookings open from the {minBookableDay}th of each month.
-      </p>
+        {scheduleHint}
+        {" "}
+        Bookings open from the {minBookableDay}th of each month. */}
+      {/* </p> */}
       {date && fleetCapacity != null && fleetCapacity === 0 ? (
         <p className="text-xs text-amber-600 dark:text-amber-400">
-          No demo {model} is scheduled at the showroom for this date. Try another model or date.
+          No demo {model}{variant ? ` ${variant}` : ""} is scheduled at the showroom for this date. Try another trim or date.
         </p>
       ) : null}
 

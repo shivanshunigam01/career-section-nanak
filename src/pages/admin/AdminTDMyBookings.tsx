@@ -18,6 +18,12 @@ import { formatTime12h } from "@/lib/tdSlotSchedule";
 import { designationLabel } from "@/lib/staffRoles";
 import { fetchTDFeedbackByBooking, type TDFeedbackRecord } from "@/lib/tdFeedbackApi";
 import { TDFeedbackForm } from "@/components/admin/TDFeedbackForm";
+import {
+  endTestDriveLog,
+  fetchTdLogByBooking,
+  startTestDriveLog,
+  type TDLogRecord,
+} from "@/lib/tdLogApi";
 
 type Booking = {
   _id: string;
@@ -30,7 +36,15 @@ type Booking = {
   preferredModel: string;
   remarks?: string;
   customerId: { _id: string; name: string; mobile: string; customerId: string; email?: string; city?: string } | null;
-  vehicleId: { vehicleId: string; model: string; registrationNo: string; color: string } | null;
+  vehicleId: {
+    _id?: string;
+    vehicleId: string;
+    model: string;
+    registrationNo: string;
+    color: string;
+    batteryPercent?: number;
+    currentOdometer?: number;
+  } | null;
   branchId: { _id?: string; name: string; code: string } | null;
   testDriveId?: {
     customerName?: string;
@@ -86,6 +100,9 @@ export default function AdminTDMyBookings() {
   const [actionLoading, setActionLoading] = useState(false);
   const [bookingFeedback, setBookingFeedback] = useState<TDFeedbackRecord | null>(null);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [tdLog, setTdLog] = useState<TDLogRecord | null>(null);
+  const [openingOdometer, setOpeningOdometer] = useState("");
+  const [closingOdometer, setClosingOdometer] = useState("");
 
   const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
 
@@ -110,8 +127,9 @@ export default function AdminTDMyBookings() {
     try {
       const { data } = await adminGet<Booking>(`/admin/td/bookings/${id}`);
       if (data) setSelected(data);
+      return data ?? null;
     } catch {
-      /* keep current */
+      return null;
     }
   }, []);
 
@@ -119,8 +137,22 @@ export default function AdminTDMyBookings() {
     setSelected(b);
     setDetailLoading(true);
     setBookingFeedback(null);
+    setTdLog(null);
+    setOpeningOdometer("");
+    setClosingOdometer("");
     try {
-      await refreshSelected(b._id);
+      const refreshed = await refreshSelected(b._id);
+      const log = await fetchTdLogByBooking(b._id);
+      setTdLog(log);
+      const vehicleOdometer = refreshed?.vehicleId?.currentOdometer ?? b.vehicleId?.currentOdometer;
+      if (log?.openingOdometer != null) {
+        setOpeningOdometer(String(log.openingOdometer));
+      } else if (vehicleOdometer != null) {
+        setOpeningOdometer(String(vehicleOdometer));
+      }
+      if (log?.closingOdometer != null) {
+        setClosingOdometer(String(log.closingOdometer));
+      }
       if (b.bookingStatus === "COMPLETED") {
         setFeedbackLoading(true);
         const fb = await fetchTDFeedbackByBooking(b._id);
@@ -189,6 +221,72 @@ export default function AdminTDMyBookings() {
       toast.success("Driving licence marked verified");
       if (selected?._id === id) await refreshSelected(id);
       void fetchBookings();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleStartDriving = async (id: string) => {
+    const opening = Number(openingOdometer);
+    if (!openingOdometer.trim() || Number.isNaN(opening) || opening < 0) {
+      toast.error("Enter opening odometer reading (km) before starting the drive");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const log = await startTestDriveLog({
+        bookingId: id,
+        openingOdometer: opening,
+        openingBattery: selected?.vehicleId?.batteryPercent,
+      });
+      setTdLog(log);
+      toast.success("Test drive started — opening odometer recorded");
+      void fetchBookings();
+      if (selected?._id === id) await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleCompleteDrive = async (id: string) => {
+    const closing = Number(closingOdometer);
+    const opening = Number(openingOdometer);
+    if (!closingOdometer.trim() || Number.isNaN(closing) || closing < 0) {
+      toast.error("Enter closing odometer reading (km) before completing the drive");
+      return;
+    }
+    if (!Number.isNaN(opening) && closing < opening) {
+      toast.error("Closing odometer cannot be less than opening odometer");
+      return;
+    }
+    if (!tdLog?._id) {
+      toast.error("No active test drive log found. Start the drive first.");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const log = await endTestDriveLog(tdLog._id, {
+        closingOdometer: closing,
+        closingBattery: selected?.vehicleId?.batteryPercent,
+      });
+      setTdLog(log);
+      toast.success(
+        log.totalKM != null
+          ? `Test drive completed — ${log.totalKM} km driven`
+          : "Test drive completed",
+      );
+      void fetchBookings();
+      if (selected?._id === id) {
+        await refreshSelected(id);
+        setFeedbackLoading(true);
+        const fb = await fetchTDFeedbackByBooking(id);
+        setBookingFeedback(fb);
+        setFeedbackLoading(false);
+      }
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -341,11 +439,67 @@ export default function AdminTDMyBookings() {
                   {!isTerminalStatus(selected.bookingStatus) ? (
                     <div className="rounded-lg border border-primary/25 bg-primary/5 p-4 space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-primary">Manage test drive</p>
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="my-opening-odometer" className="text-xs">
+                            Opening odometer (km) *
+                          </Label>
+                          <Input
+                            id="my-opening-odometer"
+                            type="number"
+                            min={0}
+                            step={1}
+                            inputMode="numeric"
+                            placeholder="e.g. 1240"
+                            value={openingOdometer}
+                            onChange={(e) => setOpeningOdometer(e.target.value)}
+                            disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                            className="bg-background/80"
+                          />
+                          {selected.vehicleId?.currentOdometer != null ? (
+                            <p className="text-[10px] text-muted-foreground">
+                              Fleet reading: {selected.vehicleId.currentOdometer} km
+                            </p>
+                          ) : null}
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="my-closing-odometer" className="text-xs">
+                            Closing odometer (km) *
+                          </Label>
+                          <Input
+                            id="my-closing-odometer"
+                            type="number"
+                            min={0}
+                            step={1}
+                            inputMode="numeric"
+                            placeholder="After test drive"
+                            value={closingOdometer}
+                            onChange={(e) => setClosingOdometer(e.target.value)}
+                            disabled={actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
+                            className="bg-background/80"
+                          />
+                          {tdLog?.totalKM != null ? (
+                            <p className="text-[10px] text-muted-foreground">
+                              Distance driven: {tdLog.totalKM} km
+                            </p>
+                          ) : null}
+                        </div>
+                      </div>
                       <div className="grid grid-cols-2 gap-2">
-                        <Button size="sm" className="h-10" disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"} onClick={() => void handleStatusUpdate(selected._id, "IN_PROGRESS")}>
+                        <Button
+                          size="sm"
+                          className="h-10"
+                          disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                          onClick={() => void handleStartDriving(selected._id)}
+                        >
                           <Play className="w-4 h-4 mr-2" /> Start driving
                         </Button>
-                        <Button size="sm" className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40" disabled={actionLoading || selected.bookingStatus !== "IN_PROGRESS"} onClick={() => void handleStatusUpdate(selected._id, "COMPLETED")}>
+                        <Button
+                          size="sm"
+                          className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40"
+                          disabled={actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
+                          onClick={() => void handleCompleteDrive(selected._id)}
+                        >
                           <CheckCircle2 className="w-4 h-4 mr-2" /> Mark completed
                         </Button>
                         <Button size="sm" variant="outline" className="h-10" disabled={actionLoading} onClick={() => { openRescheduleDialog(selected); setSelected(null); }}>
@@ -355,9 +509,30 @@ export default function AdminTDMyBookings() {
                           <Ban className="w-4 h-4 mr-2" /> Cancel booking
                         </Button>
                       </div>
+                      <p className="text-[11px] text-muted-foreground">
+                        {selected.bookingStatus === "IN_PROGRESS"
+                          ? "Enter closing odometer when the customer returns, then mark completed."
+                          : "Enter opening odometer before starting the test drive."}
+                      </p>
                     </div>
                   ) : selected.bookingStatus === "COMPLETED" ? (
                     <div className="space-y-3">
+                      {tdLog?.openingOdometer != null ? (
+                        <div className="rounded-lg border border-border/50 bg-muted/20 p-4 grid sm:grid-cols-3 gap-3 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Opening odometer</p>
+                            <p className="font-semibold text-foreground">{tdLog.openingOdometer} km</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Closing odometer</p>
+                            <p className="font-semibold text-foreground">{tdLog.closingOdometer ?? "—"} km</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Distance driven</p>
+                            <p className="font-semibold text-foreground">{tdLog.totalKM ?? "—"} km</p>
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
                         Test drive completed — capture customer feedback below to add them to Leads.
                       </div>

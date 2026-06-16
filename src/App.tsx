@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { MotionConfig } from "framer-motion";
 import { ThemeProvider } from "next-themes";
@@ -42,6 +42,10 @@ import AdminTDReports from "./pages/admin/AdminTDReports";
 import AdminTDSlotConfig from "./pages/admin/AdminTDSlotConfig";
 import AdminTDUsers from "./pages/admin/AdminTDUsers";
 import AdminTDMyBookings from "./pages/admin/AdminTDMyBookings";
+import AdminTDLeads from "./pages/admin/AdminTDLeads";
+import CustomerLogin from "./pages/customer/CustomerLogin";
+import CustomerLayout from "./pages/customer/CustomerLayout";
+import CustomerBookings from "./pages/customer/CustomerBookings";
 
 const queryClient = new QueryClient();
 
@@ -64,7 +68,7 @@ const App = () => {
           <PublicRecaptchaProvider>
             <PublicSiteProvider>
               <MotionConfig reducedMotion={reduceMotion ? "always" : "user"}>
-                <BrowserRouter>
+                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                   <ScrollToTop />
                   <Routes>
           {/* Public routes */}
@@ -82,6 +86,13 @@ const App = () => {
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/payment-refund-policy" element={<PaymentRefundPolicyPage />} />
+
+          {/* Customer portal */}
+          <Route path="/customer/login" element={<CustomerLogin />} />
+          <Route path="/customer" element={<CustomerLayout />}>
+            <Route index element={<Navigate to="bookings" replace />} />
+            <Route path="bookings" element={<CustomerBookings />} />
+          </Route>
 
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
@@ -101,6 +112,7 @@ const App = () => {
             {/* Test Drive Management Module */}
             <Route path="td/bookings" element={<AdminTDBookings />} />
             <Route path="td/my-bookings" element={<AdminTDMyBookings />} />
+            <Route path="td/leads" element={<AdminTDLeads />} />
             <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
             <Route path="td/reports" element={<AdminTDReports />} />
             <Route path="td/config" element={<AdminTDSlotConfig />} />
