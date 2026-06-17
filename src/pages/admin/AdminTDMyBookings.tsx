@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminGet, adminPatchJson, formatApiErrors } from "@/lib/api";
-import { getAdminUser } from "@/lib/adminAuth";
+import { getAdminUser, isFieldStaffUser } from "@/lib/adminAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import {
   CalendarCheck, Search, RefreshCw, Car, Clock, Building2,
-  CheckCircle2, XCircle, Loader2, Eye, Ban, Play, CalendarClock, User
+  CheckCircle2, XCircle, Loader2, Eye, Ban, Play, CalendarClock, User, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatTime12h } from "@/lib/tdSlotSchedule";
@@ -24,6 +24,7 @@ import {
   startTestDriveLog,
   type TDLogRecord,
 } from "@/lib/tdLogApi";
+import { AddCrmLeadDialog } from "@/components/admin/AddCrmLeadDialog";
 
 type Booking = {
   _id: string;
@@ -103,6 +104,9 @@ export default function AdminTDMyBookings() {
   const [tdLog, setTdLog] = useState<TDLogRecord | null>(null);
   const [openingOdometer, setOpeningOdometer] = useState("");
   const [closingOdometer, setClosingOdometer] = useState("");
+  const [showAddLead, setShowAddLead] = useState(false);
+
+  const isExecutive = isFieldStaffUser(adminUser);
 
   const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
 
@@ -113,7 +117,7 @@ export default function AdminTDMyBookings() {
       if (filterStatus !== "all") params.set("status", filterStatus);
       if (filterDate) params.set("date", filterDate);
       const { data } = await adminGet<Booking[]>(`/admin/td/bookings/my?${params}`);
-      setBookings(data ?? []);
+      setBookings(Array.isArray(data) ? data : []);
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -352,7 +356,10 @@ export default function AdminTDMyBookings() {
             {adminUser?.name} · {roleLabel} · {filtered.length} assigned booking(s)
           </p>
         </div>
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add Lead
+          </Button>
           <Button onClick={() => setFilterDate(todayIso())} variant={filterDate === todayIso() ? "default" : "outline"} size="sm">Today</Button>
           <Button onClick={() => setFilterDate("")} variant={filterDate === "" ? "default" : "outline"} size="sm">All dates</Button>
           <Button onClick={() => void fetchBookings()} variant="outline" size="sm"><RefreshCw className="w-4 h-4" /></Button>
@@ -598,6 +605,14 @@ export default function AdminTDMyBookings() {
           <Button variant="destructive" className="w-full" onClick={() => void handleCancel()} disabled={actionLoading}>Confirm cancel</Button>
         </DialogContent>
       </Dialog>
+
+      {showAddLead ? (
+        <AddCrmLeadDialog
+          open={showAddLead}
+          onOpenChange={setShowAddLead}
+          isExecutive={isExecutive}
+        />
+      ) : null}
     </div>
   );
 }
