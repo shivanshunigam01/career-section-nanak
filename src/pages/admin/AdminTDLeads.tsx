@@ -102,8 +102,9 @@ export default function AdminTDLeads() {
               : filterExecutive
             : undefined,
       });
-      setLeads(res.leads);
+      setLeads(res.leads ?? []);
     } catch (e) {
+      setLeads([]);
       toast.error(formatApiErrors(e));
     } finally {
       setLoading(false);
