@@ -70,7 +70,7 @@ export function TestDriveSlotPicker({
     (async () => {
       const list = await fetchPublicTdBranches();
       if (cancelled) return;
-      const patna = list.find((b) => b.code === "PAT") ?? list[0];
+      const patna = list.find((b) => b.code === "PATNA" || b.code === "PAT") ?? list[0];
       if (patna) setBranchId(patna._id);
     })();
     return () => {
