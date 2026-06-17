@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  BarChart3, RefreshCw, Loader2, TrendingUp, Users, Car,
-  CalendarCheck, Star, CheckCircle2, XCircle, AlertTriangle, Clock, Target, MessageSquare
+  BarChart3, RefreshCw, Loader2, TrendingUp, Users,
+  CalendarCheck, Star, CheckCircle2, XCircle, Clock, Target, MessageSquare
 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { toast } from "sonner";
@@ -114,9 +115,15 @@ type VehicleReportRow = {
 const CHART_COLORS = ["#00d4ff", "#7c3aed", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
 const StatCard = ({
-  label, value, icon: Icon, color = "text-primary", sub,
-}: { label: string; value: string | number; icon: React.ElementType; color?: string; sub?: string }) => (
-  <Card className="bg-card border-border/50 p-4">
+  label, value, icon: Icon, color = "text-primary", sub, onClick,
+}: { label: string; value: string | number; icon: React.ElementType; color?: string; sub?: string; onClick?: () => void }) => (
+  <Card
+    className={`bg-card border-border/50 p-4 ${onClick ? "cursor-pointer hover:bg-secondary/20 transition-colors" : ""}`}
+    onClick={onClick}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+  >
     <div className="flex items-start justify-between">
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
@@ -138,6 +145,11 @@ export default function AdminTDReports() {
   const [loading, setLoading] = useState(true);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupMode, setPopupMode] = useState<"bookings" | "feedback">("bookings");
+  const [popupBookings, setPopupBookings] = useState<CustomerDriveRow[]>([]);
+  const [popupFeedback, setPopupFeedback] = useState<FeedbackRow[]>([]);
 
   const fetchReport = useCallback(async () => {
     try {
@@ -196,8 +208,23 @@ export default function AdminTDReports() {
 
   const bookingStatusData = Object.entries(charts.bookingsByStatus).map(([name, value]) => ({ name, value }));
   const modelData = Object.entries(charts.bookingsByModel).map(([name, value]) => ({ name: name || "Unknown", value }));
-  const fleetData = Object.entries(vehicleFleet).map(([name, value]) => ({ name: name.replace("_", " "), value }));
   const leadStatusData = Object.entries(charts.leadByStatus ?? {}).map(([name, value]) => ({ name, value }));
+  const convertedRows = customerTestDriveLog.filter((r) => r.converted);
+  const leadsFromTdRows = customerTestDriveLog.filter((r) => Boolean(r.leadStatus));
+
+  const openBookingPopup = (title: string, rows: CustomerDriveRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("bookings");
+    setPopupBookings(rows);
+    setPopupOpen(true);
+  };
+
+  const openFeedbackPopup = (title: string, rows: FeedbackRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("feedback");
+    setPopupFeedback(rows);
+    setPopupOpen(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -226,15 +253,125 @@ export default function AdminTDReports() {
       </Card>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Total Bookings" value={overview.totalBookings} icon={CalendarCheck} />
-        <StatCard label="Completed TDs" value={overview.completed} icon={CheckCircle2} color="text-green-400" sub={`${overview.completionRate}% completion`} />
-        <StatCard label="Lead conversion" value={`${overview.leadConversionRate}%`} icon={Target} color="text-primary" sub={`${overview.convertedToBusiness} of ${overview.completed} became business`} />
-        <StatCard label="Avg Feedback" value={feedback.count > 0 ? `${feedback.avgOverall?.toFixed(1)} ⭐` : "N/A"} icon={Star} color="text-yellow-400" sub={`${feedback.count} reviews`} />
-        <StatCard label="Pending / Confirmed" value={overview.pending} icon={Clock} color="text-yellow-400" />
-        <StatCard label="In Progress" value={overview.inProgress} icon={TrendingUp} color="text-purple-400" />
-        <StatCard label="Leads from TD" value={overview.leadsFromTestDrives} icon={Users} />
-        <StatCard label="Cancelled / Missed" value={overview.cancelled + overview.missed} icon={XCircle} color="text-red-400" />
+        <StatCard
+          label="Total Bookings"
+          value={overview.totalBookings}
+          icon={CalendarCheck}
+          onClick={() => openBookingPopup("Total Bookings", customerTestDriveLog)}
+        />
+        <StatCard
+          label="Completed TDs"
+          value={overview.completed}
+          icon={CheckCircle2}
+          color="text-green-400"
+          sub={`${overview.completionRate}% completion`}
+          onClick={() => openBookingPopup("Completed TDs", customerTestDriveLog.filter((r) => r.status === "COMPLETED"))}
+        />
+        <StatCard
+          label="Lead conversion"
+          value={`${overview.leadConversionRate}%`}
+          icon={Target}
+          color="text-primary"
+          sub={`${overview.convertedToBusiness} of ${overview.completed} became business`}
+          onClick={() => openBookingPopup("Converted To Business", convertedRows)}
+        />
+        <StatCard
+          label="Avg Feedback"
+          value={feedback.count > 0 ? `${feedback.avgOverall?.toFixed(1)} ⭐` : "N/A"}
+          icon={Star}
+          color="text-yellow-400"
+          sub={`${feedback.count} reviews`}
+          onClick={() => openFeedbackPopup("All Feedback", allFeedback)}
+        />
+        <StatCard
+          label="Pending / Confirmed"
+          value={overview.pending}
+          icon={Clock}
+          color="text-yellow-400"
+          onClick={() => openBookingPopup("Pending / Confirmed TDs", customerTestDriveLog.filter((r) => r.status === "PENDING" || r.status === "CONFIRMED"))}
+        />
+        <StatCard
+          label="In Progress"
+          value={overview.inProgress}
+          icon={TrendingUp}
+          color="text-purple-400"
+          onClick={() => openBookingPopup("In Progress TDs", customerTestDriveLog.filter((r) => r.status === "IN_PROGRESS"))}
+        />
+        <StatCard
+          label="Leads from TD"
+          value={overview.leadsFromTestDrives}
+          icon={Users}
+          onClick={() => openBookingPopup("Leads From TD", leadsFromTdRows)}
+        />
+        <StatCard
+          label="Cancelled / Missed"
+          value={overview.cancelled + overview.missed}
+          icon={XCircle}
+          color="text-red-400"
+          onClick={() => openBookingPopup("Cancelled / Missed TDs", customerTestDriveLog.filter((r) => r.status === "CANCELLED" || r.status === "MISSED"))}
+        />
       </div>
+
+      <Dialog open={popupOpen} onOpenChange={setPopupOpen}>
+        <DialogContent className="max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>{popupTitle}</DialogTitle>
+          </DialogHeader>
+          {popupMode === "bookings" ? (
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 text-muted-foreground">
+                    <th className="text-left p-2">Booking</th>
+                    <th className="text-left p-2">Customer</th>
+                    <th className="text-left p-2">Model / Vehicle</th>
+                    <th className="text-left p-2">Slot</th>
+                    <th className="text-left p-2">Status</th>
+                    <th className="text-left p-2">Executive</th>
+                    <th className="text-left p-2">Lead</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupBookings.length === 0 ? (
+                    <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No records found</td></tr>
+                  ) : (
+                    popupBookings.map((row) => (
+                      <tr key={`${row.bookingId}-${row.mobile}`} className="border-b border-border/20">
+                        <td className="p-2 font-mono">{row.bookingId}</td>
+                        <td className="p-2"><p className="font-medium">{row.customerName}</p><p className="text-muted-foreground">{row.mobile}</p></td>
+                        <td className="p-2"><p>{row.model} {row.variant !== "—" ? row.variant : ""}</p><p className="text-muted-foreground">{row.vehicleLabel}</p></td>
+                        <td className="p-2 whitespace-nowrap">{fmtDate(row.slotDate)} {formatTime12h(row.slotTime)}</td>
+                        <td className="p-2"><Badge variant="outline">{row.status}</Badge></td>
+                        <td className="p-2">{row.executiveName}</td>
+                        <td className="p-2">{row.leadStatus ? <Badge variant="outline">{row.leadStatus}</Badge> : "—"}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[65vh] overflow-auto">
+              {popupFeedback.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-8 text-center">No feedback records found</p>
+              ) : (
+                popupFeedback.map((fb) => (
+                  <Card key={`${fb.bookingId}-${fb.mobile}-${fb.createdAt ?? ""}`} className="bg-card border-border/50 p-3">
+                    <p className="font-medium text-sm">{fb.customerName} · {fb.mobile}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {fb.bookingId} · {fmtDate(fb.slotDate)} {fb.slotTime ? formatTime12h(fb.slotTime) : ""} · {fb.model}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Rating: {fb.overallRating ?? "—"}⭐ · Purchase intent: {fb.purchaseIntention ?? "—"}/5
+                    </p>
+                    {fb.remarks && fb.remarks !== "—" ? <p className="text-xs mt-1">{fb.remarks}</p> : null}
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="vehicles">
         <TabsList className="bg-secondary/50 flex flex-wrap h-auto gap-1">
@@ -417,10 +554,10 @@ export default function AdminTDReports() {
           <Card className="bg-card border-border/50 p-4">
             <h3 className="font-semibold text-sm mb-3">Converted customers</h3>
             <div className="space-y-2">
-              {customerTestDriveLog.filter((r) => r.converted).length === 0 ? (
+              {convertedRows.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No converted leads yet — capture feedback after test drives to create CRM leads.</p>
               ) : (
-                customerTestDriveLog.filter((r) => r.converted).map((r) => (
+                convertedRows.map((r) => (
                   <div key={r.bookingId} className="flex flex-wrap justify-between gap-2 text-sm border-b border-border/20 pb-2">
                     <span className="font-medium">{r.customerName}</span>
                     <span className="text-muted-foreground">{r.model} · {fmtDate(r.slotDate)}</span>
