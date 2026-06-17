@@ -63,6 +63,7 @@ export default function AdminTDLeadReports() {
   const [data, setData] = useState<LeadAdminReport | null>(null);
   const [staff, setStaff] = useState<AssignableStaffUser[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [executiveId, setExecutiveId] = useState("all");
@@ -81,6 +82,7 @@ export default function AdminTDLeadReports() {
   const fetchReport = useCallback(async () => {
     try {
       setLoading(true);
+      setLoadError(null);
       const report = await fetchLeadAdminReport({
         from: from || undefined,
         to: to || undefined,
@@ -88,7 +90,10 @@ export default function AdminTDLeadReports() {
       });
       setData(report);
     } catch (e) {
-      toast.error(formatApiErrors(e));
+      setData(null);
+      const msg = formatApiErrors(e);
+      setLoadError(msg);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }
@@ -114,9 +119,36 @@ export default function AdminTDLeadReports() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <div className="space-y-4 py-12 text-center max-w-lg mx-auto">
+        <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
+        <h2 className="font-semibold text-lg">Lead reports unavailable</h2>
+        <p className="text-sm text-muted-foreground">
+          {loadError ?? "Could not load report data from the API."}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Production server may need the latest backend deployed. After deploy, open{" "}
+          <code className="text-primary">/health</code> and confirm{" "}
+          <code className="text-primary">modules.tdLeadCrm</code> is{" "}
+          <code className="text-primary">true</code>.
+        </p>
+        <Button onClick={() => void fetchReport()} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" /> Retry
+        </Button>
+      </div>
+    );
+  }
 
-  const { overview, executivePerformance, followUpSummary, followUpRows, activityLog, feedbackRows, leadDetailRows } = data;
+  const {
+    overview,
+    executivePerformance = [],
+    followUpSummary,
+    followUpRows = [],
+    activityLog = [],
+    feedbackRows = [],
+    leadDetailRows = [],
+  } = data;
 
   return (
     <div className="space-y-6">

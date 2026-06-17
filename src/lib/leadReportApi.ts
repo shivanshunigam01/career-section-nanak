@@ -108,6 +108,48 @@ export type LeadAdminReport = {
   stages: string[];
 };
 
+const EMPTY_REPORT: LeadAdminReport = {
+  overview: {
+    totalLeads: 0,
+    activeLeads: 0,
+    unassigned: 0,
+    convertedCount: 0,
+    conversionRate: 0,
+    followUpsPending: 0,
+    followUpsCompleted: 0,
+    followUpsOverdue: 0,
+    feedbackCount: 0,
+    avgFeedbackRating: 0,
+  },
+  pipeline: {},
+  bySource: {},
+  byModel: {},
+  executivePerformance: [],
+  followUpSummary: { pending: 0, completed: 0, overdue: 0, cancelled: 0, total: 0 },
+  followUpRows: [],
+  activityLog: [],
+  feedbackRows: [],
+  leadDetailRows: [],
+  stages: [],
+};
+
+function normalizeLeadReport(raw: LeadAdminReport | null | undefined): LeadAdminReport {
+  if (!raw) return EMPTY_REPORT;
+  return {
+    overview: { ...EMPTY_REPORT.overview, ...raw.overview },
+    pipeline: raw.pipeline ?? {},
+    bySource: raw.bySource ?? {},
+    byModel: raw.byModel ?? {},
+    executivePerformance: raw.executivePerformance ?? [],
+    followUpSummary: { ...EMPTY_REPORT.followUpSummary, ...raw.followUpSummary },
+    followUpRows: raw.followUpRows ?? [],
+    activityLog: raw.activityLog ?? [],
+    feedbackRows: raw.feedbackRows ?? [],
+    leadDetailRows: raw.leadDetailRows ?? [],
+    stages: raw.stages ?? [],
+  };
+}
+
 export async function fetchLeadAdminReport(params?: {
   from?: string;
   to?: string;
@@ -118,5 +160,5 @@ export async function fetchLeadAdminReport(params?: {
   if (params?.to) q.set("to", params.to);
   if (params?.executiveId) q.set("executiveId", params.executiveId);
   const { data } = await adminGet<LeadAdminReport>(`/admin/td/leads/reports/admin?${q}`);
-  return data!;
+  return normalizeLeadReport(data);
 }
