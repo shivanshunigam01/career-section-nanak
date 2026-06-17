@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { Link } from "react-router-dom";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
-  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, BarChart3,
+  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, BarChart3, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -32,6 +32,7 @@ import {
 } from "@/lib/leadCrmApi";
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
+import { AddCrmLeadDialog } from "@/components/admin/AddCrmLeadDialog";
 
 function stageBadgeClass(stage: string) {
   const normalized = normalizeCrmStage(stage);
@@ -72,6 +73,7 @@ export default function AdminTDLeads() {
   const [followUpOutcome, setFollowUpOutcome] = useState("");
   const [followUpCompleted, setFollowUpCompleted] = useState(false);
   const [assignExecutiveId, setAssignExecutiveId] = useState("");
+  const [showAddLead, setShowAddLead] = useState(false);
 
   const loadStaffUsers = useCallback(async () => {
     if (!canAssignLeads) return;
@@ -102,7 +104,7 @@ export default function AdminTDLeads() {
               : filterExecutive
             : undefined,
       });
-      setLeads(res.leads ?? []);
+      setLeads(Array.isArray(res.leads) ? res.leads : []);
     } catch (e) {
       setLeads([]);
       toast.error(formatApiErrors(e));
@@ -118,12 +120,18 @@ export default function AdminTDLeads() {
   const stageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const s of CRM_LEAD_STAGES) counts[s] = 0;
-    for (const l of leads) {
+    const rows = Array.isArray(leads) ? leads : [];
+    for (const l of rows) {
       const key = normalizeCrmStage(l.status);
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return counts;
   }, [leads]);
+
+  const safeLeads = Array.isArray(leads) ? leads : [];
+  const staffUsers = Array.isArray(executives) ? executives : [];
+  const detailFollowUps = Array.isArray(detail?.followUps) ? detail.followUps : [];
+  const detailHistory = Array.isArray(detail?.history) ? detail.history : [];
 
   const openLead = async (lead: CrmLead) => {
     setSelected(lead);
@@ -257,6 +265,9 @@ export default function AdminTDLeads() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add Lead
+          </Button>
           {!isExecutive ? (
             <Button variant="outline" size="sm" asChild>
               <Link to="/admin/td/leads/reports">
@@ -307,7 +318,7 @@ export default function AdminTDLeads() {
             <SelectContent>
               <SelectItem value="all">All staff</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
-              {executives.map((e) => (
+              {staffUsers.map((e) => (
                 <SelectItem key={e._id} value={e._id}>
                   {e.name}{e.designationLabel ? ` · ${e.designationLabel}` : ""}
                 </SelectItem>
@@ -330,15 +341,18 @@ export default function AdminTDLeads() {
         <div className="flex justify-center py-16">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
-      ) : leads.length === 0 ? (
+      ) : safeLeads.length === 0 ? (
         <Card className="p-12 text-center text-muted-foreground border-dashed">
           <Users className="w-12 h-12 mx-auto mb-3 opacity-40" />
           <p>No leads found{isExecutive ? " assigned to you" : ""}.</p>
-          <p className="text-xs mt-2">Leads appear here after test drive feedback or when a manager assigns them to you.</p>
+          <p className="text-xs mt-2">Use <strong>Add Lead</strong> to register a walk-in or referral customer.</p>
+          <Button size="sm" className="mt-4 bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Add Lead
+          </Button>
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {leads.map((lead) => (
+          {safeLeads.map((lead) => (
             <Card
               key={lead._id}
               className="p-4 border-border/50 bg-card/50 cursor-pointer hover:border-primary/40 transition-colors"
@@ -383,7 +397,7 @@ export default function AdminTDLeads() {
             <div className="flex justify-center py-12">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
             </div>
-          ) : selected && detail ? (
+          ) : selected && detail?.lead ? (
             <div className="space-y-5 text-sm">
               <div className="flex flex-wrap gap-2 items-center">
                 <Badge variant="outline" className={stageBadgeClass(detail.lead.status)}>
@@ -406,7 +420,7 @@ export default function AdminTDLeads() {
                   <p className="text-xs font-semibold uppercase tracking-wide text-foreground flex items-center gap-1.5">
                     <UserCheck className="w-3.5 h-3.5 text-primary" /> Assign staff (User Master)
                   </p>
-                  {executives.length === 0 ? (
+                  {staffUsers.length === 0 ? (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
                       No active staff found. Add users under Test Drive → User Master first.
                     </p>
@@ -420,7 +434,7 @@ export default function AdminTDLeads() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">— Unassigned —</SelectItem>
-                      {executives.map((e) => (
+                      {staffUsers.map((e) => (
                         <SelectItem key={e._id} value={e._id}>
                           {e.name}
                           {e.designationLabel ? ` · ${e.designationLabel}` : ""}
@@ -433,7 +447,7 @@ export default function AdminTDLeads() {
                     variant="outline"
                     size="sm"
                     className="w-full"
-                    disabled={saving || executives.length === 0}
+                    disabled={saving || staffUsers.length === 0}
                     onClick={() => void handleAssignExecutive()}
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserCheck className="w-4 h-4 mr-2" />}
@@ -446,7 +460,7 @@ export default function AdminTDLeads() {
                 <TabsList className="bg-secondary/50 w-full flex flex-wrap h-auto">
                   <TabsTrigger value="stage" className="text-xs">Stage</TabsTrigger>
                   <TabsTrigger value="remarks" className="text-xs">Remarks</TabsTrigger>
-                  <TabsTrigger value="followups" className="text-xs">Follow-ups ({detail.followUps.length})</TabsTrigger>
+                  <TabsTrigger value="followups" className="text-xs">Follow-ups ({detailFollowUps.length})</TabsTrigger>
                   <TabsTrigger value="history" className="text-xs">History</TabsTrigger>
                 </TabsList>
 
@@ -538,10 +552,10 @@ export default function AdminTDLeads() {
                   </div>
 
                   <div className="space-y-2 max-h-64 overflow-y-auto">
-                    {detail.followUps.length === 0 ? (
+                    {detailFollowUps.length === 0 ? (
                       <p className="text-xs text-muted-foreground text-center py-4">No follow-ups yet.</p>
                     ) : (
-                      detail.followUps.map((fu) => (
+                      detailFollowUps.map((fu) => (
                         <div key={fu._id} className="rounded-lg border border-border/50 p-3 text-xs space-y-1">
                           <div className="flex items-start justify-between gap-2">
                             <Badge variant="outline" className={fu.status === "pending" ? "text-amber-600" : "text-emerald-600"}>
@@ -573,10 +587,10 @@ export default function AdminTDLeads() {
                 </TabsContent>
 
                 <TabsContent value="history" className="mt-4 space-y-2 max-h-72 overflow-y-auto">
-                  {detail.history.length === 0 ? (
+                  {detailHistory.length === 0 ? (
                     <p className="text-xs text-muted-foreground text-center py-4">No stage changes recorded yet.</p>
                   ) : (
-                    detail.history.map((h) => (
+                    detailHistory.map((h) => (
                       <div key={h._id} className="flex gap-3 text-xs border-l-2 border-primary/30 pl-3 py-1">
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-foreground">
@@ -597,6 +611,17 @@ export default function AdminTDLeads() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      {showAddLead ? (
+        <AddCrmLeadDialog
+          open={showAddLead}
+          onOpenChange={setShowAddLead}
+          isExecutive={isExecutive}
+          canAssignToExecutive={canAssignLeads}
+          executives={staffUsers}
+          onCreated={() => void loadLeads()}
+        />
+      ) : null}
     </div>
   );
 }

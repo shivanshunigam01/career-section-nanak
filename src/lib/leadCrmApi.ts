@@ -1,5 +1,9 @@
 import { adminGet, adminPatchJson, adminPostJson } from "@/lib/api";
-import type { CrmLeadStage } from "@/lib/leadStages";
+import { CRM_LEAD_STAGES, type CrmLeadStage } from "@/lib/leadStages";
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
 
 export type CrmLead = {
   _id: string;
@@ -53,10 +57,29 @@ export type AssignableStaffUser = {
   designationLabel?: string;
 };
 
+export type CreateCrmLeadPayload = {
+  name: string;
+  mobile: string;
+  email?: string;
+  city: string;
+  otherCity?: string;
+  model: string;
+  source?: string;
+  remarks?: string;
+  interest?: string;
+  financeNeeded?: boolean;
+  exchangeNeeded?: boolean;
+  executiveId?: string;
+};
+
+export async function createCrmLead(payload: CreateCrmLeadPayload): Promise<CrmLead> {
+  return adminPostJson<CrmLead>("/admin/td/leads", payload);
+}
+
 /** Active staff from User Master (TD → User Master module). */
 export async function fetchAssignableStaffUsers(): Promise<AssignableStaffUser[]> {
   const { data } = await adminGet<AssignableStaffUser[]>("/admin/td/users/assignable");
-  return data ?? [];
+  return asArray<AssignableStaffUser>(data);
 }
 
 /** @deprecated Use fetchAssignableStaffUsers */
@@ -82,20 +105,30 @@ export async function fetchCrmLeads(params?: {
   if (params?.assignedTo) q.set("assignedTo", params.assignedTo);
 
   const res = await adminGet<CrmLead[]>(`/admin/td/leads?${q}`);
+  const list = asArray<CrmLead>(res.data);
   return {
-    leads: res.data ?? [],
-    total: res.meta?.total ?? res.data?.length ?? 0,
-    stages: (res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages ?? [],
+    leads: list,
+    total: res.meta?.total ?? list.length,
+    stages: asArray<CrmLeadStage>((res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages).length
+      ? asArray<CrmLeadStage>((res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages)
+      : [...CRM_LEAD_STAGES],
   };
 }
 
 export async function fetchCrmLeadDetail(id: string): Promise<CrmLeadDetail> {
-  const { data } = await adminGet<CrmLeadDetail>(`/admin/td/leads/${id}`);
+  const { data } = await adminGet<CrmLeadDetail & CrmLead>(`/admin/td/leads/${id}`);
+  const wrapped = data as CrmLeadDetail | null | undefined;
+  const lead = wrapped?.lead ?? (data && "_id" in data && "mobile" in data ? (data as CrmLead) : null);
+  if (!lead?._id) {
+    throw new Error("Lead details could not be loaded");
+  }
   return {
-    lead: data!.lead,
-    history: data?.history ?? [],
-    followUps: data?.followUps ?? [],
-    stages: data?.stages ?? [],
+    lead,
+    history: asArray<LeadStageHistoryItem>(wrapped?.history),
+    followUps: asArray<LeadFollowUpItem>(wrapped?.followUps),
+    stages: asArray<CrmLeadStage>(wrapped?.stages).length
+      ? asArray<CrmLeadStage>(wrapped?.stages)
+      : [...CRM_LEAD_STAGES],
   };
 }
 
