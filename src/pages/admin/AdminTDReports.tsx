@@ -166,7 +166,33 @@ export default function AdminTDReports() {
 
   if (!data) return null;
 
-  const { overview, vehicleFleet, vehicleAvailability, feedback, charts, executivePerformance, allFeedback, customerTestDriveLog, vehicleWiseReport } = data;
+  const overview = data.overview ?? {
+    totalBookings: 0,
+    completed: 0,
+    pending: 0,
+    cancelled: 0,
+    missed: 0,
+    inProgress: 0,
+    totalCustomers: 0,
+    completionRate: 0,
+    leadConversionRate: 0,
+    leadsFromTestDrives: 0,
+    convertedToBusiness: 0,
+    feedbackCount: 0,
+  };
+  const vehicleFleet = data.vehicleFleet ?? {};
+  const vehicleAvailability = data.vehicleAvailability ?? [];
+  const feedback = data.feedback ?? { avgOverall: 0, count: 0 };
+  const charts = {
+    bookingsByStatus: data.charts?.bookingsByStatus ?? {},
+    bookingsByModel: data.charts?.bookingsByModel ?? {},
+    bookingTrend: data.charts?.bookingTrend ?? [],
+    leadByStatus: data.charts?.leadByStatus ?? {},
+  };
+  const executivePerformance = data.executivePerformance ?? [];
+  const allFeedback = data.allFeedback ?? [];
+  const customerTestDriveLog = data.customerTestDriveLog ?? [];
+  const vehicleWiseReport = data.vehicleWiseReport ?? [];
 
   const bookingStatusData = Object.entries(charts.bookingsByStatus).map(([name, value]) => ({ name, value }));
   const modelData = Object.entries(charts.bookingsByModel).map(([name, value]) => ({ name: name || "Unknown", value }));
@@ -249,7 +275,7 @@ export default function AdminTDReports() {
                     <span className="text-amber-500">Available again: {fmtDate(v.availableAgainAt)}</span>
                   ) : null}
                 </div>
-                {v.customers.length === 0 ? (
+                {(v.customers ?? []).length === 0 ? (
                   <p className="text-xs text-muted-foreground italic">No completed test drives on this vehicle yet.</p>
                 ) : (
                   <div className="overflow-x-auto">
@@ -264,7 +290,7 @@ export default function AdminTDReports() {
                         </tr>
                       </thead>
                       <tbody>
-                        {v.customers.map((c, i) => (
+                        {(v.customers ?? []).map((c, i) => (
                           <tr key={i} className="border-b border-border/20">
                             <td className="p-2"><p className="font-medium">{c.name}</p><p className="text-muted-foreground">{c.mobile}</p></td>
                             <td className="p-2 whitespace-nowrap">{fmtDate(c.slotDate)} {formatTime12h(c.slotTime)}</td>
