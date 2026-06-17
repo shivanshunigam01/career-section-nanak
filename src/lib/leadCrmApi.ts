@@ -85,13 +85,18 @@ export async function fetchCrmLeads(params?: {
   return {
     leads: res.data ?? [],
     total: res.meta?.total ?? res.data?.length ?? 0,
-    stages: (res as { stages?: CrmLeadStage[] }).stages ?? [],
+    stages: (res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages ?? [],
   };
 }
 
 export async function fetchCrmLeadDetail(id: string): Promise<CrmLeadDetail> {
   const { data } = await adminGet<CrmLeadDetail>(`/admin/td/leads/${id}`);
-  return data!;
+  return {
+    lead: data!.lead,
+    history: data?.history ?? [],
+    followUps: data?.followUps ?? [],
+    stages: data?.stages ?? [],
+  };
 }
 
 export async function updateCrmLeadStage(id: string, stage: string, reason?: string): Promise<CrmLead> {

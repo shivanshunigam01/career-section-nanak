@@ -143,7 +143,7 @@ export default function AdminTDLeadReports() {
   const {
     overview,
     executivePerformance = [],
-    followUpSummary,
+    followUpSummary = { pending: 0, completed: 0, overdue: 0, cancelled: 0, total: 0 },
     followUpRows = [],
     activityLog = [],
     feedbackRows = [],
