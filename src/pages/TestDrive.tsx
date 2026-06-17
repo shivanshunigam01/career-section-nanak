@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -116,7 +116,6 @@ const TestDrivePage = () => {
   });
   const [mobileError, setMobileError] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
-  const [captchaVerified, setCaptchaVerified] = useState(false);
   const [captchaResetSignal, setCaptchaResetSignal] = useState(0);
   const [waToken, setWaToken] = useState<string | null>(null);
   const onWaTokenChange = useCallback((t: string | null) => setWaToken(t), []);
@@ -125,26 +124,7 @@ const TestDrivePage = () => {
     ? new Date(`${formData.date}T12:00:00`)
     : undefined;
   const isPatnaSelected = isPatnaDistrict(formData.city);
-  const whatsappOtpOn = Boolean(hasApi() && siteConfig.features?.whatsappOtp);
-  const scheduleUnlocked = !whatsappOtpOn || Boolean(waToken);
-  const useLiveSlots = hasApi() && scheduleUnlocked;
-
-  const canSubmit = useMemo(() => {
-    if (!formData.name.trim()) return false;
-    if (!MOBILE_REGEX.test(formData.mobile)) return false;
-    if (!formData.model.trim() || !formData.variant.trim()) return false;
-    if (!formData.date || !formData.time) return false;
-    const selected = new Date(`${formData.date}T12:00:00`);
-    if (Number.isNaN(selected.getTime()) || !isTestDriveBookableDate(selected)) return false;
-    if (formData.city === DISTRICT_OTHER && !formData.otherCity.trim()) return false;
-    if (!formData.preferredTestDriveLocation) return false;
-    if (!formData.ownsCar) return false;
-    if (formData.ownsCar === "Yes" && !formData.currentCarDetails.trim()) return false;
-    if (!formData.purchaseTimeline) return false;
-    if (!captchaVerified) return false;
-    if (whatsappOtpOn && !waToken) return false;
-    return true;
-  }, [formData, captchaVerified, waToken, whatsappOtpOn]);
+  const useLiveSlots = hasApi();
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -212,14 +192,6 @@ const TestDrivePage = () => {
     }
     if (!formData.purchaseTimeline) {
       toast.error("Please select when you are planning to purchase.");
-      return;
-    }
-    if (!captchaVerified) {
-      toast.error("Please complete captcha verification.");
-      return;
-    }
-    if (hasApi() && siteConfig.features?.whatsappOtp && !waToken) {
-      toast.error("Please verify your mobile number with the WhatsApp code we send you.");
       return;
     }
 
@@ -631,13 +603,7 @@ const TestDrivePage = () => {
                     />
                   </div>
 
-                  {whatsappOtpOn && !waToken ? (
-                    <div className="rounded-xl border border-dashed border-border/60 bg-muted/20 px-4 py-4 text-center">
-                      <p className="text-xs sm:text-sm text-muted-foreground">
-                        Verify WhatsApp above to unlock date & time slots.
-                      </p>
-                    </div>
-                  ) : useLiveSlots ? (
+                  {useLiveSlots ? (
                     <TestDriveSlotPicker
                       model={formData.model}
                       variant={formData.variant}
@@ -873,13 +839,12 @@ const TestDrivePage = () => {
                   </div>
                 </FormSection>
 
-                <FormCaptcha onVerifyChange={setCaptchaVerified} resetSignal={captchaResetSignal} />
+                <FormCaptcha onVerifyChange={() => {}} resetSignal={captchaResetSignal} />
                 <Button
                   type="submit"
                   variant="hero"
                   size="lg"
-                  className="w-full disabled:opacity-50 disabled:pointer-events-none"
-                  disabled={!canSubmit}
+                  className="w-full"
                 >
                   Confirm Test Drive
                 </Button>
