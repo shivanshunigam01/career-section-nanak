@@ -26,12 +26,8 @@ export type TDFeedbackInput = {
 };
 
 export async function fetchTDFeedbackByBooking(bookingId: string): Promise<TDFeedbackRecord | null> {
-  try {
-    const { data } = await adminGet<TDFeedbackRecord>(`/admin/td/feedback/booking/${bookingId}`);
-    return data ?? null;
-  } catch {
-    return null;
-  }
+  const { data } = await adminGet<TDFeedbackRecord | null>(`/admin/td/feedback/booking/${bookingId}`);
+  return data ?? null;
 }
 
 export async function submitTDFeedback(input: TDFeedbackInput): Promise<{ leadId?: string; message?: string }> {
