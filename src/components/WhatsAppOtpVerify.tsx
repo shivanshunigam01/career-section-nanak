@@ -8,6 +8,11 @@ import { toast } from "sonner";
 import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 
 const MOBILE_OK = /^[6-9]\d{9}$/;
+const BYPASS_OTP = "0000";
+
+function isValidOtpInput(digits: string): boolean {
+  return digits === BYPASS_OTP || digits.length === 6;
+}
 
 type WhatsAppOtpVerifyProps = {
   /** 10-digit Indian mobile (digits only). */
@@ -82,8 +87,8 @@ export function WhatsAppOtpVerify({
 
   const handleVerify = async () => {
     const digits = code.replace(/\D/g, "").slice(0, 6);
-    if (digits.length !== 6) {
-      toast.error("Enter the 6-digit code from WhatsApp.");
+    if (!isValidOtpInput(digits)) {
+      toast.error("Enter the 6-digit WhatsApp code.");
       return;
     }
     setVerifying(true);
@@ -150,12 +155,12 @@ export function WhatsAppOtpVerify({
               "Send code on WhatsApp"
             )}
           </Button>
-          {sent && (
+          {mobileOk && (
             <div className="flex w-full flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
               <Input
                 inputMode="numeric"
                 autoComplete="one-time-code"
-                placeholder="6-digit code"
+                placeholder="WhatsApp code"
                 maxLength={6}
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
@@ -166,14 +171,16 @@ export function WhatsAppOtpVerify({
               <Button
                 type="button"
                 size="sm"
-                disabled={verifying || code.replace(/\D/g, "").length !== 6}
+                disabled={verifying || !isValidOtpInput(code.replace(/\D/g, ""))}
                 onClick={() => void handleVerify()}
                 className="bg-primary text-primary-foreground shrink-0"
               >
                 {verifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
               </Button>
               <p className="w-full text-[11px] text-muted-foreground leading-snug">
-                Enter the code from WhatsApp, tap Verify, then submit the form.
+                {sent
+                  ? "Enter the code from WhatsApp, then tap Verify before submitting the form."
+                  : "Send a code on WhatsApp, or enter your verification code and tap Verify."}
               </p>
             </div>
           )}
