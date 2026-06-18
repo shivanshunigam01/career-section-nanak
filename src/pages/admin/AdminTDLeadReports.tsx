@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BarChart3, RefreshCw, Loader2, Users, Target, MessageSquare,
-  CalendarClock, Star, UserCheck, ArrowLeft, AlertTriangle, CheckCircle2, Activity,
+  CalendarClock, Star, UserCheck, ArrowLeft, AlertTriangle, CheckCircle2, Activity, Timer,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -30,6 +30,20 @@ import { cn } from "@/lib/utils";
 const CHART_COLORS = ["#00d4ff", "#7c3aed", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
 const TERMINAL_LEAD_STAGES = new Set(["Delivered", "Lost", "Not Interested"]);
+
+const AGE_BUCKET_COLORS: Record<string, string> = {
+  "0-3 Days": "#10b981",
+  "4-7 Days": "#f59e0b",
+  "8-15 Days": "#f97316",
+  "15+ Days": "#ef4444",
+};
+
+const AGE_BUCKET_TEXT: Record<string, string> = {
+  "0-3 Days": "text-green-400",
+  "4-7 Days": "text-yellow-400",
+  "8-15 Days": "text-orange-400",
+  "15+ Days": "text-red-400",
+};
 
 const StatCard = ({
   label, value, icon: Icon, color = "text-primary", sub, onClick,
@@ -161,6 +175,11 @@ export default function AdminTDLeadReports() {
     [data],
   );
 
+  const leadAgeingChart = useMemo(
+    () => (data?.leadAgeing ?? []).map((row) => ({ name: row.bucket, value: row.count })),
+    [data],
+  );
+
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-24 text-muted-foreground">
@@ -200,6 +219,7 @@ export default function AdminTDLeadReports() {
     activityLog = [],
     feedbackRows = [],
     leadDetailRows = [],
+    leadAgeing = [],
   } = data;
 
   return (
@@ -451,6 +471,7 @@ export default function AdminTDLeadReports() {
 
       <Tabs defaultValue="executives">
         <TabsList className="bg-secondary/50 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="ageing">Lead ageing</TabsTrigger>
           <TabsTrigger value="sources">Source conversion</TabsTrigger>
           <TabsTrigger value="executives">Executive performance</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
@@ -459,6 +480,101 @@ export default function AdminTDLeadReports() {
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="leads">All leads</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="ageing" className="mt-4 space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Days since lead was created — filtered by your selected date range and executive.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            {leadAgeing.map((row) => (
+              <StatCard
+                key={row.bucket}
+                label={row.bucket}
+                value={row.count}
+                icon={Timer}
+                color={AGE_BUCKET_TEXT[row.bucket] ?? "text-primary"}
+                onClick={() =>
+                  openLeadPopup(
+                    `Lead ageing · ${row.bucket}`,
+                    leadDetailRows.filter((l) => l.ageBucket === row.bucket),
+                  )
+                }
+              />
+            ))}
+          </div>
+
+          {leadAgeingChart.some((r) => r.value > 0) ? (
+            <Card className="bg-card border-border/50 p-4">
+              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                <Timer className="w-4 h-4 text-primary" /> Lead ageing distribution
+              </h3>
+              <ResponsiveContainer width="100%" height={240}>
+                <BarChart data={leadAgeingChart}>
+                  <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 10 }} />
+                  <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                  <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                    {leadAgeingChart.map((entry) => (
+                      <Cell key={entry.name} fill={AGE_BUCKET_COLORS[entry.name] ?? "#00d4ff"} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Card>
+          ) : (
+            <p className="text-muted-foreground text-center py-12">No leads in this period for ageing analysis</p>
+          )}
+
+          <Card className="bg-card border-border/50 overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 bg-secondary/30 text-muted-foreground">
+                    <th className="text-left p-3">Customer</th>
+                    <th className="text-left p-3">Stage</th>
+                    <th className="text-left p-3">Source</th>
+                    <th className="text-left p-3">Assigned to</th>
+                    <th className="text-right p-3">Age (days)</th>
+                    <th className="text-left p-3">Age bucket</th>
+                    <th className="text-left p-3">Created</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {leadDetailRows.length === 0 ? (
+                    <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No leads in this period</td></tr>
+                  ) : (
+                    [...leadDetailRows]
+                      .sort((a, b) => (b.ageDays ?? 0) - (a.ageDays ?? 0))
+                      .map((row) => (
+                        <tr key={row.leadId} className="border-b border-border/20 hover:bg-secondary/10">
+                          <td className="p-3">
+                            <p className="font-medium">{row.name}</p>
+                            <p className="text-muted-foreground">{row.mobile}</p>
+                          </td>
+                          <td className="p-3">
+                            <Badge className={cn("text-[10px]", STAGE_COLORS[row.status] ?? "bg-muted")}>{row.status}</Badge>
+                          </td>
+                          <td className="p-3">{row.source}</td>
+                          <td className="p-3">{row.assignedTo}</td>
+                          <td className="p-3 text-right font-medium">{row.ageDays ?? "—"}</td>
+                          <td className="p-3">
+                            <Badge
+                              variant="outline"
+                              className={cn("text-[10px]", AGE_BUCKET_TEXT[row.ageBucket ?? ""] ?? "")}
+                            >
+                              {row.ageBucket ?? "—"}
+                            </Badge>
+                          </td>
+                          <td className="p-3 whitespace-nowrap">{fmtDate(row.createdAt)}</td>
+                        </tr>
+                      ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="sources" className="mt-4 space-y-4">
           <p className="text-xs text-muted-foreground">
