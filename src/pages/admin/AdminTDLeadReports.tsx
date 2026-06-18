@@ -111,6 +111,17 @@ export default function AdminTDLeadReports() {
     [data],
   );
 
+  const sourceConversionChart = useMemo(
+    () =>
+      data?.bySourceConversion?.map((row) => ({
+        name: row.source,
+        conversionRate: row.conversionRate,
+        totalLeads: row.totalLeads,
+        convertedCount: row.convertedCount,
+      })) ?? [],
+    [data],
+  );
+
   if (loading && !data) {
     return (
       <div className="flex items-center justify-center py-24 text-muted-foreground">
@@ -143,6 +154,8 @@ export default function AdminTDLeadReports() {
   const {
     overview,
     executivePerformance = [],
+    bySourceConversion = [],
+    sourceConversionByExecutive = [],
     followUpSummary = { pending: 0, completed: 0, overdue: 0, cancelled: 0, total: 0 },
     followUpRows = [],
     activityLog = [],
@@ -214,6 +227,7 @@ export default function AdminTDLeadReports() {
 
       <Tabs defaultValue="executives">
         <TabsList className="bg-secondary/50 flex flex-wrap h-auto gap-1">
+          <TabsTrigger value="sources">Source conversion</TabsTrigger>
           <TabsTrigger value="executives">Executive performance</TabsTrigger>
           <TabsTrigger value="pipeline">Pipeline</TabsTrigger>
           <TabsTrigger value="followups">Follow-ups</TabsTrigger>
@@ -221,6 +235,117 @@ export default function AdminTDLeadReports() {
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="leads">All leads</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="sources" className="mt-4 space-y-4">
+          <p className="text-xs text-muted-foreground">
+            Conversion by lead source for the selected date range
+            {executiveId !== "all" ? " and executive" : " — includes per-executive breakdown when all staff is selected"}.
+          </p>
+
+          {bySourceConversion.length === 0 ? (
+            <p className="text-muted-foreground text-center py-12">No leads in this period to analyse by source</p>
+          ) : (
+            <>
+              <Card className="bg-card border-border/50 p-4">
+                <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                  <Target className="w-4 h-4 text-green-400" /> Conversion rate by source
+                </h3>
+                <ResponsiveContainer width="100%" height={Math.max(220, bySourceConversion.length * 36)}>
+                  <BarChart data={sourceConversionChart} layout="vertical" margin={{ left: 8, right: 16 }}>
+                    <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 10 }} unit="%" />
+                    <YAxis type="category" dataKey="name" width={120} tick={{ fontSize: 10 }} />
+                    <Tooltip
+                      contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }}
+                      formatter={(value: number, _name, item) => {
+                        const row = item.payload as { totalLeads: number; convertedCount: number };
+                        return [`${value}% (${row.convertedCount}/${row.totalLeads} leads)`, "Conversion"];
+                      }}
+                    />
+                    <Bar dataKey="conversionRate" fill="#10b981" radius={[0, 4, 4, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Card>
+
+              <Card className="bg-card border-border/50 overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b border-border/50 bg-secondary/30 text-muted-foreground">
+                        <th className="text-left p-3">Source</th>
+                        <th className="text-right p-3">Total leads</th>
+                        <th className="text-right p-3">Converted</th>
+                        <th className="text-right p-3">Conversion rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {bySourceConversion.map((row) => (
+                        <tr key={row.source} className="border-b border-border/20 hover:bg-secondary/10">
+                          <td className="p-3 font-medium">{row.source}</td>
+                          <td className="p-3 text-right">{row.totalLeads}</td>
+                          <td className="p-3 text-right text-green-400">{row.convertedCount}</td>
+                          <td className="p-3 text-right">
+                            <Badge
+                              className={cn(
+                                "text-[10px]",
+                                row.conversionRate >= 50
+                                  ? "bg-green-400/10 text-green-400 border-green-400/20"
+                                  : row.conversionRate >= 25
+                                    ? "bg-yellow-400/10 text-yellow-400 border-yellow-400/20"
+                                    : "bg-muted text-muted-foreground",
+                              )}
+                            >
+                              {row.conversionRate}%
+                            </Badge>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            </>
+          )}
+
+          {executiveId === "all" && sourceConversionByExecutive.length > 0 ? (
+            <div className="space-y-3">
+              <h3 className="font-semibold text-sm flex items-center gap-2">
+                <Users className="w-4 h-4 text-primary" /> By executive &amp; source
+              </h3>
+              {sourceConversionByExecutive.map((exec) => (
+                <Card key={exec.executiveId} className="bg-card border-border/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <p className="font-semibold text-foreground">{exec.name}</p>
+                    <Badge variant="outline" className="text-[10px]">
+                      {exec.convertedCount}/{exec.totalLeads} converted · {exec.conversionRate}%
+                    </Badge>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-border/50 text-muted-foreground">
+                          <th className="text-left py-2 pr-3">Source</th>
+                          <th className="text-right py-2 px-3">Leads</th>
+                          <th className="text-right py-2 px-3">Converted</th>
+                          <th className="text-right py-2 pl-3">Rate</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {exec.bySource.map((src) => (
+                          <tr key={`${exec.executiveId}-${src.source}`} className="border-b border-border/10">
+                            <td className="py-2 pr-3">{src.source}</td>
+                            <td className="py-2 px-3 text-right">{src.totalLeads}</td>
+                            <td className="py-2 px-3 text-right text-green-400">{src.convertedCount}</td>
+                            <td className="py-2 pl-3 text-right">{src.conversionRate}%</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : null}
+        </TabsContent>
 
         <TabsContent value="executives" className="mt-4 space-y-3">
           {executivePerformance.length === 0 ? (
