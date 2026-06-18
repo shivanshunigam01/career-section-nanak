@@ -39,7 +39,7 @@ function getSessionStartedAt(): number | null {
 }
 
 /** Paths executives can access in the staff portal. */
-export const STAFF_PORTAL_PREFIXES = ["/admin/td/my-bookings", "/admin/td/leads"] as const;
+export const STAFF_PORTAL_PREFIXES = ["/admin/td/my-bookings", "/admin/crm/leads"] as const;
 
 export function isStaffPortalPath(pathname: string): boolean {
   return STAFF_PORTAL_PREFIXES.some((p) => pathname.startsWith(p));

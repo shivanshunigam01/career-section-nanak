@@ -1,0 +1,169 @@
+import { adminGet, adminPatchJson, adminPostJson } from "@/lib/api";
+import { CRM_LEAD_STAGES, type CrmLeadStage } from "@/lib/leadStages";
+
+const CRM_BASE = "/admin/crm/leads";
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
+export type PvCrmLead = {
+  _id: string;
+  leadId?: string;
+  opportunityId?: string;
+  customerId?: string | null;
+  parentCustomerId?: string | null;
+  subCustomerCode?: string | null;
+  subCustomerName?: string | null;
+  vehicleRegistration?: string | null;
+  name: string;
+  mobile: string;
+  email?: string;
+  city?: string;
+  model: string;
+  source?: string;
+  status: string;
+  remarks?: string;
+  nextFollowUp?: string;
+  assignedTo?: { _id: string; name: string; email?: string } | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type LeadStageHistoryItem = {
+  _id: string;
+  fromStage?: string;
+  toStage: string;
+  reason?: string;
+  createdAt: string;
+  changedBy?: { name?: string; email?: string } | null;
+};
+
+export type LeadFollowUpItem = {
+  _id: string;
+  note: string;
+  scheduledAt?: string;
+  completedAt?: string;
+  outcome?: string;
+  status: "pending" | "completed" | "cancelled";
+  createdAt: string;
+  createdBy?: { name?: string; email?: string } | null;
+};
+
+export type PvCrmLeadDetail = {
+  lead: PvCrmLead;
+  history: LeadStageHistoryItem[];
+  followUps: LeadFollowUpItem[];
+  siblingLeads?: { leadId?: string; opportunityId?: string; model: string; status: string; source?: string; createdAt?: string }[];
+  stages: CrmLeadStage[];
+};
+
+export type AssignableStaffUser = {
+  _id: string;
+  name: string;
+  email?: string;
+  role?: string;
+  designation?: string;
+  designationLabel?: string;
+};
+
+export type CreatePvCrmLeadPayload = {
+  name: string;
+  mobile: string;
+  email?: string;
+  city: string;
+  otherCity?: string;
+  model: string;
+  source?: string;
+  remarks?: string;
+  interest?: string;
+  financeNeeded?: boolean;
+  exchangeNeeded?: boolean;
+  executiveId?: string;
+  subCustomerName?: string;
+  subCustomerMobile?: string;
+  vehicleRegistration?: string;
+};
+
+export async function createPvCrmLead(payload: CreatePvCrmLeadPayload): Promise<PvCrmLead> {
+  return adminPostJson<PvCrmLead>(CRM_BASE, payload);
+}
+
+export async function fetchAssignableStaffUsers(): Promise<AssignableStaffUser[]> {
+  const { data } = await adminGet<AssignableStaffUser[]>("/admin/td/users/assignable");
+  return asArray<AssignableStaffUser>(data);
+}
+
+export async function assignPvCrmLeadExecutive(leadId: string, executiveId: string | null): Promise<PvCrmLead> {
+  return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${leadId}/assign`, {
+    executiveId: executiveId || null,
+  });
+}
+
+export async function fetchPvCrmLeads(params?: {
+  search?: string;
+  status?: string;
+  source?: string;
+  followUpDue?: boolean;
+  assignedTo?: string;
+  limit?: number;
+}): Promise<{ leads: PvCrmLead[]; total: number; stages: CrmLeadStage[] }> {
+  const q = new URLSearchParams({ limit: String(params?.limit ?? 100) });
+  if (params?.search) q.set("search", params.search);
+  if (params?.status && params.status !== "all") q.set("status", params.status);
+  if (params?.source && params.source !== "all") q.set("source", params.source);
+  if (params?.followUpDue) q.set("followUpDue", "true");
+  if (params?.assignedTo) q.set("assignedTo", params.assignedTo);
+
+  const res = await adminGet<PvCrmLead[]>(`${CRM_BASE}?${q}`);
+  const list = asArray<PvCrmLead>(res.data);
+  return {
+    leads: list,
+    total: res.meta?.total ?? list.length,
+    stages: asArray<CrmLeadStage>((res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages).length
+      ? asArray<CrmLeadStage>((res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages)
+      : [...CRM_LEAD_STAGES],
+  };
+}
+
+export async function fetchPvCrmLeadDetail(id: string): Promise<PvCrmLeadDetail> {
+  const { data } = await adminGet<PvCrmLeadDetail & PvCrmLead>(`${CRM_BASE}/${id}`);
+  const wrapped = data as PvCrmLeadDetail | null | undefined;
+  const lead = wrapped?.lead ?? (data && "_id" in data && "mobile" in data ? (data as PvCrmLead) : null);
+  if (!lead?._id) {
+    throw new Error("Lead details could not be loaded");
+  }
+  return {
+    lead,
+    history: asArray<LeadStageHistoryItem>(wrapped?.history),
+    followUps: asArray<LeadFollowUpItem>(wrapped?.followUps),
+    siblingLeads: asArray(wrapped?.siblingLeads),
+    stages: asArray<CrmLeadStage>(wrapped?.stages).length
+      ? asArray<CrmLeadStage>(wrapped?.stages)
+      : [...CRM_LEAD_STAGES],
+  };
+}
+
+export async function updatePvCrmLeadStage(id: string, stage: string, reason?: string): Promise<PvCrmLead> {
+  return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${id}/stage`, { stage, reason });
+}
+
+export async function updatePvCrmLeadRemarks(id: string, remarks: string): Promise<PvCrmLead> {
+  return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${id}/remarks`, { remarks });
+}
+
+export async function addPvCrmFollowUp(
+  leadId: string,
+  payload: { note: string; scheduledAt?: string; outcome?: string; markCompleted?: boolean },
+): Promise<LeadFollowUpItem> {
+  return adminPostJson<LeadFollowUpItem>(`${CRM_BASE}/${leadId}/follow-ups`, payload);
+}
+
+export async function completePvCrmFollowUp(leadId: string, followUpId: string, outcome?: string): Promise<LeadFollowUpItem> {
+  return adminPatchJson<LeadFollowUpItem>(`${CRM_BASE}/${leadId}/follow-ups/${followUpId}`, {
+    status: "completed",
+    outcome,
+  });
+}
+
+export const PV_CRM_SOURCES = ["Website", "Meta Ads", "Test Drive", "Enquiry", "Walk-in", "Executive", "Referral", "WhatsApp"] as const;
