@@ -13,22 +13,34 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatApiErrors } from "@/lib/api";
 import { fetchAssignableStaffUsers, type AssignableStaffUser } from "@/lib/leadCrmApi";
 import {
   fetchLeadAdminReport,
   type LeadAdminReport,
   type LeadActivityRow,
+  type LeadDetailReportRow,
+  type LeadFollowUpReportRow,
+  type LeadFeedbackReportRow,
 } from "@/lib/leadReportApi";
 import { STAGE_COLORS, normalizeCrmStage } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
 
 const CHART_COLORS = ["#00d4ff", "#7c3aed", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
 
+const TERMINAL_LEAD_STAGES = new Set(["Delivered", "Lost", "Not Interested"]);
+
 const StatCard = ({
-  label, value, icon: Icon, color = "text-primary", sub,
-}: { label: string; value: string | number; icon: React.ElementType; color?: string; sub?: string }) => (
-  <Card className="bg-card border-border/50 p-4">
+  label, value, icon: Icon, color = "text-primary", sub, onClick,
+}: { label: string; value: string | number; icon: React.ElementType; color?: string; sub?: string; onClick?: () => void }) => (
+  <Card
+    className={`bg-card border-border/50 p-4 ${onClick ? "cursor-pointer hover:bg-secondary/20 transition-colors" : ""}`}
+    onClick={onClick}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+    onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
+  >
     <div className="flex items-start justify-between">
       <div>
         <p className="text-xs text-muted-foreground">{label}</p>
@@ -67,6 +79,33 @@ export default function AdminTDLeadReports() {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [executiveId, setExecutiveId] = useState("all");
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupMode, setPopupMode] = useState<"leads" | "followups" | "feedback">("leads");
+  const [popupLeads, setPopupLeads] = useState<LeadDetailReportRow[]>([]);
+  const [popupFollowUps, setPopupFollowUps] = useState<LeadFollowUpReportRow[]>([]);
+  const [popupFeedback, setPopupFeedback] = useState<LeadFeedbackReportRow[]>([]);
+
+  const openLeadPopup = (title: string, rows: LeadDetailReportRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("leads");
+    setPopupLeads(rows);
+    setPopupOpen(true);
+  };
+
+  const openFollowUpPopup = (title: string, rows: LeadFollowUpReportRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("followups");
+    setPopupFollowUps(rows);
+    setPopupOpen(true);
+  };
+
+  const openFeedbackPopup = (title: string, rows: LeadFeedbackReportRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("feedback");
+    setPopupFeedback(rows);
+    setPopupOpen(true);
+  };
 
   useEffect(() => {
     void (async () => {
@@ -215,15 +254,200 @@ export default function AdminTDLeadReports() {
       </Card>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Total leads" value={overview.totalLeads} icon={Users} />
-        <StatCard label="Active pipeline" value={overview.activeLeads} icon={Activity} color="text-blue-400" />
-        <StatCard label="Conversion rate" value={`${overview.conversionRate}%`} icon={Target} color="text-green-400" sub={`${overview.convertedCount} converted`} />
-        <StatCard label="Unassigned" value={overview.unassigned} icon={UserCheck} color="text-amber-400" />
-        <StatCard label="Follow-ups pending" value={overview.followUpsPending} icon={CalendarClock} color="text-yellow-400" sub={`${overview.followUpsOverdue} overdue`} />
-        <StatCard label="Follow-ups done" value={overview.followUpsCompleted} icon={CheckCircle2} color="text-green-400" />
-        <StatCard label="TD feedback" value={overview.feedbackCount} icon={Star} color="text-yellow-400" sub={overview.feedbackCount > 0 ? `Avg ${overview.avgFeedbackRating}⭐` : undefined} />
-        <StatCard label="Overdue follow-ups" value={overview.followUpsOverdue} icon={AlertTriangle} color="text-red-400" />
+        <StatCard
+          label="Total leads"
+          value={overview.totalLeads}
+          icon={Users}
+          onClick={() => openLeadPopup("Total leads", leadDetailRows)}
+        />
+        <StatCard
+          label="Active pipeline"
+          value={overview.activeLeads}
+          icon={Activity}
+          color="text-blue-400"
+          onClick={() =>
+            openLeadPopup(
+              "Active pipeline",
+              leadDetailRows.filter((r) => !TERMINAL_LEAD_STAGES.has(normalizeCrmStage(r.status))),
+            )
+          }
+        />
+        <StatCard
+          label="Conversion rate"
+          value={`${overview.conversionRate}%`}
+          icon={Target}
+          color="text-green-400"
+          sub={`${overview.convertedCount} converted`}
+          onClick={() => openLeadPopup("Converted leads", leadDetailRows.filter((r) => r.converted))}
+        />
+        <StatCard
+          label="Unassigned"
+          value={overview.unassigned}
+          icon={UserCheck}
+          color="text-amber-400"
+          onClick={() =>
+            openLeadPopup(
+              "Unassigned leads",
+              leadDetailRows.filter((r) => !r.assignedToId || r.assignedTo === "Unassigned"),
+            )
+          }
+        />
+        <StatCard
+          label="Follow-ups pending"
+          value={overview.followUpsPending}
+          icon={CalendarClock}
+          color="text-yellow-400"
+          sub={`${overview.followUpsOverdue} overdue`}
+          onClick={() => openFollowUpPopup("Follow-ups pending", followUpRows.filter((r) => r.status === "pending"))}
+        />
+        <StatCard
+          label="Follow-ups done"
+          value={overview.followUpsCompleted}
+          icon={CheckCircle2}
+          color="text-green-400"
+          onClick={() => openFollowUpPopup("Follow-ups completed", followUpRows.filter((r) => r.status === "completed"))}
+        />
+        <StatCard
+          label="TD feedback"
+          value={overview.feedbackCount}
+          icon={Star}
+          color="text-yellow-400"
+          sub={overview.feedbackCount > 0 ? `Avg ${overview.avgFeedbackRating}⭐` : undefined}
+          onClick={() => openFeedbackPopup("TD feedback linked to leads", feedbackRows)}
+        />
+        <StatCard
+          label="Overdue follow-ups"
+          value={overview.followUpsOverdue}
+          icon={AlertTriangle}
+          color="text-red-400"
+          onClick={() =>
+            openFollowUpPopup(
+              "Overdue follow-ups",
+              followUpRows.filter(
+                (r) => r.status === "pending" && r.scheduledAt && new Date(r.scheduledAt) < new Date(),
+              ),
+            )
+          }
+        />
       </div>
+
+      <Dialog open={popupOpen} onOpenChange={setPopupOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{popupTitle}</DialogTitle>
+          </DialogHeader>
+          {popupMode === "leads" ? (
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 text-muted-foreground">
+                    <th className="text-left p-2">Customer</th>
+                    <th className="text-left p-2">Model</th>
+                    <th className="text-left p-2">Stage</th>
+                    <th className="text-left p-2">Source</th>
+                    <th className="text-left p-2">Assigned to</th>
+                    <th className="text-left p-2">Follow-ups</th>
+                    <th className="text-left p-2">Next follow-up</th>
+                    <th className="text-left p-2">Feedback</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupLeads.length === 0 ? (
+                    <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No records found</td></tr>
+                  ) : (
+                    popupLeads.map((row) => (
+                      <tr key={row.leadId} className="border-b border-border/20 hover:bg-secondary/10">
+                        <td className="p-2">
+                          <p className="font-medium">{row.name}</p>
+                          <p className="text-muted-foreground">{row.mobile}</p>
+                        </td>
+                        <td className="p-2">{row.model}</td>
+                        <td className="p-2">
+                          <Badge className={cn("text-[10px]", STAGE_COLORS[row.status] ?? "bg-muted")}>{row.status}</Badge>
+                          {row.converted ? (
+                            <Badge className="ml-1 text-[10px] bg-green-400/10 text-green-400">Converted</Badge>
+                          ) : null}
+                        </td>
+                        <td className="p-2">{row.source}</td>
+                        <td className="p-2">{row.assignedTo}</td>
+                        <td className="p-2">{row.followUpCount} ({row.followUpsPending} pending)</td>
+                        <td className="p-2 whitespace-nowrap">{fmtDate(row.nextFollowUp)}</td>
+                        <td className="p-2">
+                          {row.feedbackRating != null ? `${row.feedbackRating}⭐ · ${row.purchaseIntention ?? "—"}/5` : "—"}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : popupMode === "followups" ? (
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 text-muted-foreground">
+                    <th className="text-left p-2">Lead</th>
+                    <th className="text-left p-2">Executive</th>
+                    <th className="text-left p-2">Note</th>
+                    <th className="text-left p-2">Scheduled</th>
+                    <th className="text-left p-2">Status</th>
+                    <th className="text-left p-2">Outcome</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupFollowUps.length === 0 ? (
+                    <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">No records found</td></tr>
+                  ) : (
+                    popupFollowUps.map((row) => (
+                      <tr key={row.id} className="border-b border-border/20 hover:bg-secondary/10">
+                        <td className="p-2">
+                          <p className="font-medium">{row.leadName}</p>
+                          <p className="text-muted-foreground">{row.leadMobile}</p>
+                          <Badge variant="outline" className="mt-1 text-[10px]">{row.leadStatus}</Badge>
+                        </td>
+                        <td className="p-2">{row.executiveName}</td>
+                        <td className="p-2 max-w-[14rem]">{row.note}</td>
+                        <td className="p-2 whitespace-nowrap">{fmtDateTime(row.scheduledAt)}</td>
+                        <td className="p-2">
+                          <Badge variant={row.status === "completed" ? "default" : row.status === "pending" ? "outline" : "secondary"}>
+                            {row.status}
+                          </Badge>
+                        </td>
+                        <td className="p-2">{row.outcome}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="space-y-2 max-h-[65vh] overflow-auto">
+              {popupFeedback.length === 0 ? (
+                <p className="text-muted-foreground text-sm py-8 text-center">No feedback records found</p>
+              ) : (
+                popupFeedback.map((fb, i) => (
+                  <Card key={`${fb.bookingId}-${fb.mobile}-${i}`} className="bg-card border-border/50 p-3">
+                    <p className="font-medium text-sm">{fb.leadName} · {fb.mobile}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {fb.bookingId} · {fb.model} · Executive: {fb.executiveName}
+                    </p>
+                    {fb.leadStatus ? (
+                      <Badge variant="outline" className="mt-1 text-[10px]">{normalizeCrmStage(fb.leadStatus)}</Badge>
+                    ) : null}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Rating: {fb.overallRating ?? "—"}⭐ · Purchase intent: {fb.purchaseIntention ?? "—"}/5
+                      {fb.executiveBehaviour != null ? ` · Exec ${fb.executiveBehaviour}/5` : ""}
+                    </p>
+                    {fb.remarks && fb.remarks !== "—" ? (
+                      <p className="text-xs mt-1 italic">&ldquo;{fb.remarks}&rdquo;</p>
+                    ) : null}
+                  </Card>
+                ))
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <Tabs defaultValue="executives">
         <TabsList className="bg-secondary/50 flex flex-wrap h-auto gap-1">
