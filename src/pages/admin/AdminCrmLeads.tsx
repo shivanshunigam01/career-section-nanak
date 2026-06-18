@@ -124,10 +124,6 @@ export default function AdminCrmLeads() {
   }, [search, filterStatus, filterSource, followUpDueOnly, filterExecutive, canAssignLeads, page]);
 
   useEffect(() => {
-    setPage(1);
-  }, [search, filterStatus, filterSource, filterExecutive, followUpDueOnly]);
-
-  useEffect(() => {
     void loadLeads();
   }, [loadLeads]);
 
@@ -306,11 +302,20 @@ export default function AdminCrmLeads() {
           <Input
             placeholder="Search name, mobile, email…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setPage(1);
+              setSearch(e.target.value);
+            }}
             className="pl-10 bg-secondary/50"
           />
         </div>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
+        <Select
+          value={filterStatus}
+          onValueChange={(v) => {
+            setPage(1);
+            setFilterStatus(v);
+          }}
+        >
           <SelectTrigger className="bg-secondary/50">
             <SelectValue placeholder="Stage" />
           </SelectTrigger>
@@ -321,7 +326,13 @@ export default function AdminCrmLeads() {
             ))}
           </SelectContent>
         </Select>
-        <Select value={filterSource} onValueChange={setFilterSource}>
+        <Select
+          value={filterSource}
+          onValueChange={(v) => {
+            setPage(1);
+            setFilterSource(v);
+          }}
+        >
           <SelectTrigger className="bg-secondary/50">
             <SelectValue placeholder="Source" />
           </SelectTrigger>
@@ -333,7 +344,13 @@ export default function AdminCrmLeads() {
           </SelectContent>
         </Select>
         {canAssignLeads ? (
-          <Select value={filterExecutive} onValueChange={setFilterExecutive}>
+          <Select
+            value={filterExecutive}
+            onValueChange={(v) => {
+              setPage(1);
+              setFilterExecutive(v);
+            }}
+          >
             <SelectTrigger className="bg-secondary/50">
               <SelectValue placeholder="Staff" />
             </SelectTrigger>
@@ -352,7 +369,10 @@ export default function AdminCrmLeads() {
           variant={followUpDueOnly ? "default" : "outline"}
           size="sm"
           className="h-10"
-          onClick={() => setFollowUpDueOnly((v) => !v)}
+          onClick={() => {
+            setPage(1);
+            setFollowUpDueOnly((v) => !v);
+          }}
         >
           <CalendarClock className="w-4 h-4 mr-2" />
           Follow-ups due
@@ -414,6 +434,39 @@ export default function AdminCrmLeads() {
           ))}
         </div>
       )}
+
+      {!loading && total > 0 ? (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 pt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {rangeStart}–{rangeEnd} of {total} leads · newest first
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground px-1">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            >
+              Next
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       <Dialog open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
