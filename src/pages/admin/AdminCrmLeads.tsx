@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
-  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus,
+  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -48,12 +48,16 @@ function formatDateTime(iso?: string) {
   }
 }
 
+const PAGE_SIZE = 20;
+
 export default function AdminCrmLeads() {
   const adminUser = getAdminUser();
   const isExecutive = isFieldStaffUser(adminUser);
   const canAssignLeads = adminUser?.role === "manager" || adminUser?.role === "superadmin";
 
   const [leads, setLeads] = useState<PvCrmLead[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [filterSource, setFilterSource] = useState("all");
   const [executives, setExecutives] = useState<AssignableStaffUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -99,6 +103,8 @@ export default function AdminCrmLeads() {
         status: filterStatus,
         source: filterSource,
         followUpDue: followUpDueOnly,
+        page,
+        limit: PAGE_SIZE,
         assignedTo:
           canAssignLeads && filterExecutive !== "all"
             ? filterExecutive === "unassigned"
@@ -107,17 +113,27 @@ export default function AdminCrmLeads() {
             : undefined,
       });
       setLeads(Array.isArray(res.leads) ? res.leads : []);
+      setTotal(res.total ?? 0);
     } catch (e) {
       setLeads([]);
+      setTotal(0);
       toast.error(formatApiErrors(e));
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, followUpDueOnly, filterExecutive, canAssignLeads]);
+  }, [search, filterStatus, filterSource, followUpDueOnly, filterExecutive, canAssignLeads, page]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, filterStatus, filterSource, filterExecutive, followUpDueOnly]);
 
   useEffect(() => {
     void loadLeads();
   }, [loadLeads]);
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
+  const rangeEnd = total === 0 ? 0 : Math.min(page * PAGE_SIZE, total);
 
   const stageCounts = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -380,6 +396,9 @@ export default function AdminCrmLeads() {
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>{lead.model} · {lead.source ?? "Website"}</p>
+                {lead.createdAt ? (
+                  <p className="text-[11px]">Created {formatDateTime(lead.createdAt)}</p>
+                ) : null}
                 <p className="flex items-center gap-1">
                   <UserCheck className="w-3 h-3 shrink-0" />
                   {lead.assignedTo?.name ?? "Unassigned"}
