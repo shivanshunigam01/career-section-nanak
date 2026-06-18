@@ -314,14 +314,20 @@ const ContactPage = () => {
                   />
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-                  <ModelTrimSelect
-                    model={formData.model}
-                    variant={formData.variant}
-                    onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
-                    className={inputClass}
-                    includeNotSureBoth
-                    includeMpv7={false}
-                  />
+                  <div className="flex min-w-0 w-full flex-col gap-2">
+                    <label htmlFor="contact-model-trim" className="text-xs font-medium text-muted-foreground">
+                      Model &amp; trim
+                    </label>
+                    <ModelTrimSelect
+                      id="contact-model-trim"
+                      model={formData.model}
+                      variant={formData.variant}
+                      onChange={(m, v) => setFormData({ ...formData, model: m, variant: v })}
+                      className={inputClass}
+                      includeNotSureBoth
+                      includeMpv7={false}
+                    />
+                  </div>
                   <BiharDistrictField
                     id="contact-district"
                     label="District (Bihar)"
