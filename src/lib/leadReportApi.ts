@@ -13,6 +13,22 @@ export type LeadReportOverview = {
   avgFeedbackRating: number;
 };
 
+export type LeadSourceConversionRow = {
+  source: string;
+  totalLeads: number;
+  convertedCount: number;
+  conversionRate: number;
+};
+
+export type LeadExecutiveSourceConversion = {
+  executiveId: string;
+  name: string;
+  totalLeads: number;
+  convertedCount: number;
+  conversionRate: number;
+  bySource: LeadSourceConversionRow[];
+};
+
 export type LeadExecutivePerformance = {
   executiveId: string | null;
   name: string;
@@ -99,6 +115,8 @@ export type LeadAdminReport = {
   pipeline: Record<string, number>;
   bySource: Record<string, number>;
   byModel: Record<string, number>;
+  bySourceConversion: LeadSourceConversionRow[];
+  sourceConversionByExecutive: LeadExecutiveSourceConversion[];
   executivePerformance: LeadExecutivePerformance[];
   followUpSummary: { pending: number; completed: number; overdue: number; cancelled: number; total: number };
   followUpRows: LeadFollowUpReportRow[];
@@ -124,6 +142,8 @@ const EMPTY_REPORT: LeadAdminReport = {
   pipeline: {},
   bySource: {},
   byModel: {},
+  bySourceConversion: [],
+  sourceConversionByExecutive: [],
   executivePerformance: [],
   followUpSummary: { pending: 0, completed: 0, overdue: 0, cancelled: 0, total: 0 },
   followUpRows: [],
@@ -140,6 +160,8 @@ function normalizeLeadReport(raw: LeadAdminReport | null | undefined): LeadAdmin
     pipeline: raw.pipeline ?? {},
     bySource: raw.bySource ?? {},
     byModel: raw.byModel ?? {},
+    bySourceConversion: raw.bySourceConversion ?? [],
+    sourceConversionByExecutive: raw.sourceConversionByExecutive ?? [],
     executivePerformance: raw.executivePerformance ?? [],
     followUpSummary: { ...EMPTY_REPORT.followUpSummary, ...raw.followUpSummary },
     followUpRows: raw.followUpRows ?? [],
