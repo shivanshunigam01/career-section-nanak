@@ -106,9 +106,15 @@ export async function fetchPvCrmLeads(params?: {
   source?: string;
   followUpDue?: boolean;
   assignedTo?: string;
+  page?: number;
   limit?: number;
-}): Promise<{ leads: PvCrmLead[]; total: number; stages: CrmLeadStage[] }> {
-  const q = new URLSearchParams({ limit: String(params?.limit ?? 100) });
+}): Promise<{ leads: PvCrmLead[]; total: number; page: number; limit: number; stages: CrmLeadStage[] }> {
+  const page = Math.max(params?.page ?? 1, 1);
+  const limit = Math.max(params?.limit ?? 20, 1);
+  const q = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+  });
   if (params?.search) q.set("search", params.search);
   if (params?.status && params.status !== "all") q.set("status", params.status);
   if (params?.source && params.source !== "all") q.set("source", params.source);
@@ -120,6 +126,8 @@ export async function fetchPvCrmLeads(params?: {
   return {
     leads: list,
     total: res.meta?.total ?? list.length,
+    page: res.meta?.page ?? page,
+    limit: res.meta?.limit ?? limit,
     stages: asArray<CrmLeadStage>((res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages).length
       ? asArray<CrmLeadStage>((res.meta as { stages?: CrmLeadStage[] } | undefined)?.stages)
       : [...CRM_LEAD_STAGES],
