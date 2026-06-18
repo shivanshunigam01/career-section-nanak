@@ -29,6 +29,7 @@ import {
   type AssignableStaffUser,
   type PvCrmLead,
   type PvCrmLeadDetail,
+  type PvCrmLeadDateField,
 } from "@/lib/pvLeadCrmApi";
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
@@ -65,6 +66,9 @@ export default function AdminCrmLeads() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterExecutive, setFilterExecutive] = useState("all");
   const [followUpDueOnly, setFollowUpDueOnly] = useState(false);
+  const [filterDateFrom, setFilterDateFrom] = useState("");
+  const [filterDateTo, setFilterDateTo] = useState("");
+  const [filterDateField, setFilterDateField] = useState<PvCrmLeadDateField>("created");
   const [selected, setSelected] = useState<PvCrmLead | null>(null);
   const [detail, setDetail] = useState<PvCrmLeadDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -103,6 +107,9 @@ export default function AdminCrmLeads() {
         status: filterStatus,
         source: filterSource,
         followUpDue: followUpDueOnly,
+        from: filterDateFrom || undefined,
+        to: filterDateTo || undefined,
+        dateField: filterDateField,
         page,
         limit: PAGE_SIZE,
         assignedTo:
@@ -121,7 +128,16 @@ export default function AdminCrmLeads() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, followUpDueOnly, filterExecutive, canAssignLeads, page]);
+  }, [search, filterStatus, filterSource, followUpDueOnly, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page]);
+
+  const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
+
+  const clearDateFilter = () => {
+    setPage(1);
+    setFilterDateFrom("");
+    setFilterDateTo("");
+    setFilterDateField("created");
+  };
 
   useEffect(() => {
     void loadLeads();
@@ -378,6 +394,60 @@ export default function AdminCrmLeads() {
           Follow-ups due
         </Button>
       </div>
+
+      <Card className="bg-card border-border/50 p-4">
+        <div className="flex flex-col lg:flex-row gap-3 items-end">
+          <div className="space-y-1.5 flex-1 min-w-[140px]">
+            <Label className="text-xs">From date</Label>
+            <Input
+              type="date"
+              value={filterDateFrom}
+              max={filterDateTo || undefined}
+              onChange={(e) => {
+                setPage(1);
+                setFilterDateFrom(e.target.value);
+              }}
+              className="bg-secondary/50"
+            />
+          </div>
+          <div className="space-y-1.5 flex-1 min-w-[140px]">
+            <Label className="text-xs">To date</Label>
+            <Input
+              type="date"
+              value={filterDateTo}
+              min={filterDateFrom || undefined}
+              onChange={(e) => {
+                setPage(1);
+                setFilterDateTo(e.target.value);
+              }}
+              className="bg-secondary/50"
+            />
+          </div>
+          <div className="space-y-1.5 flex-1 min-w-[160px]">
+            <Label className="text-xs">Date type</Label>
+            <Select
+              value={filterDateField}
+              onValueChange={(v) => {
+                setPage(1);
+                setFilterDateField(v as PvCrmLeadDateField);
+              }}
+            >
+              <SelectTrigger className="bg-secondary/50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="created">Created date</SelectItem>
+                <SelectItem value="activity">Last activity</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {hasDateFilter ? (
+            <Button variant="outline" size="sm" className="shrink-0 h-10" onClick={clearDateFilter}>
+              Clear dates
+            </Button>
+          ) : null}
+        </div>
+      </Card>
 
       {loading ? (
         <div className="flex justify-center py-16">

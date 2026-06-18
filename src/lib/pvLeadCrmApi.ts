@@ -101,12 +101,17 @@ export async function assignPvCrmLeadExecutive(leadId: string, executiveId: stri
   });
 }
 
+export type PvCrmLeadDateField = "created" | "activity";
+
 export async function fetchPvCrmLeads(params?: {
   search?: string;
   status?: string;
   source?: string;
   followUpDue?: boolean;
   assignedTo?: string;
+  from?: string;
+  to?: string;
+  dateField?: PvCrmLeadDateField;
   page?: number;
   limit?: number;
 }): Promise<{ leads: PvCrmLead[]; total: number; page: number; limit: number; stages: CrmLeadStage[] }> {
@@ -121,6 +126,9 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.source && params.source !== "all") q.set("source", params.source);
   if (params?.followUpDue) q.set("followUpDue", "true");
   if (params?.assignedTo) q.set("assignedTo", params.assignedTo);
+  if (params?.from) q.set("from", params.from);
+  if (params?.to) q.set("to", params.to);
+  if (params?.dateField && params.dateField !== "created") q.set("dateField", params.dateField);
 
   const res = await adminGet<PvCrmLead[]>(`${CRM_BASE}?${q}`);
   const list = asArray<PvCrmLead>(res.data);
