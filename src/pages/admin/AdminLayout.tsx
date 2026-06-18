@@ -18,6 +18,7 @@ const coreNavItems = [
   { label: "Homepage",    icon: Home,             path: "/admin/homepage" },
   { label: "Leads",       icon: Users,            path: "/admin/leads" },
   { label: "Meta Lead",   icon: Megaphone,        path: "/admin/meta-lead" },
+  { label: "Lead CRM",    icon: Users,            path: "/admin/crm/leads" },
   { label: "Test Drives", icon: TestTube,         path: "/admin/test-drives" },
   { label: "Products",    icon: Car,              path: "/admin/products" },
   { label: "Enquiries",   icon: MessageSquare,    path: "/admin/enquiries" },
@@ -27,9 +28,12 @@ const coreNavItems = [
   { label: "Settings",    icon: Settings,         path: "/admin/settings" },
 ];
 
+const crmNavItems = [
+  { label: "Lead CRM", icon: Users, path: "/admin/crm/leads", staff: true },
+];
+
 const tdNavItems = [
   { label: "My Test Drives", icon: User,         path: "/admin/td/my-bookings", staff: true },
-  { label: "Lead Management", icon: Users,        path: "/admin/td/leads",       staff: true },
   { label: "Lead Reports",    icon: BarChart3,    path: "/admin/td/leads/reports", staff: false },
   { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
   { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
@@ -134,7 +138,26 @@ const AdminLayout = () => {
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-3 sm:p-4 overscroll-contain">
           {fieldStaff ? (
-            visibleTdItems.map((item) => {
+            <>
+              {crmNavItems.map((item) => {
+                const isActive = location.pathname.startsWith(item.path);
+                return (
+                  <Link
+                    key={item.path}
+                    to={item.path}
+                    onClick={() => setSidebarOpen(false)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                      isActive
+                        ? "bg-primary/10 text-primary"
+                        : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                    }`}
+                  >
+                    <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                    <span className="truncate">{item.label}</span>
+                  </Link>
+                );
+              })}
+              {visibleTdItems.filter((item) => item.staff).map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
@@ -151,7 +174,8 @@ const AdminLayout = () => {
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
-            })
+            })}
+            </>
           ) : (
             <>
               {coreNavItems.map((item) => {
