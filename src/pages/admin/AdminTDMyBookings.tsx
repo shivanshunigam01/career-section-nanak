@@ -541,7 +541,7 @@ export default function AdminTDMyBookings() {
                         </div>
                       ) : null}
                       <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                        Test drive completed — capture customer feedback below to add them to Leads.
+                        Test drive completed — customer added to your Leads (source: Test Drive). Capture feedback below to update their status.
                       </div>
                       {feedbackLoading ? (
                         <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
