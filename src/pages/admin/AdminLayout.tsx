@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
-  TestTube, MessageSquare, Tag, Bell, Home, Image, Megaphone,
+  Tag, Bell, Home, Image,
   CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight, User
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
@@ -14,21 +14,18 @@ const ADMIN_SESSION_EXPIRED_TOAST =
   "Your session has expired. Please sign in again — your access token is no longer valid after one hour.";
 
 const coreNavItems = [
-  { label: "Dashboard",   icon: LayoutDashboard, path: "/admin/dashboard" },
-  { label: "Homepage",    icon: Home,             path: "/admin/homepage" },
-  { label: "Leads",       icon: Users,            path: "/admin/leads" },
-  { label: "Meta Lead",   icon: Megaphone,        path: "/admin/meta-lead" },
-  { label: "Lead CRM",    icon: Users,            path: "/admin/crm/leads" },
-  { label: "Test Drives", icon: TestTube,         path: "/admin/test-drives" },
-  { label: "Products",    icon: Car,              path: "/admin/products" },
-  { label: "Enquiries",   icon: MessageSquare,    path: "/admin/enquiries" },
-  { label: "Offers",      icon: Tag,              path: "/admin/offers" },
-  { label: "Content",     icon: FileText,         path: "/admin/content" },
-  { label: "Media",       icon: Image,            path: "/admin/media" },
-  { label: "Settings",    icon: Settings,         path: "/admin/settings" },
+  { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+  { label: "Homepage",  icon: Home,            path: "/admin/homepage" },
+  { label: "Lead CRM",  icon: Users,           path: "/admin/crm/leads" },
+  { label: "Products",  icon: Car,             path: "/admin/products" },
+  { label: "Offers",    icon: Tag,             path: "/admin/offers" },
+  { label: "Content",   icon: FileText,        path: "/admin/content" },
+  { label: "Media",     icon: Image,           path: "/admin/media" },
+  { label: "Settings",  icon: Settings,        path: "/admin/settings" },
 ];
 
 const crmNavItems = [
+  { label: "My Dashboard", icon: LayoutDashboard, path: "/admin/my-dashboard", staff: true },
   { label: "Lead CRM", icon: Users, path: "/admin/crm/leads", staff: true },
 ];
 
@@ -66,7 +63,7 @@ const AdminLayout = () => {
       return;
     }
     if (fieldStaff && !isStaffPortalPath(location.pathname)) {
-      navigate("/admin/td/my-bookings", { replace: true });
+      navigate("/admin/my-dashboard", { replace: true });
     }
   }, [navigate, location.pathname, fieldStaff]);
 

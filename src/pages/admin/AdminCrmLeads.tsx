@@ -488,8 +488,8 @@ export default function AdminCrmLeads() {
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3 rounded-lg border border-border/50 bg-secondary/20 p-4 text-xs">
-                <p><span className="text-muted-foreground">Lead ID</span><br /><span className="font-mono">{detail.lead.leadId || "—"}</span></p>
                 <p><span className="text-muted-foreground">Customer ID</span><br /><span className="font-mono">{detail.lead.customerId || "—"}</span></p>
+                <p><span className="text-muted-foreground">Lead ID</span><br /><span className="font-mono">{detail.lead.leadId || "—"}</span></p>
                 <p><span className="text-muted-foreground">Opportunity ID</span><br /><span className="font-mono">{detail.lead.opportunityId || "—"}</span></p>
                 <p><span className="text-muted-foreground">Registration</span><br />{detail.lead.vehicleRegistration || "—"}</p>
                 {detail.lead.subCustomerName ? (
