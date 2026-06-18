@@ -25,6 +25,7 @@ import {
   type TDLogRecord,
 } from "@/lib/tdLogApi";
 import { AddCrmLeadDialog } from "@/components/admin/AddCrmLeadDialog";
+import { DrivingLicenceVerify } from "@/components/admin/DrivingLicenceVerify";
 
 type Booking = {
   _id: string;
@@ -34,6 +35,10 @@ type Booking = {
   slotTime: string;
   slotDuration: number;
   dlVerified: boolean;
+  dlImageUrl?: string | null;
+  dlVerifiedAt?: string | null;
+  dlNumber?: string | null;
+  dlValidUntil?: string | null;
   preferredModel: string;
   remarks?: string;
   customerId: { _id: string; name: string; mobile: string; customerId: string; email?: string; city?: string } | null;
@@ -211,20 +216,6 @@ export default function AdminTDMyBookings() {
           setFeedbackLoading(false);
         }
       }
-    } catch (e) {
-      toast.error(formatApiErrors(e));
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleVerifyDl = async (id: string) => {
-    setActionLoading(true);
-    try {
-      await adminPatchJson(`/admin/td/bookings/${id}`, { dlVerified: true });
-      toast.success("Driving licence marked verified");
-      if (selected?._id === id) await refreshSelected(id);
-      void fetchBookings();
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -437,10 +428,18 @@ export default function AdminTDMyBookings() {
                   </div>
 
                   <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide">Driving licence <span className="font-normal text-muted-foreground">(optional)</span></p>
-                    <Button size="sm" variant={selected.dlVerified ? "outline" : "secondary"} className="w-full sm:w-auto" disabled={actionLoading || selected.dlVerified} onClick={() => void handleVerifyDl(selected._id)}>
-                      {selected.dlVerified ? "DL verified ✓" : "Mark DL verified (optional)"}
-                    </Button>
+                    <DrivingLicenceVerify
+                      bookingId={selected._id}
+                      dlVerified={selected.dlVerified}
+                      dlImageUrl={selected.dlImageUrl}
+                      dlNumber={selected.dlNumber}
+                      dlValidUntil={selected.dlValidUntil}
+                      disabled={actionLoading}
+                      onVerified={async () => {
+                        await refreshSelected(selected._id);
+                        void fetchBookings();
+                      }}
+                    />
                   </div>
 
                   {!isTerminalStatus(selected.bookingStatus) ? (
