@@ -416,8 +416,10 @@ export default function AdminCrmLeads() {
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>{lead.model} · {lead.source ?? "Website"}</p>
-                {lead.updatedAt ? (
-                  <p className="text-[11px]">Updated {formatDateTime(lead.updatedAt)}</p>
+                {(lead.lastActivityAt || lead.updatedAt) ? (
+                  <p className="text-[11px]">
+                    Updated {formatDateTime(lead.lastActivityAt || lead.updatedAt)}
+                  </p>
                 ) : lead.createdAt ? (
                   <p className="text-[11px]">Created {formatDateTime(lead.createdAt)}</p>
                 ) : null}
@@ -440,7 +442,7 @@ export default function AdminCrmLeads() {
       {!loading && total > 0 ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 pt-4">
           <p className="text-sm text-muted-foreground">
-            Showing {rangeStart}–{rangeEnd} of {total} leads · newest first
+            Showing {rangeStart}–{rangeEnd} of {total} leads · recent activity first
           </p>
           <div className="flex items-center gap-2">
             <Button

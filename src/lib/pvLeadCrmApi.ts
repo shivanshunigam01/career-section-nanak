@@ -28,6 +28,7 @@ export type PvCrmLead = {
   assignedTo?: { _id: string; name: string; email?: string } | null;
   createdAt?: string;
   updatedAt?: string;
+  lastActivityAt?: string;
 };
 
 export type LeadStageHistoryItem = {
