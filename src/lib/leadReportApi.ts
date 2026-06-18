@@ -88,6 +88,11 @@ export type LeadFeedbackReportRow = {
   remarks: string;
 };
 
+export type LeadAgeingBucket = {
+  bucket: string;
+  count: number;
+};
+
 export type LeadDetailReportRow = {
   leadId: string;
   name: string;
@@ -106,6 +111,8 @@ export type LeadDetailReportRow = {
   feedbackRating: number | null;
   purchaseIntention: number | null;
   converted: boolean;
+  ageDays?: number;
+  ageBucket?: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -123,6 +130,7 @@ export type LeadAdminReport = {
   activityLog: LeadActivityRow[];
   feedbackRows: LeadFeedbackReportRow[];
   leadDetailRows: LeadDetailReportRow[];
+  leadAgeing: LeadAgeingBucket[];
   stages: string[];
 };
 
@@ -150,6 +158,7 @@ const EMPTY_REPORT: LeadAdminReport = {
   activityLog: [],
   feedbackRows: [],
   leadDetailRows: [],
+  leadAgeing: [],
   stages: [],
 };
 
@@ -168,6 +177,7 @@ function normalizeLeadReport(raw: LeadAdminReport | null | undefined): LeadAdmin
     activityLog: raw.activityLog ?? [],
     feedbackRows: raw.feedbackRows ?? [],
     leadDetailRows: raw.leadDetailRows ?? [],
+    leadAgeing: raw.leadAgeing ?? [],
     stages: raw.stages ?? [],
   };
 }
