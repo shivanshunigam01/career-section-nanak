@@ -416,7 +416,9 @@ export default function AdminCrmLeads() {
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>{lead.model} · {lead.source ?? "Website"}</p>
-                {lead.createdAt ? (
+                {lead.updatedAt ? (
+                  <p className="text-[11px]">Updated {formatDateTime(lead.updatedAt)}</p>
+                ) : lead.createdAt ? (
                   <p className="text-[11px]">Created {formatDateTime(lead.createdAt)}</p>
                 ) : null}
                 <p className="flex items-center gap-1">
