@@ -39,6 +39,7 @@ interface SiteConfig {
   leadStripSubtitle: string;
   vf7Price: string;
   vf6Price: string;
+  mpv7Price: string;
   vf7Range: string;
   vf6Range: string;
 }
@@ -50,7 +51,7 @@ const initialSlides: HeroSlide[] = [
     ctaSecondary: "Explore VF 7", ctaSecondaryLink: "/models/vf7", bgImage: "", active: true, order: 1,
   },
   {
-    id: "S2", title: "VinFast VF 6", subtitle: "Smart. Sleek. Perfect for Bihar roads.", badge: "Starting ₹17,29,000*",
+    id: "S2", title: "VinFast VF 6", subtitle: "Smart. Sleek. Perfect for Bihar roads.", badge: "Starting ₹18,19,000*",
     ctaPrimary: "Book Test Drive", ctaPrimaryLink: "/test-drive", ctaSecondary: "Explore VF 6",
     ctaSecondaryLink: "/models/vf6", bgImage: "", active: true, order: 2,
   },
@@ -62,8 +63,9 @@ const initialConfig: SiteConfig = {
   heroTagline: "Bihar's First VinFast Dealer",
   leadStripTitle: "Ready to Go Electric?",
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
-  vf7Price: "₹21,89,000*",
-  vf6Price: "₹17,29,000*",
+  vf7Price: "₹22.99L*",
+  vf6Price: "₹18.19L*",
+  mpv7Price: "₹24.49L*",
   vf7Range: "532 km",
   vf6Range: "468 km",
 };
@@ -77,6 +79,7 @@ const emptySiteConfig: SiteConfig = {
   leadStripSubtitle: "",
   vf7Price: "",
   vf6Price: "",
+  mpv7Price: "",
   vf7Range: "",
   vf6Range: "",
 };
@@ -126,6 +129,7 @@ function siteConfigFromApi(doc: Record<string, unknown>): SiteConfig {
     leadStripSubtitle: String(doc.leadStripSubtitle ?? initialConfig.leadStripSubtitle),
     vf7Price: String(doc.vf7Price ?? initialConfig.vf7Price),
     vf6Price: String(doc.vf6Price ?? initialConfig.vf6Price),
+    mpv7Price: String(doc.mpv7Price ?? initialConfig.mpv7Price),
     vf7Range: String(doc.vf7Range ?? initialConfig.vf7Range),
     vf6Range: String(doc.vf6Range ?? initialConfig.vf6Range),
   };
@@ -348,11 +352,15 @@ const AdminHomepage = () => {
             <div className="grid sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 7 Display Price</Label>
-                <Input value={config.vf7Price} onChange={e => updateConfig("vf7Price", e.target.value)} className="bg-secondary/50" placeholder="₹21,89,000*" />
+                <Input value={config.vf7Price} onChange={e => updateConfig("vf7Price", e.target.value)} className="bg-secondary/50" placeholder="₹22.99L*" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 6 Display Price</Label>
-                <Input value={config.vf6Price} onChange={e => updateConfig("vf6Price", e.target.value)} className="bg-secondary/50" placeholder="₹17,29,000*" />
+                <Input value={config.vf6Price} onChange={e => updateConfig("vf6Price", e.target.value)} className="bg-secondary/50" placeholder="₹18.19L*" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">MPV 7 Display Price</Label>
+                <Input value={config.mpv7Price} onChange={e => updateConfig("mpv7Price", e.target.value)} className="bg-secondary/50" placeholder="₹24.49L*" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 7 Range</Label>

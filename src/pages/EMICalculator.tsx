@@ -9,7 +9,7 @@ import StickyMobileCTA from "@/components/StickyMobileCTA";
 const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
 
 const EMICalculator = () => {
-  const [price, setPrice] = useState(2189000);
+  const [price, setPrice] = useState(2299000);
   const [downPayment, setDownPayment] = useState(500000);
   const [tenure, setTenure] = useState(60);
   const [rate, setRate] = useState(8.5);

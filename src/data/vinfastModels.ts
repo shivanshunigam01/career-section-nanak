@@ -1,21 +1,43 @@
-/** Aligned with model pages (VF 6 / VF 7 trims). */
+/**
+ * Canonical VinFast car catalog — the single source of truth for model/variant
+ * options across the website, the test-drive module, and the admin panel.
+ *
+ *   VF 7   → Sky Infinity, Sky, Wind Infinity, Wind, Earth
+ *   VF 6   → Wind Infinity, Wind, Earth
+ *   VF MPV 7 → single lineup, no separate trims
+ */
 
-export const VF7_VARIANT_OPTIONS = [
-  "VF 7 Earth",
-  "VF 7 Wind",
-  "VF 7 Wind Infinity",
-  "VF 7 Sky",
-  "VF 7 Sky Infinity",
-] as const;
+/** Plain trim names (no model prefix), ordered as in the dealer catalog. */
+export const VF7_TRIMS = ["Sky Infinity", "Sky", "Wind Infinity", "Wind", "Earth"] as const;
+export const VF6_TRIMS = ["Wind Infinity", "Wind", "Earth"] as const;
+/** MPV 7 has no separate trims. */
+export const MPV7_TRIMS: readonly string[] = [];
 
-export const VF6_VARIANT_OPTIONS = ["VF 6 Earth", "VF 6 Wind", "VF 6 Wind Infinity"] as const;
-
-/** Single-lineup electric MPV — one trim label for forms */
+/** Full "model + trim" labels stored on leads / bookings / testimonials. */
+export const VF7_VARIANT_OPTIONS: readonly string[] = VF7_TRIMS.map((t) => `VF 7 ${t}`);
+export const VF6_VARIANT_OPTIONS: readonly string[] = VF6_TRIMS.map((t) => `VF 6 ${t}`);
+/** Single-lineup electric MPV — one label for forms. */
 export const MPV7_VARIANT_OPTIONS = ["VF MPV 7"] as const;
 
-export const DEFAULT_VF7_TRIM = VF7_VARIANT_OPTIONS[0];
-export const DEFAULT_VF6_TRIM = VF6_VARIANT_OPTIONS[0];
+/** Default trims pre-selected in forms (entry trim). */
+export const DEFAULT_VF7_TRIM = "VF 7 Earth";
+export const DEFAULT_VF6_TRIM = "VF 6 Earth";
 export const DEFAULT_MPV7_TRIM = MPV7_VARIANT_OPTIONS[0];
+
+/** Base model names. */
+export const CAR_MODELS = ["VF 7", "VF 6", "VF MPV 7"] as const;
+
+/** Plain trims for a base model (used by the demo-fleet form which stores model + variant separately). */
+export function trimsForModel(model: string): string[] {
+  if (model === "VF 6") return [...VF6_TRIMS];
+  if (model === "VF MPV 7") return [...MPV7_TRIMS];
+  return [...VF7_TRIMS];
+}
+
+/** Entry trim for a base model (empty for MPV 7). */
+export function defaultTrimForModel(model: string): string {
+  return trimsForModel(model)[0] ?? "";
+}
 
 /** Contact form: not sure which model. */
 export const MODEL_TRIM_COMBO_BOTH = "__BOTH__";
@@ -43,8 +65,8 @@ export function parseStoredModelLine(stored: string): { model: string; variant: 
   const s = stored.trim();
   if (!s) return { model: "VF 7", variant: DEFAULT_VF7_TRIM };
   if (s === "VF 6 / VF 7" || s === "VF 6 / VF 7 / VF MPV 7" || s === "Both") return { model: "Both", variant: "" };
-  if ((VF7_VARIANT_OPTIONS as readonly string[]).includes(s)) return { model: "VF 7", variant: s };
-  if ((VF6_VARIANT_OPTIONS as readonly string[]).includes(s)) return { model: "VF 6", variant: s };
+  if (VF7_VARIANT_OPTIONS.includes(s)) return { model: "VF 7", variant: s };
+  if (VF6_VARIANT_OPTIONS.includes(s)) return { model: "VF 6", variant: s };
   if ((MPV7_VARIANT_OPTIONS as readonly string[]).includes(s)) return { model: "VF MPV 7", variant: s };
   if (s === "VF 7") return { model: "VF 7", variant: DEFAULT_VF7_TRIM };
   if (s === "VF 6") return { model: "VF 6", variant: DEFAULT_VF6_TRIM };

@@ -31,7 +31,7 @@ type LeadCaptureStripProps = {
   includeMpv7InModelSelect?: boolean;
 };
 
-const LeadCaptureStrip = ({ includeMpv7InModelSelect = false }: LeadCaptureStripProps) => {
+const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripProps) => {
   const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const [formData, setFormData] = useState({

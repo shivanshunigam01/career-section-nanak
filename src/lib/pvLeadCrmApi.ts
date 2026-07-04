@@ -1,5 +1,6 @@
 import { adminGet, adminPatchJson, adminPostJson } from "@/lib/api";
 import { CRM_LEAD_STAGES, type CrmLeadStage } from "@/lib/leadStages";
+import { LEAD_SOURCE_OPTIONS } from "@/data/leadSources";
 
 const CRM_BASE = "/admin/crm/leads";
 
@@ -183,4 +184,4 @@ export async function completePvCrmFollowUp(leadId: string, followUpId: string, 
   });
 }
 
-export const PV_CRM_SOURCES = ["Website", "Meta Ads", "Test Drive", "Enquiry", "Walk-in", "Executive", "Referral", "WhatsApp"] as const;
+export const PV_CRM_SOURCES = LEAD_SOURCE_OPTIONS;

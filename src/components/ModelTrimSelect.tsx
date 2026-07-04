@@ -17,7 +17,7 @@ type Props = {
   className?: string;
   /** Contact: “Not sure — which model” */
   includeNotSureBoth?: boolean;
-  /** Set false where MPV 7 should not be selectable (e.g., compare lead strip). */
+  /** MPV 7 is part of the catalog everywhere; pass false only where it must be hidden. */
   includeMpv7?: boolean;
 };
 
@@ -28,7 +28,7 @@ export function ModelTrimSelect({
   onChange,
   className,
   includeNotSureBoth,
-  includeMpv7 = false,
+  includeMpv7 = true,
 }: Props) {
   const optionValues = useMemo(() => {
     const set = new Set<string>();

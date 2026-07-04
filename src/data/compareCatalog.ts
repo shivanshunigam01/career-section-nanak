@@ -37,9 +37,9 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
       {
         id: "earth",
         label: "Earth",
-        price: "₹17,29,000*",
+        price: "₹18,19,000*",
         specs: {
-          ex_showroom: "₹17,29,000*",
+          ex_showroom: "₹18,19,000*",
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "468 km",
@@ -157,9 +157,9 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
       {
         id: "earth",
         label: "Earth",
-        price: "₹21,89,000*",
+        price: "₹22,99,000*",
         specs: {
-          ex_showroom: "₹21,89,000*",
+          ex_showroom: "₹22,99,000*",
           power: "130 kW (177 PS)",
           torque: "250 Nm",
           range_midc: "438 km",

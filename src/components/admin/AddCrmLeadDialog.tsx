@@ -11,14 +11,13 @@ import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BIHAR_DEFAULT_DISTRICT } from "@/data/biharDistricts";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { formatApiErrors } from "@/lib/api";
+import { LEAD_SOURCE_OPTIONS, DEFAULT_LEAD_SOURCE } from "@/data/leadSources";
 import {
   createCrmLead,
   type AssignableStaffUser,
   type CrmLead,
   type CreateCrmLeadPayload,
 } from "@/lib/leadCrmApi";
-
-const LEAD_SOURCES = ["Walk-in", "Referral", "WhatsApp", "Executive", "Website", "Google Ads", "Meta Ads"] as const;
 
 type Props = {
   open: boolean;
@@ -37,7 +36,7 @@ const emptyForm = () => ({
   otherCity: "",
   model: "VF 7",
   variant: DEFAULT_VF7_TRIM,
-  source: "Walk-in" as string,
+  source: DEFAULT_LEAD_SOURCE as string,
   remarks: "",
   financeNeeded: false,
   exchangeNeeded: false,
@@ -60,7 +59,7 @@ export function AddCrmLeadDialog({
     if (!open) return;
     setForm({
       ...emptyForm(),
-      source: isExecutive ? "Executive" : "Walk-in",
+      source: DEFAULT_LEAD_SOURCE,
     });
   }, [open, isExecutive]);
 
@@ -179,7 +178,7 @@ export function AddCrmLeadDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LEAD_SOURCES.map((s) => (
+                  {LEAD_SOURCE_OPTIONS.map((s) => (
                     <SelectItem key={s} value={s}>
                       {s}
                     </SelectItem>

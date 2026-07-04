@@ -412,7 +412,6 @@ const ContactPage = () => {
                       }
                       className={inputClass}
                       includeNotSureBoth
-                      includeMpv7={false}
                     />
                   </div>
                   <BiharDistrictField

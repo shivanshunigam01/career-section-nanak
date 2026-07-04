@@ -599,7 +599,6 @@ const TestDrivePage = () => {
                       variant={formData.variant}
                       onChange={(m, v) => setFormData({ ...formData, model: m, variant: v, time: "" })}
                       className={inputClass}
-                      includeMpv7={false}
                     />
                   </div>
 
