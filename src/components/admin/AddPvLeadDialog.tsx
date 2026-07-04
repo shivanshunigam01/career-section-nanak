@@ -11,6 +11,7 @@ import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BIHAR_DEFAULT_DISTRICT } from "@/data/biharDistricts";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { formatApiErrors } from "@/lib/api";
+import { DEFAULT_LEAD_SOURCE } from "@/data/leadSources";
 import {
   createPvCrmLead,
   PV_CRM_SOURCES,
@@ -36,7 +37,7 @@ const emptyForm = () => ({
   otherCity: "",
   model: "VF 7",
   variant: DEFAULT_VF7_TRIM,
-  source: "Walk-in" as string,
+  source: DEFAULT_LEAD_SOURCE as string,
   remarks: "",
   financeNeeded: false,
   exchangeNeeded: false,
@@ -62,7 +63,7 @@ export function AddPvLeadDialog({
     if (!open) return;
     setForm({
       ...emptyForm(),
-      source: isExecutive ? "Executive" : "Walk-in",
+      source: DEFAULT_LEAD_SOURCE,
     });
   }, [open, isExecutive]);
 

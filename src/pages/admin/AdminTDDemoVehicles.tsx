@@ -13,6 +13,7 @@ import {
   Battery, MapPin, Wrench, BatteryCharging, AlertTriangle, Clock
 } from "lucide-react";
 import { toast } from "sonner";
+import { CAR_MODELS, trimsForModel, defaultTrimForModel } from "@/data/vinfastModels";
 
 type Vehicle = {
   _id: string;
@@ -85,8 +86,6 @@ const emptyVehicle = {
   availableAgainAt: "",
 };
 
-const VF6_VARIANTS = ["Earth", "Wind", "Wind Infinity"];
-const VF7_VARIANTS = ["Earth", "Wind", "Wind Infinity", "Sky", "Sky Infinity"];
 const WEBSITE_COLORS = ["Infinity Blanc", "Crimson Red", "Jet Black", "Desert Silver", "Zenith Grey", "Urban Mint"];
 
 export default function AdminTDDemoVehicles() {
@@ -322,21 +321,29 @@ export default function AdminTDDemoVehicles() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Model</Label>
-                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v, variant: v === "VF 6" ? "Earth" : "Wind" }))}>
+                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v, variant: defaultTrimForModel(v) }))}>
                   <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent>
+                  <SelectContent>
+                    {CAR_MODELS.map((m) => (
+                      <SelectItem key={m} value={m}>{m}</SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Variant</Label>
-                <Select value={form.variant} onValueChange={(v) => setForm((p) => ({ ...p, variant: v }))}>
-                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select trim" /></SelectTrigger>
-                  <SelectContent>
-                    {(form.model === "VF 6" ? VF6_VARIANTS : VF7_VARIANTS).map((v) => (
-                      <SelectItem key={v} value={v}>{v}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {trimsForModel(form.model).length === 0 ? (
+                  <Input value="No variants" disabled className="bg-secondary/50" />
+                ) : (
+                  <Select value={form.variant} onValueChange={(v) => setForm((p) => ({ ...p, variant: v }))}>
+                    <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select trim" /></SelectTrigger>
+                    <SelectContent>
+                      {trimsForModel(form.model).map((v) => (
+                        <SelectItem key={v} value={v}>{v}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
               </div>
               <div className="space-y-1.5"><Label className="text-xs">Registration No</Label><Input value={form.registrationNo} onChange={(e) => setForm((p) => ({ ...p, registrationNo: e.target.value }))} className="bg-secondary/50" placeholder="BR01AB1234" /></div>
               <div className="space-y-1.5"><Label className="text-xs">VIN No</Label><Input value={form.vinNo} onChange={(e) => setForm((p) => ({ ...p, vinNo: e.target.value }))} className="bg-secondary/50" /></div>

@@ -71,7 +71,7 @@ const variantHeroStats: Record<
 };
 
 const variantExShowroomPrice: Record<VariantId, string> = {
-  earth: "₹17,29,000*",
+  earth: "₹18,19,000*",
   wind: "₹18,69,000*",
   infinity: "₹19,19,000*",
 };

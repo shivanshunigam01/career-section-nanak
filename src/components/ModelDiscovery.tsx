@@ -72,14 +72,14 @@ function slugMatchesHref(href: string, slug: string): boolean {
 function mergeModels(
   base: Omit<ModelCard, "price">[],
   apiList: Record<string, unknown>[] | null,
-  site: { vf7Price: string; vf6Price: string; vf7Range: string; vf6Range: string },
+  site: { vf7Price: string; vf6Price: string; mpv7Price: string; vf7Range: string; vf6Range: string },
 ): ModelCard[] {
   return base.map((m) => {
     const api = apiList?.find((p) => slugMatchesHref(m.href, String(p.slug ?? "")));
     const sitePrice = m.href.includes("vf7")
       ? site.vf7Price
       : m.href.includes("mpv7")
-        ? "Bookings open*"
+        ? site.mpv7Price
         : site.vf6Price;
     const siteRange = m.href.includes("mpv7")
       ? ""
