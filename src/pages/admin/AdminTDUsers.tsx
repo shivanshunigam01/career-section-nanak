@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { adminGet, adminPatchJson, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import { adminDeleteJson, adminGet, adminPatchJson, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,9 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import {
-  Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2
+  Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -55,6 +65,7 @@ export default function AdminTDUsers() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<typeof emptyForm & { _id?: string }>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<StaffUser | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -138,6 +149,22 @@ export default function AdminTDUsers() {
       toast.success(user.active ? "User deactivated" : "User activated");
       void fetchUsers();
     } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setActionLoading(true);
+    try {
+      await adminDeleteJson(`/admin/td/users/${deleteTarget._id}`);
+      toast.success(`${deleteTarget.name} deleted`);
+      setDeleteTarget(null);
+      void fetchUsers();
+    } catch (e) {
+      // Backend blocks deleting users with assigned leads/bookings (409).
       toast.error(formatApiErrors(e));
     } finally {
       setActionLoading(false);
@@ -234,6 +261,15 @@ export default function AdminTDUsers() {
                   >
                     {user.active ? "Deactivate" : "Activate"}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={actionLoading}
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeleteTarget(user)}
+                  >
+                    <Trash2 className="w-4 h-4 mr-1" /> Delete
+                  </Button>
                 </div>
               </div>
             </Card>
@@ -286,6 +322,33 @@ export default function AdminTDUsers() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This permanently removes <span className="font-medium text-foreground">{deleteTarget?.email}</span> from
+              the User Master and they will no longer be able to log in. Users with assigned leads or test drive
+              bookings cannot be deleted — deactivate them instead. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={actionLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={(e) => {
+                e.preventDefault();
+                void handleDelete();
+              }}
+            >
+              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trash2 className="w-4 h-4 mr-2" />}
+              Delete user
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
