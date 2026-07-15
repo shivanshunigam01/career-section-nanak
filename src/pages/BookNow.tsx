@@ -13,7 +13,7 @@ import type { Lead } from "@/data/mockData";
 import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicLead } from "@/lib/publicFormsApi";
-import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, leadModelLabel } from "@/data/vinfastModels";
+import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, DEFAULT_LIMO_GREEN_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
 import { FormCaptcha } from "@/components/FormCaptcha";
@@ -68,6 +68,8 @@ const BookNowPage = () => {
     const norm = raw.toLowerCase().replace(/\s+/g, " ");
     if (norm === "vf mpv 7" || norm === "mpv7" || raw === "VF MPV 7") {
       setFormData((f) => ({ ...f, model: "VF MPV 7", variant: DEFAULT_MPV7_TRIM }));
+    } else if (norm === "limo green" || norm === "limo-green" || raw === "Limo Green") {
+      setFormData((f) => ({ ...f, model: "Limo Green", variant: DEFAULT_LIMO_GREEN_TRIM }));
     }
   }, [searchParams]);
 

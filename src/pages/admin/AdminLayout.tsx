@@ -3,10 +3,24 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
   Tag, Bell, Home, Image,
-  CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight, User
+  CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight, User,
+  MessageSquare, Clock, BellOff, Warehouse
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
+import { adminGet } from "@/lib/api";
+import { dashboardStatsFromApi } from "@/lib/apiMappers";
+import { getEnquiriesAdminInitial, getLeadsAdminInitial, getTestDrivesAdminInitial } from "@/lib/vfLocalStorage";
+import { mockEnquiries, mockLeads, mockTestDrives } from "@/data/mockData";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut, canAccessFullAdmin, isFieldStaffUser, isStaffPortalPath } from "@/lib/adminAuth";
 import { toast } from "sonner";
 
@@ -35,19 +49,118 @@ const tdNavItems = [
   { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
   { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
   { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles",    staff: false },
+  { label: "Model Master",   icon: Car,           path: "/admin/td/models",      staff: false },
+  { label: "Vehicle Stock",  icon: Warehouse,     path: "/admin/stock",          staff: false },
   { label: "TD Reports",     icon: BarChart3,     path: "/admin/td/reports",     staff: false },
   { label: "Slot Config",    icon: Building2,     path: "/admin/td/config",      staff: false },
 ];
+
+type HeaderNotification = {
+  id: string;
+  title: string;
+  sub: string;
+  icon: React.ElementType;
+  path: string;
+};
 
 const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tdExpanded, setTdExpanded] = useState(location.pathname.startsWith("/admin/td"));
+  const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [notifRev, setNotifRev] = useState(0);
 
   const adminUser = getAdminUser();
   const fieldStaff = isFieldStaffUser(adminUser);
   const fullAdmin = canAccessFullAdmin(adminUser);
+
+  useEffect(() => {
+    if (!fullAdmin) {
+      setNotifications([]);
+      return;
+    }
+
+    let cancelled = false;
+    (async () => {
+      setNotifLoading(true);
+      try {
+        let newLeadsToday = 0;
+        let tdPending = 0;
+        let openEnquiries = 0;
+        let pendingFollowUps = 0;
+
+        if (hasApi()) {
+          const res = await adminGet<Record<string, unknown>>("/admin/dashboard/stats");
+          const stats = dashboardStatsFromApi(res.data);
+          newLeadsToday = stats.newLeadsToday;
+          tdPending = (stats.testDrivesByStatus.Pending ?? 0) + (stats.testDrivesByStatus.Scheduled ?? 0);
+          openEnquiries = stats.openEnquiries;
+          pendingFollowUps = stats.pendingFollowUps;
+        } else {
+          const { seedMock: sl, leads } = getLeadsAdminInitial();
+          const L = sl ? mockLeads : leads;
+          const { seedMock: st, bookings } = getTestDrivesAdminInitial();
+          const T = st ? mockTestDrives : bookings;
+          const { seedMock: se, enquiries } = getEnquiriesAdminInitial();
+          const E = se ? mockEnquiries : enquiries;
+          const today = new Date().toISOString().slice(0, 10);
+          newLeadsToday = L.filter((l) => (l.createdAt || "").slice(0, 10) === today).length;
+          tdPending = T.filter((t) => t.status === "Pending" || t.status === "Scheduled").length;
+          openEnquiries = E.filter((e) => e.status === "Open" || e.status === "In Progress").length;
+          pendingFollowUps = L.filter((l) => l.nextFollowUp).length;
+        }
+
+        const items: HeaderNotification[] = [];
+        if (newLeadsToday > 0) {
+          items.push({
+            id: "leads-today",
+            title: `${newLeadsToday} new lead${newLeadsToday === 1 ? "" : "s"} today`,
+            sub: "Review and assign the latest leads",
+            icon: Users,
+            path: "/admin/leads",
+          });
+        }
+        if (tdPending > 0) {
+          items.push({
+            id: "td-pending",
+            title: `${tdPending} test drive${tdPending === 1 ? "" : "s"} awaiting action`,
+            sub: "Pending or scheduled bookings",
+            icon: CalendarCheck,
+            path: "/admin/test-drives",
+          });
+        }
+        if (openEnquiries > 0) {
+          items.push({
+            id: "open-enquiries",
+            title: `${openEnquiries} open enquir${openEnquiries === 1 ? "y" : "ies"}`,
+            sub: "Customers waiting for a response",
+            icon: MessageSquare,
+            path: "/admin/enquiries",
+          });
+        }
+        if (pendingFollowUps > 0) {
+          items.push({
+            id: "follow-ups",
+            title: `${pendingFollowUps} follow-up${pendingFollowUps === 1 ? "" : "s"} scheduled`,
+            sub: "Leads with a next follow-up date",
+            icon: Clock,
+            path: "/admin/crm/leads",
+          });
+        }
+        if (!cancelled) setNotifications(items);
+      } catch {
+        if (!cancelled) setNotifications([]);
+      } finally {
+        if (!cancelled) setNotifLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [fullAdmin, notifRev]);
 
   useEffect(() => {
     const api = hasApi();
@@ -262,22 +375,105 @@ const AdminLayout = () => {
             <Menu className="h-6 w-6" />
           </button>
           <div className="min-w-0 flex-1 lg:block" />
-          <button
-            type="button"
-            className="relative shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation"
-            aria-label="Notifications"
+          <Popover
+            open={notifOpen}
+            onOpenChange={(open) => {
+              setNotifOpen(open);
+              if (open) setNotifRev((r) => r + 1);
+            }}
           >
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
-              3
-            </span>
-          </button>
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary sm:h-10 sm:w-10"
-            title={adminUser ? `${adminUser.email}${adminUser.designationLabel ? ` · ${adminUser.designationLabel}` : ""}` : ""}
-          >
-            {avatarLabel}
-          </div>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="relative shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted hover:text-foreground touch-manipulation"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {notifications.length > 0 && (
+                  <span className="absolute right-1 top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[9px] font-bold text-primary-foreground">
+                    {notifications.length}
+                  </span>
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-[min(20rem,calc(100vw-1.5rem))] p-0">
+              <div className="border-b border-border px-4 py-3">
+                <p className="text-sm font-semibold text-foreground">Notifications</p>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifLoading && notifications.length === 0 ? (
+                  <p className="px-4 py-6 text-center text-sm text-muted-foreground">Loading…</p>
+                ) : notifications.length === 0 ? (
+                  <div className="flex flex-col items-center gap-2 px-4 py-8 text-muted-foreground">
+                    <BellOff className="h-6 w-6 opacity-60" />
+                    <p className="text-sm">You're all caught up</p>
+                  </div>
+                ) : (
+                  notifications.map((n) => (
+                    <button
+                      key={n.id}
+                      type="button"
+                      onClick={() => {
+                        setNotifOpen(false);
+                        navigate(n.path);
+                      }}
+                      className="flex w-full items-start gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors last:border-0 hover:bg-secondary/50 touch-manipulation"
+                    >
+                      <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <n.icon className="h-4 w-4" />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-sm font-medium text-foreground">{n.title}</span>
+                        <span className="block text-xs text-muted-foreground">{n.sub}</span>
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/20 text-xs font-bold text-primary transition-colors hover:bg-primary/30 sm:h-10 sm:w-10 touch-manipulation"
+                aria-label="Profile menu"
+                title={adminUser ? `${adminUser.email}${adminUser.designationLabel ? ` · ${adminUser.designationLabel}` : ""}` : ""}
+              >
+                {avatarLabel}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64">
+              <DropdownMenuLabel>
+                <p className="truncate text-sm font-semibold text-foreground">{adminUser?.name || "Admin"}</p>
+                {adminUser?.email ? (
+                  <p className="truncate text-xs font-normal text-muted-foreground">{adminUser.email}</p>
+                ) : null}
+                {adminUser?.designationLabel ? (
+                  <p className="truncate text-xs font-normal text-muted-foreground">{adminUser.designationLabel}</p>
+                ) : null}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer"
+                onClick={() => navigate(fieldStaff ? "/admin/my-dashboard" : "/admin/dashboard")}
+              >
+                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+              </DropdownMenuItem>
+              {fullAdmin && (
+                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/admin/settings")}>
+                  <Settings className="mr-2 h-4 w-4" /> Settings
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="cursor-pointer text-destructive focus:text-destructive"
+                onClick={handleLogout}
+              >
+                <LogOut className="mr-2 h-4 w-4" /> Sign Out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </header>
 
         <main className="flex-1 overflow-x-hidden overflow-y-auto p-3 sm:p-5 md:p-6 lg:p-8">

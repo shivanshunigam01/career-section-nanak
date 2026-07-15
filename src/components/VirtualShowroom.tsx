@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import stepInsideLuxuryV6 from "@/assets/step-inside-luxury-v6-upload.png";
 import vf7Interior from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-08.jpg";
 import mpv7Hero from "@/assets/mpv7-gallery/mpv7-new.png";
+import limoGreenHero from "@/assets/limo-green/design-car.webp";
 import leadInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 
 const interiorModels = [
@@ -26,6 +27,13 @@ const interiorModels = [
     image: mpv7Hero,
     alt: "VinFast VF MPV 7 — studio exterior, seven-seat electric MPV",
     objectClass: "object-cover object-[48%_top]",
+  },
+  {
+    href: "/models/limo-green",
+    label: "Limo Green",
+    image: limoGreenHero,
+    alt: "VinFast Limo Green — studio exterior, seven-seat electric MPV",
+    objectClass: "object-cover object-center",
   },
 ] as const;
 
@@ -70,7 +78,7 @@ const VirtualShowroom = () => {
           </div>
         </motion.div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-6 max-w-6xl mx-auto w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 sm:gap-6 max-w-6xl mx-auto w-full">
           {interiorModels.map((m, i) => (
             <motion.div
               key={m.href}

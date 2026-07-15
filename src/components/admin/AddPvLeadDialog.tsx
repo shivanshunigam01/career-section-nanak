@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +20,8 @@ import {
   type CreatePvCrmLeadPayload,
   type PvCrmLead,
 } from "@/lib/pvLeadCrmApi";
+import { lookupCrmCustomerByMobile, type CustomerHistory } from "@/lib/crmCustomerApi";
+import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog";
 
 type Props = {
   open: boolean;
@@ -59,13 +62,42 @@ export function AddPvLeadDialog({
   const [saving, setSaving] = useState(false);
   const staffUsers = Array.isArray(executives) ? executives : [];
 
+  // Returning-customer popup: full history shown when a known mobile is entered.
+  const [existingHistory, setExistingHistory] = useState<CustomerHistory | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const lookedUpMobileRef = useRef("");
+
   useEffect(() => {
     if (!open) return;
     setForm({
       ...emptyForm(),
       source: DEFAULT_LEAD_SOURCE,
     });
+    setExistingHistory(null);
+    setShowHistory(false);
+    lookedUpMobileRef.current = "";
   }, [open, isExecutive]);
+
+  useEffect(() => {
+    const mobile = form.mobile.trim();
+    if (!open || !/^[6-9]\d{9}$/.test(mobile) || lookedUpMobileRef.current === mobile) return;
+    lookedUpMobileRef.current = mobile;
+    lookupCrmCustomerByMobile(mobile)
+      .then((res) => {
+        if (res.existingCustomer) {
+          setExistingHistory(res);
+          setShowHistory(true);
+          setForm((f) => ({
+            ...f,
+            name: f.name.trim() || res.customer.name,
+            email: f.email.trim() || res.customer.email || "",
+          }));
+        } else {
+          setExistingHistory(null);
+        }
+      })
+      .catch(() => setExistingHistory(null));
+  }, [open, form.mobile]);
 
   const handleSave = async () => {
     if (!form.name.trim() || form.name.trim().length < 2) {
@@ -136,6 +168,16 @@ export function AddPvLeadDialog({
                 className="bg-secondary/50"
                 inputMode="numeric"
               />
+              {existingHistory ? (
+                <button
+                  type="button"
+                  onClick={() => setShowHistory(true)}
+                  className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline"
+                >
+                  <History className="w-3 h-3" />
+                  Existing customer {existingHistory.customer.customerId ? `(${existingHistory.customer.customerId})` : ""} — view history
+                </button>
+              ) : null}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">Email (optional)</Label>
@@ -223,6 +265,13 @@ export function AddPvLeadDialog({
           </div>
         </div>
       </DialogContent>
+
+      <CustomerHistoryDialog
+        open={showHistory}
+        onOpenChange={setShowHistory}
+        history={existingHistory}
+        headline="Existing customer — full history"
+      />
     </Dialog>
   );
 }

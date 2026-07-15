@@ -6,6 +6,7 @@ import { Battery, Gauge, Shield, Users, Zap } from "lucide-react";
 import vf7FrontHero from "@/assets/vf7-model-discovery-upload.png";
 import vf6DiscoveryHero from "@/assets/vf6-model-discovery-upload.png";
 import mpv7Card from "@/assets/mpv7-gallery/mpv7-new.png";
+import limoGreenCard from "@/assets/limo-green/modal-car.webp";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
@@ -59,10 +60,23 @@ const BASE_MODELS: Omit<ModelCard, "price">[] = [
       { icon: Users, label: "Seats", value: "7" },
     ],
   },
+  {
+    name: "Limo Green",
+    tagline: "Built for your business.",
+    image: limoGreenCard,
+    href: "/models/limo-green",
+    specs: [
+      { icon: Battery, label: "Battery", value: "60.13 kWh" },
+      { icon: Gauge, label: "Range", value: "450 km" },
+      { icon: Zap, label: "Max. power", value: "150 kW" },
+      { icon: Users, label: "Seats", value: "7" },
+    ],
+  },
 ];
 
 function slugMatchesHref(href: string, slug: string): boolean {
   const s = slug.toLowerCase();
+  if (href.includes("limo-green")) return s.includes("limo");
   if (href.includes("mpv7")) return s.includes("mpv7") || s.includes("mpv") || s === "vf-mpv-7" || s.endsWith("mpv7");
   if (href.includes("vf7")) return s.includes("vf7") || s === "vf-7" || s.endsWith("vf7");
   if (href.includes("vf6")) return s.includes("vf6") || s === "vf-6" || s.endsWith("vf6");
@@ -72,7 +86,7 @@ function slugMatchesHref(href: string, slug: string): boolean {
 function mergeModels(
   base: Omit<ModelCard, "price">[],
   apiList: Record<string, unknown>[] | null,
-  site: { vf7Price: string; vf6Price: string; mpv7Price: string; vf7Range: string; vf6Range: string },
+  site: { vf7Price: string; vf6Price: string; mpv7Price: string; limoGreenPrice: string; vf7Range: string; vf6Range: string },
 ): ModelCard[] {
   return base.map((m) => {
     const api = apiList?.find((p) => slugMatchesHref(m.href, String(p.slug ?? "")));
@@ -80,8 +94,10 @@ function mergeModels(
       ? site.vf7Price
       : m.href.includes("mpv7")
         ? site.mpv7Price
-        : site.vf6Price;
-    const siteRange = m.href.includes("mpv7")
+        : m.href.includes("limo-green")
+          ? site.limoGreenPrice
+          : site.vf6Price;
+    const siteRange = m.href.includes("mpv7") || m.href.includes("limo-green")
       ? ""
       : m.href.includes("vf7")
         ? site.vf7Range

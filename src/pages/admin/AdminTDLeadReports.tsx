@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   BarChart3, RefreshCw, Loader2, Users, Target, MessageSquare,
-  CalendarClock, Star, UserCheck, ArrowLeft, AlertTriangle, CheckCircle2, Activity, Timer,
+  CalendarClock, Star, UserCheck, ArrowLeft, AlertTriangle, CheckCircle2, Activity, Timer, Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
@@ -81,6 +81,7 @@ function activityIcon(type: LeadActivityRow["type"]) {
     case "follow_up": return MessageSquare;
     case "feedback": return Star;
     case "assignment": return UserCheck;
+    case "edit": return Pencil;
     default: return Activity;
   }
 }
@@ -243,33 +244,37 @@ export default function AdminTDLeadReports() {
       </div>
 
       <Card className="bg-card border-border/50 p-4">
-        <div className="flex flex-col lg:flex-row gap-3 items-end">
-          <div className="space-y-1.5 flex-1">
-            <Label className="text-xs">From date</Label>
-            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="bg-secondary/50" />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-1 lg:gap-3">
+            <div className="space-y-1.5 w-full lg:flex-1">
+              <Label className="text-xs">From date</Label>
+              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full bg-secondary/50" />
+            </div>
+            <div className="space-y-1.5 w-full lg:flex-1">
+              <Label className="text-xs">To date</Label>
+              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full bg-secondary/50" />
+            </div>
+            <div className="space-y-1.5 w-full sm:col-span-2 lg:col-span-1 lg:flex-1">
+              <Label className="text-xs">Executive / staff</Label>
+              <Select value={executiveId} onValueChange={setExecutiveId}>
+                <SelectTrigger className="w-full bg-secondary/50">
+                  <SelectValue placeholder="All staff" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All staff</SelectItem>
+                  {staff.map((s) => (
+                    <SelectItem key={s._id} value={s._id}>
+                      {s.name}{s.designationLabel ? ` · ${s.designationLabel}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-          <div className="space-y-1.5 flex-1">
-            <Label className="text-xs">To date</Label>
-            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="bg-secondary/50" />
+          <div className="flex gap-3">
+            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground flex-1 lg:flex-none shrink-0">Apply</Button>
+            <Button onClick={() => { setFrom(""); setTo(""); setExecutiveId("all"); }} variant="outline" className="flex-1 lg:flex-none shrink-0">Clear</Button>
           </div>
-          <div className="space-y-1.5 flex-1">
-            <Label className="text-xs">Executive / staff</Label>
-            <Select value={executiveId} onValueChange={setExecutiveId}>
-              <SelectTrigger className="bg-secondary/50">
-                <SelectValue placeholder="All staff" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All staff</SelectItem>
-                {staff.map((s) => (
-                  <SelectItem key={s._id} value={s._id}>
-                    {s.name}{s.designationLabel ? ` · ${s.designationLabel}` : ""}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground shrink-0">Apply</Button>
-          <Button onClick={() => { setFrom(""); setTo(""); setExecutiveId("all"); }} variant="outline" className="shrink-0">Clear</Button>
         </div>
       </Card>
 
@@ -346,6 +351,51 @@ export default function AdminTDLeadReports() {
               followUpRows.filter(
                 (r) => r.status === "pending" && r.scheduledAt && new Date(r.scheduledAt) < new Date(),
               ),
+            )
+          }
+        />
+        <StatCard
+          label="TD booked / done"
+          value={`${overview.testDrivesBooked} / ${overview.testDrivesDone}`}
+          icon={CalendarClock}
+          color="text-blue-400"
+          onClick={() => openLeadPopup("Test drives booked", leadDetailRows.filter((r) => r.testDriveBooked))}
+        />
+        <StatCard
+          label="Repeat approvals"
+          value={overview.repeatApprovalsPending}
+          icon={AlertTriangle}
+          color="text-amber-400"
+          sub="awaiting admin decision"
+          onClick={() =>
+            openLeadPopup(
+              "Repeat test drives awaiting approval",
+              leadDetailRows.filter((r) => r.testDriveStatus === "Awaiting Approval"),
+            )
+          }
+        />
+        <StatCard
+          label="Delayed / overdue"
+          value={overview.delayedLeads}
+          icon={AlertTriangle}
+          color="text-red-400"
+          onClick={() =>
+            openLeadPopup(
+              "Delayed & overdue leads",
+              leadDetailRows.filter((r) => r.delayStatus === "Delayed" || r.delayStatus === "Overdue"),
+            )
+          }
+        />
+        <StatCard
+          label="Action required"
+          value={overview.actionRequired}
+          icon={Target}
+          color="text-amber-400"
+          sub="management attention"
+          onClick={() =>
+            openLeadPopup(
+              "Leads needing action",
+              leadDetailRows.filter((r) => r.actionRequired && r.actionRequired !== "—"),
             )
           }
         />
@@ -866,16 +916,19 @@ export default function AdminTDLeadReports() {
                     <th className="text-left p-3">Customer</th>
                     <th className="text-left p-3">Model</th>
                     <th className="text-left p-3">Stage</th>
+                    <th className="text-left p-3">Test drive</th>
                     <th className="text-left p-3">Assigned to</th>
                     <th className="text-left p-3">Follow-ups</th>
-                    <th className="text-left p-3">Next follow-up</th>
                     <th className="text-left p-3">Feedback</th>
+                    <th className="text-left p-3">Photo / GPS</th>
+                    <th className="text-left p-3">Delay</th>
+                    <th className="text-left p-3">Action required</th>
                     <th className="text-left p-3">Remarks</th>
                   </tr>
                 </thead>
                 <tbody>
                   {leadDetailRows.length === 0 ? (
-                    <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No leads in this period</td></tr>
+                    <tr><td colSpan={11} className="p-8 text-center text-muted-foreground">No leads in this period</td></tr>
                   ) : (
                     leadDetailRows.map((row) => (
                       <tr key={row.leadId} className="border-b border-border/20 hover:bg-secondary/10">
@@ -889,11 +942,77 @@ export default function AdminTDLeadReports() {
                           <Badge className={cn("text-[10px]", STAGE_COLORS[row.status] ?? "bg-muted")}>{row.status}</Badge>
                           {row.converted ? <Badge className="ml-1 text-[10px] bg-green-400/10 text-green-400">Converted</Badge> : null}
                         </td>
+                        <td className="p-3">
+                          <Badge
+                            className={cn(
+                              "text-[10px]",
+                              row.testDriveStatus === "Done"
+                                ? "bg-green-400/10 text-green-400"
+                                : row.testDriveStatus === "Booked"
+                                  ? "bg-blue-400/10 text-blue-400"
+                                  : row.testDriveStatus === "Awaiting Approval"
+                                    ? "bg-amber-400/10 text-amber-400"
+                                    : "bg-muted text-muted-foreground",
+                            )}
+                          >
+                            {row.testDriveStatus}
+                          </Badge>
+                          {row.testDriveBookingId ? (
+                            <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{row.testDriveBookingId}</p>
+                          ) : null}
+                        </td>
                         <td className="p-3">{row.assignedTo}</td>
                         <td className="p-3">{row.followUpCount} ({row.followUpsPending} pending)</td>
-                        <td className="p-3 whitespace-nowrap">{fmtDate(row.nextFollowUp)}</td>
                         <td className="p-3">
                           {row.feedbackRating != null ? `${row.feedbackRating}⭐ · ${row.purchaseIntention ?? "—"}/5` : "—"}
+                        </td>
+                        <td className="p-3">
+                          <div className="flex items-center gap-2">
+                            {row.customerPhotoUrl ? (
+                              <a href={row.customerPhotoUrl} target="_blank" rel="noreferrer" className="shrink-0">
+                                <img
+                                  src={row.customerPhotoUrl}
+                                  alt={`${row.name} photo`}
+                                  className="w-8 h-8 rounded-full object-cover border border-border/60"
+                                />
+                              </a>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                            {row.latitude != null && row.longitude != null ? (
+                              <a
+                                href={`https://www.google.com/maps?q=${row.latitude},${row.longitude}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-[10px] text-primary hover:underline whitespace-nowrap"
+                              >
+                                {row.latitude.toFixed(4)}, {row.longitude.toFixed(4)}
+                              </a>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="p-3">
+                          <Badge
+                            className={cn(
+                              "text-[10px]",
+                              row.delayStatus === "On Track"
+                                ? "bg-green-400/10 text-green-400"
+                                : row.delayStatus === "Closed"
+                                  ? "bg-muted text-muted-foreground"
+                                  : row.delayStatus === "Delayed"
+                                    ? "bg-amber-400/10 text-amber-400"
+                                    : "bg-red-400/10 text-red-400",
+                            )}
+                          >
+                            {row.delayStatus}
+                          </Badge>
+                        </td>
+                        <td className="p-3 max-w-[11rem]">
+                          {row.actionRequired && row.actionRequired !== "—" ? (
+                            <span className="text-amber-600 dark:text-amber-400">{row.actionRequired}</span>
+                          ) : (
+                            "—"
+                          )}
                         </td>
                         <td className="p-3 max-w-[10rem] truncate" title={row.remarks}>{row.remarks}</td>
                       </tr>

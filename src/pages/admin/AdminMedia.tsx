@@ -21,7 +21,7 @@ const initialMedia: MediaItem[] = [
   { id: "M2", url: "", name: "VF6 Hero Banner", tag: "VF 6", uploadedAt: "2026-03-31" },
 ];
 
-const TAGS = ["All", "VF 7", "VF 6", "Banner", "Interior", "Exterior", "Colour", "Other"];
+const TAGS = ["All", "VF 7", "VF 6", "VF MPV 7", "Limo Green", "Banner", "Interior", "Exterior", "Colour", "Other"];
 
 function mediaFromApi(doc: Record<string, unknown>): MediaItem {
   const created = doc.createdAt ? new Date(String(doc.createdAt)).toISOString().slice(0, 10) : "";

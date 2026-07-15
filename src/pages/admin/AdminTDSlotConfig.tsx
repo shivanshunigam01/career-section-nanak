@@ -19,6 +19,7 @@ import {
   normalizeSlotTimesList,
 } from "@/lib/tdSlotSchedule";
 import { TdSlotGrid, type TdSlotGridItem } from "@/components/TdSlotGrid";
+import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 
 type Branch = { _id: string; name: string; code: string };
 type SlotConfig = {
@@ -46,6 +47,7 @@ type SlotAvailability = {
 type FleetSummary = { model: string; variant?: string; label: string; available: number; total: number; capacity: number };
 
 export default function AdminTDSlotConfig() {
+  const { models: catalogModels } = useVehicleCatalog();
   const [branches, setBranches] = useState<Branch[]>([]);
   const [configs, setConfigs] = useState<SlotConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -574,8 +576,9 @@ export default function AdminTDSlotConfig() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="VF 6">VF 6</SelectItem>
-                          <SelectItem value="VF 7">VF 7</SelectItem>
+                          {catalogModels.map((m) => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <Button
@@ -683,7 +686,7 @@ export default function AdminTDSlotConfig() {
                   <Card className="bg-card border-border/50 p-5 space-y-4">
                     <h3 className="font-semibold flex items-center gap-2"><Search className="w-4 h-4 text-primary" /> Website preview (live API)</h3>
                     <p className="text-xs text-muted-foreground">
-                      Same API as the public test drive page — pick model to preview VF 6 vs VF 7 availability.
+                      Same API as the public test drive page — pick a model to preview its availability.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-3">
                       <Input type="date" value={previewDate} onChange={(e) => setPreviewDate(e.target.value)} className="bg-secondary/50 flex-1" />
@@ -692,8 +695,9 @@ export default function AdminTDSlotConfig() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="VF 6">VF 6</SelectItem>
-                          <SelectItem value="VF 7">VF 7</SelectItem>
+                          {catalogModels.map((m) => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <Button onClick={() => void fetchSlotPreview()} disabled={slotsLoading} className="bg-primary text-primary-foreground shrink-0">

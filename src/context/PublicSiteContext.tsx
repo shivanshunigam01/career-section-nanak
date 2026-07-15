@@ -25,6 +25,7 @@ export type SiteConfigPublic = {
   vf7Price: string;
   vf6Price: string;
   mpv7Price: string;
+  limoGreenPrice: string;
   vf7Range: string;
   vf6Range: string;
   /** Set by API from env when WhatsApp OTP is enabled on the server. */
@@ -51,6 +52,7 @@ const DEFAULT_SITE: SiteConfigPublic = {
   vf7Price: "₹22.99L*",
   vf6Price: "₹18.19L*",
   mpv7Price: "₹24.49L*",
+  limoGreenPrice: "₹22.99L*",
   vf7Range: "532 km",
   vf6Range: "468 km",
   features: { whatsappOtp: false },
@@ -111,6 +113,7 @@ function mergeSite(doc: Record<string, unknown> | null): SiteConfigPublic {
     vf7Price: coalesceStr(doc.vf7Price, DEFAULT_SITE.vf7Price),
     vf6Price: coalesceStr(doc.vf6Price, DEFAULT_SITE.vf6Price),
     mpv7Price: coalesceStr(doc.mpv7Price, DEFAULT_SITE.mpv7Price),
+    limoGreenPrice: coalesceStr(doc.limoGreenPrice, DEFAULT_SITE.limoGreenPrice),
     vf7Range: coalesceStr(doc.vf7Range, DEFAULT_SITE.vf7Range),
     vf6Range: coalesceStr(doc.vf6Range, DEFAULT_SITE.vf6Range),
     features: {

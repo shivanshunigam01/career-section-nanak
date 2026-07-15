@@ -11,6 +11,7 @@ import Index from "./pages/Index";
 import ModelVF7 from "./pages/ModelVF7";
 import ModelVF6 from "./pages/ModelVF6";
 import ModelMPV7 from "./pages/ModelMPV7";
+import ModelLimoGreen from "./pages/ModelLimoGreen";
 import TestDrive from "./pages/TestDrive";
 import BookNow from "./pages/BookNow";
 import EMICalculator from "./pages/EMICalculator";
@@ -21,6 +22,7 @@ import PrivacyPolicyPage from "./pages/PrivacyPolicy";
 import TermsOfServicePage from "./pages/TermsOfService";
 import PaymentRefundPolicyPage from "./pages/PaymentRefundPolicy";
 import TermsAndConditionsPage from "./pages/TermsAndConditions";
+import PostDeliveryFeedback from "./pages/PostDeliveryFeedback";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -38,6 +40,8 @@ import AdminMedia from "./pages/admin/AdminMedia";
 import AdminMetaLeadCRM from "./pages/admin/AdminMetaLeadCRM";
 import AdminTDBookings from "./pages/admin/AdminTDBookings";
 import AdminTDDemoVehicles from "./pages/admin/AdminTDDemoVehicles";
+import AdminVehicleModels from "./pages/admin/AdminVehicleModels";
+import AdminVehicleStock from "./pages/admin/AdminVehicleStock";
 import AdminTDReports from "./pages/admin/AdminTDReports";
 import AdminTDSlotConfig from "./pages/admin/AdminTDSlotConfig";
 import AdminTDUsers from "./pages/admin/AdminTDUsers";
@@ -79,6 +83,7 @@ const App = () => {
           <Route path="/models/vf7" element={<ModelVF7 />} />
           <Route path="/models/vf6" element={<ModelVF6 />} />
           <Route path="/models/mpv7" element={<ModelMPV7 />} />
+          <Route path="/models/limo-green" element={<ModelLimoGreen />} />
           <Route path="/book-now" element={<BookNow />} />
           <Route path="/test-drive" element={<TestDrive />} />
           <Route path="/emi-calculator" element={<EMICalculator />} />
@@ -89,6 +94,8 @@ const App = () => {
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/payment-refund-policy" element={<PaymentRefundPolicyPage />} />
+          {/* URL-only page (QR code) — intentionally not linked from any menu or footer */}
+          <Route path="/post-delivery-feedback" element={<PostDeliveryFeedback />} />
 
           {/* Customer portal */}
           <Route path="/customer/login" element={<CustomerLogin />} />
@@ -122,6 +129,8 @@ const App = () => {
             <Route path="td/leads" element={<AdminTDLeads />} />
             <Route path="td/leads/reports" element={<AdminTDLeadReports />} />
             <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
+            <Route path="td/models" element={<AdminVehicleModels />} />
+            <Route path="stock" element={<AdminVehicleStock />} />
             <Route path="td/reports" element={<AdminTDReports />} />
             <Route path="td/config" element={<AdminTDSlotConfig />} />
             <Route path="td/users" element={<AdminTDUsers />} />

@@ -17,7 +17,7 @@ import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } f
 import { formatApiErrors } from "@/lib/api";
 import { submitPublicTestDrive } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, leadModelLabel } from "@/data/vinfastModels";
-import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { FormCaptcha } from "@/components/FormCaptcha";
 import { BiharDistrictField } from "@/components/BiharDistrictField";
 import {
@@ -98,6 +98,7 @@ function FormSection({
 const TestDrivePage = () => {
   const { getToken } = usePublicFormRecaptcha();
   const { siteConfig, dealer } = usePublicSite();
+  const vehicleCatalog = useVehicleCatalog();
   const [formData, setFormData] = useState({
     name: "",
     mobile: "",
@@ -125,6 +126,7 @@ const TestDrivePage = () => {
     : undefined;
   const isPatnaSelected = isPatnaDistrict(formData.city);
   const useLiveSlots = hasApi();
+  const otpRequired = hasApi() && Boolean(siteConfig.features?.whatsappOtp);
 
   const handleMobileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
@@ -192,6 +194,10 @@ const TestDrivePage = () => {
     }
     if (!formData.purchaseTimeline) {
       toast.error("Please select when you are planning to purchase.");
+      return;
+    }
+    if (otpRequired && !waToken) {
+      toast.error("Please verify your mobile number with the WhatsApp code before booking.");
       return;
     }
 
@@ -577,7 +583,7 @@ const TestDrivePage = () => {
                       className={inputClass}
                     />
                   </div>
-                  {hasApi() && siteConfig.features?.whatsappOtp && (
+                  {otpRequired && (
                     <WhatsAppOtpVerify
                       mobile={formData.mobile.replace(/\D/g, "").slice(0, 10)}
                       displayName={formData.name.trim() || "Customer"}
@@ -589,17 +595,53 @@ const TestDrivePage = () => {
                 </FormSection>
 
                 <FormSection title="Vehicle & slot">
-                  <div className={fieldBlockClass}>
-                    <label htmlFor="td-model-trim" className={labelClass}>
-                      Select your test drive *
-                    </label>
-                    <ModelTrimSelect
-                      id="td-model-trim"
-                      model={formData.model}
-                      variant={formData.variant}
-                      onChange={(m, v) => setFormData({ ...formData, model: m, variant: v, time: "" })}
-                      className={inputClass}
-                    />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
+                    <div className={fieldBlockClass}>
+                      <label htmlFor="td-model" className={labelClass}>
+                        Model *
+                      </label>
+                      <select
+                        id="td-model"
+                        value={vehicleCatalog.models.includes(formData.model) ? formData.model : vehicleCatalog.models[0] ?? ""}
+                        onChange={(e) => {
+                          const m = e.target.value;
+                          setFormData({
+                            ...formData,
+                            model: m,
+                            variant: vehicleCatalog.defaultVariantFor(m),
+                            time: "",
+                          });
+                        }}
+                        className={inputClass}
+                      >
+                        {vehicleCatalog.models.map((m) => (
+                          <option key={m} value={m}>
+                            VinFast {m}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className={fieldBlockClass}>
+                      <label htmlFor="td-variant" className={labelClass}>
+                        Variant *
+                      </label>
+                      {vehicleCatalog.trimsFor(formData.model).length === 0 ? (
+                        <input value="Single lineup — no variants" disabled className={inputClass} />
+                      ) : (
+                        <select
+                          id="td-variant"
+                          value={formData.variant}
+                          onChange={(e) => setFormData({ ...formData, variant: e.target.value, time: "" })}
+                          className={inputClass}
+                        >
+                          {vehicleCatalog.variantOptionsFor(formData.model).map((label) => (
+                            <option key={label} value={label}>
+                              {label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   </div>
 
                   {useLiveSlots ? (
@@ -844,9 +886,15 @@ const TestDrivePage = () => {
                   variant="hero"
                   size="lg"
                   className="w-full"
+                  disabled={otpRequired && !waToken}
                 >
                   Confirm Test Drive
                 </Button>
+                {otpRequired && !waToken ? (
+                  <p className="text-center text-amber-600 text-[11px]">
+                    Verify your mobile number with the WhatsApp code above to enable booking.
+                  </p>
+                ) : null}
                 <p className="text-center text-muted-foreground text-[11px]">By submitting, you agree to our privacy policy.</p>
                 <p className="text-center text-muted-foreground text-[11px] lg:hidden">
                   Ready to buy?{" "}

@@ -46,8 +46,8 @@ const Footer = () => {
             </p>
             <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mb-6">
               {dealer.dealerName} — Bihar&apos;s authorized {dealer.brand}{" "}
-              dealer. Experience electric SUVs and the seven-seat VF MPV 7 —
-              world-class safety, technology, and support.
+              dealer. Experience electric SUVs and the seven-seat VF MPV 7 and
+              Limo Green — world-class safety, technology, and support.
             </p>
             <div className="flex gap-4">
               <a
@@ -84,6 +84,7 @@ const Footer = () => {
                 { label: "VF 7", href: "/models/vf7" },
                 { label: "VF 6", href: "/models/vf6" },
                 { label: "VF MPV 7", href: "/models/mpv7" },
+                { label: "Limo Green", href: "/models/limo-green" },
                 { label: "Compare Models", href: "/compare" },
                 { label: "Pre-Booking", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },

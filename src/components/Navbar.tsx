@@ -14,6 +14,7 @@ const navLinks = [
   { label: "VF 7", href: "/models/vf7" },
   { label: "VF 6", href: "/models/vf6" },
   { label: "VF MPV 7", href: "/models/mpv7" },
+  { label: "Limo Green", href: "/models/limo-green" },
   { label: "Compare", href: "/compare" },
   // { label: "Pre-Booking", href: "/book-now" },
   { label: "Test Drive", href: "/test-drive" },

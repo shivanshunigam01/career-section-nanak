@@ -244,11 +244,13 @@ export default function AdminTDReports() {
       </div>
 
       <Card className="bg-card border-border/50 p-4">
-        <div className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="space-y-1.5 flex-1"><Label className="text-xs">From Date</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="bg-secondary/50" /></div>
-          <div className="space-y-1.5 flex-1"><Label className="text-xs">To Date</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="bg-secondary/50" /></div>
-          <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground shrink-0">Apply Filter</Button>
-          <Button onClick={() => { setFrom(""); setTo(""); }} variant="outline" className="shrink-0">Clear</Button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="space-y-1.5 w-full sm:flex-1"><Label className="text-xs">From Date</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full bg-secondary/50" /></div>
+          <div className="space-y-1.5 w-full sm:flex-1"><Label className="text-xs">To Date</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full bg-secondary/50" /></div>
+          <div className="flex gap-3">
+            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground flex-1 sm:flex-none shrink-0">Apply Filter</Button>
+            <Button onClick={() => { setFrom(""); setTo(""); }} variant="outline" className="flex-1 sm:flex-none shrink-0">Clear</Button>
+          </div>
         </div>
       </Card>
 
