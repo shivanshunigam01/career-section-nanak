@@ -23,6 +23,7 @@ import TermsOfServicePage from "./pages/TermsOfService";
 import PaymentRefundPolicyPage from "./pages/PaymentRefundPolicy";
 import TermsAndConditionsPage from "./pages/TermsAndConditions";
 import PostDeliveryFeedback from "./pages/PostDeliveryFeedback";
+import TestDriveFeedback from "./pages/TestDriveFeedback";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -94,8 +95,9 @@ const App = () => {
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
           <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
           <Route path="/payment-refund-policy" element={<PaymentRefundPolicyPage />} />
-          {/* URL-only page (QR code) — intentionally not linked from any menu or footer */}
+          {/* URL-only pages (QR code) — intentionally not linked from any menu or footer */}
           <Route path="/post-delivery-feedback" element={<PostDeliveryFeedback />} />
+          <Route path="/test-drive-feedback" element={<TestDriveFeedback />} />
 
           {/* Customer portal */}
           <Route path="/customer/login" element={<CustomerLogin />} />
