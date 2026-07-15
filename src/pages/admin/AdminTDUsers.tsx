@@ -159,12 +159,19 @@ export default function AdminTDUsers() {
     if (!deleteTarget) return;
     setActionLoading(true);
     try {
-      await adminDeleteJson(`/admin/td/users/${deleteTarget._id}`);
-      toast.success(`${deleteTarget.name} deleted`);
+      const result = await adminDeleteJson<{ unassignedLeads?: number; unassignedBookings?: number }>(
+        `/admin/td/users/${deleteTarget._id}`,
+      );
+      const leads = result?.unassignedLeads ?? 0;
+      const bookings = result?.unassignedBookings ?? 0;
+      toast.success(
+        leads > 0 || bookings > 0
+          ? `${deleteTarget.name} deleted — ${leads} lead(s) and ${bookings} test drive(s) moved to Unassigned`
+          : `${deleteTarget.name} deleted`,
+      );
       setDeleteTarget(null);
       void fetchUsers();
     } catch (e) {
-      // Backend blocks deleting users with assigned leads/bookings (409).
       toast.error(formatApiErrors(e));
     } finally {
       setActionLoading(false);
@@ -329,8 +336,9 @@ export default function AdminTDUsers() {
             <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
               This permanently removes <span className="font-medium text-foreground">{deleteTarget?.email}</span> from
-              the User Master and they will no longer be able to log in. Users with assigned leads or test drive
-              bookings cannot be deleted — deactivate them instead. This action cannot be undone.
+              the User Master and they will no longer be able to log in. Any leads or test drive bookings assigned to
+              them will automatically move to <span className="font-medium text-foreground">Unassigned</span> so you
+              can reassign them. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
