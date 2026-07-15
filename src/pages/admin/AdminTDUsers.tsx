@@ -20,7 +20,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2, Trash2, ShieldCheck
+  Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2, Trash2, ShieldCheck, Eye, EyeOff
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -77,6 +77,9 @@ export default function AdminTDUsers() {
   const [form, setForm] = useState<typeof emptyForm & { _id?: string }>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StaffUser | null>(null);
+  const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string>>({});
+  const [revealLoadingId, setRevealLoadingId] = useState<string | null>(null);
+  const [showFormPassword, setShowFormPassword] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -188,6 +191,32 @@ export default function AdminTDUsers() {
     }
   };
 
+  const toggleRevealPassword = async (user: StaffUser) => {
+    if (revealedPasswords[user._id] !== undefined) {
+      setRevealedPasswords((prev) => {
+        const next = { ...prev };
+        delete next[user._id];
+        return next;
+      });
+      return;
+    }
+    setRevealLoadingId(user._id);
+    try {
+      const { data } = await adminGet<{ password: string | null; available: boolean }>(
+        `/admin/td/users/${user._id}/password`,
+      );
+      if (!data?.available || !data.password) {
+        toast.info("No saved password for this user yet — set a new password via Edit, then the eye will show it.");
+        return;
+      }
+      setRevealedPasswords((prev) => ({ ...prev, [user._id]: data.password as string }));
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setRevealLoadingId(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setActionLoading(true);
@@ -283,6 +312,19 @@ export default function AdminTDUsers() {
                   <div className="min-w-0">
                     <p className="font-medium text-foreground truncate">{user.name}</p>
                     <p className="text-sm text-muted-foreground truncate">{user.email}</p>
+                    {revealedPasswords[user._id] !== undefined && (
+                      <button
+                        type="button"
+                        className="text-xs font-mono text-primary truncate hover:underline"
+                        title="Click to copy"
+                        onClick={() => {
+                          void navigator.clipboard?.writeText(revealedPasswords[user._id]);
+                          toast.success("Password copied");
+                        }}
+                      >
+                        Password: {revealedPasswords[user._id]}
+                      </button>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
@@ -297,6 +339,21 @@ export default function AdminTDUsers() {
                   <Badge variant="outline" className={user.active ? "border-green-400/30 text-green-400" : "border-red-400/30 text-red-400"}>
                     {user.active ? "Active" : "Inactive"}
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={revealLoadingId === user._id}
+                    title={revealedPasswords[user._id] !== undefined ? "Hide password" : "View password"}
+                    onClick={() => void toggleRevealPassword(user)}
+                  >
+                    {revealLoadingId === user._id ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : revealedPasswords[user._id] !== undefined ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => openEdit(user)}>
                     <Edit2 className="w-4 h-4 mr-1" /> Edit
                   </Button>
@@ -340,12 +397,23 @@ export default function AdminTDUsers() {
             </div>
             <div className="space-y-2">
               <Label>{form._id ? "New password (optional)" : "Password"}</Label>
-              <Input
-                type="password"
-                value={form.password}
-                onChange={(e) => setForm({ ...form, password: e.target.value })}
-                placeholder={form._id ? "Leave blank to keep current" : "Min 8 characters"}
-              />
+              <div className="relative">
+                <Input
+                  type={showFormPassword ? "text" : "password"}
+                  value={form.password}
+                  onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  placeholder={form._id ? "Leave blank to keep current" : "Min 8 characters"}
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label={showFormPassword ? "Hide password" : "Show password"}
+                  onClick={() => setShowFormPassword((v) => !v)}
+                >
+                  {showFormPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Role / designation</Label>
