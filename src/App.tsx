@@ -46,6 +46,7 @@ import AdminVehicleStock from "./pages/admin/AdminVehicleStock";
 import AdminTDReports from "./pages/admin/AdminTDReports";
 import AdminTDSlotConfig from "./pages/admin/AdminTDSlotConfig";
 import AdminTDUsers from "./pages/admin/AdminTDUsers";
+import AdminFeedbackSubmissions from "./pages/admin/AdminFeedbackSubmissions";
 import AdminCrmLeads from "./pages/admin/AdminCrmLeads";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import AdminTDMyBookings from "./pages/admin/AdminTDMyBookings";
@@ -124,6 +125,10 @@ const App = () => {
             {/* Lead CRM module */}
             <Route path="my-dashboard" element={<AdminExecutiveDashboard />} />
             <Route path="crm/leads" element={<AdminCrmLeads />} />
+
+            {/* Customer feedback form submissions (QR pages) */}
+            <Route path="feedback/test-drive" element={<AdminFeedbackSubmissions kind="testDrive" />} />
+            <Route path="feedback/post-delivery" element={<AdminFeedbackSubmissions kind="postDelivery" />} />
 
             {/* Test Drive Management Module */}
             <Route path="td/bookings" element={<AdminTDBookings />} />

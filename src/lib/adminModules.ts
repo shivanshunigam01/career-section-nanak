@@ -14,6 +14,8 @@ export type AdminModuleKey =
   | "settings"
   | "my_dashboard"
   | "td_my_bookings"
+  | "feedback_test_drive"
+  | "feedback_post_delivery"
   | "td_lead_reports"
   | "td_bookings"
   | "td_users"
@@ -27,7 +29,7 @@ export type AdminModule = {
   key: AdminModuleKey;
   label: string;
   path: string;
-  group: "Core" | "Staff portal" | "TD Management";
+  group: "Core" | "Staff portal" | "Feedback" | "TD Management";
 };
 
 export const ADMIN_MODULES: AdminModule[] = [
@@ -41,6 +43,8 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "settings", label: "Settings", path: "/admin/settings", group: "Core" },
   { key: "my_dashboard", label: "My Dashboard", path: "/admin/my-dashboard", group: "Staff portal" },
   { key: "td_my_bookings", label: "My Test Drives", path: "/admin/td/my-bookings", group: "Staff portal" },
+  { key: "feedback_test_drive", label: "TD Feedback Forms", path: "/admin/feedback/test-drive", group: "Feedback" },
+  { key: "feedback_post_delivery", label: "Delivery Feedback Forms", path: "/admin/feedback/post-delivery", group: "Feedback" },
   { key: "td_lead_reports", label: "Lead Reports", path: "/admin/td/leads/reports", group: "TD Management" },
   { key: "td_bookings", label: "TD Bookings", path: "/admin/td/bookings", group: "TD Management" },
   { key: "td_users", label: "User Master", path: "/admin/td/users", group: "TD Management" },
@@ -55,7 +59,7 @@ export const MODULE_BY_PATH: Record<string, AdminModuleKey> = Object.fromEntries
   ADMIN_MODULES.map((m) => [m.path, m.key]),
 ) as Record<string, AdminModuleKey>;
 
-export const MODULE_GROUPS = ["Core", "Staff portal", "TD Management"] as const;
+export const MODULE_GROUPS = ["Core", "Staff portal", "Feedback", "TD Management"] as const;
 
 export function modulesForGroup(group: AdminModule["group"]) {
   return ADMIN_MODULES.filter((m) => m.group === group);

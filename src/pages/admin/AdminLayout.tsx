@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
   Tag, Bell, Home, Image,
   CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight, User,
-  MessageSquare, Clock, BellOff, Warehouse
+  MessageSquare, Clock, BellOff, Warehouse, CarFront, PackageCheck
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
@@ -53,6 +53,12 @@ const coreNavItems = [
 const crmNavItems = [
   { label: "My Dashboard", icon: LayoutDashboard, path: "/admin/my-dashboard", staff: true },
   { label: "Lead CRM", icon: Users, path: "/admin/crm/leads", staff: true },
+];
+
+// Customer feedback form submissions (QR pages)
+const feedbackNavItems = [
+  { label: "TD Feedback", icon: CarFront, path: "/admin/feedback/test-drive" },
+  { label: "Delivery Feedback", icon: PackageCheck, path: "/admin/feedback/post-delivery" },
 ];
 
 const tdNavItems = [
@@ -222,6 +228,7 @@ const AdminLayout = () => {
   };
 
   const visibleTdItems = tdNavItems.filter((item) => (item.staff || fullAdmin) && canSeePath(item.path));
+  const visibleFeedbackItems = feedbackNavItems.filter((item) => canSeePath(item.path));
   const visibleCoreItems = [
     // Restricted users granted the staff portal see My Dashboard alongside core modules.
     ...(restrictedModules && canSeePath("/admin/my-dashboard")
@@ -339,6 +346,33 @@ const AdminLayout = () => {
                   </Link>
                 );
               })}
+
+              {visibleFeedbackItems.length > 0 && (
+                <div className="pt-1">
+                  <div className="mx-1 my-2 border-t border-border/50" />
+                  <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Feedback
+                  </p>
+                  {visibleFeedbackItems.map((item) => {
+                    const isActive = location.pathname === item.path;
+                    return (
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => setSidebarOpen(false)}
+                        className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                          isActive
+                            ? "bg-primary/10 text-primary"
+                            : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                        }`}
+                      >
+                        <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                        <span className="truncate">{item.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
 
               {visibleTdItems.length > 0 && (
               <div className="pt-1">
