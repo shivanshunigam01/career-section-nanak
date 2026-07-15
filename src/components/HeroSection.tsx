@@ -86,9 +86,9 @@ function buildDealerOpeningSlide(): HeroSlideView {
     image: heroSlide01,
     imageMobile: heroMobileDealerLineup,
     objectPositionMobile: "center 42%",
-    title: "VF 6, VF 7 & VF MPV 7",
+    title: "VF 6, VF 7, VF MPV 7 & Limo Green",
     subLines: [
-      "Electrify your drive with our SUV lineup and the all-new seven-seat VF MPV 7. Exclusively at Patliputra VinFast, Bihar's only authorized VinFast dealer.",
+      "Electrify your drive with our SUV lineup and the seven-seat VF MPV 7 and Limo Green MPVs. Exclusively at Patliputra VinFast, Bihar's only authorized VinFast dealer.",
       "",
       "",
     ],

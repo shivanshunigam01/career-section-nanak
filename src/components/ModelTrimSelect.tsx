@@ -1,13 +1,6 @@
 import { useMemo } from "react";
-import {
-  VF6_VARIANT_OPTIONS,
-  VF7_VARIANT_OPTIONS,
-  MPV7_VARIANT_OPTIONS,
-  DEFAULT_MPV7_TRIM,
-  encodeModelTrim,
-  decodeModelTrim,
-  MODEL_TRIM_COMBO_BOTH,
-} from "@/data/vinfastModels";
+import { encodeModelTrim, decodeModelTrim, MODEL_TRIM_COMBO_BOTH } from "@/data/vinfastModels";
+import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 
 type Props = {
   id?: string;
@@ -21,6 +14,10 @@ type Props = {
   includeMpv7?: boolean;
 };
 
+/**
+ * Model + trim dropdown driven by the admin-managed vehicle model master
+ * (with the static catalog as fallback while it loads).
+ */
 export function ModelTrimSelect({
   id,
   model,
@@ -30,25 +27,35 @@ export function ModelTrimSelect({
   includeNotSureBoth,
   includeMpv7 = true,
 }: Props) {
+  const { catalog } = useVehicleCatalog();
+
+  const groups = useMemo(() => {
+    const visible = includeMpv7 ? catalog : catalog.filter((m) => m.name !== "VF MPV 7");
+    return visible.map((m) => ({
+      model: m.name,
+      options: m.variants.length ? m.variants.map((t) => `${m.name} ${t}`) : [m.name],
+    }));
+  }, [catalog, includeMpv7]);
+
   const optionValues = useMemo(() => {
     const set = new Set<string>();
     if (includeNotSureBoth) set.add(MODEL_TRIM_COMBO_BOTH);
-    VF7_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF 7", l)));
-    VF6_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF 6", l)));
-    if (includeMpv7) MPV7_VARIANT_OPTIONS.forEach((l) => set.add(encodeModelTrim("VF MPV 7", l)));
+    groups.forEach((g) => g.options.forEach((label) => set.add(encodeModelTrim(g.model, label))));
     return set;
-  }, [includeNotSureBoth, includeMpv7]);
+  }, [groups, includeNotSureBoth]);
 
   const encoded = encodeModelTrim(model, variant);
-  const value = optionValues.has(encoded)
-    ? encoded
-    : model === "Both"
-      ? MODEL_TRIM_COMBO_BOTH
-      : model === "VF 6"
-        ? encodeModelTrim("VF 6", VF6_VARIANT_OPTIONS[0])
-        : model === "VF MPV 7"
-          ? encodeModelTrim("VF MPV 7", DEFAULT_MPV7_TRIM)
-          : encodeModelTrim("VF 7", VF7_VARIANT_OPTIONS[0]);
+  let value: string;
+  if (optionValues.has(encoded)) {
+    value = encoded;
+  } else if (model === "Both") {
+    value = MODEL_TRIM_COMBO_BOTH;
+  } else {
+    const group = groups.find((g) => g.model === model) ?? groups[0];
+    value = group ? encodeModelTrim(group.model, group.options[0]) : "";
+  }
+
+  const notSureLabel = `Not sure — ${groups.map((g) => g.model).join(", ").replace(/, ([^,]*)$/, ", or $1")}`;
 
   return (
     <select
@@ -60,34 +67,16 @@ export function ModelTrimSelect({
       }}
       className={className}
     >
-      {includeNotSureBoth && (
-        <option value={MODEL_TRIM_COMBO_BOTH}>
-          {includeMpv7 ? "Not sure — VF 6, VF 7, or VF MPV 7" : "Not sure — VF 6 or VF 7"}
-        </option>
-      )}
-      <optgroup label="VinFast VF 7">
-        {VF7_VARIANT_OPTIONS.map((label) => (
-          <option key={label} value={encodeModelTrim("VF 7", label)}>
-            {label}
-          </option>
-        ))}
-      </optgroup>
-      <optgroup label="VinFast VF 6">
-        {VF6_VARIANT_OPTIONS.map((label) => (
-          <option key={label} value={encodeModelTrim("VF 6", label)}>
-            {label}
-          </option>
-        ))}
-      </optgroup>
-      {includeMpv7 && (
-        <optgroup label="VinFast VF MPV 7">
-          {MPV7_VARIANT_OPTIONS.map((label) => (
-            <option key={label} value={encodeModelTrim("VF MPV 7", label)}>
+      {includeNotSureBoth && <option value={MODEL_TRIM_COMBO_BOTH}>{notSureLabel}</option>}
+      {groups.map((g) => (
+        <optgroup key={g.model} label={`VinFast ${g.model}`}>
+          {g.options.map((label) => (
+            <option key={label} value={encodeModelTrim(g.model, label)}>
               {label}
             </option>
           ))}
         </optgroup>
-      )}
+      ))}
     </select>
   );
 }

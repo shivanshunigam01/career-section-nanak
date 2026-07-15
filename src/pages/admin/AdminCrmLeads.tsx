@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
-  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight,
+  MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight, Pencil,
+  History, Trophy, ShieldAlert,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -24,16 +25,25 @@ import {
   fetchPvCrmLeadDetail,
   fetchPvCrmLeads,
   PV_CRM_SOURCES,
+  updatePvCrmLeadDetails,
   updatePvCrmLeadRemarks,
   updatePvCrmLeadStage,
+  convertPvCrmLeadToSale,
+  fetchOpportunityDuplicates,
   type AssignableStaffUser,
   type PvCrmLead,
   type PvCrmLeadDetail,
   type PvCrmLeadDateField,
+  type OpportunityDuplicatesReport,
 } from "@/lib/pvLeadCrmApi";
+import { lookupCrmCustomerByMobile, type CustomerHistory } from "@/lib/crmCustomerApi";
+import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog";
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
 import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
+import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
+import { ModelTrimSelect } from "@/components/ModelTrimSelect";
+import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
 
 function stageBadgeClass(stage: string) {
   const normalized = normalizeCrmStage(stage);
@@ -83,6 +93,41 @@ export default function AdminCrmLeads() {
   const [followUpCompleted, setFollowUpCompleted] = useState(false);
   const [assignExecutiveId, setAssignExecutiveId] = useState("");
   const [showAddLead, setShowAddLead] = useState(false);
+  const [showBookTestDrive, setShowBookTestDrive] = useState(false);
+
+  const [customerHistory, setCustomerHistory] = useState<CustomerHistory | null>(null);
+  const [showCustomerHistory, setShowCustomerHistory] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  const [convertStage, setConvertStage] = useState<"Booking" | "Delivered">("Booking");
+  const [convertBuyerDiffers, setConvertBuyerDiffers] = useState(false);
+  const [convertBuyerName, setConvertBuyerName] = useState("");
+  const [convertBuyerMobile, setConvertBuyerMobile] = useState("");
+  const [convertRegistration, setConvertRegistration] = useState("");
+  const [convertRemarks, setConvertRemarks] = useState("");
+
+  const [oppReport, setOppReport] = useState<OpportunityDuplicatesReport | null>(null);
+  const [showOppReport, setShowOppReport] = useState(false);
+  const [oppLoading, setOppLoading] = useState(false);
+
+  const [editName, setEditName] = useState("");
+  const [editMobile, setEditMobile] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCity, setEditCity] = useState("");
+  const [editModel, setEditModel] = useState("VF 7");
+  const [editVariant, setEditVariant] = useState("");
+  const [editSource, setEditSource] = useState("");
+
+  const primeEditDrafts = (lead: PvCrmLead) => {
+    setEditName(lead.name ?? "");
+    setEditMobile(lead.mobile ?? "");
+    setEditEmail(lead.email ?? "");
+    setEditCity(lead.city ?? "");
+    const parsed = parseStoredModelLine(lead.model ?? "");
+    setEditModel(parsed.model);
+    setEditVariant(parsed.variant);
+    setEditSource(lead.source ?? "");
+  };
 
   const loadStaffUsers = useCallback(async () => {
     if (!canAssignLeads) return;
@@ -174,6 +219,7 @@ export default function AdminCrmLeads() {
     setFollowUpOutcome("");
     setFollowUpCompleted(false);
     setAssignExecutiveId(lead.assignedTo?._id ?? "");
+    primeEditDrafts(lead);
     if (canAssignLeads) void loadStaffUsers();
     setDetailLoading(true);
     try {
@@ -182,6 +228,7 @@ export default function AdminCrmLeads() {
       setStageDraft(normalizeCrmStage(d.lead.status));
       setRemarksDraft(d.lead.remarks ?? "");
       setAssignExecutiveId(d.lead.assignedTo?._id ?? "");
+      primeEditDrafts(d.lead);
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -195,7 +242,42 @@ export default function AdminCrmLeads() {
     setSelected(d.lead);
     setStageDraft(normalizeCrmStage(d.lead.status));
     setRemarksDraft(d.lead.remarks ?? "");
+    primeEditDrafts(d.lead);
     void loadLeads();
+  };
+
+  const handleDetailsSave = async () => {
+    if (!selected || !canAssignLeads) return;
+    const mobileDigits = editMobile.replace(/\D/g, "").slice(0, 10);
+    if (!editName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(mobileDigits)) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
+      return;
+    }
+    if (!editCity.trim()) {
+      toast.error("City is required");
+      return;
+    }
+    setSaving(true);
+    try {
+      await updatePvCrmLeadDetails(selected._id, {
+        name: editName.trim(),
+        mobile: mobileDigits,
+        email: editEmail.trim(),
+        city: editCity.trim(),
+        model: leadModelLabel(editModel, editVariant),
+        source: editSource || undefined,
+      });
+      toast.success("Lead details updated");
+      await refreshDetail(selected._id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleAssignExecutive = async () => {
@@ -267,6 +349,65 @@ export default function AdminCrmLeads() {
     }
   };
 
+  const openCustomerHistory = async (mobile: string) => {
+    setHistoryLoading(true);
+    try {
+      const res = await lookupCrmCustomerByMobile(mobile);
+      if (res.existingCustomer) {
+        setCustomerHistory(res);
+        setShowCustomerHistory(true);
+      } else {
+        toast.info("No customer record found for this mobile yet");
+      }
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleConvertToSale = async () => {
+    if (!selected) return;
+    if (convertBuyerDiffers) {
+      if (!convertBuyerName.trim()) { toast.error("Enter the buyer's name"); return; }
+      if (!/^[6-9]\d{9}$/.test(convertBuyerMobile)) { toast.error("Enter a valid 10-digit buyer mobile"); return; }
+    }
+    setSaving(true);
+    try {
+      const res = await convertPvCrmLeadToSale(selected._id, {
+        stage: convertStage,
+        buyerName: convertBuyerDiffers ? convertBuyerName.trim() : undefined,
+        buyerMobile: convertBuyerDiffers ? convertBuyerMobile : undefined,
+        vehicleRegistration: convertRegistration.trim() || undefined,
+        remarks: convertRemarks.trim() || undefined,
+      });
+      toast.success(`Opportunity converted — customer ${res.customer.customerId}`);
+      setConvertBuyerDiffers(false);
+      setConvertBuyerName("");
+      setConvertBuyerMobile("");
+      setConvertRegistration("");
+      setConvertRemarks("");
+      await refreshDetail(selected._id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const openOpportunityReport = async () => {
+    setOppLoading(true);
+    setShowOppReport(true);
+    try {
+      setOppReport(await fetchOpportunityDuplicates());
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+      setShowOppReport(false);
+    } finally {
+      setOppLoading(false);
+    }
+  };
+
   const handleCompleteFollowUp = async (followUpId: string) => {
     if (!selected) return;
     setSaving(true);
@@ -298,6 +439,11 @@ export default function AdminCrmLeads() {
           <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add Lead
           </Button>
+          {canAssignLeads ? (
+            <Button variant="outline" size="sm" onClick={() => void openOpportunityReport()}>
+              <ShieldAlert className="w-4 h-4 mr-2" /> Opportunity health
+            </Button>
+          ) : null}
           <Button variant="outline" size="sm" onClick={() => void loadLeads()}>
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </Button>
@@ -559,6 +705,36 @@ export default function AdminCrmLeads() {
                   {normalizeCrmStage(detail.lead.status)}
                 </Badge>
                 <span className="text-xs text-muted-foreground">{detail.lead.model}</span>
+                {detail.lead.convertedAt ? (
+                  <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px]">
+                    <Trophy className="w-3 h-3 mr-1" /> Converted to sale
+                  </Badge>
+                ) : null}
+                <div className="ml-auto flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="text-xs h-7"
+                    disabled={historyLoading}
+                    onClick={() => void openCustomerHistory(detail.lead.mobile)}
+                  >
+                    {historyLoading ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : <History className="w-3.5 h-3.5 mr-1.5" />}
+                    History
+                  </Button>
+                  {/* Book Test Drive: hidden for executives once the drive is done — repeats need admin approval. */}
+                  {canAssignLeads || normalizeCrmStage(detail.lead.status) !== "Test Drive Completed" ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7"
+                      onClick={() => setShowBookTestDrive(true)}
+                    >
+                      <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Book Test Drive
+                    </Button>
+                  ) : null}
+                </div>
               </div>
 
               <div className="grid sm:grid-cols-2 gap-3 rounded-lg border border-border/50 bg-secondary/20 p-4 text-xs">
@@ -621,6 +797,12 @@ export default function AdminCrmLeads() {
               <Tabs defaultValue="stage">
                 <TabsList className="bg-secondary/50 w-full flex flex-wrap h-auto">
                   <TabsTrigger value="stage" className="text-xs">Stage</TabsTrigger>
+                  {canAssignLeads ? (
+                    <TabsTrigger value="edit" className="text-xs">Edit details</TabsTrigger>
+                  ) : null}
+                  {!detail.lead.convertedAt ? (
+                    <TabsTrigger value="convert" className="text-xs">Convert</TabsTrigger>
+                  ) : null}
                   <TabsTrigger value="remarks" className="text-xs">Remarks</TabsTrigger>
                   <TabsTrigger value="followups" className="text-xs">Follow-ups ({detailFollowUps.length})</TabsTrigger>
                   <TabsTrigger value="history" className="text-xs">History</TabsTrigger>
@@ -635,7 +817,14 @@ export default function AdminCrmLeads() {
                     <Select value={stageDraft} onValueChange={setStageDraft}>
                       <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        {CRM_LEAD_STAGES.map((s) => (
+                        {/* Once the drive is done, executives can't re-select the test drive stages (repeat drives need admin approval). */}
+                        {CRM_LEAD_STAGES.filter(
+                          (s) =>
+                            canAssignLeads ||
+                            normalizeCrmStage(detail.lead.status) !== "Test Drive Completed" ||
+                            s === normalizeCrmStage(detail.lead.status) ||
+                            !["Test Drive Booked", "Test Drive Completed"].includes(s),
+                        ).map((s) => (
                           <SelectItem key={s} value={s}>{s}</SelectItem>
                         ))}
                       </SelectContent>
@@ -655,6 +844,152 @@ export default function AdminCrmLeads() {
                     Update stage
                   </Button>
                 </TabsContent>
+
+                {canAssignLeads ? (
+                  <TabsContent value="edit" className="mt-4 space-y-3">
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Full name *</Label>
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="bg-secondary/50"
+                          placeholder="Customer name"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Mobile *</Label>
+                        <Input
+                          value={editMobile}
+                          onChange={(e) => setEditMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                          inputMode="numeric"
+                          maxLength={10}
+                          className="bg-secondary/50"
+                          placeholder="10-digit mobile"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Email</Label>
+                        <Input
+                          type="email"
+                          value={editEmail}
+                          onChange={(e) => setEditEmail(e.target.value)}
+                          className="bg-secondary/50"
+                          placeholder="Optional"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">City *</Label>
+                        <Input
+                          value={editCity}
+                          onChange={(e) => setEditCity(e.target.value)}
+                          className="bg-secondary/50"
+                          placeholder="City / district"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Vehicle / model *</Label>
+                        <ModelTrimSelect
+                          id="crm-edit-model"
+                          model={editModel}
+                          variant={editVariant}
+                          onChange={(m, v) => {
+                            setEditModel(m);
+                            setEditVariant(v);
+                          }}
+                          className="w-full h-10 rounded-md border border-input bg-secondary/50 px-3 text-sm"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Source</Label>
+                        <Select value={editSource || "keep"} onValueChange={(v) => setEditSource(v === "keep" ? "" : v)}>
+                          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Source" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="keep">— Keep current —</SelectItem>
+                            {editSource && !(PV_CRM_SOURCES as readonly string[]).includes(editSource) ? (
+                              <SelectItem value={editSource}>{editSource}</SelectItem>
+                            ) : null}
+                            {PV_CRM_SOURCES.map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      Changes sync to the customer profile and are recorded in the lead history.
+                    </p>
+                    <Button onClick={() => void handleDetailsSave()} disabled={saving} className="w-full">
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Pencil className="w-4 h-4 mr-2" />}
+                      Save details
+                    </Button>
+                  </TabsContent>
+                ) : null}
+
+                {!detail.lead.convertedAt ? (
+                  <TabsContent value="convert" className="mt-4 space-y-3">
+                    <p className="text-xs text-muted-foreground">
+                      Converting opportunity <span className="font-mono">{detail.lead.opportunityId || "—"}</span> creates/links a
+                      customer record with a unique Customer ID for lifecycle tracking.
+                    </p>
+                    <div className="space-y-2">
+                      <Label className="text-xs">Sale stage</Label>
+                      <Select value={convertStage} onValueChange={(v) => setConvertStage(v as "Booking" | "Delivered")}>
+                        <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Booking">Booking</SelectItem>
+                          <SelectItem value="Delivered">Delivered</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <label className="flex items-center gap-2 text-xs text-foreground cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={convertBuyerDiffers}
+                        onChange={(e) => setConvertBuyerDiffers(e.target.checked)}
+                        className="accent-primary"
+                      />
+                      Actual buyer differs from {detail.lead.name}
+                    </label>
+                    {convertBuyerDiffers ? (
+                      <div className="grid sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Buyer name *</Label>
+                          <Input value={convertBuyerName} onChange={(e) => setConvertBuyerName(e.target.value)} className="bg-secondary/50" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs">Buyer mobile *</Label>
+                          <Input
+                            value={convertBuyerMobile}
+                            onChange={(e) => setConvertBuyerMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                            inputMode="numeric"
+                            maxLength={10}
+                            className="bg-secondary/50"
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                    <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Vehicle registration (optional)</Label>
+                        <Input
+                          value={convertRegistration}
+                          onChange={(e) => setConvertRegistration(e.target.value.toUpperCase())}
+                          className="bg-secondary/50 uppercase"
+                          placeholder="e.g. BR01AB1234"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Remarks (optional)</Label>
+                        <Input value={convertRemarks} onChange={(e) => setConvertRemarks(e.target.value)} className="bg-secondary/50" />
+                      </div>
+                    </div>
+                    <Button onClick={() => void handleConvertToSale()} disabled={saving} className="w-full">
+                      {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trophy className="w-4 h-4 mr-2" />}
+                      Convert to sale
+                    </Button>
+                  </TabsContent>
+                ) : null}
 
                 <TabsContent value="remarks" className="mt-4 space-y-3">
                   <Label className="text-xs">Remarks</Label>
@@ -787,6 +1122,89 @@ export default function AdminCrmLeads() {
           ) : null}
         </DialogContent>
       </Dialog>
+
+      <CustomerHistoryDialog
+        open={showCustomerHistory}
+        onOpenChange={setShowCustomerHistory}
+        history={customerHistory}
+      />
+
+      <Dialog open={showOppReport} onOpenChange={setShowOppReport}>
+        <DialogContent className="bg-card border-border max-w-xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-primary" /> Opportunity ID health
+            </DialogTitle>
+          </DialogHeader>
+          {oppLoading ? (
+            <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>
+          ) : oppReport ? (
+            <div className="space-y-4 text-sm">
+              {oppReport.healthy && oppReport.multiOpportunityCustomers.length === 0 ? (
+                <p className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2 text-sm">
+                  <CheckCircle2 className="w-4 h-4" /> No duplicate or missing opportunity IDs found.
+                </p>
+              ) : null}
+              {oppReport.leadsMissingOpportunityId > 0 ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  {oppReport.leadsMissingOpportunityId} lead(s) have no Opportunity ID yet — IDs are assigned automatically the next time those leads are opened.
+                </p>
+              ) : null}
+              {oppReport.duplicateOpportunityIds.length > 0 ? (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-destructive mb-2">
+                    Duplicated opportunity IDs ({oppReport.duplicateOpportunityIds.length})
+                  </p>
+                  <div className="space-y-1.5">
+                    {oppReport.duplicateOpportunityIds.map((d) => (
+                      <p key={d.opportunityId} className="text-xs rounded border border-destructive/30 bg-destructive/10 px-2 py-1.5">
+                        <span className="font-mono">{d.opportunityId}</span> used by {d.count} leads
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+              {oppReport.multiOpportunityCustomers.length > 0 ? (
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Customers with multiple open opportunities on the same model ({oppReport.multiOpportunityCustomers.length})
+                  </p>
+                  <div className="space-y-1.5">
+                    {oppReport.multiOpportunityCustomers.map((c) => (
+                      <div key={`${c.mobile}-${c.model}`} className="text-xs rounded border border-border/50 bg-secondary/20 px-2 py-1.5">
+                        <p className="font-medium text-foreground">{c.name || "Customer"} · {c.mobile} · {c.model}</p>
+                        <p className="text-muted-foreground">
+                          {c.opportunities.map((o) => `${o.opportunityId || o.leadId || "—"} (${o.status || "—"})`).join(" · ")}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      <BookTestDriveDialog
+        open={showBookTestDrive}
+        onOpenChange={setShowBookTestDrive}
+        customer={
+          detail?.lead
+            ? {
+                leadId: detail.lead._id,
+                name: detail.lead.name,
+                mobile: detail.lead.mobile,
+                email: detail.lead.email,
+                city: detail.lead.city,
+                model: parseStoredModelLine(detail.lead.model ?? "").model,
+              }
+            : null
+        }
+        onBooked={() => {
+          if (selected) void refreshDetail(selected._id);
+        }}
+      />
 
       {showAddLead ? (
         <AddPvLeadDialog

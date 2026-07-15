@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminGet, adminPatchJson, adminPostJson, formatApiErrors } from "@/lib/api";
+import { getAdminUser } from "@/lib/adminAuth";
+import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import {
   CalendarCheck, Search, RefreshCw, Car, Clock, Building2,
-  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban, Play, CalendarClock, Lock
+  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban, Play, CalendarClock, Lock, Pencil
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,11 +22,15 @@ import { fetchTDFeedbackByBooking, type TDFeedbackRecord } from "@/lib/tdFeedbac
 import { TDFeedbackForm } from "@/components/admin/TDFeedbackForm";
 import { DrivingLicenceVerify } from "@/components/admin/DrivingLicenceVerify";
 import {
-  endTestDriveLog,
   fetchTdLogByBooking,
   startTestDriveLog,
   type TDLogRecord,
 } from "@/lib/tdLogApi";
+import {
+  CompleteTestDriveDialog,
+  TestDriveCompletionSummary,
+} from "@/components/admin/CompleteTestDriveDialog";
+import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 
 type TestDriveDetails = {
   _id: string;
@@ -41,6 +47,9 @@ type TestDriveDetails = {
   remarks?: string;
   status?: string;
 };
+
+/** Stable reference so the dialog's reset effect only fires on open/close. */
+const EMPTY_WALK_IN_CUSTOMER = { name: "", mobile: "" };
 
 type Booking = {
   _id: string;
@@ -71,6 +80,7 @@ type Booking = {
   testDriveId?: TestDriveDetails | null;
   createdAt: string;
   cancellationReason?: string;
+  isRepeatDrive?: boolean;
 };
 
 type Executive = { _id: string; name: string; email: string; role: string; designation?: string; designationLabel?: string };
@@ -106,6 +116,9 @@ const todayIso = () => {
 };
 
 export default function AdminTDBookings() {
+  const adminUser = getAdminUser();
+  const { models: catalogModels } = useVehicleCatalog();
+  const canEditDetails = adminUser?.role === "manager" || adminUser?.role === "superadmin";
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -116,6 +129,7 @@ export default function AdminTDBookings() {
   const [executives, setExecutives] = useState<Executive[]>([]);
   const [assignExecutiveId, setAssignExecutiveId] = useState("");
   const [cancelDialog, setCancelDialog] = useState<Booking | null>(null);
+  const [showNewBooking, setShowNewBooking] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
   const [rescheduleDialog, setRescheduleDialog] = useState<Booking | null>(null);
   const [rescheduleDate, setRescheduleDate] = useState("");
@@ -131,6 +145,23 @@ export default function AdminTDBookings() {
   const [tdLog, setTdLog] = useState<TDLogRecord | null>(null);
   const [openingOdometer, setOpeningOdometer] = useState("");
   const [closingOdometer, setClosingOdometer] = useState("");
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [detailName, setDetailName] = useState("");
+  const [detailMobile, setDetailMobile] = useState("");
+  const [detailEmail, setDetailEmail] = useState("");
+  const [detailCity, setDetailCity] = useState("");
+  const [detailModel, setDetailModel] = useState("");
+  const [detailRemarks, setDetailRemarks] = useState("");
+
+  const primeDetailDrafts = (b: Booking) => {
+    setDetailName(b.testDriveId?.customerName ?? b.customerId?.name ?? "");
+    setDetailMobile(b.testDriveId?.mobile ?? b.customerId?.mobile ?? "");
+    setDetailEmail(b.testDriveId?.email ?? b.customerId?.email ?? "");
+    setDetailCity(b.testDriveId?.city ?? b.customerId?.city ?? "");
+    setDetailModel(b.preferredModel || b.testDriveId?.model || "");
+    setDetailRemarks(b.testDriveId?.remarks ?? b.remarks ?? "");
+  };
 
   const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
 
@@ -211,8 +242,11 @@ export default function AdminTDBookings() {
     setTdLog(null);
     setOpeningOdometer("");
     setClosingOdometer("");
+    setEditingDetails(false);
+    primeDetailDrafts(b);
     try {
       const refreshed = await refreshSelected(b._id);
+      if (refreshed) primeDetailDrafts(refreshed);
       await loadAvailableVehicles(refreshed ?? b);
       const log = await fetchTdLogByBooking(b._id);
       setTdLog(log);
@@ -248,6 +282,46 @@ export default function AdminTDBookings() {
       b.vehicleId?.registrationNo?.toLowerCase().includes(s)
     );
   });
+
+  const handleDetailsSave = async () => {
+    if (!selected || !canEditDetails) return;
+    const mobileDigits = detailMobile.replace(/\D/g, "").slice(0, 10);
+    if (!detailName.trim()) {
+      toast.error("Customer name is required");
+      return;
+    }
+    if (!/^[6-9]\d{9}$/.test(mobileDigits)) {
+      toast.error("Enter a valid 10-digit Indian mobile number");
+      return;
+    }
+    if (!detailModel) {
+      toast.error("Select a vehicle model");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${selected._id}/details`, {
+        customerName: detailName.trim(),
+        customerMobile: mobileDigits,
+        customerEmail: detailEmail.trim(),
+        customerCity: detailCity.trim(),
+        preferredModel: detailModel,
+        remarks: detailRemarks.trim(),
+      });
+      toast.success("Booking details updated");
+      setEditingDetails(false);
+      const refreshed = await refreshSelected(selected._id);
+      if (refreshed) {
+        primeDetailDrafts(refreshed);
+        await loadAvailableVehicles(refreshed);
+      }
+      void fetchBookings();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleCancel = async () => {
     if (!cancelDialog) return;
@@ -350,46 +424,26 @@ export default function AdminTDBookings() {
     }
   };
 
-  const handleCompleteDrive = async (id: string) => {
-    const closing = Number(closingOdometer);
-    const opening = Number(openingOdometer);
-    if (!closingOdometer.trim() || Number.isNaN(closing) || closing < 0) {
-      toast.error("Enter closing odometer reading (km) before completing the drive");
-      return;
-    }
-    if (!Number.isNaN(opening) && closing < opening) {
-      toast.error("Closing odometer cannot be less than opening odometer");
-      return;
-    }
+  const openCompleteDialog = () => {
     if (!tdLog?._id) {
       toast.error("No active test drive log found. Start the drive first.");
       return;
     }
-    setActionLoading(true);
-    try {
-      const log = await endTestDriveLog(tdLog._id, {
-        closingOdometer: closing,
-        closingBattery: selected?.vehicleId?.batteryPercent,
-      });
-      setTdLog(log);
-      toast.success(
-        log.totalKM != null
-          ? `Test drive completed — ${log.totalKM} km driven`
-          : "Test drive completed",
-      );
-      void fetchBookings();
-      if (selected?._id === id) {
-        await refreshSelected(id);
-        setFeedbackLoading(true);
-        const fb = await fetchTDFeedbackByBooking(id);
-        setBookingFeedback(fb);
-        setFeedbackLoading(false);
-      }
-    } catch (e) {
-      toast.error(formatApiErrors(e));
-    } finally {
-      setActionLoading(false);
-    }
+    setCompleteDialogOpen(true);
+  };
+
+  const handleDriveCompleted = async () => {
+    if (!selected) return;
+    const id = selected._id;
+    const log = await fetchTdLogByBooking(id);
+    setTdLog(log);
+    if (log?.closingOdometer != null) setClosingOdometer(String(log.closingOdometer));
+    void fetchBookings();
+    await refreshSelected(id);
+    setFeedbackLoading(true);
+    const fb = await fetchTDFeedbackByBooking(id);
+    setBookingFeedback(fb);
+    setFeedbackLoading(false);
   };
 
   const openRescheduleDialog = (b: Booking) => {
@@ -481,8 +535,19 @@ export default function AdminTDBookings() {
           <Button onClick={() => void fetchBookings()} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </Button>
+          <Button onClick={() => setShowNewBooking(true)} size="sm">
+            <CalendarClock className="w-4 h-4 mr-2" /> New booking
+          </Button>
         </div>
       </div>
+
+      <BookTestDriveDialog
+        open={showNewBooking}
+        onOpenChange={setShowNewBooking}
+        allowCustomerEdit
+        customer={EMPTY_WALK_IN_CUSTOMER}
+        onBooked={() => void fetchBookings()}
+      />
 
       {/* Filters */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -527,9 +592,16 @@ export default function AdminTDBookings() {
                   <p className="font-semibold text-foreground truncate">{b.customerId?.name ?? "Unknown"}</p>
                   <p className="text-xs text-muted-foreground">{b.customerId?.mobile}</p>
                 </div>
-                <Badge className={`shrink-0 text-[10px] border ${STATUS_COLORS[b.bookingStatus] ?? "bg-secondary"}`}>
-                  {b.bookingStatus}
-                </Badge>
+                <div className="flex flex-col items-end gap-1 shrink-0">
+                  <Badge className={`text-[10px] border ${STATUS_COLORS[b.bookingStatus] ?? "bg-secondary"}`}>
+                    {b.bookingStatus}
+                  </Badge>
+                  {b.isRepeatDrive ? (
+                    <Badge className="text-[10px] border bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                      REPEAT
+                    </Badge>
+                  ) : null}
+                </div>
               </div>
 
               {/* Details grid */}
@@ -590,40 +662,151 @@ export default function AdminTDBookings() {
                     <Badge className={`border ${STATUS_COLORS[selected.bookingStatus] ?? "bg-secondary"}`}>
                       {selected.bookingStatus}
                     </Badge>
+                    {selected.isRepeatDrive ? (
+                      <Badge className="border bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30">
+                        Repeat drive (admin approved)
+                      </Badge>
+                    ) : null}
                     <span className="font-mono text-xs text-muted-foreground">{selected.bookingId}</span>
                   </div>
 
                   <div className="rounded-lg border border-border/50 bg-secondary/20 p-4 space-y-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-primary">Customer (website form)</p>
-                    <div className="grid sm:grid-cols-2 gap-3">
-                      {[
-                        ["Name", selected.testDriveId?.customerName ?? selected.customerId?.name],
-                        ["Mobile", selected.testDriveId?.mobile ?? selected.customerId?.mobile],
-                        ["Email", selected.testDriveId?.email ?? selected.customerId?.email],
-                        ["City", selected.testDriveId?.city ?? selected.customerId?.city],
-                        ["Model", selected.testDriveId?.model ?? selected.preferredModel],
-                        ["Variant", selected.testDriveId?.variant],
-                        ["TD location", selected.testDriveId?.preferredTestDriveLocation],
-                        ["Owns car", selected.testDriveId?.ownsCar],
-                        ["Current car", selected.testDriveId?.currentCarDetails],
-                        ["Purchase plan", selected.testDriveId?.purchaseTimeline],
-                        ["Slot", `${new Date(selected.slotDate).toLocaleDateString("en-IN")} · ${formatTime12h(selected.slotTime)}`],
-                        ["Branch", selected.branchId?.name],
-                      ].map(([label, val]) => (
-                        <div key={label}>
-                          <p className="text-[11px] text-muted-foreground">{label}</p>
-                          <p className="font-medium text-foreground">{val || "—"}</p>
-                        </div>
-                      ))}
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-primary">Customer (website form)</p>
+                      {canEditDetails && !editingDetails ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          disabled={actionLoading}
+                          onClick={() => {
+                            primeDetailDrafts(selected);
+                            setEditingDetails(true);
+                          }}
+                        >
+                          <Pencil className="w-3 h-3 mr-1.5" /> Edit
+                        </Button>
+                      ) : null}
                     </div>
-                    {selected.testDriveId?.remarks || selected.remarks ? (
-                      <div>
-                        <p className="text-[11px] text-muted-foreground">Remarks</p>
-                        <p className="text-foreground text-xs leading-relaxed mt-0.5">
-                          {selected.testDriveId?.remarks || selected.remarks}
-                        </p>
+
+                    {editingDetails ? (
+                      <div className="space-y-3">
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Name *</Label>
+                            <Input
+                              value={detailName}
+                              onChange={(e) => setDetailName(e.target.value)}
+                              className="bg-background/80"
+                              placeholder="Customer name"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Mobile *</Label>
+                            <Input
+                              value={detailMobile}
+                              onChange={(e) => setDetailMobile(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                              inputMode="numeric"
+                              maxLength={10}
+                              className="bg-background/80"
+                              placeholder="10-digit mobile"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Email</Label>
+                            <Input
+                              type="email"
+                              value={detailEmail}
+                              onChange={(e) => setDetailEmail(e.target.value)}
+                              className="bg-background/80"
+                              placeholder="Optional"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">City</Label>
+                            <Input
+                              value={detailCity}
+                              onChange={(e) => setDetailCity(e.target.value)}
+                              className="bg-background/80"
+                              placeholder="City / district"
+                            />
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Model *</Label>
+                            <Select value={detailModel || "none"} onValueChange={(v) => setDetailModel(v === "none" ? "" : v)}>
+                              <SelectTrigger className="bg-background/80"><SelectValue placeholder="Select model" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="none">— Select model —</SelectItem>
+                                {catalogModels.map((m) => (
+                                  <SelectItem key={m} value={m}>{m}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <p className="text-[10px] text-muted-foreground">
+                              Changing the model releases a demo vehicle that no longer matches.
+                            </p>
+                          </div>
+                          <div className="space-y-1.5">
+                            <Label className="text-xs">Remarks</Label>
+                            <Input
+                              value={detailRemarks}
+                              onChange={(e) => setDetailRemarks(e.target.value)}
+                              className="bg-background/80"
+                              placeholder="Optional"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button size="sm" disabled={actionLoading} onClick={() => void handleDetailsSave()}>
+                            {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                            Save details
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={actionLoading}
+                            onClick={() => {
+                              setEditingDetails(false);
+                              primeDetailDrafts(selected);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
                       </div>
-                    ) : null}
+                    ) : (
+                      <>
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          {[
+                            ["Name", selected.testDriveId?.customerName ?? selected.customerId?.name],
+                            ["Mobile", selected.testDriveId?.mobile ?? selected.customerId?.mobile],
+                            ["Email", selected.testDriveId?.email ?? selected.customerId?.email],
+                            ["City", selected.testDriveId?.city ?? selected.customerId?.city],
+                            ["Model", selected.testDriveId?.model ?? selected.preferredModel],
+                            ["Variant", selected.testDriveId?.variant],
+                            ["TD location", selected.testDriveId?.preferredTestDriveLocation],
+                            ["Owns car", selected.testDriveId?.ownsCar],
+                            ["Current car", selected.testDriveId?.currentCarDetails],
+                            ["Purchase plan", selected.testDriveId?.purchaseTimeline],
+                            ["Slot", `${new Date(selected.slotDate).toLocaleDateString("en-IN")} · ${formatTime12h(selected.slotTime)}`],
+                            ["Branch", selected.branchId?.name],
+                          ].map(([label, val]) => (
+                            <div key={label}>
+                              <p className="text-[11px] text-muted-foreground">{label}</p>
+                              <p className="font-medium text-foreground">{val || "—"}</p>
+                            </div>
+                          ))}
+                        </div>
+                        {selected.testDriveId?.remarks || selected.remarks ? (
+                          <div>
+                            <p className="text-[11px] text-muted-foreground">Remarks</p>
+                            <p className="text-foreground text-xs leading-relaxed mt-0.5">
+                              {selected.testDriveId?.remarks || selected.remarks}
+                            </p>
+                          </div>
+                        ) : null}
+                      </>
+                    )}
                   </div>
 
                   <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
@@ -823,7 +1006,7 @@ export default function AdminTDBookings() {
                           size="sm"
                           className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40"
                           disabled={!isReadyForDrive(selected) || actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
-                          onClick={() => void handleCompleteDrive(selected._id)}
+                          onClick={openCompleteDialog}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" /> Mark completed
                         </Button>
@@ -858,7 +1041,8 @@ export default function AdminTDBookings() {
                         </p>
                       ) : selected.bookingStatus === "IN_PROGRESS" ? (
                         <p className="text-[11px] text-muted-foreground">
-                          Drive in progress — enter closing odometer when the customer returns, then mark completed.
+                          Drive in progress — tap Mark completed to capture the closing odometer, photos, location, and
+                          customer feedback.
                         </p>
                       ) : (
                         <p className="text-[11px] text-muted-foreground">
@@ -887,6 +1071,7 @@ export default function AdminTDBookings() {
                             </div>
                           </div>
                         ) : null}
+                        {tdLog ? <TestDriveCompletionSummary log={tdLog} /> : null}
                         {feedbackLoading ? (
                           <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                         ) : (
@@ -914,6 +1099,23 @@ export default function AdminTDBookings() {
           )}
         </DialogContent>
       </Dialog>
+
+      {selected ? (
+        <CompleteTestDriveDialog
+          open={completeDialogOpen}
+          onOpenChange={setCompleteDialogOpen}
+          bookingMongoId={selected._id}
+          bookingCode={selected.bookingId}
+          customerName={selected.testDriveId?.customerName || selected.customerId?.name}
+          customerId={selected.customerId?._id}
+          preferredModel={selected.testDriveId?.model || selected.preferredModel}
+          dlVerified={selected.dlVerified}
+          log={tdLog}
+          vehicleBattery={selected.vehicleId?.batteryPercent}
+          initialClosingOdometer={closingOdometer}
+          onCompleted={handleDriveCompleted}
+        />
+      ) : null}
 
       {/* Reschedule Dialog */}
       <Dialog open={!!rescheduleDialog} onOpenChange={(o) => !o && setRescheduleDialog(null)}>

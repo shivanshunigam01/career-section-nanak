@@ -6,6 +6,8 @@ import { telHref, waMeUrl } from "@/lib/contactLinks";
 
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
 const MPV7_PREBOOK_UNLOCK_EVENT = "vinfast-mpv7-prebook-unlock";
+const LIMO_GREEN_PREBOOK_SESSION_KEY = "vinfast_limo_green_prebook_unlocked";
+const LIMO_GREEN_PREBOOK_UNLOCK_EVENT = "vinfast-limo-green-prebook-unlock";
 
 /** Show sticky bar only after the user scrolls past this offset (px). */
 const STICKY_CTA_SCROLL_THRESHOLD = 48;
@@ -16,14 +18,23 @@ const StickyMobileCTA = () => {
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
   const onMpv7Page = location.pathname === "/models/mpv7";
+  const onLimoGreenPage = location.pathname === "/models/limo-green";
   const [mpv7PrebookUnlocked, setMpv7PrebookUnlocked] = useState(false);
+  const [limoGreenPrebookUnlocked, setLimoGreenPrebookUnlocked] = useState(false);
   const [showBar, setShowBar] = useState(false);
 
   useEffect(() => {
-    const sync = () => setMpv7PrebookUnlocked(sessionStorage.getItem(MPV7_PREBOOK_SESSION_KEY) === "1");
+    const sync = () => {
+      setMpv7PrebookUnlocked(sessionStorage.getItem(MPV7_PREBOOK_SESSION_KEY) === "1");
+      setLimoGreenPrebookUnlocked(sessionStorage.getItem(LIMO_GREEN_PREBOOK_SESSION_KEY) === "1");
+    };
     sync();
     window.addEventListener(MPV7_PREBOOK_UNLOCK_EVENT, sync);
-    return () => window.removeEventListener(MPV7_PREBOOK_UNLOCK_EVENT, sync);
+    window.addEventListener(LIMO_GREEN_PREBOOK_UNLOCK_EVENT, sync);
+    return () => {
+      window.removeEventListener(MPV7_PREBOOK_UNLOCK_EVENT, sync);
+      window.removeEventListener(LIMO_GREEN_PREBOOK_UNLOCK_EVENT, sync);
+    };
   }, [location.pathname]);
 
   useEffect(() => {
@@ -65,7 +76,11 @@ const StickyMobileCTA = () => {
                 ? mpv7PrebookUnlocked
                   ? "/book-now?model=VF%20MPV%207"
                   : "/models/mpv7#mpv7-prebook"
-                : "/book-now"
+                : onLimoGreenPage
+                  ? limoGreenPrebookUnlocked
+                    ? "/book-now?model=Limo%20Green"
+                    : "/models/limo-green#limo-green-prebook"
+                  : "/book-now"
             }
             className="flex-1 flex items-center justify-center gap-1.5 h-10 rounded-xl bg-primary text-primary-foreground text-xs font-medium"
           >

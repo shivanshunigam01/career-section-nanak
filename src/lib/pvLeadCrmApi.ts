@@ -30,6 +30,8 @@ export type PvCrmLead = {
   createdAt?: string;
   updatedAt?: string;
   lastActivityAt?: string;
+  convertedAt?: string;
+  convertedCustomerId?: { _id: string; customerId?: string; name?: string; mobile?: string } | string | null;
 };
 
 export type LeadStageHistoryItem = {
@@ -162,6 +164,28 @@ export async function fetchPvCrmLeadDetail(id: string): Promise<PvCrmLeadDetail>
   };
 }
 
+export type UpdatePvCrmLeadDetailsPayload = {
+  name?: string;
+  mobile?: string;
+  email?: string;
+  city?: string;
+  otherCity?: string;
+  model?: string;
+  source?: string;
+  interest?: string;
+  vehicleRegistration?: string;
+  financeNeeded?: boolean;
+  exchangeNeeded?: boolean;
+};
+
+/** Admin (manager/superadmin) edit of core lead details. */
+export async function updatePvCrmLeadDetails(
+  id: string,
+  payload: UpdatePvCrmLeadDetailsPayload,
+): Promise<PvCrmLead> {
+  return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${id}/details`, payload);
+}
+
 export async function updatePvCrmLeadStage(id: string, stage: string, reason?: string): Promise<PvCrmLead> {
   return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${id}/stage`, { stage, reason });
 }
@@ -182,6 +206,49 @@ export async function completePvCrmFollowUp(leadId: string, followUpId: string, 
     status: "completed",
     outcome,
   });
+}
+
+export type ConvertLeadToSalePayload = {
+  /** Fill only when the actual buyer differs from the lead's customer. */
+  buyerName?: string;
+  buyerMobile?: string;
+  buyerEmail?: string;
+  buyerCity?: string;
+  vehicleRegistration?: string;
+  stage?: "Booking" | "Delivered";
+  remarks?: string;
+};
+
+export type ConvertLeadToSaleResult = {
+  lead: PvCrmLead;
+  customer: { _id: string; customerId: string; name: string; mobile: string };
+};
+
+/** Convert an opportunity to a sale; a differing buyer gets its own Customer ID. */
+export async function convertPvCrmLeadToSale(
+  id: string,
+  payload: ConvertLeadToSalePayload,
+): Promise<ConvertLeadToSaleResult> {
+  return adminPostJson<ConvertLeadToSaleResult>(`${CRM_BASE}/${id}/convert`, payload);
+}
+
+export type OpportunityDuplicatesReport = {
+  duplicateOpportunityIds: { opportunityId: string; count: number; leadIds: string[] }[];
+  multiOpportunityCustomers: {
+    mobile: string;
+    model: string;
+    name?: string;
+    count: number;
+    opportunities: { leadId?: string; opportunityId?: string; status?: string }[];
+  }[];
+  leadsMissingOpportunityId: number;
+  healthy: boolean;
+};
+
+/** Opportunity ID health check (managers/superadmins). */
+export async function fetchOpportunityDuplicates(): Promise<OpportunityDuplicatesReport> {
+  const { data } = await adminGet<OpportunityDuplicatesReport>(`${CRM_BASE}/duplicates/opportunities`);
+  return data;
 }
 
 export const PV_CRM_SOURCES = LEAD_SOURCE_OPTIONS;

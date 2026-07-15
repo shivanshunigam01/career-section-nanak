@@ -73,6 +73,7 @@ export function normalizeLeadModel(display: string): string {
   ) {
     return "Both";
   }
+  if (s.includes("LIMO")) return "Limo Green";
   if (s.includes("MPV")) return "VF MPV 7";
   const has6 = /\bVF\s*6\b|\bVF6\b/i.test(display);
   const has7 = /\bVF\s*7\b|\bVF7\b/i.test(display);

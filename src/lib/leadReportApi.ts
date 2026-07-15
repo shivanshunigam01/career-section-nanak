@@ -11,6 +11,11 @@ export type LeadReportOverview = {
   followUpsOverdue: number;
   feedbackCount: number;
   avgFeedbackRating: number;
+  testDrivesBooked: number;
+  testDrivesDone: number;
+  repeatApprovalsPending: number;
+  delayedLeads: number;
+  actionRequired: number;
 };
 
 export type LeadSourceConversionRow = {
@@ -46,7 +51,7 @@ export type LeadExecutivePerformance = {
 };
 
 export type LeadActivityRow = {
-  type: "stage_change" | "assignment" | "follow_up" | "feedback";
+  type: "stage_change" | "assignment" | "follow_up" | "feedback" | "edit";
   at: string;
   executiveName: string;
   executiveId?: string;
@@ -113,6 +118,18 @@ export type LeadDetailReportRow = {
   converted: boolean;
   ageDays?: number;
   ageBucket?: string;
+  // Test drive & completion evidence
+  testDriveStatus: "Done" | "Booked" | "Awaiting Approval" | "Not Booked";
+  testDriveBooked: boolean;
+  testDriveDone: boolean;
+  testDriveBookingId: string | null;
+  customerPhotoUrl: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  testDriveKm: number | null;
+  // Management attention
+  delayStatus: "Closed" | "Overdue" | "Delayed" | "On Track";
+  actionRequired: string;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -146,6 +163,11 @@ const EMPTY_REPORT: LeadAdminReport = {
     followUpsOverdue: 0,
     feedbackCount: 0,
     avgFeedbackRating: 0,
+    testDrivesBooked: 0,
+    testDrivesDone: 0,
+    repeatApprovalsPending: 0,
+    delayedLeads: 0,
+    actionRequired: 0,
   },
   pipeline: {},
   bySource: {},

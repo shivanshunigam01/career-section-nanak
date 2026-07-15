@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Star } from "lucide-react";
 import { submitTDFeedback, type TDFeedbackRecord } from "@/lib/tdFeedbackApi";
 import { toast } from "sonner";
+import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 
-const RATING_FIELDS = [
+export const RATING_FIELDS = [
   { key: "drivingExperience", label: "Driving experience" },
   { key: "vehicleComfort", label: "Vehicle comfort" },
   { key: "batteryConfidence", label: "Battery confidence" },
@@ -15,7 +16,7 @@ const RATING_FIELDS = [
   { key: "purchaseIntention", label: "Purchase intention" },
 ] as const;
 
-type RatingKey = (typeof RATING_FIELDS)[number]["key"];
+export type RatingKey = (typeof RATING_FIELDS)[number]["key"];
 
 type Props = {
   bookingId: string;
@@ -25,9 +26,17 @@ type Props = {
   onSubmitted?: () => void;
 };
 
-const VARIANTS = ["Earth", "Wind", "Wind Infinity", "Sky", "Sky Infinity"];
+/** Fallback trim list when the booking's model isn't in the catalog. */
+export const FEEDBACK_VARIANTS = ["Earth", "Wind", "Wind Infinity", "Sky", "Sky Infinity"];
 
-function RatingRow({
+/** Trims for the booking's model from the master catalog (falls back to the static list). */
+export function useFeedbackVariantChoices(preferredModel?: string): string[] {
+  const { catalog } = useVehicleCatalog();
+  const entry = preferredModel ? catalog.find((m) => m.name === preferredModel) : undefined;
+  return entry ? entry.variants : [...FEEDBACK_VARIANTS];
+}
+
+export function RatingRow({
   label,
   value,
   onChange,
@@ -62,6 +71,7 @@ function RatingRow({
 }
 
 export function TDFeedbackForm({ bookingId, customerId, preferredModel, existing, onSubmitted }: Props) {
+  const variantChoices = useFeedbackVariantChoices(preferredModel);
   const [ratings, setRatings] = useState<Record<RatingKey, number>>({
     drivingExperience: existing?.drivingExperience ?? 4,
     vehicleComfort: existing?.vehicleComfort ?? 4,
@@ -133,7 +143,7 @@ export function TDFeedbackForm({ bookingId, customerId, preferredModel, existing
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="none">— Not specified —</SelectItem>
-            {VARIANTS.map((v) => (
+            {variantChoices.map((v) => (
               <SelectItem key={v} value={v}>{v}</SelectItem>
             ))}
           </SelectContent>

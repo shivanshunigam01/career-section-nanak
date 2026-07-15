@@ -13,7 +13,7 @@ import {
   Battery, MapPin, Wrench, BatteryCharging, AlertTriangle, Clock
 } from "lucide-react";
 import { toast } from "sonner";
-import { CAR_MODELS, trimsForModel, defaultTrimForModel } from "@/data/vinfastModels";
+import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 
 type Vehicle = {
   _id: string;
@@ -89,6 +89,7 @@ const emptyVehicle = {
 const WEBSITE_COLORS = ["Infinity Blanc", "Crimson Red", "Jet Black", "Desert Silver", "Zenith Grey", "Urban Mint"];
 
 export default function AdminTDDemoVehicles() {
+  const { models: catalogModels, trimsFor } = useVehicleCatalog();
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -229,7 +230,10 @@ export default function AdminTDDemoVehicles() {
         </div>
         <Select value={filterModel} onValueChange={setFilterModel}>
           <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Model" /></SelectTrigger>
-          <SelectContent><SelectItem value="all">All Models</SelectItem><SelectItem value="VF 6">VF 6</SelectItem><SelectItem value="VF 7">VF 7</SelectItem></SelectContent>
+          <SelectContent>
+            <SelectItem value="all">All Models</SelectItem>
+            {catalogModels.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
+          </SelectContent>
         </Select>
         <Select value={filterStatus} onValueChange={setFilterStatus}>
           <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -321,10 +325,10 @@ export default function AdminTDDemoVehicles() {
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label className="text-xs">Model</Label>
-                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v, variant: defaultTrimForModel(v) }))}>
+                <Select value={form.model} onValueChange={(v) => setForm((p) => ({ ...p, model: v, variant: trimsFor(v)[0] ?? "" }))}>
                   <SelectTrigger className="bg-secondary/50"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {CAR_MODELS.map((m) => (
+                    {catalogModels.map((m) => (
                       <SelectItem key={m} value={m}>{m}</SelectItem>
                     ))}
                   </SelectContent>
@@ -332,13 +336,13 @@ export default function AdminTDDemoVehicles() {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">Variant</Label>
-                {trimsForModel(form.model).length === 0 ? (
+                {trimsFor(form.model).length === 0 ? (
                   <Input value="No variants" disabled className="bg-secondary/50" />
                 ) : (
                   <Select value={form.variant} onValueChange={(v) => setForm((p) => ({ ...p, variant: v }))}>
                     <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select trim" /></SelectTrigger>
                     <SelectContent>
-                      {trimsForModel(form.model).map((v) => (
+                      {trimsFor(form.model).map((v) => (
                         <SelectItem key={v} value={v}>{v}</SelectItem>
                       ))}
                     </SelectContent>

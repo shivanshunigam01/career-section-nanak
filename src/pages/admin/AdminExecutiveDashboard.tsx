@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import {
   BarChart3, RefreshCw, Loader2, Users, Target, CalendarCheck,
   TrendingUp, TrendingDown, Minus, Star, MessageSquare, ArrowRight,
+  UserCheck, Pencil, Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -28,6 +29,19 @@ function fmtDate(iso?: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
+
+function fmtDateTime(iso?: string | null) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+}
+
+const ACTIVITY_META: Record<string, { label: string; icon: React.ElementType; badge: string }> = {
+  stage_change: { label: "Stage change", icon: ArrowRight, badge: "bg-blue-500/10 text-blue-500 border-blue-500/25" },
+  assignment: { label: "Assignment", icon: UserCheck, badge: "bg-violet-500/10 text-violet-500 border-violet-500/25" },
+  follow_up: { label: "Follow-up", icon: MessageSquare, badge: "bg-amber-500/10 text-amber-600 border-amber-500/25" },
+  feedback: { label: "Feedback", icon: Star, badge: "bg-emerald-500/10 text-emerald-600 border-emerald-500/25" },
+  edit: { label: "Details edited", icon: Pencil, badge: "bg-cyan-500/10 text-cyan-600 border-cyan-500/25" },
+};
 
 function CompareStat({
   label,
@@ -272,19 +286,36 @@ export default function AdminExecutiveDashboard() {
 
           <Card className="p-4 border-border/50">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="font-semibold text-sm">Recent activity</h3>
+              <h3 className="font-semibold text-sm">Activity history</h3>
               <Link to="/admin/crm/leads" className="text-xs text-primary hover:underline flex items-center gap-1">
                 Open Lead CRM <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
-              {data.leads.activityLog.length ? data.leads.activityLog.map((row, i) => (
-                <div key={i} className="flex gap-3 text-xs border-b border-border/30 pb-2 last:border-0">
-                  <span className="text-muted-foreground shrink-0 w-28">{fmtDate(row.at)}</span>
-                  <span className="font-medium shrink-0">{row.leadName}</span>
-                  <span className="text-muted-foreground truncate">{row.detail}</span>
-                </div>
-              )) : (
+            <div className="space-y-2 max-h-80 overflow-y-auto pr-1">
+              {data.leads.activityLog.length ? data.leads.activityLog.map((row, i) => {
+                const meta = ACTIVITY_META[row.type] ?? { label: "Activity", icon: Activity, badge: "bg-muted text-muted-foreground" };
+                const Icon = meta.icon;
+                return (
+                  <div key={i} className="flex gap-3 rounded-lg border border-border/40 bg-background/40 p-2.5">
+                    <div className="p-1.5 rounded-md bg-primary/10 text-primary shrink-0 h-fit">
+                      <Icon className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="font-medium text-xs">{row.leadName}</span>
+                        <span className="text-[10px] text-muted-foreground">{row.leadMobile}</span>
+                        <Badge variant="outline" className={cn("text-[9px] px-1.5 py-0", meta.badge)}>
+                          {meta.label}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-snug break-words">{row.detail}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {row.executiveName} · {fmtDateTime(row.at)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              }) : (
                 <p className="text-sm text-muted-foreground text-center py-4">No activity yet</p>
               )}
             </div>

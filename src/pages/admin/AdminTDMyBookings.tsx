@@ -19,11 +19,14 @@ import { designationLabel } from "@/lib/staffRoles";
 import { fetchTDFeedbackByBooking, type TDFeedbackRecord } from "@/lib/tdFeedbackApi";
 import { TDFeedbackForm } from "@/components/admin/TDFeedbackForm";
 import {
-  endTestDriveLog,
   fetchTdLogByBooking,
   startTestDriveLog,
   type TDLogRecord,
 } from "@/lib/tdLogApi";
+import {
+  CompleteTestDriveDialog,
+  TestDriveCompletionSummary,
+} from "@/components/admin/CompleteTestDriveDialog";
 import { AddCrmLeadDialog } from "@/components/admin/AddCrmLeadDialog";
 import { DrivingLicenceVerify } from "@/components/admin/DrivingLicenceVerify";
 
@@ -109,6 +112,7 @@ export default function AdminTDMyBookings() {
   const [tdLog, setTdLog] = useState<TDLogRecord | null>(null);
   const [openingOdometer, setOpeningOdometer] = useState("");
   const [closingOdometer, setClosingOdometer] = useState("");
+  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
   const [showAddLead, setShowAddLead] = useState(false);
 
   const isExecutive = isFieldStaffUser(adminUser);
@@ -247,46 +251,26 @@ export default function AdminTDMyBookings() {
     }
   };
 
-  const handleCompleteDrive = async (id: string) => {
-    const closing = Number(closingOdometer);
-    const opening = Number(openingOdometer);
-    if (!closingOdometer.trim() || Number.isNaN(closing) || closing < 0) {
-      toast.error("Enter closing odometer reading (km) before completing the drive");
-      return;
-    }
-    if (!Number.isNaN(opening) && closing < opening) {
-      toast.error("Closing odometer cannot be less than opening odometer");
-      return;
-    }
+  const openCompleteDialog = () => {
     if (!tdLog?._id) {
       toast.error("No active test drive log found. Start the drive first.");
       return;
     }
-    setActionLoading(true);
-    try {
-      const log = await endTestDriveLog(tdLog._id, {
-        closingOdometer: closing,
-        closingBattery: selected?.vehicleId?.batteryPercent,
-      });
-      setTdLog(log);
-      toast.success(
-        log.totalKM != null
-          ? `Test drive completed — ${log.totalKM} km driven`
-          : "Test drive completed",
-      );
-      void fetchBookings();
-      if (selected?._id === id) {
-        await refreshSelected(id);
-        setFeedbackLoading(true);
-        const fb = await fetchTDFeedbackByBooking(id);
-        setBookingFeedback(fb);
-        setFeedbackLoading(false);
-      }
-    } catch (e) {
-      toast.error(formatApiErrors(e));
-    } finally {
-      setActionLoading(false);
-    }
+    setCompleteDialogOpen(true);
+  };
+
+  const handleDriveCompleted = async () => {
+    if (!selected) return;
+    const id = selected._id;
+    const log = await fetchTdLogByBooking(id);
+    setTdLog(log);
+    if (log?.closingOdometer != null) setClosingOdometer(String(log.closingOdometer));
+    void fetchBookings();
+    await refreshSelected(id);
+    setFeedbackLoading(true);
+    const fb = await fetchTDFeedbackByBooking(id);
+    setBookingFeedback(fb);
+    setFeedbackLoading(false);
   };
 
   const openRescheduleDialog = (b: Booking) => {
@@ -504,7 +488,7 @@ export default function AdminTDMyBookings() {
                           size="sm"
                           className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40"
                           disabled={actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
-                          onClick={() => void handleCompleteDrive(selected._id)}
+                          onClick={openCompleteDialog}
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" /> Mark completed
                         </Button>
@@ -517,7 +501,7 @@ export default function AdminTDMyBookings() {
                       </div>
                       <p className="text-[11px] text-muted-foreground">
                         {selected.bookingStatus === "IN_PROGRESS"
-                          ? "Enter closing odometer when the customer returns, then mark completed."
+                          ? "Tap Mark completed to capture the closing odometer, photos, location, and customer feedback."
                           : "Enter opening odometer before starting the test drive."}
                       </p>
                     </div>
@@ -539,6 +523,7 @@ export default function AdminTDMyBookings() {
                           </div>
                         </div>
                       ) : null}
+                      {tdLog ? <TestDriveCompletionSummary log={tdLog} /> : null}
                       <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
                         Test drive completed — customer added to your Leads (source: Test Drive). Capture feedback below to update their status.
                       </div>
@@ -568,6 +553,23 @@ export default function AdminTDMyBookings() {
           )}
         </DialogContent>
       </Dialog>
+
+      {selected ? (
+        <CompleteTestDriveDialog
+          open={completeDialogOpen}
+          onOpenChange={setCompleteDialogOpen}
+          bookingMongoId={selected._id}
+          bookingCode={selected.bookingId}
+          customerName={selected.testDriveId?.customerName || selected.customerId?.name}
+          customerId={selected.customerId?._id}
+          preferredModel={selected.testDriveId?.model || selected.preferredModel}
+          dlVerified={selected.dlVerified}
+          log={tdLog}
+          vehicleBattery={selected.vehicleId?.batteryPercent}
+          initialClosingOdometer={closingOdometer}
+          onCompleted={handleDriveCompleted}
+        />
+      ) : null}
 
       <Dialog open={!!rescheduleDialog} onOpenChange={(o) => !o && setRescheduleDialog(null)}>
         <DialogContent className="bg-card border-border max-w-md">
