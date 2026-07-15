@@ -1,3 +1,5 @@
+import { ADMIN_MODULES, type AdminModuleKey } from "./adminModules";
+
 export type AdminUser = {
   _id?: string;
   name: string;
@@ -5,6 +7,8 @@ export type AdminUser = {
   role: string;
   designation?: string | null;
   designationLabel?: string | null;
+  /** Module keys this user may access. Empty/missing = default access for their role. */
+  allowedModules?: string[];
 };
 
 const TOKEN_KEY = "vf_admin_token";
@@ -51,13 +55,47 @@ export function isCrmStaffUser(user: AdminUser | null | undefined): boolean {
   return user.role === "executive" || user.role === "manager";
 }
 
-/** Sales executives use a focused portal (test drives + assigned leads). */
+/**
+ * Module keys explicitly granted in User Master, or null when the user has no
+ * per-user restriction (superadmins, and staff left on role defaults).
+ */
+export function getRestrictedModules(user: AdminUser | null | undefined): AdminModuleKey[] | null {
+  if (!user?.allowedModules?.length) return null;
+  const valid = new Set<string>(ADMIN_MODULES.map((m) => m.key));
+  const keys = user.allowedModules.filter((k): k is AdminModuleKey => valid.has(k));
+  return keys.length ? keys : null;
+}
+
+export function isModuleAllowed(user: AdminUser | null | undefined, key: AdminModuleKey): boolean {
+  const restricted = getRestrictedModules(user);
+  return !restricted || restricted.includes(key);
+}
+
+/** True when a restricted user may open this path (unrestricted users always may). */
+export function isPathAllowed(user: AdminUser | null | undefined, pathname: string): boolean {
+  const restricted = getRestrictedModules(user);
+  if (!restricted) return true;
+  return ADMIN_MODULES.some(
+    (m) => restricted.includes(m.key) && (pathname === m.path || pathname.startsWith(`${m.path}/`)),
+  );
+}
+
+/**
+ * Sales executives use a focused portal (test drives + assigned leads).
+ * Users given explicit module access in User Master follow that instead.
+ */
 export function isFieldStaffUser(user: AdminUser | null | undefined): boolean {
   if (!user) return false;
+  if (getRestrictedModules(user)) return false;
   return user.role === "executive" || user.designation === "sales_executive";
 }
 
 export function getAdminLoginRedirect(user: AdminUser | null | undefined): string {
+  const restricted = getRestrictedModules(user);
+  if (restricted) {
+    const first = ADMIN_MODULES.find((m) => restricted.includes(m.key));
+    if (first) return first.path;
+  }
   if (isFieldStaffUser(user)) return "/admin/my-dashboard";
   return "/admin/dashboard";
 }
