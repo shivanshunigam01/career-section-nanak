@@ -21,7 +21,19 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { clearAdminSession, getAdminToken, getAdminUser, isAdminSessionTimedOut, canAccessFullAdmin, isFieldStaffUser, isStaffPortalPath } from "@/lib/adminAuth";
+import {
+  clearAdminSession,
+  getAdminToken,
+  getAdminUser,
+  isAdminSessionTimedOut,
+  canAccessFullAdmin,
+  isFieldStaffUser,
+  isStaffPortalPath,
+  getRestrictedModules,
+  isPathAllowed,
+  getAdminLoginRedirect,
+} from "@/lib/adminAuth";
+import { MODULE_BY_PATH } from "@/lib/adminModules";
 import { toast } from "sonner";
 
 const ADMIN_SESSION_EXPIRED_TOAST =
@@ -76,9 +88,17 @@ const AdminLayout = () => {
   const adminUser = getAdminUser();
   const fieldStaff = isFieldStaffUser(adminUser);
   const fullAdmin = canAccessFullAdmin(adminUser);
+  // Per-user module access configured in User Master (null = no restriction).
+  const restrictedModules = getRestrictedModules(adminUser);
+  const canSeePath = (path: string) => {
+    if (!restrictedModules) return true;
+    const key = MODULE_BY_PATH[path];
+    return Boolean(key && restrictedModules.includes(key));
+  };
+  const notifEnabled = fullAdmin && canSeePath("/admin/dashboard");
 
   useEffect(() => {
-    if (!fullAdmin) {
+    if (!notifEnabled) {
       setNotifications([]);
       return;
     }
@@ -160,7 +180,7 @@ const AdminLayout = () => {
     return () => {
       cancelled = true;
     };
-  }, [fullAdmin, notifRev]);
+  }, [notifEnabled, notifRev]);
 
   useEffect(() => {
     const api = hasApi();
@@ -177,7 +197,13 @@ const AdminLayout = () => {
     }
     if (fieldStaff && !isStaffPortalPath(location.pathname)) {
       navigate("/admin/my-dashboard", { replace: true });
+      return;
     }
+    // Users with per-module access (User Master) can only open granted modules.
+    if (restrictedModules && !isPathAllowed(adminUser, location.pathname)) {
+      navigate(getAdminLoginRedirect(adminUser), { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate, location.pathname, fieldStaff]);
 
   useEffect(() => {
@@ -195,7 +221,14 @@ const AdminLayout = () => {
     navigate("/admin/login");
   };
 
-  const visibleTdItems = tdNavItems.filter((item) => item.staff || fullAdmin);
+  const visibleTdItems = tdNavItems.filter((item) => (item.staff || fullAdmin) && canSeePath(item.path));
+  const visibleCoreItems = [
+    // Restricted users granted the staff portal see My Dashboard alongside core modules.
+    ...(restrictedModules && canSeePath("/admin/my-dashboard")
+      ? [{ label: "My Dashboard", icon: LayoutDashboard, path: "/admin/my-dashboard" }]
+      : []),
+    ...coreNavItems.filter((item) => canSeePath(item.path)),
+  ];
 
   const avatarLabel = adminUser?.name
     ? adminUser.name
@@ -288,7 +321,7 @@ const AdminLayout = () => {
             </>
           ) : (
             <>
-              {coreNavItems.map((item) => {
+              {visibleCoreItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
                   <Link
@@ -307,6 +340,7 @@ const AdminLayout = () => {
                 );
               })}
 
+              {visibleTdItems.length > 0 && (
               <div className="pt-1">
                 <div className="mx-1 my-2 border-t border-border/50" />
                 <button
@@ -347,6 +381,7 @@ const AdminLayout = () => {
                   </div>
                 )}
               </div>
+              )}
             </>
           )}
         </nav>
@@ -456,11 +491,11 @@ const AdminLayout = () => {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={() => navigate(fieldStaff ? "/admin/my-dashboard" : "/admin/dashboard")}
+                onClick={() => navigate(getAdminLoginRedirect(adminUser))}
               >
                 <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
               </DropdownMenuItem>
-              {fullAdmin && (
+              {fullAdmin && canSeePath("/admin/settings") && (
                 <DropdownMenuItem className="cursor-pointer" onClick={() => navigate("/admin/settings")}>
                   <Settings className="mr-2 h-4 w-4" /> Settings
                 </DropdownMenuItem>

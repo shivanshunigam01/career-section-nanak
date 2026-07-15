@@ -18,37 +18,46 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2, Trash2
+  Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2, Trash2, ShieldCheck
 } from "lucide-react";
 import { toast } from "sonner";
 import {
   DESIGNATION_LABELS,
   STAFF_DESIGNATIONS,
   designationLabel,
-  type StaffDesignation
 } from "@/lib/staffRoles";
+import { MODULE_GROUPS, modulesForGroup, type AdminModuleKey } from "@/lib/adminModules";
 
 type StaffUser = {
   _id: string;
   name: string;
   email: string;
   role: string;
-  designation: StaffDesignation;
+  designation: string;
   designationLabel?: string;
+  isCustomDesignation?: boolean;
   active: boolean;
+  allowedModules?: string[];
   createdAt?: string;
 };
+
+/** Sentinel value in the designation dropdown for admin-typed custom positions. */
+const OTHER_DESIGNATION = "__other__";
 
 const emptyForm = {
   name: "",
   email: "",
   password: "",
-  designation: "sales_executive" as StaffDesignation,
+  designation: "sales_executive" as string,
+  customDesignation: "",
+  accessLevel: "executive" as "executive" | "manager",
+  allowedModules: [] as AdminModuleKey[],
   active: true,
 };
 
-const DESIGNATION_COLORS: Record<StaffDesignation, string> = {
+const DESIGNATION_COLORS: Record<string, string> = {
   sales_executive: "bg-blue-400/10 text-blue-400 border-blue-400/20",
   sales_manager: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
   branch_manager: "bg-purple-400/10 text-purple-400 border-purple-400/20",
@@ -56,6 +65,8 @@ const DESIGNATION_COLORS: Record<StaffDesignation, string> = {
   ceo: "bg-rose-400/10 text-rose-400 border-rose-400/20",
   md: "bg-amber-400/10 text-amber-400 border-amber-400/20",
 };
+
+const CUSTOM_DESIGNATION_COLOR = "bg-teal-400/10 text-teal-400 border-teal-400/20";
 
 export default function AdminTDUsers() {
   const [users, setUsers] = useState<StaffUser[]>([]);
@@ -95,16 +106,31 @@ export default function AdminTDUsers() {
   };
 
   const openEdit = (user: StaffUser) => {
+    const isKnown = (STAFF_DESIGNATIONS as readonly string[]).includes(user.designation);
     setForm({
       _id: user._id,
       name: user.name,
       email: user.email,
       password: "",
-      designation: user.designation,
+      designation: isKnown ? user.designation : OTHER_DESIGNATION,
+      customDesignation: isKnown ? "" : user.designation,
+      accessLevel: user.role === "manager" ? "manager" : "executive",
+      allowedModules: (user.allowedModules ?? []) as AdminModuleKey[],
       active: user.active,
     });
     setShowForm(true);
   };
+
+  const toggleModule = (key: AdminModuleKey, checked: boolean) => {
+    setForm((f) => ({
+      ...f,
+      allowedModules: checked
+        ? [...new Set([...f.allowedModules, key])]
+        : f.allowedModules.filter((m) => m !== key),
+    }));
+  };
+
+  const isOtherDesignation = form.designation === OTHER_DESIGNATION;
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.email.trim()) {
@@ -115,15 +141,22 @@ export default function AdminTDUsers() {
       toast.error("Password must be at least 8 characters");
       return;
     }
+    if (isOtherDesignation && !form.customDesignation.trim()) {
+      toast.error("Please type the custom position name");
+      return;
+    }
 
     setActionLoading(true);
     try {
       const payload: Record<string, unknown> = {
         name: form.name.trim(),
         email: form.email.trim(),
-        designation: form.designation,
+        designation: isOtherDesignation ? form.customDesignation.trim() : form.designation,
         active: form.active,
+        allowedModules: form.allowedModules,
       };
+      // Custom positions carry an explicit access level; standard ones derive it from the designation.
+      if (isOtherDesignation) payload.role = form.accessLevel;
       if (form.password) payload.password = form.password;
 
       if (form._id) {
@@ -203,6 +236,8 @@ export default function AdminTDUsers() {
           Every user signs in at <span className="font-mono text-foreground">/admin/login</span> with their email and password.
           Assigned test drives appear under <strong className="text-foreground">My Test Drives</strong>.
           Sales Executives land on that page automatically; managers and above also see full TD Management.
+          Pick <strong className="text-foreground">Other (custom position)</strong> to add any designation, and use{" "}
+          <strong className="text-foreground">Module access</strong> to control exactly which sections a user sees after login.
         </p>
       </Card>
 
@@ -251,9 +286,14 @@ export default function AdminTDUsers() {
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                  <Badge variant="outline" className={DESIGNATION_COLORS[user.designation]}>
+                  <Badge variant="outline" className={DESIGNATION_COLORS[user.designation] || CUSTOM_DESIGNATION_COLOR}>
                     {user.designationLabel || designationLabel(user.designation)}
                   </Badge>
+                  {(user.allowedModules?.length ?? 0) > 0 && (
+                    <Badge variant="outline" className="border-primary/30 text-primary">
+                      <ShieldCheck className="mr-1 h-3 w-3" /> {user.allowedModules!.length} module{user.allowedModules!.length === 1 ? "" : "s"}
+                    </Badge>
+                  )}
                   <Badge variant="outline" className={user.active ? "border-green-400/30 text-green-400" : "border-red-400/30 text-red-400"}>
                     {user.active ? "Active" : "Inactive"}
                   </Badge>
@@ -285,7 +325,7 @@ export default function AdminTDUsers() {
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{form._id ? "Edit user" : "Add user"}</DialogTitle>
           </DialogHeader>
@@ -309,14 +349,82 @@ export default function AdminTDUsers() {
             </div>
             <div className="space-y-2">
               <Label>Role / designation</Label>
-              <Select value={form.designation} onValueChange={(v) => setForm({ ...form, designation: v as StaffDesignation })}>
+              <Select value={form.designation} onValueChange={(v) => setForm({ ...form, designation: v })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STAFF_DESIGNATIONS.map((d) => (
                     <SelectItem key={d} value={d}>{DESIGNATION_LABELS[d]}</SelectItem>
                   ))}
+                  <SelectItem value={OTHER_DESIGNATION}>Other (custom position)…</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            {isOtherDesignation && (
+              <>
+                <div className="space-y-2">
+                  <Label>Custom position name</Label>
+                  <Input
+                    autoFocus
+                    value={form.customDesignation}
+                    onChange={(e) => setForm({ ...form, customDesignation: e.target.value })}
+                    placeholder="e.g. Telecaller, Receptionist, Accountant…"
+                    maxLength={60}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Access level</Label>
+                  <Select
+                    value={form.accessLevel}
+                    onValueChange={(v) => setForm({ ...form, accessLevel: v as "executive" | "manager" })}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="executive">Executive (own leads &amp; test drives only)</SelectItem>
+                      <SelectItem value="manager">Manager (full team data)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </>
+            )}
+            <div className="space-y-2 rounded-lg border border-border/50 p-3">
+              <div className="flex items-center justify-between gap-2">
+                <Label className="flex items-center gap-2">
+                  <ShieldCheck className="h-4 w-4 text-primary" /> Module access
+                </Label>
+                {form.allowedModules.length > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs text-muted-foreground"
+                    onClick={() => setForm({ ...form, allowedModules: [] })}
+                  >
+                    Clear (use role default)
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Tick the modules this user can open after login. Leave everything unticked for the default access of
+                their role (Sales Executives get the staff portal; managers and above get full TD Management).
+              </p>
+              <div className="space-y-3 pt-1">
+                {MODULE_GROUPS.map((group) => (
+                  <div key={group}>
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group}</p>
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                      {modulesForGroup(group).map((m) => (
+                        <label key={m.key} className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
+                          <Checkbox
+                            checked={form.allowedModules.includes(m.key)}
+                            onCheckedChange={(v) => toggleModule(m.key, v === true)}
+                          />
+                          <span className="truncate">{m.label}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border/50 px-3 py-2">
               <Label htmlFor="active-user">Active</Label>
