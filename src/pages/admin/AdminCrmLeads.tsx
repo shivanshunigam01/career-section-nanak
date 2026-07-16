@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
   MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight, Pencil,
-  History, Trophy, ShieldAlert,
+  History, Trophy, ShieldAlert, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -29,6 +29,7 @@ import {
   updatePvCrmLeadRemarks,
   updatePvCrmLeadStage,
   convertPvCrmLeadToSale,
+  deletePvCrmLead,
   fetchOpportunityDuplicates,
   type AssignableStaffUser,
   type PvCrmLead,
@@ -422,6 +423,26 @@ export default function AdminCrmLeads() {
     }
   };
 
+  const handleDeleteLead = async () => {
+    if (!selected || !canAssignLeads) return;
+    const label = selected.leadId || selected.name;
+    if (!window.confirm(`Permanently delete lead "${label}"? Follow-ups and stage history will also be removed. This cannot be undone.`)) {
+      return;
+    }
+    setSaving(true);
+    try {
+      await deletePvCrmLead(selected._id);
+      toast.success("Lead deleted");
+      setSelected(null);
+      setDetail(null);
+      void loadLeads();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -732,6 +753,18 @@ export default function AdminCrmLeads() {
                       onClick={() => setShowBookTestDrive(true)}
                     >
                       <CalendarClock className="w-3.5 h-3.5 mr-1.5" /> Book Test Drive
+                    </Button>
+                  ) : null}
+                  {canAssignLeads ? (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      className="text-xs h-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      disabled={saving}
+                      onClick={() => void handleDeleteLead()}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Delete
                     </Button>
                   ) : null}
                 </div>

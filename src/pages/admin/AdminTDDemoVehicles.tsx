@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { adminGet, adminPatchJson, adminPostJson, adminPutJson, formatApiErrors } from "@/lib/api";
+import { adminGet, adminPatchJson, adminPostJson, adminPutJson, adminDeleteJson, formatApiErrors } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,10 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Progress } from "@/components/ui/progress";
 import {
   Car, Search, RefreshCw, Zap, Gauge, Loader2, Plus, Edit2,
-  Battery, MapPin, Wrench, BatteryCharging, AlertTriangle, Clock
+  Battery, MapPin, Wrench, BatteryCharging, AlertTriangle, Clock, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
+import { getAdminUser } from "@/lib/adminAuth";
 
 type Vehicle = {
   _id: string;
@@ -90,6 +91,8 @@ const WEBSITE_COLORS = ["Infinity Blanc", "Crimson Red", "Jet Black", "Desert Si
 
 export default function AdminTDDemoVehicles() {
   const { models: catalogModels, trimsFor } = useVehicleCatalog();
+  const adminUser = getAdminUser();
+  const canDelete = adminUser?.role === "manager" || adminUser?.role === "superadmin";
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
@@ -174,6 +177,21 @@ export default function AdminTDDemoVehicles() {
       });
       toast.success(`Vehicle status → ${newStatus}`);
       setStatusDialog(null);
+      void fetchData();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteVehicle = async (vehicle: Vehicle) => {
+    if (!canDelete) return;
+    if (!window.confirm(`Permanently delete ${vehicle.vehicleId} (${vehicle.model})? This cannot be undone.`)) return;
+    setActionLoading(true);
+    try {
+      await adminDeleteJson(`/admin/td/vehicles/${vehicle._id}`);
+      toast.success("Vehicle deleted");
       void fetchData();
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -311,6 +329,17 @@ export default function AdminTDDemoVehicles() {
                   }}>
                     <Gauge className="w-3.5 h-3.5 mr-1" /> Status
                   </Button>
+                  {canDelete ? (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="text-xs h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      disabled={actionLoading}
+                      onClick={() => void handleDeleteVehicle(v)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  ) : null}
                 </div>
               </Card>
             );

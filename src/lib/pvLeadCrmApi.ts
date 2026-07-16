@@ -1,4 +1,4 @@
-import { adminGet, adminPatchJson, adminPostJson } from "@/lib/api";
+import { adminGet, adminPatchJson, adminPostJson, adminDeleteJson } from "@/lib/api";
 import { CRM_LEAD_STAGES, type CrmLeadStage } from "@/lib/leadStages";
 import { LEAD_SOURCE_OPTIONS } from "@/data/leadSources";
 
@@ -206,6 +206,11 @@ export async function completePvCrmFollowUp(leadId: string, followUpId: string, 
     status: "completed",
     outcome,
   });
+}
+
+/** Permanently delete a junk/incorrect CRM lead (managers/superadmins). */
+export async function deletePvCrmLead(id: string): Promise<void> {
+  await adminDeleteJson(`${CRM_BASE}/${id}`);
 }
 
 export type ConvertLeadToSalePayload = {
