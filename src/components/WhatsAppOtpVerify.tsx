@@ -11,7 +11,7 @@ const MOBILE_OK = /^[6-9]\d{9}$/;
 const BYPASS_OTP = "0000";
 
 function isValidOtpInput(digits: string): boolean {
-  return digits === BYPASS_OTP || digits.length === 6;
+  return digits === BYPASS_OTP || digits.length === 4;
 }
 
 type WhatsAppOtpVerifyProps = {
@@ -86,9 +86,9 @@ export function WhatsAppOtpVerify({
   };
 
   const handleVerify = async () => {
-    const digits = code.replace(/\D/g, "").slice(0, 6);
+    const digits = code.replace(/\D/g, "").slice(0, 4);
     if (!isValidOtpInput(digits)) {
-      toast.error("Enter the 6-digit WhatsApp code.");
+      toast.error("Enter the 4-digit WhatsApp code.");
       return;
     }
     setVerifying(true);
@@ -161,9 +161,9 @@ export function WhatsAppOtpVerify({
                 inputMode="numeric"
                 autoComplete="one-time-code"
                 placeholder="WhatsApp code"
-                maxLength={6}
+                maxLength={4}
                 value={code}
-                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 4))}
                 className="sm:max-w-[9rem] bg-background/80"
                 aria-label="WhatsApp verification code"
                 aria-required="true"
