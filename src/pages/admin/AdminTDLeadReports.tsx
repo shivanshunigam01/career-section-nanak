@@ -244,31 +244,22 @@ export default function AdminTDLeadReports() {
       </div>
 
       <Card className="bg-card border-border/50 p-4">
-        {/* Tablet (sm–lg): 2-col grid — dates side by side, staff + buttons on rows below.
-            Desktop (lg+): everything on one row, aligned at the bottom edge. */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.2fr_auto] lg:items-end">
+        {/* Phone: dates side by side, staff + buttons full width.
+            Tablet (sm–lg): dates row, then staff + buttons aligned on one row.
+            Desktop (lg+): everything on a single row. */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-[1fr_1fr_1.25fr_auto] lg:items-end">
           <div className="space-y-1.5 min-w-0">
             <Label className="text-xs">From date</Label>
-            <Input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="block w-full min-w-0 h-10 appearance-none bg-secondary/50 [&::-webkit-date-and-time-value]:text-left"
-            />
+            <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full bg-secondary/50" />
           </div>
           <div className="space-y-1.5 min-w-0">
             <Label className="text-xs">To date</Label>
-            <Input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="block w-full min-w-0 h-10 appearance-none bg-secondary/50 [&::-webkit-date-and-time-value]:text-left"
-            />
+            <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full bg-secondary/50" />
           </div>
-          <div className="space-y-1.5 min-w-0 sm:col-span-2 lg:col-span-1">
+          <div className="space-y-1.5 min-w-0 col-span-2 sm:col-span-1 lg:col-span-1">
             <Label className="text-xs">Executive / staff</Label>
             <Select value={executiveId} onValueChange={setExecutiveId}>
-              <SelectTrigger className="w-full h-10 bg-secondary/50">
+              <SelectTrigger className="w-full bg-secondary/50">
                 <SelectValue placeholder="All staff" />
               </SelectTrigger>
               <SelectContent>
@@ -281,9 +272,9 @@ export default function AdminTDLeadReports() {
               </SelectContent>
             </Select>
           </div>
-          <div className="flex gap-3 sm:col-span-2 lg:col-span-1">
-            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground h-10 flex-1 lg:flex-none shrink-0">Apply</Button>
-            <Button onClick={() => { setFrom(""); setTo(""); setExecutiveId("all"); }} variant="outline" className="h-10 flex-1 lg:flex-none shrink-0">Clear</Button>
+          <div className="flex gap-3 col-span-2 sm:col-span-1 sm:self-end lg:col-span-1">
+            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground flex-1 lg:flex-none shrink-0">Apply</Button>
+            <Button onClick={() => { setFrom(""); setTo(""); setExecutiveId("all"); }} variant="outline" className="flex-1 lg:flex-none shrink-0">Clear</Button>
           </div>
         </div>
       </Card>
