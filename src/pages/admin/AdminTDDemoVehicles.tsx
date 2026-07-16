@@ -106,14 +106,13 @@ export default function AdminTDDemoVehicles() {
   const [statusAvailableAgain, setStatusAvailableAgain] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Always fetch the FULL fleet (no status/model params) so the summary cards
+  // show real counts up-front; status/model/search filtering happens client-side.
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({ limit: "100" });
-      if (filterStatus !== "all") params.set("status", filterStatus);
-      if (filterModel !== "all") params.set("model", filterModel);
       const [vRes, bRes] = await Promise.all([
-        adminGet<Vehicle[]>(`/admin/td/vehicles?${params}`),
+        adminGet<Vehicle[]>("/admin/td/vehicles?limit=200"),
         adminGet<Branch[]>("/admin/td/branches/public")
       ]);
       setVehicles(vRes.data ?? []);
@@ -123,11 +122,13 @@ export default function AdminTDDemoVehicles() {
     } finally {
       setLoading(false);
     }
-  }, [filterStatus, filterModel]);
+  }, []);
 
   useEffect(() => { void fetchData(); }, [fetchData]);
 
   const filtered = vehicles.filter((v) => {
+    if (filterStatus !== "all" && v.status !== filterStatus) return false;
+    if (filterModel !== "all" && v.model !== filterModel) return false;
     if (!search) return true;
     const s = search.toLowerCase();
     return v.vehicleId?.toLowerCase().includes(s) || v.registrationNo?.toLowerCase().includes(s) || v.model?.toLowerCase().includes(s) || v.color?.toLowerCase().includes(s);
