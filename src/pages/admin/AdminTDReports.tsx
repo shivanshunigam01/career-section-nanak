@@ -244,30 +244,14 @@ export default function AdminTDReports() {
       </div>
 
       <Card className="bg-card border-border/50 p-4">
-        {/* Tablet (sm–lg): dates side by side, buttons full-width below.
-            Desktop (lg+): single row aligned at the bottom edge. */}
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] lg:items-end">
-          <div className="space-y-1.5 min-w-0">
-            <Label className="text-xs">From Date</Label>
-            <Input
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              className="block w-full min-w-0 h-10 appearance-none bg-secondary/50 [&::-webkit-date-and-time-value]:text-left"
-            />
-          </div>
-          <div className="space-y-1.5 min-w-0">
-            <Label className="text-xs">To Date</Label>
-            <Input
-              type="date"
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="block w-full min-w-0 h-10 appearance-none bg-secondary/50 [&::-webkit-date-and-time-value]:text-left"
-            />
-          </div>
-          <div className="flex gap-3 sm:col-span-2 lg:col-span-1">
-            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground h-10 flex-1 lg:flex-none shrink-0">Apply Filter</Button>
-            <Button onClick={() => { setFrom(""); setTo(""); }} variant="outline" className="h-10 flex-1 lg:flex-none shrink-0">Clear</Button>
+        {/* Phone: dates side by side, buttons full width below.
+            Tablet/desktop (sm+): dates and buttons aligned on one row. */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+          <div className="space-y-1.5 min-w-0"><Label className="text-xs">From Date</Label><Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full bg-secondary/50" /></div>
+          <div className="space-y-1.5 min-w-0"><Label className="text-xs">To Date</Label><Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full bg-secondary/50" /></div>
+          <div className="flex gap-3 col-span-2 sm:col-span-1 sm:self-end">
+            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground flex-1 sm:flex-none shrink-0">Apply Filter</Button>
+            <Button onClick={() => { setFrom(""); setTo(""); }} variant="outline" className="flex-1 sm:flex-none shrink-0">Clear</Button>
           </div>
         </div>
       </Card>
