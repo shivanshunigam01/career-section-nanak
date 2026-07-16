@@ -244,36 +244,46 @@ export default function AdminTDLeadReports() {
       </div>
 
       <Card className="bg-card border-border/50 p-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:flex lg:flex-1 lg:gap-3">
-            <div className="space-y-1.5 w-full lg:flex-1">
-              <Label className="text-xs">From date</Label>
-              <Input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="w-full bg-secondary/50" />
-            </div>
-            <div className="space-y-1.5 w-full lg:flex-1">
-              <Label className="text-xs">To date</Label>
-              <Input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="w-full bg-secondary/50" />
-            </div>
-            <div className="space-y-1.5 w-full sm:col-span-2 lg:col-span-1 lg:flex-1">
-              <Label className="text-xs">Executive / staff</Label>
-              <Select value={executiveId} onValueChange={setExecutiveId}>
-                <SelectTrigger className="w-full bg-secondary/50">
-                  <SelectValue placeholder="All staff" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All staff</SelectItem>
-                  {staff.map((s) => (
-                    <SelectItem key={s._id} value={s._id}>
-                      {s.name}{s.designationLabel ? ` · ${s.designationLabel}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Tablet (sm–lg): 2-col grid — dates side by side, staff + buttons on rows below.
+            Desktop (lg+): everything on one row, aligned at the bottom edge. */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1.2fr_auto] lg:items-end">
+          <div className="space-y-1.5 min-w-0">
+            <Label className="text-xs">From date</Label>
+            <Input
+              type="date"
+              value={from}
+              onChange={(e) => setFrom(e.target.value)}
+              className="block w-full min-w-0 h-10 appearance-none bg-secondary/50 [&::-webkit-date-and-time-value]:text-left"
+            />
           </div>
-          <div className="flex gap-3">
-            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground flex-1 lg:flex-none shrink-0">Apply</Button>
-            <Button onClick={() => { setFrom(""); setTo(""); setExecutiveId("all"); }} variant="outline" className="flex-1 lg:flex-none shrink-0">Clear</Button>
+          <div className="space-y-1.5 min-w-0">
+            <Label className="text-xs">To date</Label>
+            <Input
+              type="date"
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="block w-full min-w-0 h-10 appearance-none bg-secondary/50 [&::-webkit-date-and-time-value]:text-left"
+            />
+          </div>
+          <div className="space-y-1.5 min-w-0 sm:col-span-2 lg:col-span-1">
+            <Label className="text-xs">Executive / staff</Label>
+            <Select value={executiveId} onValueChange={setExecutiveId}>
+              <SelectTrigger className="w-full h-10 bg-secondary/50">
+                <SelectValue placeholder="All staff" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All staff</SelectItem>
+                {staff.map((s) => (
+                  <SelectItem key={s._id} value={s._id}>
+                    {s.name}{s.designationLabel ? ` · ${s.designationLabel}` : ""}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex gap-3 sm:col-span-2 lg:col-span-1">
+            <Button onClick={() => void fetchReport()} className="bg-primary text-primary-foreground h-10 flex-1 lg:flex-none shrink-0">Apply</Button>
+            <Button onClick={() => { setFrom(""); setTo(""); setExecutiveId("all"); }} variant="outline" className="h-10 flex-1 lg:flex-none shrink-0">Clear</Button>
           </div>
         </div>
       </Card>
