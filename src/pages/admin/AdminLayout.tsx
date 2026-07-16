@@ -34,6 +34,12 @@ import {
   getAdminLoginRedirect,
 } from "@/lib/adminAuth";
 import { MODULE_BY_PATH } from "@/lib/adminModules";
+import {
+  dismissNotification,
+  dismissNotifications,
+  isNotificationDismissed,
+  notificationFingerprint,
+} from "@/lib/adminNotifications";
 import { toast } from "sonner";
 
 const ADMIN_SESSION_EXPIRED_TOAST =
@@ -75,11 +81,15 @@ const tdNavItems = [
 
 type HeaderNotification = {
   id: string;
+  /** Unique per current metric so dismissing "3 new leads" doesn't hide "4 new leads". */
+  fingerprint: string;
   title: string;
   sub: string;
   icon: React.ElementType;
   path: string;
 };
+
+const NOTIF_POLL_MS = 60_000;
 
 const AdminLayout = () => {
   const navigate = useNavigate();
@@ -110,8 +120,8 @@ const AdminLayout = () => {
     }
 
     let cancelled = false;
-    (async () => {
-      setNotifLoading(true);
+    const load = async (showSpinner: boolean) => {
+      if (showSpinner) setNotifLoading(true);
       try {
         let newLeadsToday = 0;
         let tdPending = 0;
@@ -139,28 +149,32 @@ const AdminLayout = () => {
           pendingFollowUps = L.filter((l) => l.nextFollowUp).length;
         }
 
-        const items: HeaderNotification[] = [];
+        const todayKey = new Date().toISOString().slice(0, 10);
+        const candidates: HeaderNotification[] = [];
         if (newLeadsToday > 0) {
-          items.push({
+          candidates.push({
             id: "leads-today",
+            fingerprint: notificationFingerprint("leads-today", `${todayKey}:${newLeadsToday}`),
             title: `${newLeadsToday} new lead${newLeadsToday === 1 ? "" : "s"} today`,
             sub: "Review and assign the latest leads",
             icon: Users,
-            path: "/admin/leads",
+            path: "/admin/crm/leads",
           });
         }
         if (tdPending > 0) {
-          items.push({
+          candidates.push({
             id: "td-pending",
+            fingerprint: notificationFingerprint("td-pending", tdPending),
             title: `${tdPending} test drive${tdPending === 1 ? "" : "s"} awaiting action`,
             sub: "Pending or scheduled bookings",
             icon: CalendarCheck,
-            path: "/admin/test-drives",
+            path: "/admin/td/bookings",
           });
         }
         if (openEnquiries > 0) {
-          items.push({
+          candidates.push({
             id: "open-enquiries",
+            fingerprint: notificationFingerprint("open-enquiries", openEnquiries),
             title: `${openEnquiries} open enquir${openEnquiries === 1 ? "y" : "ies"}`,
             sub: "Customers waiting for a response",
             icon: MessageSquare,
@@ -168,25 +182,51 @@ const AdminLayout = () => {
           });
         }
         if (pendingFollowUps > 0) {
-          items.push({
+          candidates.push({
             id: "follow-ups",
+            fingerprint: notificationFingerprint("follow-ups", pendingFollowUps),
             title: `${pendingFollowUps} follow-up${pendingFollowUps === 1 ? "" : "s"} scheduled`,
             sub: "Leads with a next follow-up date",
             icon: Clock,
             path: "/admin/crm/leads",
           });
         }
-        if (!cancelled) setNotifications(items);
+
+        // Drop anything the admin has already viewed/cleared for this fingerprint.
+        const unread = candidates.filter((n) => !isNotificationDismissed(n.fingerprint));
+        if (!cancelled) setNotifications(unread);
       } catch {
         if (!cancelled) setNotifications([]);
       } finally {
-        if (!cancelled) setNotifLoading(false);
+        if (!cancelled && showSpinner) setNotifLoading(false);
       }
-    })();
+    };
+
+    void load(true);
+    // Keep the badge live without waiting for the user to reopen the panel.
+    const pollId = window.setInterval(() => void load(false), NOTIF_POLL_MS);
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
     };
   }, [notifEnabled, notifRev]);
+
+  const dismissAndHide = (fingerprints: string[]) => {
+    dismissNotifications(fingerprints);
+    setNotifications((prev) => prev.filter((n) => !fingerprints.includes(n.fingerprint)));
+  };
+
+  const handleNotificationClick = (n: HeaderNotification) => {
+    dismissNotification(n.fingerprint);
+    setNotifications((prev) => prev.filter((item) => item.fingerprint !== n.fingerprint));
+    setNotifOpen(false);
+    navigate(n.path);
+  };
+
+  const handleClearAllNotifications = () => {
+    dismissAndHide(notifications.map((n) => n.fingerprint));
+    setNotifOpen(false);
+  };
 
   useEffect(() => {
     const api = hasApi();
@@ -466,8 +506,17 @@ const AdminLayout = () => {
               </button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-[min(20rem,calc(100vw-1.5rem))] p-0">
-              <div className="border-b border-border px-4 py-3">
+              <div className="flex items-center justify-between gap-2 border-b border-border px-4 py-3">
                 <p className="text-sm font-semibold text-foreground">Notifications</p>
+                {notifications.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={handleClearAllNotifications}
+                    className="text-xs font-medium text-primary hover:underline touch-manipulation"
+                  >
+                    Clear all
+                  </button>
+                ) : null}
               </div>
               <div className="max-h-80 overflow-y-auto">
                 {notifLoading && notifications.length === 0 ? (
@@ -480,12 +529,9 @@ const AdminLayout = () => {
                 ) : (
                   notifications.map((n) => (
                     <button
-                      key={n.id}
+                      key={n.fingerprint}
                       type="button"
-                      onClick={() => {
-                        setNotifOpen(false);
-                        navigate(n.path);
-                      }}
+                      onClick={() => handleNotificationClick(n)}
                       className="flex w-full items-start gap-3 border-b border-border/40 px-4 py-3 text-left transition-colors last:border-0 hover:bg-secondary/50 touch-manipulation"
                     >
                       <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
