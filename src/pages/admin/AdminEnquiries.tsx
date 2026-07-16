@@ -8,7 +8,7 @@ import {
   VF_STORAGE_KEYS,
 } from "@/lib/vfLocalStorage";
 import { hasApi } from "@/lib/apiConfig";
-import { adminGet, adminPutJson, formatApiErrors } from "@/lib/api";
+import { adminGet, adminPutJson, adminDeleteJson, formatApiErrors } from "@/lib/api";
 import { fetchAllAdminRows } from "@/lib/adminFetchAll";
 import { enquiryFromApi, enquiryStatusPayload } from "@/lib/apiMappers";
 import { toast } from "sonner";
@@ -16,7 +16,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Phone, Mail, CheckCircle, MessageSquare, Archive, Download, FileText, MessageCircle } from "lucide-react";
+import { Search, Phone, Mail, CheckCircle, MessageSquare, Archive, Download, FileText, MessageCircle, Trash2 } from "lucide-react";
+import { getAdminUser } from "@/lib/adminAuth";
 
 const statusColors: Record<string, string> = {
   Open: "bg-amber-400/10 text-amber-400",
@@ -27,10 +28,13 @@ const statusColors: Record<string, string> = {
 
 const AdminEnquiries = () => {
   const useRemote = hasApi();
+  const adminUser = getAdminUser();
+  const canDelete = adminUser?.role === "manager" || adminUser?.role === "superadmin";
   const [hydrated, setHydrated] = useState(false);
   const [enquiries, setEnquiries] = useState<Enquiry[]>(() => (hasApi() ? [] : mockEnquiries));
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const refreshFromApi = useCallback(async () => {
     const { data } = await adminGet<unknown[]>("/admin/enquiries?limit=500&page=1");
@@ -80,6 +84,26 @@ const AdminEnquiries = () => {
       return;
     }
     setEnquiries((prev) => prev.map((e) => (e.id === id ? { ...e, status } : e)));
+  };
+
+  const handleDelete = async (enq: Enquiry) => {
+    if (!canDelete) return;
+    if (!window.confirm(`Permanently delete enquiry from ${enq.name}? This cannot be undone.`)) return;
+    if (useRemote) {
+      setDeletingId(enq.id);
+      try {
+        await adminDeleteJson(`/admin/enquiries/${enq.id}`);
+        toast.success("Enquiry deleted");
+        await refreshFromApi();
+      } catch (e) {
+        toast.error(formatApiErrors(e));
+      } finally {
+        setDeletingId(null);
+      }
+      return;
+    }
+    setEnquiries((prev) => prev.filter((e) => e.id !== enq.id));
+    toast.success("Enquiry deleted");
   };
 
   const escapeCsv = (value: unknown) => {
@@ -254,6 +278,16 @@ const AdminEnquiries = () => {
               <div className="flex items-center gap-1">
                 <button onClick={() => updateStatus(enq.id, "Responded")} title="Mark Responded" className="p-1.5 rounded hover:bg-green-400/10 text-muted-foreground hover:text-green-400"><MessageSquare className="w-4 h-4" /></button>
                 <button onClick={() => updateStatus(enq.id, "Closed")} title="Close" className="p-1.5 rounded hover:bg-secondary text-muted-foreground hover:text-foreground"><Archive className="w-4 h-4" /></button>
+                {canDelete ? (
+                  <button
+                    onClick={() => void handleDelete(enq)}
+                    title="Delete"
+                    disabled={deletingId === enq.id}
+                    className="p-1.5 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive disabled:opacity-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                ) : null}
               </div>
             </div>
           </Card>

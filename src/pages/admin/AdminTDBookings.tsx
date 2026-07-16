@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { adminGet, adminPatchJson, adminPostJson, formatApiErrors } from "@/lib/api";
+import { adminGet, adminPatchJson, adminPostJson, adminDeleteJson, formatApiErrors } from "@/lib/api";
 import { getAdminUser } from "@/lib/adminAuth";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { Card } from "@/components/ui/card";
@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import {
   CalendarCheck, Search, RefreshCw, Car, Clock, Building2,
-  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban, Play, CalendarClock, Lock, Pencil
+  CheckCircle2, XCircle, AlertTriangle, Loader2, Eye, UserCheck, Ban, Play, CalendarClock, Lock, Pencil, Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -331,6 +331,24 @@ export default function AdminTDBookings() {
       toast.success("Booking cancelled");
       setCancelDialog(null);
       setCancelReason("");
+      void fetchBookings();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteBooking = async (booking: Booking) => {
+    if (!canEditDetails) return;
+    if (!window.confirm(`Permanently delete booking ${booking.bookingId}? This removes the record from the database and cannot be undone.`)) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await adminDeleteJson(`/admin/td/bookings/${booking._id}`);
+      toast.success("Booking deleted");
+      setSelected(null);
       void fetchBookings();
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -1034,6 +1052,17 @@ export default function AdminTDBookings() {
                         >
                           <Ban className="w-4 h-4 mr-2" /> Cancel booking
                         </Button>
+                        {canEditDetails ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-10 text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                            onClick={() => void handleDeleteBooking(selected)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete
+                          </Button>
+                        ) : null}
                       </div>
                       {!isReadyForDrive(selected) ? (
                         <p className="text-[11px] text-muted-foreground">
@@ -1088,8 +1117,21 @@ export default function AdminTDBookings() {
                         )}
                       </div>
                     ) : (
-                      <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
-                        This booking is <span className="font-medium text-foreground">{selected.bookingStatus}</span> — no further actions available.
+                      <div className="space-y-3">
+                        <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
+                          This booking is <span className="font-medium text-foreground">{selected.bookingStatus}</span> — no further actions available.
+                        </div>
+                        {canEditDetails ? (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            disabled={actionLoading}
+                            onClick={() => void handleDeleteBooking(selected)}
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" /> Delete record
+                          </Button>
+                        ) : null}
                       </div>
                     )
                   ) : null}
