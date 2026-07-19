@@ -109,14 +109,14 @@ const Navbar = () => {
                 <MessageCircle className="w-4 h-4" />
               </a>
               <Button variant="hero" size="sm" asChild className="text-sm px-4">
-                <Link to="/book-now">Pre-Booking</Link>
+                <Link to="/book-now">Book Now</Link>
               </Button>
             </div>
 
-            {/* Compact Pre-Booking when drawer is active (tablet / mid desktop) */}
+            {/* Compact Book Now when drawer is active (tablet / mid desktop) */}
             <div className="flex items-center gap-2 shrink-0 2xl:hidden">
               <Button variant="hero" size="sm" asChild className="hidden sm:inline-flex text-xs px-3">
-                <Link to="/book-now">Pre-Booking</Link>
+                <Link to="/book-now">Book Now</Link>
               </Button>
               <button
                 type="button"
@@ -174,7 +174,7 @@ const Navbar = () => {
                 </Link>
                 <div className="mt-6 flex flex-col gap-3">
                   <Button variant="hero" size="lg" className="w-full" asChild>
-                    <Link to="/book-now">Pre-Booking</Link>
+                    <Link to="/book-now">Book Now</Link>
                   </Button>
                   <Button variant="outline" size="lg" className="w-full" asChild>
                     <Link to="/test-drive">Book Test Drive</Link>
