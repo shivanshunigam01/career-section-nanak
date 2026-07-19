@@ -16,7 +16,6 @@ const navLinks = [
   { label: "VF MPV 7", href: "/models/mpv7" },
   { label: "Limo Green", href: "/models/limo-green" },
   { label: "Compare", href: "/compare" },
-  // { label: "Pre-Booking", href: "/book-now" },
   { label: "Test Drive", href: "/test-drive" },
   { label: "EMI Calculator", href: "/emi-calculator" },
   { label: "About", href: "/about" },
@@ -52,33 +51,36 @@ const Navbar = () => {
 
   return (
     <>
-      <nav
-        className="fixed top-0 left-0 right-0 z-50 transition-all duration-500 bg-white border-b border-gray-200 py-0 shadow-sm"
-      >
-        <div className="container mx-auto px-3 sm:px-4 xl:px-5 2xl:px-6">
-          <div className="flex items-center justify-between gap-3 min-h-[4.25rem] h-[4.25rem] 2xl:h-20 2xl:min-h-0">
-            {/* Logo lockup — both marks on wider screens; drawer until 2xl avoids mid-width crashes */}
-            <Link to="/" className="flex items-center gap-2 sm:gap-2.5 shrink-0 min-w-0">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
+        <div className="mx-auto w-full max-w-[100%] px-3 sm:px-4 lg:px-5 2xl:px-6">
+          {/*
+            Three-zone header: logos (shrinkable) | nav (2xl only) | actions (never shrink).
+            Caps on logo widths stop PNG assets from colliding with Book Now / hamburger.
+          */}
+          <div className="flex h-16 sm:h-[4.25rem] 2xl:h-20 items-center gap-2 sm:gap-3">
+            <Link
+              to="/"
+              className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2 overflow-hidden 2xl:flex-none 2xl:max-w-[22rem]"
+            >
               <img
                 src={vinfastLogo}
                 alt={dealer.dealerName}
-                className="h-10 sm:h-12 lg:h-[3.25rem] 2xl:h-16 w-auto max-w-[min(100%,14rem)] sm:max-w-none object-contain object-left"
+                className="h-9 w-auto max-w-[9.5rem] shrink object-contain object-left sm:h-11 sm:max-w-[12rem] lg:h-12 lg:max-w-[13.5rem] 2xl:h-14 2xl:max-w-[15rem]"
               />
-              <span className="hidden sm:block w-px h-7 2xl:h-8 self-center bg-border shrink-0" aria-hidden />
+              <span className="hidden h-6 w-px shrink-0 bg-border md:block 2xl:h-8" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
-                className="hidden sm:block h-7 lg:h-8 2xl:h-9 w-auto max-w-[9rem] lg:max-w-[11rem] 2xl:max-w-none object-contain object-left"
+                className="hidden h-6 w-auto max-w-[7.5rem] shrink object-contain object-left md:block lg:h-7 lg:max-w-[9rem] 2xl:h-8 2xl:max-w-[10.5rem]"
               />
             </Link>
 
-            {/* Desktop Nav — only when there is real room (2xl / 1536px+) */}
-            <div className="hidden 2xl:flex items-center gap-0.5 min-w-0 flex-1 justify-center overflow-hidden px-1">
+            <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 overflow-hidden 2xl:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.href}
                   to={link.href}
-                  className={`px-2.5 py-2 text-sm font-medium transition-colors rounded-lg whitespace-nowrap ${
+                  className={`shrink-0 rounded-lg px-2 py-2 text-[0.8125rem] font-medium whitespace-nowrap transition-colors ${
                     location.pathname === link.href
                       ? "text-primary"
                       : "text-foreground/70 hover:text-foreground"
@@ -89,51 +91,59 @@ const Navbar = () => {
               ))}
             </div>
 
-            {/* Desktop CTAs */}
-            <div className="hidden 2xl:flex items-center gap-3 shrink-0">
+            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <Link
                 to={customerPortalHref}
-                className={`inline-flex items-center gap-1.5 text-xs font-medium transition-colors rounded-lg px-2 py-1.5 ${
+                className={`hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors 2xl:inline-flex ${
                   location.pathname.startsWith("/customer")
                     ? "text-primary"
                     : "text-foreground/70 hover:text-foreground"
                 }`}
               >
-                <UserCircle className="w-4 h-4" />
+                <UserCircle className="h-4 w-4" />
                 {customerLoggedIn ? "" : "Login"}
               </Link>
-              <a href={tel} className="transition-colors text-foreground/60 hover:text-foreground" aria-label="Call us">
-                <Phone className="w-4 h-4" />
+              <a
+                href={tel}
+                className="hidden text-foreground/60 transition-colors hover:text-foreground 2xl:block"
+                aria-label="Call us"
+              >
+                <Phone className="h-4 w-4" />
               </a>
-              <a href={wa} target="_blank" rel="noopener noreferrer" className="transition-colors text-foreground/60 hover:text-foreground" aria-label="WhatsApp">
-                <MessageCircle className="w-4 h-4" />
+              <a
+                href={wa}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hidden text-foreground/60 transition-colors hover:text-foreground 2xl:block"
+                aria-label="WhatsApp"
+              >
+                <MessageCircle className="h-4 w-4" />
               </a>
-              <Button variant="hero" size="sm" asChild className="text-sm px-4">
-                <Link to="/book-now">Book Now</Link>
-              </Button>
-            </div>
 
-            {/* Compact Book Now when drawer is active (tablet / mid desktop) */}
-            <div className="flex items-center gap-2 shrink-0 2xl:hidden">
-              <Button variant="hero" size="sm" asChild className="hidden sm:inline-flex text-xs px-3">
+              <Button
+                variant="hero"
+                size="sm"
+                asChild
+                className="h-8 px-2.5 text-[0.7rem] sm:h-9 sm:px-3 sm:text-xs 2xl:h-9 2xl:px-4 2xl:text-sm"
+              >
                 <Link to="/book-now">Book Now</Link>
               </Button>
+
               <button
                 type="button"
                 onClick={() => setIsMobileOpen((open) => !open)}
-                className="p-2 -mr-1 transition-colors text-foreground touch-manipulation"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-foreground touch-manipulation 2xl:hidden"
                 aria-expanded={isMobileOpen}
                 aria-controls="mobile-nav-panel"
                 aria-label={isMobileOpen ? "Close menu" : "Open menu"}
               >
-                {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Mobile / tablet / mid-desktop Menu */}
       <AnimatePresence>
         {isMobileOpen && (
           <motion.div
@@ -145,18 +155,18 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 flex flex-col bg-background pt-[4.25rem] 2xl:hidden"
+            className="fixed inset-0 z-40 flex flex-col bg-background pt-16 sm:pt-[4.25rem] 2xl:hidden"
           >
-            <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
-              <div className="container mx-auto px-4 py-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] flex flex-col gap-2">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              <div className="mx-auto flex w-full max-w-lg flex-col gap-1 px-4 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
                 {navLinks.map((link) => (
                   <Link
                     key={link.href}
                     to={link.href}
-                    className={`px-4 py-3 text-lg font-medium rounded-xl transition-colors ${
+                    className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
                       location.pathname === link.href
-                        ? "text-primary bg-primary/10"
-                        : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
                     }`}
                   >
                     {link.label}
@@ -164,15 +174,15 @@ const Navbar = () => {
                 ))}
                 <Link
                   to={customerPortalHref}
-                  className={`px-4 py-3 text-lg font-medium rounded-xl transition-colors ${
+                  className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
                     location.pathname.startsWith("/customer")
-                      ? "text-primary bg-primary/10"
-                      : "text-foreground/70 hover:text-foreground hover:bg-muted/50"
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
                   }`}
                 >
                   {customerLoggedIn ? "My Bookings" : "Login"}
                 </Link>
-                <div className="mt-6 flex flex-col gap-3">
+                <div className="mt-5 flex flex-col gap-3">
                   <Button variant="hero" size="lg" className="w-full" asChild>
                     <Link to="/book-now">Book Now</Link>
                   </Button>
@@ -181,7 +191,7 @@ const Navbar = () => {
                   </Button>
                   <Button variant="whatsapp" size="lg" className="w-full" asChild>
                     <a href={wa} target="_blank" rel="noopener noreferrer">
-                      <MessageCircle className="w-5 h-5" /> WhatsApp
+                      <MessageCircle className="h-5 w-5" /> WhatsApp
                     </a>
                   </Button>
                 </div>
