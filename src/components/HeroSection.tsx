@@ -299,8 +299,8 @@ const HeroSection = () => {
   const slide = slides[current] ?? fallbackSlides[0];
 
   return (
-    <section className="relative z-0 w-full max-w-[100%] overflow-x-clip overflow-y-hidden bg-background pt-[4.25rem] lg:pt-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-0">
-      <div className="relative w-full max-w-[100%] shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] min-h-[18rem] lg:h-full lg:absolute lg:inset-0 lg:z-0 lg:min-h-0">
+    <section className="relative z-0 w-full max-w-[100%] overflow-x-clip overflow-y-hidden bg-background pt-16 sm:pt-[4.25rem] lg:pt-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-0">
+      <div className="relative w-full max-w-[100%] shrink-0 overflow-hidden h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-4.25rem)] min-h-[18rem] lg:h-full lg:absolute lg:inset-0 lg:z-0 lg:min-h-0">
         {slides.map((s, i) => {
           // Keep cross-fade wrappers mounted, but only request nearby slide images.
           // This avoids front-loading all hero assets on first paint.
