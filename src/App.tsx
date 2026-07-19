@@ -55,6 +55,7 @@ import AdminTDLeadReports from "./pages/admin/AdminTDLeadReports";
 import CustomerLogin from "./pages/customer/CustomerLogin";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerBookings from "./pages/customer/CustomerBookings";
+import LoginPage from "./pages/LoginPage";
 
 const queryClient = new QueryClient();
 
@@ -100,7 +101,8 @@ const App = () => {
           <Route path="/post-delivery-feedback" element={<PostDeliveryFeedback />} />
           <Route path="/test-drive-feedback" element={<TestDriveFeedback />} />
 
-          {/* Customer portal */}
+          {/* Login chooser + portals */}
+          <Route path="/login" element={<LoginPage />} />
           <Route path="/customer/login" element={<CustomerLogin />} />
           <Route path="/customer" element={<CustomerLayout />}>
             <Route index element={<Navigate to="bookings" replace />} />

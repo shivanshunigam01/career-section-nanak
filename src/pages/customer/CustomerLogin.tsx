@@ -179,6 +179,16 @@ export default function CustomerLogin() {
                 Book a test drive
               </Link>
             </p>
+            <p className="mt-3 text-center text-xs text-muted-foreground">
+              Staff member?{" "}
+              <Link to="/admin/login" className="text-primary hover:underline">
+                Login as Admin
+              </Link>
+              {" · "}
+              <Link to="/login" className="text-primary hover:underline">
+                All login options
+              </Link>
+            </p>
           </div>
         </motion.div>
       </main>

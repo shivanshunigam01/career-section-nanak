@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,6 +126,16 @@ const AdminLogin = () => {
             {hasApi()
               ? "Signed in against your Node API (JWT)."
               : "Demo mode: any email/password works. Set VITE_API_URL for real auth."}
+          </p>
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Looking for bookings?{" "}
+            <Link to="/customer/login" className="text-primary hover:underline">
+              Login as Customer
+            </Link>
+            {" · "}
+            <Link to="/login" className="text-primary hover:underline">
+              All login options
+            </Link>
           </p>
         </div>
       </motion.div>

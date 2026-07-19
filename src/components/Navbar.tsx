@@ -29,7 +29,7 @@ const Navbar = () => {
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
   const customerLoggedIn = Boolean(getCustomerToken());
-  const customerPortalHref = customerLoggedIn ? "/customer/bookings" : "/customer/login";
+  const loginHref = customerLoggedIn ? "/customer/bookings" : "/login";
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -93,15 +93,17 @@ const Navbar = () => {
 
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
               <Link
-                to={customerPortalHref}
+                to={loginHref}
                 className={`hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors 2xl:inline-flex ${
-                  location.pathname.startsWith("/customer")
+                  location.pathname === "/login" ||
+                  location.pathname.startsWith("/customer") ||
+                  location.pathname.startsWith("/admin/login")
                     ? "text-primary"
                     : "text-foreground/70 hover:text-foreground"
                 }`}
               >
                 <UserCircle className="h-4 w-4" />
-                {customerLoggedIn ? "" : "Login"}
+                {customerLoggedIn ? "My Bookings" : "Login"}
               </Link>
               <a
                 href={tel}
@@ -172,16 +174,41 @@ const Navbar = () => {
                     {link.label}
                   </Link>
                 ))}
-                <Link
-                  to={customerPortalHref}
-                  className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
-                    location.pathname.startsWith("/customer")
-                      ? "bg-primary/10 text-primary"
-                      : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
-                  }`}
-                >
-                  {customerLoggedIn ? "My Bookings" : "Login"}
-                </Link>
+                {customerLoggedIn ? (
+                  <Link
+                    to="/customer/bookings"
+                    className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                      location.pathname.startsWith("/customer")
+                        ? "bg-primary/10 text-primary"
+                        : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
+                    }`}
+                  >
+                    My Bookings
+                  </Link>
+                ) : (
+                  <>
+                    <Link
+                      to="/customer/login"
+                      className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                        location.pathname === "/customer/login"
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
+                      }`}
+                    >
+                      Login as Customer
+                    </Link>
+                    <Link
+                      to="/admin/login"
+                      className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                        location.pathname === "/admin/login"
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
+                      }`}
+                    >
+                      Login as Admin
+                    </Link>
+                  </>
+                )}
                 <div className="mt-5 flex flex-col gap-3">
                   <Button variant="hero" size="lg" className="w-full" asChild>
                     <Link to="/book-now">Book Now</Link>
