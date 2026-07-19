@@ -12,7 +12,7 @@ import StickyMobileCTA from "@/components/StickyMobileCTA";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="min-h-screen w-full max-w-[100%] overflow-x-clip bg-background pb-36 lg:pb-0">
       <Navbar />
       <HeroSection />
       <QuickActionBar />
