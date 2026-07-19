@@ -61,6 +61,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
+    overflow-x: clip;
+    max-width: 100%;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -236,13 +238,13 @@
   }
 
   /*
-   * On short landscape mobile viewports (after rotate), keep the full hero
-   * image visible instead of aggressively cropping with object-cover.
+   * Only on very small landscape phones — never on tablet/desktop widths.
+   * Using object-contain on wider short viewports left a letterbox gap on the sides.
    */
-  @media (max-width: 1024px) and (orientation: landscape) and (max-height: 520px) {
+  @media (max-width: 768px) and (orientation: landscape) and (max-height: 480px) {
     .hero-slider-image {
-      object-fit: contain;
-      background-color: #000;
+      object-fit: cover;
+      object-position: center center;
     }
   }
 
@@ -262,6 +264,7 @@
 html {
   scroll-behavior: smooth;
   scroll-padding-bottom: max(6.5rem, env(safe-area-inset-bottom, 0px));
+  overflow-x: clip;
 }
 
 @media (max-width: 768px) {
