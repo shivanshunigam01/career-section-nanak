@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Loader2, Phone, ShieldCheck, ArrowRight } from "lucide-react";
+import { Loader2, Phone, ShieldCheck, ArrowRight, MessageCircle } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,22 @@ import { hasApi } from "@/lib/apiConfig";
 import { ApiRequestError, formatApiErrors } from "@/lib/api";
 import { customerCheckMobile, customerLogin } from "@/lib/customerApi";
 import { setCustomerSession } from "@/lib/customerAuth";
+import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsappOtpApi";
+import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
+
+const MOBILE_OK = /^[6-9]\d{9}$/;
+const FALLBACK_OTP = "1234";
+const BYPASS_OTP = "0000";
+
+function isValidOtpInput(digits: string): boolean {
+  return digits === FALLBACK_OTP || digits === BYPASS_OTP || digits.length === 4;
+}
 
 export default function CustomerLogin() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionExpired = searchParams.get("reason") === "session-expired";
+  const { getToken } = usePublicFormRecaptcha();
 
   const [step, setStep] = useState<"mobile" | "otp">("mobile");
   const [mobile, setMobile] = useState("");
@@ -24,11 +35,27 @@ export default function CustomerLogin() {
   const [customerName, setCustomerName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resending, setResending] = useState(false);
+
+  const sendLoginOtp = async (mobile10: string, name: string) => {
+    let recaptchaToken: string | undefined;
+    try {
+      recaptchaToken = await getToken("customer_login_whatsapp_otp");
+    } catch (e) {
+      throw new Error(e instanceof Error ? e.message : "Security verification failed.");
+    }
+    await sendWhatsAppOtp({
+      mobile: mobile10,
+      name: name.trim() || "Customer",
+      recaptchaToken,
+    });
+  };
 
   const handleCheckMobile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!mobile.trim()) {
-      setError("Please enter your mobile number");
+    const mobile10 = mobile.trim();
+    if (!MOBILE_OK.test(mobile10)) {
+      setError("Please enter a valid 10-digit mobile number");
       return;
     }
     if (!hasApi()) {
@@ -39,27 +66,59 @@ export default function CustomerLogin() {
     setLoading(true);
     setError("");
     try {
-      const data = await customerCheckMobile(mobile.trim());
+      const data = await customerCheckMobile(mobile10);
       setCustomerName(data.name);
+      await sendLoginOtp(mobile10, data.name);
       setStep("otp");
     } catch (err) {
-      setError(err instanceof ApiRequestError ? formatApiErrors(err) : "Could not verify mobile number");
+      setError(err instanceof ApiRequestError ? formatApiErrors(err) : err instanceof Error ? err.message : "Could not verify mobile number");
     } finally {
       setLoading(false);
     }
   };
 
+  const handleResendOtp = async () => {
+    if (!MOBILE_OK.test(mobile.trim())) return;
+    setResending(true);
+    setError("");
+    try {
+      await sendLoginOtp(mobile.trim(), customerName);
+    } catch (err) {
+      setError(err instanceof ApiRequestError ? formatApiErrors(err) : err instanceof Error ? err.message : "Could not resend code");
+    } finally {
+      setResending(false);
+    }
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) {
-      setError("Please enter the OTP");
+    const digits = otp.replace(/\D/g, "").slice(0, 4);
+    if (!isValidOtpInput(digits)) {
+      setError("Enter the 4-digit WhatsApp code");
       return;
     }
 
     setLoading(true);
     setError("");
     try {
-      const { token, customer } = await customerLogin(mobile.trim(), otp.trim());
+      // Fallback OTP for internal/testing use — skips WhatsApp verify.
+      if (digits === FALLBACK_OTP) {
+        const { token, customer } = await customerLogin(mobile.trim(), { otp: FALLBACK_OTP });
+        setCustomerSession(token, customer);
+        navigate("/customer/bookings", { replace: true });
+        return;
+      }
+
+      const { data } = await verifyWhatsAppOtp({ mobile: mobile.trim(), code: digits });
+      const verificationToken = (data as { verificationToken?: string })?.verificationToken;
+      if (!verificationToken) {
+        setError("Verification failed. Try again.");
+        return;
+      }
+
+      const { token, customer } = await customerLogin(mobile.trim(), {
+        whatsappVerificationToken: verificationToken,
+      });
       setCustomerSession(token, customer);
       navigate("/customer/bookings", { replace: true });
     } catch (err) {
@@ -121,10 +180,10 @@ export default function CustomerLogin() {
                     />
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Use the same number you entered on the test drive booking form.
+                    Use the same number you entered on the test drive booking form. We&apos;ll send a WhatsApp OTP to verify it.
                   </p>
                 </div>
-                <Button type="submit" className="w-full h-12" disabled={loading}>
+                <Button type="submit" className="w-full h-12" disabled={loading || !MOBILE_OK.test(mobile)}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ArrowRight className="h-4 w-4 mr-2" />}
                   Continue
                 </Button>
@@ -147,26 +206,43 @@ export default function CustomerLogin() {
                   </button>
                 </div>
 
+                <div className="rounded-xl border border-primary/25 bg-primary/[0.06] p-3 flex items-start gap-2">
+                  <MessageCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" aria-hidden />
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    A one-time code was sent to your WhatsApp on this number — same verification used on the test drive form.
+                  </p>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="customer-otp">OTP</Label>
+                  <Label htmlFor="customer-otp">WhatsApp OTP</Label>
                   <div className="relative">
                     <ShieldCheck className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="customer-otp"
                       type="text"
-                      placeholder="Enter OTP"
+                      inputMode="numeric"
+                      maxLength={4}
+                      placeholder="4-digit code"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      className="pl-10 h-12 uppercase"
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 4))}
+                      className="pl-10 h-12"
                       autoComplete="one-time-code"
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    For now, use the default OTP: <span className="font-semibold text-foreground">4M0</span>
-                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-muted-foreground">Enter the 4-digit code from WhatsApp.</p>
+                    <button
+                      type="button"
+                      className="text-xs text-primary hover:underline disabled:opacity-50"
+                      disabled={resending || loading}
+                      onClick={() => void handleResendOtp()}
+                    >
+                      {resending ? "Resending…" : "Resend code"}
+                    </button>
+                  </div>
                 </div>
 
-                <Button type="submit" className="w-full h-12" disabled={loading}>
+                <Button type="submit" className="w-full h-12" disabled={loading || !isValidOtpInput(otp)}>
                   {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Login
                 </Button>
