@@ -1,13 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useLayoutEffect, useRef } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, X, Phone, MessageCircle, UserCircle } from "lucide-react";
+import { Menu, X, Phone, MessageCircle, UserCircle, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { motion, AnimatePresence } from "framer-motion";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
 import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { getCustomerToken } from "@/lib/customerAuth";
+import { cn } from "@/lib/utils";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -22,14 +29,21 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
+const GAP_PX = 2;
+const MORE_BTN_RESERVE_PX = 84;
+
 const Navbar = () => {
   const { dealer, siteConfig } = usePublicSite();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(navLinks.length);
   const location = useLocation();
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
   const customerLoggedIn = Boolean(getCustomerToken());
   const loginHref = customerLoggedIn ? "/customer/bookings" : "/login";
+
+  const navSlotRef = useRef<HTMLDivElement>(null);
+  const measureRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsMobileOpen(false);
@@ -49,65 +63,158 @@ const Navbar = () => {
     };
   }, [isMobileOpen]);
 
+  useLayoutEffect(() => {
+    const slot = navSlotRef.current;
+    const measure = measureRef.current;
+    if (!slot || !measure) return;
+
+    const recalc = () => {
+      const available = slot.clientWidth;
+      if (available <= 0) return;
+
+      const items = Array.from(measure.children) as HTMLElement[];
+      const widths = items.map((el) => el.getBoundingClientRect().width);
+      const totalAll =
+        widths.reduce((sum, w) => sum + w, 0) + Math.max(0, widths.length - 1) * GAP_PX;
+
+      if (totalAll <= available) {
+        setVisibleCount(navLinks.length);
+        return;
+      }
+
+      let used = MORE_BTN_RESERVE_PX;
+      let count = 0;
+      for (let i = 0; i < widths.length; i++) {
+        const next = used + (count > 0 ? GAP_PX : 0) + widths[i];
+        if (next > available) break;
+        used = next;
+        count += 1;
+      }
+      // Keep at least Home + More when space is very tight
+      setVisibleCount(Math.max(1, count));
+    };
+
+    recalc();
+    const ro = new ResizeObserver(recalc);
+    ro.observe(slot);
+    window.addEventListener("resize", recalc);
+    return () => {
+      ro.disconnect();
+      window.removeEventListener("resize", recalc);
+    };
+  }, []);
+
+  const visibleLinks = navLinks.slice(0, visibleCount);
+  const overflowLinks = navLinks.slice(visibleCount);
+  const moreActive = overflowLinks.some((link) => location.pathname === link.href);
+
+  const linkClass = (active: boolean) =>
+    cn(
+      "shrink-0 rounded-lg px-2 py-2 text-[0.8125rem] font-medium whitespace-nowrap transition-colors",
+      active ? "text-primary" : "text-foreground/70 hover:text-foreground",
+    );
+
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="mx-auto w-full max-w-[100%] px-3 sm:px-4 lg:px-5 2xl:px-6">
-          {/*
-            Three-zone header: logos (shrinkable) | nav (2xl only) | actions (never shrink).
-            Caps on logo widths stop PNG assets from colliding with Book Now / hamburger.
-          */}
-          <div className="flex h-16 sm:h-[4.25rem] 2xl:h-20 items-center gap-2 sm:gap-3">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto w-full max-w-[100%] px-3 sm:px-4 lg:px-5">
+          <div className="flex h-16 items-center gap-2 sm:h-[4.25rem] sm:gap-3 lg:h-[4.5rem]">
             <Link
               to="/"
-              className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2 overflow-hidden 2xl:flex-none 2xl:max-w-[22rem]"
+              className="flex min-w-0 shrink items-center gap-1.5 overflow-hidden sm:gap-2 lg:max-w-[18rem] xl:max-w-[20rem]"
             >
               <img
                 src={vinfastLogo}
                 alt={dealer.dealerName}
-                className="h-9 w-auto max-w-[9.5rem] shrink object-contain object-left sm:h-11 sm:max-w-[12rem] lg:h-12 lg:max-w-[13.5rem] 2xl:h-14 2xl:max-w-[15rem]"
+                className="h-9 w-auto max-w-[9.5rem] object-contain object-left sm:h-11 sm:max-w-[12rem] lg:h-11 lg:max-w-[13rem]"
               />
-              <span className="hidden h-6 w-px shrink-0 bg-border md:block 2xl:h-8" aria-hidden />
+              <span className="hidden h-6 w-px shrink-0 bg-border md:block" aria-hidden />
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
-                className="hidden h-6 w-auto max-w-[7.5rem] shrink object-contain object-left md:block lg:h-7 lg:max-w-[9rem] 2xl:h-8 2xl:max-w-[10.5rem]"
+                className="hidden h-6 w-auto max-w-[7rem] object-contain object-left md:block lg:h-7 lg:max-w-[8.5rem]"
               />
             </Link>
 
-            <div className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 overflow-hidden 2xl:flex">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.href}
-                  to={link.href}
-                  className={`shrink-0 rounded-lg px-2 py-2 text-[0.8125rem] font-medium whitespace-nowrap transition-colors ${
-                    location.pathname === link.href
-                      ? "text-primary"
-                      : "text-foreground/70 hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                </Link>
-              ))}
+            {/* Desktop / laptop / MacBook nav — fits what it can, rest goes into More */}
+            <div ref={navSlotRef} className="relative hidden min-w-0 flex-1 lg:block">
+              {/* Off-screen measurer — keeps real widths even while nav is condensed */}
+              <div
+                ref={measureRef}
+                aria-hidden
+                className="pointer-events-none fixed left-0 top-0 z-[-1] flex items-center gap-0.5 opacity-0"
+              >
+                {navLinks.map((link) => (
+                  <span key={link.href} className={linkClass(false)}>
+                    {link.label}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex items-center justify-center gap-0.5">
+                {visibleLinks.map((link) => (
+                  <Link
+                    key={link.href}
+                    to={link.href}
+                    className={linkClass(location.pathname === link.href)}
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+
+                {overflowLinks.length > 0 ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        type="button"
+                        className={cn(
+                          linkClass(moreActive),
+                          "inline-flex items-center gap-0.5 outline-none data-[state=open]:text-primary",
+                        )}
+                        aria-label="More navigation links"
+                      >
+                        More
+                        <ChevronDown className="h-3.5 w-3.5 opacity-70" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="min-w-[11rem]">
+                      {overflowLinks.map((link) => (
+                        <DropdownMenuItem key={link.href} asChild>
+                          <Link
+                            to={link.href}
+                            className={cn(
+                              "cursor-pointer",
+                              location.pathname === link.href && "text-primary font-medium",
+                            )}
+                          >
+                            {link.label}
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : null}
+              </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:ml-0">
               <Link
                 to={loginHref}
-                className={`hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors 2xl:inline-flex ${
+                className={cn(
+                  "hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors lg:inline-flex",
                   location.pathname === "/login" ||
-                  location.pathname.startsWith("/customer") ||
-                  location.pathname.startsWith("/admin/login")
+                    location.pathname.startsWith("/customer") ||
+                    location.pathname.startsWith("/admin/login")
                     ? "text-primary"
-                    : "text-foreground/70 hover:text-foreground"
-                }`}
+                    : "text-foreground/70 hover:text-foreground",
+                )}
               >
                 <UserCircle className="h-4 w-4" />
                 {customerLoggedIn ? "My Bookings" : "Login"}
               </Link>
               <a
                 href={tel}
-                className="hidden text-foreground/60 transition-colors hover:text-foreground 2xl:block"
+                className="hidden text-foreground/60 transition-colors hover:text-foreground xl:block"
                 aria-label="Call us"
               >
                 <Phone className="h-4 w-4" />
@@ -116,7 +223,7 @@ const Navbar = () => {
                 href={wa}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden text-foreground/60 transition-colors hover:text-foreground 2xl:block"
+                className="hidden text-foreground/60 transition-colors hover:text-foreground xl:block"
                 aria-label="WhatsApp"
               >
                 <MessageCircle className="h-4 w-4" />
@@ -126,7 +233,7 @@ const Navbar = () => {
                 variant="hero"
                 size="sm"
                 asChild
-                className="h-8 px-2.5 text-[0.7rem] sm:h-9 sm:px-3 sm:text-xs 2xl:h-9 2xl:px-4 2xl:text-sm"
+                className="h-8 px-2.5 text-[0.7rem] sm:h-9 sm:px-3 sm:text-xs"
               >
                 <Link to="/book-now">Book Now</Link>
               </Button>
@@ -134,7 +241,7 @@ const Navbar = () => {
               <button
                 type="button"
                 onClick={() => setIsMobileOpen((open) => !open)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-foreground touch-manipulation 2xl:hidden"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-foreground touch-manipulation lg:hidden"
                 aria-expanded={isMobileOpen}
                 aria-controls="mobile-nav-panel"
                 aria-label={isMobileOpen ? "Close menu" : "Open menu"}
@@ -157,7 +264,7 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 flex flex-col bg-background pt-16 sm:pt-[4.25rem] 2xl:hidden"
+            className="fixed inset-0 z-40 flex flex-col bg-background pt-16 sm:pt-[4.25rem] lg:hidden"
           >
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <div className="mx-auto flex w-full max-w-lg flex-col gap-1 px-4 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
@@ -165,11 +272,12 @@ const Navbar = () => {
                   <Link
                     key={link.href}
                     to={link.href}
-                    className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                    className={cn(
+                      "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
                       location.pathname === link.href
                         ? "bg-primary/10 text-primary"
-                        : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
-                    }`}
+                        : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                    )}
                   >
                     {link.label}
                   </Link>
@@ -177,11 +285,12 @@ const Navbar = () => {
                 {customerLoggedIn ? (
                   <Link
                     to="/customer/bookings"
-                    className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                    className={cn(
+                      "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
                       location.pathname.startsWith("/customer")
                         ? "bg-primary/10 text-primary"
-                        : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
-                    }`}
+                        : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                    )}
                   >
                     My Bookings
                   </Link>
@@ -189,21 +298,23 @@ const Navbar = () => {
                   <>
                     <Link
                       to="/customer/login"
-                      className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                      className={cn(
+                        "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
                         location.pathname === "/customer/login"
                           ? "bg-primary/10 text-primary"
-                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
-                      }`}
+                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                      )}
                     >
                       Login as Customer
                     </Link>
                     <Link
                       to="/admin/login"
-                      className={`rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg ${
+                      className={cn(
+                        "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
                         location.pathname === "/admin/login"
                           ? "bg-primary/10 text-primary"
-                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground"
-                      }`}
+                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                      )}
                     >
                       Login as Admin
                     </Link>
