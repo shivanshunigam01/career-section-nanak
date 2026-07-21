@@ -71,11 +71,15 @@ export async function customerCheckMobile(mobile: string): Promise<{ name: strin
 
 export async function customerLogin(
   mobile: string,
-  otp: string,
+  options: { whatsappVerificationToken?: string; otp?: string },
 ): Promise<{ token: string; customer: CustomerUser }> {
   const { res, json } = await customerRequest("/customer/auth/login", {
     method: "POST",
-    json: { mobile, otp },
+    json: {
+      mobile,
+      whatsappVerificationToken: options.whatsappVerificationToken,
+      otp: options.otp,
+    },
   });
   assertOk(res, json);
   return {
