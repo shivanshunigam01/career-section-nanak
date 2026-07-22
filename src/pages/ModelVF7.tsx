@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import SeoHead from "@/components/seo/SeoHead";
 import vf7FrontHero from "@/assets/VF7 Front Page.png";
 import vf7HeroPagePortrait from "@/assets/vf7-hero-page-portrait.png";
 import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
@@ -456,11 +458,27 @@ const ModelVF7 = () => {
   const heroRange = stats.range;
   const heroAccel = stats.accel;
   const vMeta = vf7Variants.find((v) => v.id === variant)!;
+  const location = useLocation();
   const displayExShowroom =
     variant === "earth" ? siteConfig.vf7Price : variantExShowroomPrice[variant];
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
+      <SeoHead
+        title="VinFast VF7 Price Bihar | Earth to Sky Infinity | Patliputra VinFast"
+        description="Explore VinFast VF7 in Bihar — Earth, Wind, Wind Infinity, Sky and Sky Infinity. ADAS, range, booking and test drive from Patliputra VinFast."
+        path={location.pathname.startsWith("/vinfast-") ? location.pathname : "/vinfast-vf7"}
+        keywords={[
+          "VinFast VF7",
+          "VinFast VF7 Price",
+          "VinFast VF7 Bihar",
+          "VinFast VF7 ADAS",
+          "VF7 Sky Infinity",
+          "Premium Electric SUV India",
+          "Luxury EV SUV",
+        ]}
+        type="product"
+      />
       <Navbar />
 
       <section

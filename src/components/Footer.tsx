@@ -85,10 +85,11 @@ const Footer = () => {
                 { label: "VF 6", href: "/models/vf6" },
                 { label: "VF MPV 7", href: "/models/mpv7" },
                 { label: "Limo Green", href: "/models/limo-green" },
-                { label: "Compare Models", href: "/compare" },
+                { label: "Compare Models", href: "/compare-models" },
                 { label: "Pre-Booking", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },
                 { label: "EMI Calculator", href: "/emi-calculator" },
+                { label: "Bihar Districts", href: "/bihar" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link
@@ -110,10 +111,14 @@ const Footer = () => {
             <ul className="space-y-3">
               {[
                 { label: "About Us", href: "/about" },
-                { label: "Offers", href: "/contact" },
-                { label: "Exchange Car", href: "/contact" },
-                { label: "Finance Options", href: "/emi-calculator" },
-                { label: "FAQ", href: "/about" },
+                { label: "EV Buying Guide", href: "/ev-buying-guide" },
+                { label: "Finance Options", href: "/finance" },
+                { label: "Exchange Car", href: "/exchange" },
+                { label: "Insurance", href: "/insurance" },
+                { label: "Corporate Sales", href: "/corporate-sales" },
+                { label: "Charging Guide", href: "/charging-infrastructure" },
+                { label: "Blogs", href: "/blogs" },
+                { label: "FAQ", href: "/faq" },
                 { label: "Contact Us", href: "/contact" },
               ].map((link) => (
                 <li key={link.label}>

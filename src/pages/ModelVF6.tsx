@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
+import SeoHead from "@/components/seo/SeoHead";
 import vf6Hero from "@/assets/vf6-product-hero.png";
 import vf6HeroPagePortrait from "@/assets/vf6-hero-page-portrait.png";
 import vf6WhyInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
@@ -355,11 +357,28 @@ const ModelVF6 = () => {
 
   const stats = variantHeroStats[variant];
   const vMeta = vf6Variants.find((v) => v.id === variant)!;
+  const location = useLocation();
   const displayExShowroom =
     variant === "earth" ? siteConfig.vf6Price : variantExShowroomPrice[variant];
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
+      <SeoHead
+        title="VinFast VF6 Price Bihar | Earth, Wind, Wind Infinity | Patliputra VinFast"
+        description="Buy VinFast VF6 in Bihar — Earth, Wind and Wind Infinity. Price, range, features, booking and test drive from Patliputra VinFast across 38 districts."
+        path={location.pathname.startsWith("/vinfast-") ? location.pathname : "/vinfast-vf6"}
+        keywords={[
+          "VinFast VF6",
+          "VinFast VF6 Price Bihar",
+          "VinFast VF6 Price Patna",
+          "Buy VinFast VF6",
+          "VinFast VF6 Earth",
+          "VinFast VF6 Wind",
+          "VinFast VF6 Wind Infinity",
+          "Best Electric SUV under 20 lakh",
+        ]}
+        type="product"
+      />
       <Navbar />
 
       <section

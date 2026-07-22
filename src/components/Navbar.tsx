@@ -22,9 +22,11 @@ const navLinks = [
   { label: "VF 6", href: "/models/vf6" },
   { label: "VF MPV 7", href: "/models/mpv7" },
   { label: "Limo Green", href: "/models/limo-green" },
-  { label: "Compare", href: "/compare" },
+  { label: "Compare", href: "/compare-models" },
   { label: "Test Drive", href: "/test-drive" },
   { label: "EMI Calculator", href: "/emi-calculator" },
+  { label: "Blogs", href: "/blogs" },
+  { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
