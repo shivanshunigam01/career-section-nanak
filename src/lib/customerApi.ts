@@ -99,6 +99,7 @@ export type CustomerBooking = {
   preferredModel?: string;
   canReschedule?: boolean;
   rescheduleCount?: number;
+  hasPendingReschedule?: boolean;
   branchId?: { _id: string; name: string; code: string; city?: string } | null;
   testDriveId?: {
     model?: string;
@@ -112,21 +113,40 @@ export type CustomerBooking = {
   createdAt?: string;
 };
 
+export type PreferredSlotOption = { slotDate: string; slotTime: string };
+
 export async function fetchCustomerBookings(): Promise<CustomerBooking[]> {
   const { res, json } = await customerRequest("/customer/bookings");
   assertOk(res, json);
   return (json.data as CustomerBooking[]) ?? [];
 }
 
+/** MoM #4: submit exactly 3 preferred slots for dealership approval. */
+export async function customerRequestReschedule(
+  bookingId: string,
+  body: { preferredSlots: PreferredSlotOption[]; reason?: string },
+): Promise<{ booking: CustomerBooking }> {
+  const { res, json } = await customerRequest(`/customer/bookings/${bookingId}/reschedule`, {
+    method: "PATCH",
+    json: body,
+  });
+  assertOk(res, json);
+  const data = json.data as { booking?: CustomerBooking };
+  return { booking: data?.booking ?? (json.data as CustomerBooking) };
+}
+
+/** @deprecated Use customerRequestReschedule with 3 preferredSlots */
 export async function customerRescheduleBooking(
   bookingId: string,
   slotDate: string,
   slotTime: string,
 ): Promise<CustomerBooking> {
-  const { res, json } = await customerRequest(`/customer/bookings/${bookingId}/reschedule`, {
-    method: "PATCH",
-    json: { slotDate, slotTime },
+  const { booking } = await customerRequestReschedule(bookingId, {
+    preferredSlots: [
+      { slotDate, slotTime },
+      { slotDate, slotTime },
+      { slotDate, slotTime },
+    ],
   });
-  assertOk(res, json);
-  return json.data as CustomerBooking;
+  return booking;
 }

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -17,9 +18,10 @@ import {
 } from "@/components/ui/dialog";
 import { ApiRequestError, formatApiErrors } from "@/lib/api";
 import {
-  customerRescheduleBooking,
+  customerRequestReschedule,
   fetchCustomerBookings,
   type CustomerBooking,
+  type PreferredSlotOption,
 } from "@/lib/customerApi";
 import { fetchPublicTdSlots, formatSlotLabel, type PublicTdSlot } from "@/lib/publicTdApi";
 import { formatTime12h } from "@/lib/tdSlotSchedule";
@@ -45,14 +47,23 @@ function formatBookingDate(booking: CustomerBooking): string {
   return "—";
 }
 
+type PrefDraft = { date: string; time: string };
+
+const EMPTY_PREFS: PrefDraft[] = [
+  { date: "", time: "" },
+  { date: "", time: "" },
+  { date: "", time: "" },
+];
+
 export default function CustomerBookings() {
   const [bookings, setBookings] = useState<CustomerBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [rescheduleTarget, setRescheduleTarget] = useState<CustomerBooking | null>(null);
-  const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleTime, setRescheduleTime] = useState("");
+  const [prefs, setPrefs] = useState<PrefDraft[]>(EMPTY_PREFS);
+  const [activePrefIndex, setActivePrefIndex] = useState(0);
   const [rescheduleSlots, setRescheduleSlots] = useState<PublicTdSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
 
   const loadBookings = useCallback(async () => {
@@ -76,13 +87,20 @@ export default function CustomerBookings() {
       booking.slotDateLabel ||
       (booking.slotDate ? new Date(booking.slotDate).toISOString().split("T")[0] : "");
     setRescheduleTarget(booking);
-    setRescheduleDate(dateStr);
-    setRescheduleTime(booking.slotTime || "");
+    setPrefs([
+      { date: dateStr, time: "" },
+      { date: dateStr, time: "" },
+      { date: dateStr, time: "" },
+    ]);
+    setActivePrefIndex(0);
+    setReason("");
     setRescheduleSlots([]);
   };
 
+  const activeDate = prefs[activePrefIndex]?.date || "";
+
   const loadRescheduleSlots = useCallback(async () => {
-    if (!rescheduleTarget?.branchId?._id || !rescheduleDate) return;
+    if (!rescheduleTarget?.branchId?._id || !activeDate) return;
     setSlotsLoading(true);
     try {
       const model = rescheduleTarget.preferredModel || rescheduleTarget.testDriveId?.model || "";
@@ -92,7 +110,7 @@ export default function CustomerBookings() {
         "";
       const res = await fetchPublicTdSlots({
         branchId: rescheduleTarget.branchId._id,
-        date: rescheduleDate,
+        date: activeDate,
         model,
         variant: variant || undefined,
       });
@@ -102,27 +120,35 @@ export default function CustomerBookings() {
     } finally {
       setSlotsLoading(false);
     }
-  }, [rescheduleDate, rescheduleTarget]);
+  }, [activeDate, rescheduleTarget]);
 
   useEffect(() => {
-    if (rescheduleTarget && rescheduleDate) {
+    if (rescheduleTarget && activeDate) {
       void loadRescheduleSlots();
     }
-  }, [rescheduleTarget, rescheduleDate, loadRescheduleSlots]);
+  }, [rescheduleTarget, activeDate, loadRescheduleSlots]);
 
   const handleReschedule = async () => {
-    if (!rescheduleTarget || !rescheduleDate || !rescheduleTime) {
-      toast.error("Select a new date and time");
+    if (!rescheduleTarget) return;
+    const preferredSlots: PreferredSlotOption[] = prefs.map((p) => ({
+      slotDate: p.date,
+      slotTime: p.time,
+    }));
+    if (preferredSlots.some((p) => !p.slotDate || !p.slotTime)) {
+      toast.error("Select date and time for all 3 preferred options");
       return;
     }
     setSaving(true);
     try {
-      await customerRescheduleBooking(rescheduleTarget._id, rescheduleDate, rescheduleTime);
-      toast.success("Test drive rescheduled successfully");
+      await customerRequestReschedule(rescheduleTarget._id, {
+        preferredSlots,
+        reason: reason.trim() || undefined,
+      });
+      toast.success("Reschedule request submitted — our team will confirm a slot");
       setRescheduleTarget(null);
       void loadBookings();
     } catch (e) {
-      toast.error(e instanceof ApiRequestError ? formatApiErrors(e) : "Reschedule failed");
+      toast.error(e instanceof ApiRequestError ? formatApiErrors(e) : "Reschedule request failed");
     } finally {
       setSaving(false);
     }
@@ -166,6 +192,11 @@ export default function CustomerBookings() {
                   <Badge className={STATUS_COLORS[booking.bookingStatus] || "bg-muted"}>
                     {booking.bookingStatus}
                   </Badge>
+                  {booking.hasPendingReschedule ? (
+                    <Badge variant="outline" className="text-amber-700 border-amber-500/40">
+                      Reschedule pending
+                    </Badge>
+                  ) : null}
                 </div>
 
                 <div className="grid gap-2 text-sm sm:grid-cols-2">
@@ -194,9 +225,9 @@ export default function CustomerBookings() {
                 ) : null}
               </div>
 
-              {booking.canReschedule ? (
+              {booking.canReschedule && !booking.hasPendingReschedule ? (
                 <Button variant="outline" size="sm" className="shrink-0" onClick={() => openReschedule(booking)}>
-                  Reschedule
+                  Request reschedule
                 </Button>
               ) : null}
             </div>
@@ -205,30 +236,46 @@ export default function CustomerBookings() {
       </div>
 
       <Dialog open={Boolean(rescheduleTarget)} onOpenChange={(open) => !open && setRescheduleTarget(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Reschedule test drive</DialogTitle>
+            <DialogTitle>Request reschedule</DialogTitle>
             <DialogDescription>
-              Choose a new date and time for booking {rescheduleTarget?.bookingId}.
+              Submit 3 preferred time options for booking {rescheduleTarget?.bookingId}. Our team will assign the best available slot.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            <div className="flex gap-2">
+              {[0, 1, 2].map((i) => (
+                <Button
+                  key={i}
+                  type="button"
+                  size="sm"
+                  variant={activePrefIndex === i ? "default" : "outline"}
+                  onClick={() => setActivePrefIndex(i)}
+                >
+                  Option {i + 1}
+                  {prefs[i]?.time ? " ✓" : ""}
+                </Button>
+              ))}
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="reschedule-date">New date</Label>
+              <Label htmlFor="reschedule-date">Preferred date (option {activePrefIndex + 1})</Label>
               <Input
                 id="reschedule-date"
                 type="date"
-                value={rescheduleDate}
+                value={prefs[activePrefIndex]?.date || ""}
                 onChange={(e) => {
-                  setRescheduleDate(e.target.value);
-                  setRescheduleTime("");
+                  const next = [...prefs];
+                  next[activePrefIndex] = { date: e.target.value, time: "" };
+                  setPrefs(next);
                 }}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Available time slots</Label>
+              <Label>Preferred time</Label>
               {slotsLoading ? (
                 <div className="flex justify-center py-6">
                   <Loader2 className="h-5 w-5 animate-spin text-primary" />
@@ -242,11 +289,18 @@ export default function CustomerBookings() {
                       key={slot.time}
                       type="button"
                       disabled={!slot.available}
-                      onClick={() => setRescheduleTime(slot.time)}
+                      onClick={() => {
+                        const next = [...prefs];
+                        next[activePrefIndex] = {
+                          date: prefs[activePrefIndex].date,
+                          time: slot.time,
+                        };
+                        setPrefs(next);
+                      }}
                       className={cn(
                         "rounded-xl border px-3 py-2 text-sm transition-colors",
                         !slot.available && "opacity-50 cursor-not-allowed border-border bg-muted/30",
-                        slot.available && rescheduleTime === slot.time
+                        slot.available && prefs[activePrefIndex]?.time === slot.time
                           ? "border-primary bg-primary/10 text-primary font-medium"
                           : slot.available && "border-border hover:border-primary/50",
                       )}
@@ -257,15 +311,29 @@ export default function CustomerBookings() {
                 </div>
               )}
             </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="reschedule-reason">Reason (optional)</Label>
+              <Textarea
+                id="reschedule-reason"
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Why do you need to reschedule?"
+                rows={2}
+              />
+            </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setRescheduleTarget(null)}>
               Cancel
             </Button>
-            <Button onClick={() => void handleReschedule()} disabled={saving || !rescheduleTime}>
+            <Button
+              onClick={() => void handleReschedule()}
+              disabled={saving || prefs.some((p) => !p.date || !p.time)}
+            >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Confirm reschedule
+              Submit 3 preferences
             </Button>
           </DialogFooter>
         </DialogContent>

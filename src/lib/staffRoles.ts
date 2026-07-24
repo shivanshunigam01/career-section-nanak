@@ -1,6 +1,7 @@
 export const STAFF_DESIGNATIONS = [
   "sales_executive",
   "sales_manager",
+  "sales_head",
   "branch_manager",
   "gm",
   "ceo",
@@ -12,10 +13,22 @@ export type StaffDesignation = (typeof STAFF_DESIGNATIONS)[number];
 export const DESIGNATION_LABELS: Record<StaffDesignation, string> = {
   sales_executive: "Sales Executive",
   sales_manager: "Sales Manager",
+  sales_head: "Sales Head",
   branch_manager: "Branch Manager",
-  gm: "GM",
+  gm: "General Manager",
   ceo: "CEO",
-  md: "MD",
+  md: "Managing Director",
+};
+
+/** Org chart order (top → bottom). */
+export const DESIGNATION_RANK: Record<StaffDesignation, number> = {
+  md: 100,
+  ceo: 90,
+  gm: 80,
+  branch_manager: 70,
+  sales_head: 60,
+  sales_manager: 40,
+  sales_executive: 20,
 };
 
 export function designationLabel(designation?: string | null) {

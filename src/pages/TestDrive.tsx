@@ -1,5 +1,4 @@
 import { useCallback, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ import { BiharDistrictField } from "@/components/BiharDistrictField";
 import {
   BIHAR_DEFAULT_DISTRICT,
   DISTRICT_OTHER,
-  isPatnaDistrict,
   resolvedDistrictLabel,
 } from "@/data/biharDistricts";
 import { Label } from "@/components/ui/label";
@@ -124,7 +122,7 @@ const TestDrivePage = () => {
   const selectedCalendarDate = formData.date
     ? new Date(`${formData.date}T12:00:00`)
     : undefined;
-  const isPatnaSelected = isPatnaDistrict(formData.city);
+  const homeTestDriveAllowed = formData.city !== DISTRICT_OTHER;
   const useLiveSlots = hasApi();
   const otpRequired = hasApi() && Boolean(siteConfig.features?.whatsappOtp);
 
@@ -430,11 +428,7 @@ const TestDrivePage = () => {
                   Experience the Future
                 </h1>
                 <p className="text-muted-foreground text-sm leading-relaxed">
-                  Live showroom slots · complimentary drive ·{" "}
-                  <Link to="/book-now" className="text-primary font-medium hover:underline">
-                    Pre-Booking
-                  </Link>{" "}
-                  for purchase.
+                  Live showroom slots · complimentary drive at Patliputra VinFast.
                 </p>
               </div>
 
@@ -514,10 +508,7 @@ const TestDrivePage = () => {
               <p className="hidden lg:flex shrink-0 text-xs text-muted-foreground items-center gap-2">
                 <Car className="w-3.5 h-3.5 shrink-0 text-primary" />
                 <span>
-                  Ready to buy?{" "}
-                  <Link to="/book-now" className="text-primary font-medium hover:underline">
-                    Pre-Booking
-                  </Link>
+                  Ready to buy? Use <strong>Book Now</strong> in the top menu to start Pre-Booking.
                 </span>
               </p>
             </motion.aside>
@@ -733,31 +724,31 @@ const TestDrivePage = () => {
                         value={formData.city}
                         otherValue={formData.otherCity}
                         onDistrictChange={(city) => {
-                          const patna = isPatnaDistrict(city);
+                          const allowHome = city !== DISTRICT_OTHER;
                           setFormData((prev) => ({
                             ...prev,
                             city,
                             otherCity: "",
                             preferredTestDriveLocation:
-                              !patna && prev.preferredTestDriveLocation === HOME_TEST_DRIVE_OPTION
+                              !allowHome && prev.preferredTestDriveLocation === HOME_TEST_DRIVE_OPTION
                                 ? DEALERSHIP_VISIT_OPTION
                                 : prev.preferredTestDriveLocation,
                           }));
-                          if (!patna && formData.preferredTestDriveLocation === HOME_TEST_DRIVE_OPTION) {
-                            toast.info("Home Test Drive is available only in Patna. Switched to Dealership Visit.");
+                          if (!allowHome && formData.preferredTestDriveLocation === HOME_TEST_DRIVE_OPTION) {
+                            toast.info("Home Test Drive is available across Bihar. Outside Bihar, please choose Dealership Visit.");
                           }
                         }}
                         onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
                         fullWidthOtherRow
                         otherFieldLabel="City / state / district *"
                       />
-                      {isPatnaSelected ? (
+                      {homeTestDriveAllowed ? (
                         <p className="text-emerald-600 text-[11px] leading-relaxed">
-                          Patna — home test drives available.
+                          Bihar — home test drives available in your district.
                         </p>
                       ) : (
                         <p className="text-amber-600 text-[11px] leading-relaxed">
-                          Outside Patna — choose Dealership Visit.
+                          Outside Bihar — choose Dealership Visit.
                         </p>
                       )}
                     </div>
@@ -767,8 +758,8 @@ const TestDrivePage = () => {
                       <RadioGroup
                         value={formData.preferredTestDriveLocation}
                         onValueChange={(v) => {
-                          if (!isPatnaSelected && v === HOME_TEST_DRIVE_OPTION) {
-                            toast.info("Home Test Drive is available only for Patna. Please select Dealership Visit.");
+                          if (!homeTestDriveAllowed && v === HOME_TEST_DRIVE_OPTION) {
+                            toast.info("Home Test Drive is available across Bihar. Outside Bihar, please select Dealership Visit.");
                             update("preferredTestDriveLocation", DEALERSHIP_VISIT_OPTION);
                             return;
                           }
@@ -780,7 +771,7 @@ const TestDrivePage = () => {
                           <div
                             key={opt}
                             className={`flex items-center gap-2 rounded-lg border px-3 py-2 ${
-                              !isPatnaSelected && opt === HOME_TEST_DRIVE_OPTION
+                              !homeTestDriveAllowed && opt === HOME_TEST_DRIVE_OPTION
                                 ? "border-border/40 bg-muted/40 opacity-60"
                                 : "border-border/60 bg-background/30"
                             }`}
@@ -788,12 +779,12 @@ const TestDrivePage = () => {
                             <RadioGroupItem
                               value={opt}
                               id={`td-loc-${opt.replace(/\s+/g, "-")}`}
-                              disabled={!isPatnaSelected && opt === HOME_TEST_DRIVE_OPTION}
+                              disabled={!homeTestDriveAllowed && opt === HOME_TEST_DRIVE_OPTION}
                             />
                             <Label
                               htmlFor={`td-loc-${opt.replace(/\s+/g, "-")}`}
                               className={`text-xs sm:text-sm font-normal leading-snug ${
-                                !isPatnaSelected && opt === HOME_TEST_DRIVE_OPTION
+                                !homeTestDriveAllowed && opt === HOME_TEST_DRIVE_OPTION
                                   ? "cursor-not-allowed text-muted-foreground"
                                   : "cursor-pointer"
                               }`}
@@ -897,10 +888,7 @@ const TestDrivePage = () => {
                 ) : null}
                 <p className="text-center text-muted-foreground text-[11px]">By submitting, you agree to our privacy policy.</p>
                 <p className="text-center text-muted-foreground text-[11px] lg:hidden">
-                  Ready to buy?{" "}
-                  <Link to="/book-now" className="text-primary font-medium hover:underline">
-                    Go to Pre-Booking
-                  </Link>
+                  Ready to buy? Use Book Now in the menu for Pre-Booking.
                 </p>
               </div>
             </motion.form>

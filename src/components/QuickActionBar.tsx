@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Car, Calculator, ArrowLeftRight, MapPin, Phone, MessageCircle, CalendarDays, ShoppingBag } from "lucide-react";
+import { Car, Calculator, ArrowLeftRight, MapPin, Phone, MessageCircle, CalendarDays } from "lucide-react";
 import { useMemo } from "react";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
@@ -11,7 +11,6 @@ const QuickActionBar = () => {
 
   const actions = useMemo(
     () => [
-      { icon: ShoppingBag, label: "Pre-Booking", href: "/book-now" as const, external: false },
       { icon: CalendarDays, label: "Test Drive", href: "/test-drive" as const, external: false },
       { icon: Car, label: "Get Price", href: "/contact" as const, external: false },
       { icon: Calculator, label: "EMI Calculator", href: "/emi-calculator" as const, external: false },

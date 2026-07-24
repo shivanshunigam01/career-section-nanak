@@ -3,14 +3,19 @@ import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { motion } from "framer-motion";
-import { Lock, Mail, Eye, EyeOff } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Lock, Mail, Eye, EyeOff, ArrowLeft, ShieldCheck } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
 import { adminLogin, ApiRequestError, formatApiErrors } from "@/lib/api";
 import { markAdminSessionStart, setAdminSession, getAdminLoginRedirect, type AdminUser } from "@/lib/adminAuth";
 
+/**
+ * Structured staff login (MoM #2): identity step → password step,
+ * similar to bank-style flows (user first, then credential).
+ */
 const AdminLogin = () => {
+  const [step, setStep] = useState<"identity" | "password">("identity");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -19,6 +24,16 @@ const AdminLogin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const sessionExpired = searchParams.get("reason") === "session-expired";
+
+  const continueIdentity = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim() || !email.includes("@")) {
+      setError("Enter your registered staff email to continue");
+      return;
+    }
+    setError("");
+    setStep("password");
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,92 +64,148 @@ const AdminLogin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-background via-muted/30 to-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
-        <div className="glass-card p-8 sm:p-10">
+        <div className="rounded-2xl border border-border/60 bg-card/95 p-8 sm:p-10 shadow-sm backdrop-blur">
           <div className="text-center mb-8">
             <img
               src={vinLogo}
               alt="Patliputra VinFast"
               className="mx-auto mb-4 h-16 w-auto max-w-[min(100%,280px)] object-contain sm:h-20 sm:max-w-[320px]"
             />
+            <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary mb-3">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Secure staff access
+            </div>
             <h1 className="font-display text-2xl font-bold text-foreground">Staff & Admin Login</h1>
-            <p className="text-muted-foreground text-sm mt-1">Sign in with your assigned email and password</p>
+            <p className="text-muted-foreground text-sm mt-1">
+              {step === "identity"
+                ? "Step 1 of 2 — enter your registered email"
+                : "Step 2 of 2 — enter your password"}
+            </p>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-5">
-            {sessionExpired && (
-              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
-                Your session has expired (after 1 hour). Please sign in again to continue — your access token is no longer valid.
-              </div>
-            )}
-            {error && (
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm text-muted-foreground">Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="admin@patliputravinfast.com"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  className="pl-10 bg-secondary/50 border-border/50"
-                  autoComplete="email"
-                />
-              </div>
+          {sessionExpired && (
+            <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
+              Your session has expired (after 1 hour). Please sign in again to continue.
             </div>
+          )}
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm text-muted-foreground">Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
-                  className="pl-10 pr-10 bg-secondary/50 border-border/50"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          <AnimatePresence mode="wait">
+            {step === "identity" ? (
+              <motion.form
+                key="identity"
+                initial={{ opacity: 0, x: -12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                onSubmit={continueIdentity}
+                className="space-y-5"
+              >
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
+                    {error}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label htmlFor="email" className="text-sm text-muted-foreground">
+                    Email / User ID
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="you@patliputravinfast.com"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError("");
+                      }}
+                      className="pl-10 bg-secondary/50 border-border/50"
+                      autoComplete="username"
+                      autoFocus
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full font-semibold py-5">
+                  Continue
+                </Button>
+              </motion.form>
+            ) : (
+              <motion.form
+                key="password"
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -12 }}
+                onSubmit={handleLogin}
+                className="space-y-5"
+              >
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 text-sm text-destructive">
+                    {error}
+                  </div>
+                )}
+                <div className="rounded-lg border border-border/50 bg-muted/30 px-3 py-2 text-sm flex items-center justify-between gap-2">
+                  <span className="truncate text-foreground">{email}</span>
+                  <button
+                    type="button"
+                    className="text-xs text-primary inline-flex items-center gap-1 shrink-0"
+                    onClick={() => {
+                      setStep("identity");
+                      setPassword("");
+                      setError("");
+                    }}
+                  >
+                    <ArrowLeft className="h-3 w-3" /> Change
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password" className="text-sm text-muted-foreground">
+                    Password
+                  </Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="password"
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setError("");
+                      }}
+                      className="pl-10 pr-10 bg-secondary/50 border-border/50"
+                      autoComplete="current-password"
+                      autoFocus
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-5"
                 >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
+                  {loading ? "Signing in…" : "Sign in securely"}
+                </Button>
+              </motion.form>
+            )}
+          </AnimatePresence>
 
-            <Button type="submit" disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-5">
-              {loading ? "Signing in…" : "Sign In"}
-            </Button>
-          </form>
-
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            {hasApi()
-              ? "Signed in against your Node API (JWT)."
-              : "Demo mode: any email/password works. Set VITE_API_URL for real auth."}
-          </p>
-          <p className="mt-3 text-center text-xs text-muted-foreground">
-            Looking for bookings?{" "}
+          <p className="mt-6 text-center text-xs text-muted-foreground">
+            Customer booking access?{" "}
             <Link to="/customer/login" className="text-primary hover:underline">
-              Login as Customer
-            </Link>
-            {" · "}
-            <Link to="/login" className="text-primary hover:underline">
-              All login options
+              Login as customer
             </Link>
           </p>
         </div>
