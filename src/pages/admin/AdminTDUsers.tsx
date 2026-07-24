@@ -38,6 +38,7 @@ type StaffUser = {
   designation: string;
   designationLabel?: string;
   isCustomDesignation?: boolean;
+  reportsTo?: string | { _id: string; name?: string } | null;
   active: boolean;
   allowedModules?: string[];
   createdAt?: string;
@@ -45,6 +46,7 @@ type StaffUser = {
 
 /** Sentinel value in the designation dropdown for admin-typed custom positions. */
 const OTHER_DESIGNATION = "__other__";
+const NO_MANAGER = "__none__";
 
 const emptyForm = {
   name: "",
@@ -53,6 +55,7 @@ const emptyForm = {
   designation: "sales_executive" as string,
   customDesignation: "",
   accessLevel: "executive" as "executive" | "manager",
+  reportsTo: NO_MANAGER as string,
   allowedModules: [] as AdminModuleKey[],
   active: true,
 };
@@ -60,6 +63,7 @@ const emptyForm = {
 const DESIGNATION_COLORS: Record<string, string> = {
   sales_executive: "bg-blue-400/10 text-blue-400 border-blue-400/20",
   sales_manager: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
+  sales_head: "bg-violet-400/10 text-violet-400 border-violet-400/20",
   branch_manager: "bg-purple-400/10 text-purple-400 border-purple-400/20",
   gm: "bg-orange-400/10 text-orange-400 border-orange-400/20",
   ceo: "bg-rose-400/10 text-rose-400 border-rose-400/20",
@@ -110,6 +114,12 @@ export default function AdminTDUsers() {
 
   const openEdit = (user: StaffUser) => {
     const isKnown = (STAFF_DESIGNATIONS as readonly string[]).includes(user.designation);
+    const reportsToId =
+      typeof user.reportsTo === "object" && user.reportsTo
+        ? user.reportsTo._id
+        : typeof user.reportsTo === "string"
+          ? user.reportsTo
+          : NO_MANAGER;
     setForm({
       _id: user._id,
       name: user.name,
@@ -118,6 +128,7 @@ export default function AdminTDUsers() {
       designation: isKnown ? user.designation : OTHER_DESIGNATION,
       customDesignation: isKnown ? "" : user.designation,
       accessLevel: user.role === "manager" ? "manager" : "executive",
+      reportsTo: reportsToId || NO_MANAGER,
       allowedModules: (user.allowedModules ?? []) as AdminModuleKey[],
       active: user.active,
     });
@@ -157,6 +168,7 @@ export default function AdminTDUsers() {
         designation: isOtherDesignation ? form.customDesignation.trim() : form.designation,
         active: form.active,
         allowedModules: form.allowedModules,
+        reportsTo: form.reportsTo === NO_MANAGER ? null : form.reportsTo,
       };
       // Custom positions carry an explicit access level; standard ones derive it from the designation.
       if (isOtherDesignation) payload.role = form.accessLevel;
@@ -248,7 +260,7 @@ export default function AdminTDUsers() {
             <Users className="w-6 h-6 text-primary" /> User Master
           </h1>
           <p className="text-muted-foreground text-sm">
-            Sales hierarchy — Executive → Manager → Branch Manager → GM → CEO → MD
+            Sales hierarchy — SE → SM → Sales Head → GM → CEO → MD
           </p>
         </div>
         <div className="flex gap-2">
@@ -426,6 +438,28 @@ export default function AdminTDUsers() {
                   <SelectItem value={OTHER_DESIGNATION}>Other (custom position)…</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reports to</Label>
+              <Select
+                value={form.reportsTo}
+                onValueChange={(v) => setForm({ ...form, reportsTo: v })}
+              >
+                <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_MANAGER}>— Top of chain / none —</SelectItem>
+                  {users
+                    .filter((u) => u._id !== form._id && u.active)
+                    .map((u) => (
+                      <SelectItem key={u._id} value={u._id}>
+                        {u.name} ({u.designationLabel || designationLabel(u.designation)})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Managers see leads and test drives assigned to themselves and their reports.
+              </p>
             </div>
             {isOtherDesignation && (
               <>

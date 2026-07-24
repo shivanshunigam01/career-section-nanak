@@ -47,6 +47,7 @@ const ADMIN_SESSION_EXPIRED_TOAST =
 
 const coreNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+  { label: "Calendar",  icon: Clock,           path: "/admin/calendar" },
   { label: "Homepage",  icon: Home,            path: "/admin/homepage" },
   { label: "Lead CRM",  icon: Users,           path: "/admin/crm/leads" },
   { label: "Products",  icon: Car,             path: "/admin/products" },
@@ -71,6 +72,8 @@ const tdNavItems = [
   { label: "My Test Drives", icon: User,         path: "/admin/td/my-bookings", staff: true },
   { label: "Lead Reports",    icon: BarChart3,    path: "/admin/td/leads/reports", staff: false },
   { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
+  { label: "Reschedule History", icon: Clock, path: "/admin/td/reschedule-history", staff: false },
+  { label: "Fleet Health",   icon: Gauge,         path: "/admin/td/fleet-health", staff: false },
   { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
   { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles",    staff: false },
   { label: "Model Master",   icon: Car,           path: "/admin/td/models",      staff: false },

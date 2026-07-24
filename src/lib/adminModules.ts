@@ -23,7 +23,10 @@ export type AdminModuleKey =
   | "td_models"
   | "vehicle_stock"
   | "td_reports"
-  | "td_config";
+  | "td_config"
+  | "calendar"
+  | "td_reschedule_history"
+  | "td_fleet_health";
 
 export type AdminModule = {
   key: AdminModuleKey;
@@ -34,6 +37,7 @@ export type AdminModule = {
 
 export const ADMIN_MODULES: AdminModule[] = [
   { key: "dashboard", label: "Dashboard", path: "/admin/dashboard", group: "Core" },
+  { key: "calendar", label: "Calendar", path: "/admin/calendar", group: "Core" },
   { key: "homepage", label: "Homepage", path: "/admin/homepage", group: "Core" },
   { key: "crm_leads", label: "Lead CRM", path: "/admin/crm/leads", group: "Core" },
   { key: "products", label: "Products", path: "/admin/products", group: "Core" },
@@ -47,6 +51,8 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "feedback_post_delivery", label: "Delivery Feedback Forms", path: "/admin/feedback/post-delivery", group: "Feedback" },
   { key: "td_lead_reports", label: "Lead Reports", path: "/admin/td/leads/reports", group: "TD Management" },
   { key: "td_bookings", label: "TD Bookings", path: "/admin/td/bookings", group: "TD Management" },
+  { key: "td_reschedule_history", label: "Reschedule History", path: "/admin/td/reschedule-history", group: "TD Management" },
+  { key: "td_fleet_health", label: "Fleet Charging & Health", path: "/admin/td/fleet-health", group: "TD Management" },
   { key: "td_users", label: "User Master", path: "/admin/td/users", group: "TD Management" },
   { key: "td_vehicles", label: "Demo Fleet", path: "/admin/td/vehicles", group: "TD Management" },
   { key: "td_models", label: "Model Master", path: "/admin/td/models", group: "TD Management" },
@@ -70,4 +76,18 @@ export const EXECUTIVE_DEFAULT_MODULES: AdminModuleKey[] = [
   "my_dashboard",
   "td_my_bookings",
   "crm_leads",
+  "calendar",
+];
+
+export const MANAGER_DEFAULT_MODULES: AdminModuleKey[] = [
+  "dashboard",
+  "calendar",
+  "crm_leads",
+  "my_dashboard",
+  "td_my_bookings",
+  "td_bookings",
+  "td_reschedule_history",
+  "td_fleet_health",
+  "td_lead_reports",
+  "td_reports",
 ];

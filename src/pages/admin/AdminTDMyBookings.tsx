@@ -34,6 +34,7 @@ type Booking = {
   _id: string;
   bookingId: string;
   bookingStatus: string;
+  assignmentStatus?: string;
   slotDate: string;
   slotTime: string;
   slotDuration: number;
@@ -228,6 +229,14 @@ export default function AdminTDMyBookings() {
   };
 
   const handleStartDriving = async (id: string) => {
+    if (!selected?.dlVerified || !selected?.dlImageUrl) {
+      toast.error("Upload and verify driving licence before starting the test drive");
+      return;
+    }
+    if (selected.assignmentStatus === "PENDING_ACCEPTANCE") {
+      toast.error("Accept this assignment before starting the test drive");
+      return;
+    }
     const opening = Number(openingOdometer);
     if (!openingOdometer.trim() || Number.isNaN(opening) || opening < 0) {
       toast.error("Enter opening odometer reading (km) before starting the drive");
@@ -244,6 +253,35 @@ export default function AdminTDMyBookings() {
       toast.success("Test drive started — opening odometer recorded");
       void fetchBookings();
       if (selected?._id === id) await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAcceptAssignment = async (id: string) => {
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/accept-assignment`, {});
+      toast.success("Assignment accepted");
+      void fetchBookings();
+      await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectAssignment = async (id: string) => {
+    const reason = window.prompt("Reason for rejecting this assignment (optional)") || undefined;
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/reject-assignment`, { reason });
+      toast.success("Assignment rejected — returned for reassignment");
+      setSelected(null);
+      void fetchBookings();
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -429,6 +467,33 @@ export default function AdminTDMyBookings() {
                   {!isTerminalStatus(selected.bookingStatus) ? (
                     <div className="rounded-lg border border-primary/25 bg-primary/5 p-4 space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-primary">Manage test drive</p>
+                      {selected.assignmentStatus === "PENDING_ACCEPTANCE" ? (
+                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                          <p className="text-sm text-foreground font-medium">Assignment awaiting your response</p>
+                          <p className="text-xs text-muted-foreground">
+                            Accept to confirm this test drive, or reject to return it for reassignment.
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              size="sm"
+                              className="h-10"
+                              disabled={actionLoading}
+                              onClick={() => void handleAcceptAssignment(selected._id)}
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-2" /> Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-10"
+                              disabled={actionLoading}
+                              onClick={() => void handleRejectAssignment(selected._id)}
+                            >
+                              <XCircle className="w-4 h-4 mr-2" /> Reject
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label htmlFor="my-opening-odometer" className="text-xs">
@@ -479,7 +544,12 @@ export default function AdminTDMyBookings() {
                         <Button
                           size="sm"
                           className="h-10"
-                          disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                          disabled={
+                            actionLoading ||
+                            selected.bookingStatus === "IN_PROGRESS" ||
+                            selected.assignmentStatus === "PENDING_ACCEPTANCE" ||
+                            !selected.dlVerified
+                          }
                           onClick={() => void handleStartDriving(selected._id)}
                         >
                           <Play className="w-4 h-4 mr-2" /> Start driving
@@ -500,9 +570,13 @@ export default function AdminTDMyBookings() {
                         </Button>
                       </div>
                       <p className="text-[11px] text-muted-foreground">
-                        {selected.bookingStatus === "IN_PROGRESS"
-                          ? "Tap Mark completed to capture the closing odometer, photos, location, and customer feedback."
-                          : "Enter opening odometer before starting the test drive."}
+                        {selected.assignmentStatus === "PENDING_ACCEPTANCE"
+                          ? "Accept or reject this assignment before starting."
+                          : !selected.dlVerified
+                            ? "Driving licence must be verified before starting the test drive."
+                            : selected.bookingStatus === "IN_PROGRESS"
+                              ? "Tap Mark completed to capture the closing odometer, photos, location, and customer feedback."
+                              : "Enter opening odometer before starting the test drive."}
                       </p>
                     </div>
                   ) : selected.bookingStatus === "COMPLETED" ? (

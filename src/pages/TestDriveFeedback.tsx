@@ -42,6 +42,22 @@ const VEHICLE_MODELS = ["VF 6", "VF 7", "MPV 7", "Limo Green"];
 const PURCHASE_INTENTS = ["Within 15 days", "Within 1 month", "Within 3 months", "Exploring"];
 const MAIN_CONCERNS = ["None", "Price", "Charging", "Range", "Finance", "Family decision"];
 
+/** Brochure-style product highlights — multi-select on the last page. */
+const LIKED_PRODUCT_OPTIONS = [
+  "Exterior design / styling",
+  "Cabin comfort & space",
+  "Ride quality & quietness",
+  "Performance & handling",
+  "Features & technology",
+  "Infotainment / connectivity",
+  "Range / battery confidence",
+  "Charging convenience",
+  "Safety / ADAS",
+  "Boot / storage space",
+  "Value for money",
+  "Warranty & after-sales",
+] as const;
+
 const STYLES = `
 .tdfb{--blue:#0068b5;--deep:#073b64;--pale:#eaf5fd;--ink:#102f49;--muted:#647d91;--line:#d7e4ee;--green:#1fa855;margin:0;color:var(--ink);font-family:Arial,Helvetica,sans-serif;background:radial-gradient(circle at 15% 0,#dff3ff 0,transparent 34%),#eef6fb}
 .tdfb *{box-sizing:border-box}
@@ -84,6 +100,9 @@ const STYLES = `
 .tdfb .chips{display:flex;flex-wrap:wrap;gap:8px}
 .tdfb .chip{padding:10px 13px;border:1px solid var(--line);border-radius:99px;background:#fff;color:#3c6078;font-size:12px;font-weight:700;cursor:pointer}
 .tdfb .chip.active{border-color:var(--blue);background:var(--blue);color:#fff}
+.tdfb .chip.check{border-radius:14px;padding-left:11px;padding-right:11px;display:inline-flex;align-items:center;gap:7px}
+.tdfb .chip.check .mark{width:16px;height:16px;border:1.5px solid #b7cdda;border-radius:5px;display:grid;place-items:center;font-size:11px;line-height:1;background:#fff;color:transparent;flex:0 0 auto}
+.tdfb .chip.check.active .mark{border-color:#fff;background:rgba(255,255,255,.22);color:#fff}
 .tdfb .ratings{display:grid;gap:11px}
 .tdfb .rating{padding:14px;border:1.5px solid var(--line);border-radius:17px;background:#fbfdff}
 .tdfb .rating.answered{border-color:#a9d5ee;background:#f6fbff}
@@ -126,7 +145,7 @@ const PAGE_TITLES: Record<1 | 2 | 3, { eyebrow: string; heading: string; intro: 
   3: {
     eyebrow: "Page 3 · Your decision",
     heading: "Your final impression",
-    intro: "Rate our team and tell us what comes next for you.",
+    intro: "Rate our team, tell us what you liked, and share any feedback for Patliputra VinFast.",
   },
 };
 
@@ -142,6 +161,9 @@ const TestDriveFeedback = () => {
   const [leadSource, setLeadSource] = useState("Digital");
   const [purchaseIntent, setPurchaseIntent] = useState("");
   const [mainConcern, setMainConcern] = useState("None");
+  const [likedFeatures, setLikedFeatures] = useState<string[]>([]);
+  const [dislikedAboutProduct, setDislikedAboutProduct] = useState("");
+  const [dealerSuggestions, setDealerSuggestions] = useState("");
   const [comment, setComment] = useState("");
   const [ratings, setRatings] = useState<Partial<Record<RatingKey, number>>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -198,6 +220,9 @@ const TestDriveFeedback = () => {
         ratings,
         purchaseIntent,
         mainConcern,
+        likedFeatures,
+        dislikedAboutProduct: dislikedAboutProduct.trim(),
+        dealerSuggestions: dealerSuggestions.trim(),
         comment: comment.trim(),
       });
       const data = (result.data ?? {}) as { id?: unknown; reference?: unknown };
@@ -257,6 +282,34 @@ const TestDriveFeedback = () => {
           {option}
         </button>
       ))}
+    </div>
+  );
+
+  const toggleLikedFeature = (option: string) => {
+    setLikedFeatures((prev) =>
+      prev.includes(option) ? prev.filter((item) => item !== option) : [...prev, option],
+    );
+  };
+
+  const renderMultiCheckChips = (options: readonly string[], selected: string[]) => (
+    <div className="chips" role="group" aria-label="What did you like about the product">
+      {options.map((option) => {
+        const active = selected.includes(option);
+        return (
+          <button
+            key={option}
+            type="button"
+            className={`chip check ${active ? "active" : ""}`}
+            aria-pressed={active}
+            onClick={() => toggleLikedFeature(option)}
+          >
+            <span className="mark" aria-hidden>
+              ✓
+            </span>
+            {option}
+          </button>
+        );
+      })}
     </div>
   );
 
@@ -413,6 +466,37 @@ const TestDriveFeedback = () => {
                     <legend>Your main concern</legend>
                     {renderChips(MAIN_CONCERNS, mainConcern, setMainConcern)}
                   </fieldset>
+                </section>
+                <section className="section">
+                  <div className="section-title">
+                    <b>05</b>
+                    <div>
+                      <h2>Product & dealership feedback</h2>
+                      <p>Tick what you liked — then share anything else</p>
+                    </div>
+                  </div>
+                  <fieldset className="chip-set" style={{ margin: 0 }}>
+                    <legend>What did you like about the product? (select all that apply)</legend>
+                    {renderMultiCheckChips(LIKED_PRODUCT_OPTIONS, likedFeatures)}
+                  </fieldset>
+                  <label className="comment">
+                    <span>What did you not like about the product?</span>
+                    <textarea
+                      maxLength={1000}
+                      placeholder="Share anything that could be better…"
+                      value={dislikedAboutProduct}
+                      onChange={(e) => setDislikedAboutProduct(e.target.value)}
+                    />
+                  </label>
+                  <label className="comment">
+                    <span>Any suggestions or feedback for Patliputra VinFast?</span>
+                    <textarea
+                      maxLength={1000}
+                      placeholder="Ideas, service notes, or anything we should improve…"
+                      value={dealerSuggestions}
+                      onChange={(e) => setDealerSuggestions(e.target.value)}
+                    />
+                  </label>
                   <label className="comment">
                     <span>Anything else you’d like us to know?</span>
                     <textarea

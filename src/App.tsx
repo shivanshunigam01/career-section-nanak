@@ -56,6 +56,9 @@ import CustomerLogin from "./pages/customer/CustomerLogin";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerBookings from "./pages/customer/CustomerBookings";
 import LoginPage from "./pages/LoginPage";
+import AdminCalendar from "./pages/admin/AdminCalendar";
+import AdminRescheduleHistory from "./pages/admin/AdminRescheduleHistory";
+import AdminFleetHealth from "./pages/admin/AdminFleetHealth";
 
 const queryClient = new QueryClient();
 
@@ -113,6 +116,7 @@ const App = () => {
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="calendar" element={<AdminCalendar />} />
             <Route path="leads" element={<AdminLeads />} />
             <Route path="meta-lead" element={<AdminMetaLeadCRM />} />
             <Route path="test-drives" element={<AdminTestDrives />} />
@@ -135,6 +139,8 @@ const App = () => {
             {/* Test Drive Management Module */}
             <Route path="td/bookings" element={<AdminTDBookings />} />
             <Route path="td/my-bookings" element={<AdminTDMyBookings />} />
+            <Route path="td/reschedule-history" element={<AdminRescheduleHistory />} />
+            <Route path="td/fleet-health" element={<AdminFleetHealth />} />
             <Route path="td/leads" element={<AdminTDLeads />} />
             <Route path="td/leads/reports" element={<AdminTDLeadReports />} />
             <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
