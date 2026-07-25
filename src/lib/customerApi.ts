@@ -71,14 +71,13 @@ export async function customerCheckMobile(mobile: string): Promise<{ name: strin
 
 export async function customerLogin(
   mobile: string,
-  options: { whatsappVerificationToken?: string; otp?: string },
+  options: { whatsappVerificationToken: string },
 ): Promise<{ token: string; customer: CustomerUser }> {
   const { res, json } = await customerRequest("/customer/auth/login", {
     method: "POST",
     json: {
       mobile,
       whatsappVerificationToken: options.whatsappVerificationToken,
-      otp: options.otp,
     },
   });
   assertOk(res, json);
@@ -133,20 +132,4 @@ export async function customerRequestReschedule(
   assertOk(res, json);
   const data = json.data as { booking?: CustomerBooking };
   return { booking: data?.booking ?? (json.data as CustomerBooking) };
-}
-
-/** @deprecated Use customerRequestReschedule with 3 preferredSlots */
-export async function customerRescheduleBooking(
-  bookingId: string,
-  slotDate: string,
-  slotTime: string,
-): Promise<CustomerBooking> {
-  const { booking } = await customerRequestReschedule(bookingId, {
-    preferredSlots: [
-      { slotDate, slotTime },
-      { slotDate, slotTime },
-      { slotDate, slotTime },
-    ],
-  });
-  return booking;
 }

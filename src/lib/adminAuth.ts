@@ -9,6 +9,8 @@ export type AdminUser = {
   designationLabel?: string | null;
   /** Module keys this user may access. Empty/missing = default access for their role. */
   allowedModules?: string[];
+  /** Portal account type — set at login (`admin` or `tdstaff`). */
+  userType?: "admin" | "tdstaff";
 };
 
 const TOKEN_KEY = "vf_admin_token";
@@ -98,6 +100,20 @@ export function getAdminLoginRedirect(user: AdminUser | null | undefined): strin
   }
   if (isFieldStaffUser(user)) return "/admin/my-dashboard";
   return "/admin/dashboard";
+}
+
+/** Login page for the current session's account type. */
+export function getPortalLoginPath(user: AdminUser | null | undefined): string {
+  if (user?.userType === "tdstaff" || isFieldStaffUser(user)) return "/staff/login";
+  return "/admin/login";
+}
+
+export function isStaffUserType(user: AdminUser | null | undefined): boolean {
+  return user?.userType === "tdstaff";
+}
+
+export function isAdminUserType(user: AdminUser | null | undefined): boolean {
+  return user?.userType === "admin" || (!user?.userType && !isFieldStaffUser(user));
 }
 
 export function canAccessFullAdmin(user: AdminUser | null | undefined): boolean {

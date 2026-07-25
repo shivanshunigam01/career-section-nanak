@@ -27,6 +27,7 @@ import TestDriveFeedback from "./pages/TestDriveFeedback";
 import NotFound from "./pages/NotFound";
 import ScrollToTop from "./components/ScrollToTop";
 import AdminLogin from "./pages/admin/AdminLogin";
+import StaffLogin from "./pages/staff/StaffLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLeads from "./pages/admin/AdminLeads";
@@ -114,6 +115,7 @@ const App = () => {
 
           {/* Admin routes */}
           <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/staff/login" element={<StaffLogin />} />
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="calendar" element={<AdminCalendar />} />

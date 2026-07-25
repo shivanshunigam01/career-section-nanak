@@ -8,10 +8,9 @@ import { toast } from "sonner";
 import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 
 const MOBILE_OK = /^[6-9]\d{9}$/;
-const BYPASS_OTP = "0000";
 
 function isValidOtpInput(digits: string): boolean {
-  return digits === BYPASS_OTP || digits.length === 4;
+  return digits.length === 4;
 }
 
 type WhatsAppOtpVerifyProps = {

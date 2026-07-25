@@ -11,8 +11,8 @@ import { adminLogin, ApiRequestError, formatApiErrors } from "@/lib/api";
 import { markAdminSessionStart, setAdminSession, getAdminLoginRedirect, type AdminUser } from "@/lib/adminAuth";
 
 /**
- * Structured staff login (MoM #2): identity step → password step,
- * similar to bank-style flows (user first, then credential).
+ * Admin portal login — Admin accounts only.
+ * Isolated from Staff portal authentication.
  */
 const AdminLogin = () => {
   const [step, setStep] = useState<"identity" | "password">("identity");
@@ -28,7 +28,7 @@ const AdminLogin = () => {
   const continueIdentity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) {
-      setError("Enter your registered staff email to continue");
+      setError("Enter your registered admin email to continue");
       return;
     }
     setError("");
@@ -47,7 +47,10 @@ const AdminLogin = () => {
       setError("");
       try {
         const { token, admin } = await adminLogin(email.trim(), password);
-        const user = admin as AdminUser;
+        const user: AdminUser = {
+          ...(admin as AdminUser),
+          userType: "admin",
+        };
         setAdminSession(token, user);
         navigate(getAdminLoginRedirect(user));
       } catch (err) {
@@ -79,12 +82,12 @@ const AdminLogin = () => {
             />
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary mb-3">
               <ShieldCheck className="h-3.5 w-3.5" />
-              Secure staff access
+              Admin portal
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Staff & Admin Login</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">Admin Login</h1>
             <p className="text-muted-foreground text-sm mt-1">
               {step === "identity"
-                ? "Step 1 of 2 — enter your registered email"
+                ? "Step 1 of 2 — enter your registered admin email"
                 : "Step 2 of 2 — enter your password"}
             </p>
           </div>
@@ -119,7 +122,7 @@ const AdminLogin = () => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="you@patliputravinfast.com"
+                      placeholder="admin@patliputravinfast.com"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -196,17 +199,25 @@ const AdminLogin = () => {
                   disabled={loading}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-5"
                 >
-                  {loading ? "Signing in…" : "Sign in securely"}
+                  {loading ? "Signing in…" : "Sign in"}
                 </Button>
               </motion.form>
             )}
           </AnimatePresence>
 
-          <p className="mt-6 text-center text-xs text-muted-foreground">
-            Customer booking access?{" "}
-            <Link to="/customer/login" className="text-primary hover:underline">
-              Login as customer
-            </Link>
+          <p className="mt-6 text-center text-xs text-muted-foreground space-y-1">
+            <span className="block">
+              Staff / CRM access?{" "}
+              <Link to="/staff/login" className="text-primary hover:underline">
+                Login as staff
+              </Link>
+            </span>
+            <span className="block">
+              Customer booking access?{" "}
+              <Link to="/customer/login" className="text-primary hover:underline">
+                Login as customer
+              </Link>
+            </span>
           </p>
         </div>
       </motion.div>

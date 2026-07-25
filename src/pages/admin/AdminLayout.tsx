@@ -32,6 +32,7 @@ import {
   getRestrictedModules,
   isPathAllowed,
   getAdminLoginRedirect,
+  getPortalLoginPath,
 } from "@/lib/adminAuth";
 import { MODULE_BY_PATH } from "@/lib/adminModules";
 import {
@@ -234,14 +235,15 @@ const AdminLayout = () => {
   useEffect(() => {
     const api = hasApi();
     const tokenOk = api ? Boolean(getAdminToken()) : localStorage.getItem("admin_logged_in") === "true";
+    const loginPath = getPortalLoginPath(adminUser);
     if (!tokenOk) {
-      navigate("/admin/login");
+      navigate(loginPath);
       return;
     }
     if (isAdminSessionTimedOut()) {
       clearAdminSession();
       toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
-      navigate("/admin/login?reason=session-expired");
+      navigate(`${loginPath}?reason=session-expired`);
       return;
     }
     if (fieldStaff && !isStaffPortalPath(location.pathname)) {
@@ -258,16 +260,18 @@ const AdminLayout = () => {
   useEffect(() => {
     const id = window.setInterval(() => {
       if (!isAdminSessionTimedOut()) return;
+      const loginPath = getPortalLoginPath(getAdminUser());
       clearAdminSession();
       toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
-      navigate("/admin/login?reason=session-expired");
+      navigate(`${loginPath}?reason=session-expired`);
     }, 60_000);
     return () => clearInterval(id);
   }, [navigate]);
 
   const handleLogout = () => {
+    const loginPath = getPortalLoginPath(adminUser);
     clearAdminSession();
-    navigate("/admin/login");
+    navigate(loginPath);
   };
 
   const visibleTdItems = tdNavItems.filter((item) => (item.staff || fullAdmin) && canSeePath(item.path));

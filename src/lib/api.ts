@@ -1,5 +1,5 @@
 import { API_BASE } from "./apiConfig";
-import { clearAdminSession, getAdminToken } from "./adminAuth";
+import { clearAdminSession, getAdminToken, getAdminUser, getPortalLoginPath } from "./adminAuth";
 
 export class ApiRequestError extends Error {
   status: number;
@@ -89,13 +89,15 @@ export async function adminRequest(
   const res = await fetch(`${API_BASE}${path}`, { ...rest, headers, body });
   const json = await parseJson(res);
   if (res.status === 401) {
+    const loginPath = getPortalLoginPath(getAdminUser());
     clearAdminSession();
     if (
       typeof window !== "undefined" &&
       window.location.pathname.startsWith("/admin") &&
-      !window.location.pathname.includes("/admin/login")
+      !window.location.pathname.includes("/admin/login") &&
+      !window.location.pathname.includes("/staff/login")
     ) {
-      window.location.assign(`${window.location.origin}/admin/login?reason=session-expired`);
+      window.location.assign(`${window.location.origin}${loginPath}?reason=session-expired`);
     }
   }
   return { res, json };
@@ -148,6 +150,24 @@ export async function adminDeleteJson<T = unknown>(path: string): Promise<T | un
 
 export async function adminLogin(email: string, password: string): Promise<{ token: string; admin: Record<string, unknown> }> {
   const res = await fetch(`${API_BASE}/admin/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const json = await parseJson(res);
+  if (!res.ok) {
+    throw new ApiRequestError(
+      String(json.message ?? "Login failed"),
+      res.status,
+      json.errors as ApiRequestError["errors"],
+    );
+  }
+  return { token: json.token as string, admin: json.admin as Record<string, unknown> };
+}
+
+/** Staff portal login — TDStaff accounts only. */
+export async function staffLogin(email: string, password: string): Promise<{ token: string; admin: Record<string, unknown> }> {
+  const res = await fetch(`${API_BASE}/admin/auth/staff-login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),

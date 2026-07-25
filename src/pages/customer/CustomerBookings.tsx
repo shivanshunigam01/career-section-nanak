@@ -55,6 +55,11 @@ const EMPTY_PREFS: PrefDraft[] = [
   { date: "", time: "" },
 ];
 
+function preferencesAreDistinct(prefs: PrefDraft[]): boolean {
+  const completed = prefs.filter((pref) => pref.date && pref.time);
+  return completed.length === 3 && new Set(completed.map((pref) => `${pref.date}|${pref.time}`)).size === 3;
+}
+
 export default function CustomerBookings() {
   const [bookings, setBookings] = useState<CustomerBooking[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +70,7 @@ export default function CustomerBookings() {
   const [slotsLoading, setSlotsLoading] = useState(false);
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const minDate = format(new Date(), "yyyy-MM-dd");
 
   const loadBookings = useCallback(async () => {
     setLoading(true);
@@ -83,15 +89,8 @@ export default function CustomerBookings() {
   }, [loadBookings]);
 
   const openReschedule = (booking: CustomerBooking) => {
-    const dateStr =
-      booking.slotDateLabel ||
-      (booking.slotDate ? new Date(booking.slotDate).toISOString().split("T")[0] : "");
     setRescheduleTarget(booking);
-    setPrefs([
-      { date: dateStr, time: "" },
-      { date: dateStr, time: "" },
-      { date: dateStr, time: "" },
-    ]);
+    setPrefs(EMPTY_PREFS.map((pref) => ({ ...pref })));
     setActivePrefIndex(0);
     setReason("");
     setRescheduleSlots([]);
@@ -136,6 +135,10 @@ export default function CustomerBookings() {
     }));
     if (preferredSlots.some((p) => !p.slotDate || !p.slotTime)) {
       toast.error("Select date and time for all 3 preferred options");
+      return;
+    }
+    if (!preferencesAreDistinct(prefs)) {
+      toast.error("Choose 3 different preferred date/time options");
       return;
     }
     setSaving(true);
@@ -265,6 +268,7 @@ export default function CustomerBookings() {
               <Input
                 id="reschedule-date"
                 type="date"
+                min={minDate}
                 value={prefs[activePrefIndex]?.date || ""}
                 onChange={(e) => {
                   const next = [...prefs];
@@ -330,7 +334,7 @@ export default function CustomerBookings() {
             </Button>
             <Button
               onClick={() => void handleReschedule()}
-              disabled={saving || prefs.some((p) => !p.date || !p.time)}
+              disabled={saving || !preferencesAreDistinct(prefs)}
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Submit 3 preferences
