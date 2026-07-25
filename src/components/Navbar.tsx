@@ -204,7 +204,8 @@ const Navbar = () => {
                   "hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors lg:inline-flex",
                   location.pathname === "/login" ||
                     location.pathname.startsWith("/customer") ||
-                    location.pathname.startsWith("/admin/login")
+                    location.pathname.startsWith("/admin/login") ||
+                    location.pathname.startsWith("/staff/login")
                     ? "text-primary"
                     : "text-foreground/70 hover:text-foreground",
                 )}
@@ -306,6 +307,17 @@ const Navbar = () => {
                       )}
                     >
                       Login as Customer
+                    </Link>
+                    <Link
+                      to="/staff/login"
+                      className={cn(
+                        "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
+                        location.pathname === "/staff/login"
+                          ? "bg-primary/10 text-primary"
+                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                      )}
+                    >
+                      Login as Staff
                     </Link>
                     <Link
                       to="/admin/login"

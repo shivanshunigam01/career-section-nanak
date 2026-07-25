@@ -1,16 +1,26 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Shield, UserRound } from "lucide-react";
+import { ArrowRight, Shield, UserRound, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { getCustomerToken } from "@/lib/customerAuth";
-import { getAdminUser, getAdminLoginRedirect, isAdminSession } from "@/lib/adminAuth";
+import {
+  getAdminUser,
+  getAdminLoginRedirect,
+  getPortalLoginPath,
+  isAdminSession,
+  isStaffUserType,
+} from "@/lib/adminAuth";
 
 export default function LoginPage() {
   const customerLoggedIn = Boolean(getCustomerToken());
-  const adminLoggedIn = isAdminSession();
-  const adminContinueHref = adminLoggedIn ? getAdminLoginRedirect(getAdminUser()) : "/admin/login";
+  const portalLoggedIn = isAdminSession();
+  const portalUser = getAdminUser();
+  const staffLoggedIn = portalLoggedIn && isStaffUserType(portalUser);
+  const adminLoggedIn = portalLoggedIn && !staffLoggedIn;
+  const adminContinueHref = adminLoggedIn ? getAdminLoginRedirect(portalUser) : "/admin/login";
+  const staffContinueHref = staffLoggedIn ? getAdminLoginRedirect(portalUser) : "/staff/login";
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -30,7 +40,7 @@ export default function LoginPage() {
               />
               <h1 className="font-display text-2xl font-bold text-foreground">Login</h1>
               <p className="mt-2 text-sm text-muted-foreground">
-                Choose how you want to sign in.
+                Choose your portal — Admin, Staff, or Customer.
               </p>
             </div>
 
@@ -50,7 +60,27 @@ export default function LoginPage() {
                     <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                   </span>
                   <span className="mt-1 block text-sm text-muted-foreground">
-                    View and manage your test drive bookings with mobile OTP.
+                    View and manage your test drive bookings with mobile WhatsApp OTP.
+                  </span>
+                </span>
+              </Link>
+
+              <Link
+                to={staffContinueHref}
+                className="group flex items-start gap-4 rounded-xl border border-border/70 bg-background px-4 py-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+              >
+                <span className="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Users className="h-5 w-5" />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-display text-base font-semibold text-foreground">
+                      {staffLoggedIn ? "Continue as Staff" : "Login as Staff"}
+                    </span>
+                    <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
+                  </span>
+                  <span className="mt-1 block text-sm text-muted-foreground">
+                    CRM and Test Drive team access with staff email and password.
                   </span>
                 </span>
               </Link>
@@ -70,11 +100,20 @@ export default function LoginPage() {
                     <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary" />
                   </span>
                   <span className="mt-1 block text-sm text-muted-foreground">
-                    Staff CRM access with your assigned email and password.
+                    Management and system administration with admin email and password.
                   </span>
                 </span>
               </Link>
             </div>
+
+            {portalLoggedIn && (
+              <p className="mt-4 text-center text-[11px] text-muted-foreground">
+                Signed in portal:{" "}
+                <Link to={getPortalLoginPath(portalUser)} className="text-primary hover:underline">
+                  {getPortalLoginPath(portalUser)}
+                </Link>
+              </p>
+            )}
           </div>
         </motion.div>
       </main>

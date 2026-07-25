@@ -16,11 +16,9 @@ import { sendWhatsAppOtp, verifyWhatsAppOtp } from "@/lib/whatsappOtpApi";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 
 const MOBILE_OK = /^[6-9]\d{9}$/;
-const FALLBACK_OTP = "1234";
-const BYPASS_OTP = "0000";
 
 function isValidOtpInput(digits: string): boolean {
-  return digits === FALLBACK_OTP || digits === BYPASS_OTP || digits.length === 4;
+  return digits.length === 4;
 }
 
 export default function CustomerLogin() {
@@ -101,14 +99,6 @@ export default function CustomerLogin() {
     setLoading(true);
     setError("");
     try {
-      // Fallback OTP for internal/testing use — skips WhatsApp verify.
-      if (digits === FALLBACK_OTP) {
-        const { token, customer } = await customerLogin(mobile.trim(), { otp: FALLBACK_OTP });
-        setCustomerSession(token, customer);
-        navigate("/customer/bookings", { replace: true });
-        return;
-      }
-
       const { data } = await verifyWhatsAppOtp({ mobile: mobile.trim(), code: digits });
       const verificationToken = (data as { verificationToken?: string })?.verificationToken;
       if (!verificationToken) {
@@ -257,6 +247,10 @@ export default function CustomerLogin() {
             </p>
             <p className="mt-3 text-center text-xs text-muted-foreground">
               Staff member?{" "}
+              <Link to="/staff/login" className="text-primary hover:underline">
+                Login as Staff
+              </Link>
+              {" · "}
               <Link to="/admin/login" className="text-primary hover:underline">
                 Login as Admin
               </Link>

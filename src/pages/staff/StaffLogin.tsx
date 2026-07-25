@@ -4,17 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, Mail, Eye, EyeOff, ArrowLeft, ShieldCheck } from "lucide-react";
+import { Lock, Mail, Eye, EyeOff, ArrowLeft, Users } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
 import { hasApi } from "@/lib/apiConfig";
-import { adminLogin, ApiRequestError, formatApiErrors } from "@/lib/api";
+import { staffLogin, ApiRequestError, formatApiErrors } from "@/lib/api";
 import { markAdminSessionStart, setAdminSession, getAdminLoginRedirect, type AdminUser } from "@/lib/adminAuth";
 
 /**
- * Admin portal login — Admin accounts only.
- * Isolated from Staff portal authentication.
+ * Staff portal login — TDStaff accounts only (CRM / Test Drive team).
+ * Isolated from Admin portal authentication.
  */
-const AdminLogin = () => {
+const StaffLogin = () => {
   const [step, setStep] = useState<"identity" | "password">("identity");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +28,7 @@ const AdminLogin = () => {
   const continueIdentity = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !email.includes("@")) {
-      setError("Enter your registered admin email to continue");
+      setError("Enter your registered staff email to continue");
       return;
     }
     setError("");
@@ -46,10 +46,10 @@ const AdminLogin = () => {
       setLoading(true);
       setError("");
       try {
-        const { token, admin } = await adminLogin(email.trim(), password);
+        const { token, admin } = await staffLogin(email.trim(), password);
         const user: AdminUser = {
           ...(admin as AdminUser),
-          userType: "admin",
+          userType: "tdstaff",
         };
         setAdminSession(token, user);
         navigate(getAdminLoginRedirect(user));
@@ -63,7 +63,7 @@ const AdminLogin = () => {
 
     localStorage.setItem("admin_logged_in", "true");
     markAdminSessionStart();
-    navigate("/admin/dashboard");
+    navigate("/admin/my-dashboard");
   };
 
   return (
@@ -81,13 +81,13 @@ const AdminLogin = () => {
               className="mx-auto mb-4 h-16 w-auto max-w-[min(100%,280px)] object-contain sm:h-20 sm:max-w-[320px]"
             />
             <div className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-[11px] font-medium text-primary mb-3">
-              <ShieldCheck className="h-3.5 w-3.5" />
-              Admin portal
+              <Users className="h-3.5 w-3.5" />
+              Staff portal
             </div>
-            <h1 className="font-display text-2xl font-bold text-foreground">Admin Login</h1>
+            <h1 className="font-display text-2xl font-bold text-foreground">Staff Login</h1>
             <p className="text-muted-foreground text-sm mt-1">
               {step === "identity"
-                ? "Step 1 of 2 — enter your registered admin email"
+                ? "Step 1 of 2 — enter your registered staff email"
                 : "Step 2 of 2 — enter your password"}
             </p>
           </div>
@@ -114,15 +114,15 @@ const AdminLogin = () => {
                   </div>
                 )}
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm text-muted-foreground">
+                  <Label htmlFor="staff-email" className="text-sm text-muted-foreground">
                     Email / User ID
                   </Label>
                   <div className="relative">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      id="email"
+                      id="staff-email"
                       type="email"
-                      placeholder="admin@patliputravinfast.com"
+                      placeholder="you@patliputravinfast.com"
                       value={email}
                       onChange={(e) => {
                         setEmail(e.target.value);
@@ -167,13 +167,13 @@ const AdminLogin = () => {
                   </button>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password" className="text-sm text-muted-foreground">
+                  <Label htmlFor="staff-password" className="text-sm text-muted-foreground">
                     Password
                   </Label>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     <Input
-                      id="password"
+                      id="staff-password"
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
                       value={password}
@@ -207,9 +207,9 @@ const AdminLogin = () => {
 
           <p className="mt-6 text-center text-xs text-muted-foreground space-y-1">
             <span className="block">
-              Staff / CRM access?{" "}
-              <Link to="/staff/login" className="text-primary hover:underline">
-                Login as staff
+              Admin access?{" "}
+              <Link to="/admin/login" className="text-primary hover:underline">
+                Login as admin
               </Link>
             </span>
             <span className="block">
@@ -225,4 +225,4 @@ const AdminLogin = () => {
   );
 };
 
-export default AdminLogin;
+export default StaffLogin;

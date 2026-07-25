@@ -274,7 +274,8 @@ export default function AdminTDUsers() {
       <Card className="p-4 border-primary/20 bg-primary/5 text-sm">
         <p className="font-medium text-foreground mb-1">Staff login</p>
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Every user signs in at <span className="font-mono text-foreground">/admin/login</span> with their email and password.
+          Every staff user signs in at <span className="font-mono text-foreground">/staff/login</span> with their email and password.
+          Admins use <span className="font-mono text-foreground">/admin/login</span>.
           Assigned test drives appear under <strong className="text-foreground">My Test Drives</strong>.
           Sales Executives land on that page automatically; managers and above also see full TD Management.
           Pick <strong className="text-foreground">Other (custom position)</strong> to add any designation, and use{" "}
