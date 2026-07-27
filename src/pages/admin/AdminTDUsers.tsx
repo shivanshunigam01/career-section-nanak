@@ -28,7 +28,8 @@ import {
   STAFF_DESIGNATIONS,
   designationLabel,
 } from "@/lib/staffRoles";
-import { MODULE_GROUPS, modulesForGroup, type AdminModuleKey } from "@/lib/adminModules";
+import { MODULE_GROUPS, modulesForGroup, actionToken, ACTION_LABELS, allActionTokensForModules, type AdminModuleKey, type AdminModuleAction } from "@/lib/adminModules";
+import { getAdminUser, canPerformManagerAction } from "@/lib/adminAuth";
 
 type StaffUser = {
   _id: string;
@@ -38,13 +39,16 @@ type StaffUser = {
   designation: string;
   designationLabel?: string;
   isCustomDesignation?: boolean;
+  reportsTo?: string | { _id: string; name?: string } | null;
   active: boolean;
   allowedModules?: string[];
+  allowedActions?: string[];
   createdAt?: string;
 };
 
 /** Sentinel value in the designation dropdown for admin-typed custom positions. */
 const OTHER_DESIGNATION = "__other__";
+const NO_MANAGER = "__none__";
 
 const emptyForm = {
   name: "",
@@ -53,13 +57,16 @@ const emptyForm = {
   designation: "sales_executive" as string,
   customDesignation: "",
   accessLevel: "executive" as "executive" | "manager",
+  reportsTo: NO_MANAGER as string,
   allowedModules: [] as AdminModuleKey[],
+  allowedActions: [] as string[],
   active: true,
 };
 
 const DESIGNATION_COLORS: Record<string, string> = {
   sales_executive: "bg-blue-400/10 text-blue-400 border-blue-400/20",
   sales_manager: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
+  sales_head: "bg-violet-400/10 text-violet-400 border-violet-400/20",
   branch_manager: "bg-purple-400/10 text-purple-400 border-purple-400/20",
   gm: "bg-orange-400/10 text-orange-400 border-orange-400/20",
   ceo: "bg-rose-400/10 text-rose-400 border-rose-400/20",
@@ -69,6 +76,11 @@ const DESIGNATION_COLORS: Record<string, string> = {
 const CUSTOM_DESIGNATION_COLOR = "bg-teal-400/10 text-teal-400 border-teal-400/20";
 
 export default function AdminTDUsers() {
+  const adminUser = getAdminUser();
+  const canCreate = canPerformManagerAction(adminUser, "td_users", "create");
+  const canUpdate = canPerformManagerAction(adminUser, "td_users", "update");
+  const canDelete = canPerformManagerAction(adminUser, "td_users", "delete");
+  const canViewPassword = canPerformManagerAction(adminUser, "td_users", "view_password");
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -105,11 +117,18 @@ export default function AdminTDUsers() {
 
   const openCreate = () => {
     setForm(emptyForm);
+    setShowFormPassword(true);
     setShowForm(true);
   };
 
-  const openEdit = (user: StaffUser) => {
+  const openEdit = async (user: StaffUser) => {
     const isKnown = (STAFF_DESIGNATIONS as readonly string[]).includes(user.designation);
+    const reportsToId =
+      typeof user.reportsTo === "object" && user.reportsTo
+        ? user.reportsTo._id
+        : typeof user.reportsTo === "string"
+          ? user.reportsTo
+          : NO_MANAGER;
     setForm({
       _id: user._id,
       name: user.name,
@@ -118,26 +137,78 @@ export default function AdminTDUsers() {
       designation: isKnown ? user.designation : OTHER_DESIGNATION,
       customDesignation: isKnown ? "" : user.designation,
       accessLevel: user.role === "manager" ? "manager" : "executive",
+      reportsTo: reportsToId || NO_MANAGER,
       allowedModules: (user.allowedModules ?? []) as AdminModuleKey[],
+      allowedActions: user.allowedActions ?? [],
       active: user.active,
     });
+    setShowFormPassword(true);
     setShowForm(true);
+
+    // Prefill the current password (same as name/email) when a recoverable copy exists.
+    try {
+      const { data } = await adminGet<{ password: string | null; available: boolean }>(
+        `/admin/td/users/${user._id}/password`,
+      );
+      if (data?.available && data.password) {
+        setForm((f) => (f._id === user._id ? { ...f, password: data.password as string } : f));
+        setRevealedPasswords((prev) => ({ ...prev, [user._id]: data.password as string }));
+      }
+    } catch {
+      // Eye / preview stays empty if the viewer lacks permission or no plain copy exists yet.
+    }
   };
 
   const toggleModule = (key: AdminModuleKey, checked: boolean) => {
-    setForm((f) => ({
-      ...f,
-      allowedModules: checked
-        ? [...new Set([...f.allowedModules, key])]
-        : f.allowedModules.filter((m) => m !== key),
-    }));
+    setForm((f) => {
+      if (checked) {
+        const modules = [...new Set([...f.allowedModules, key])];
+        const moduleTokens = allActionTokensForModules([key]);
+        const actions = [...new Set([...f.allowedActions, ...moduleTokens])];
+        return { ...f, allowedModules: modules, allowedActions: actions };
+      }
+      return {
+        ...f,
+        allowedModules: f.allowedModules.filter((m) => m !== key),
+        allowedActions: f.allowedActions.filter((a) => !a.startsWith(`${key}:`)),
+      };
+    });
   };
+
+  const toggleAction = (key: AdminModuleKey, action: AdminModuleAction, checked: boolean) => {
+    const token = actionToken(key, action);
+    setForm((f) => {
+      // Enabling any action also enables the module (and ensures view is present).
+      if (checked) {
+        const modules = f.allowedModules.includes(key) ? f.allowedModules : [...f.allowedModules, key];
+        let actions = [...new Set([...f.allowedActions, token])];
+        const viewToken = actionToken(key, "view");
+        if (!actions.includes(viewToken)) actions = [...actions, viewToken];
+        return { ...f, allowedModules: modules, allowedActions: actions };
+      }
+      // Disabling view removes the whole module.
+      if (action === "view") {
+        return {
+          ...f,
+          allowedModules: f.allowedModules.filter((m) => m !== key),
+          allowedActions: f.allowedActions.filter((a) => !a.startsWith(`${key}:`)),
+        };
+      }
+      return { ...f, allowedActions: f.allowedActions.filter((a) => a !== token) };
+    });
+  };
+
+  const clearModuleAccess = () => setForm((f) => ({ ...f, allowedModules: [], allowedActions: [] }));
 
   const isOtherDesignation = form.designation === OTHER_DESIGNATION;
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.email.trim()) {
       toast.error("Name and email are required");
+      return;
+    }
+    if (form._id && form.password && form.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
       return;
     }
     if (!form._id && (!form.password || form.password.length < 8)) {
@@ -157,13 +228,18 @@ export default function AdminTDUsers() {
         designation: isOtherDesignation ? form.customDesignation.trim() : form.designation,
         active: form.active,
         allowedModules: form.allowedModules,
+        allowedActions: form.allowedModules.length ? form.allowedActions : [],
+        reportsTo: form.reportsTo === NO_MANAGER ? null : form.reportsTo,
       };
       // Custom positions carry an explicit access level; standard ones derive it from the designation.
       if (isOtherDesignation) payload.role = form.accessLevel;
-      if (form.password) payload.password = form.password;
+      if (form.password.trim()) payload.password = form.password.trim();
 
       if (form._id) {
         await adminPutJson(`/admin/td/users/${form._id}`, payload);
+        if (form.password.trim()) {
+          setRevealedPasswords((prev) => ({ ...prev, [form._id!]: form.password.trim() }));
+        }
         toast.success("User updated");
       } else {
         await adminPostJson("/admin/td/users", payload);
@@ -248,21 +324,24 @@ export default function AdminTDUsers() {
             <Users className="w-6 h-6 text-primary" /> User Master
           </h1>
           <p className="text-muted-foreground text-sm">
-            Sales hierarchy — Executive → Manager → Branch Manager → GM → CEO → MD
+            Sales hierarchy — SE → SM → Sales Head → GM → CEO → MD
           </p>
         </div>
         <div className="flex gap-2">
           <Button onClick={() => void fetchUsers()} variant="outline" size="sm"><RefreshCw className="w-4 h-4" /></Button>
-          <Button onClick={openCreate} size="sm" className="bg-primary text-primary-foreground">
-            <Plus className="w-4 h-4 mr-2" /> Add User
-          </Button>
+          {canCreate ? (
+            <Button onClick={openCreate} size="sm" className="bg-primary text-primary-foreground">
+              <Plus className="w-4 h-4 mr-2" /> Add User
+            </Button>
+          ) : null}
         </div>
       </div>
 
       <Card className="p-4 border-primary/20 bg-primary/5 text-sm">
         <p className="font-medium text-foreground mb-1">Staff login</p>
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Every user signs in at <span className="font-mono text-foreground">/admin/login</span> with their email and password.
+          Every staff user signs in at <span className="font-mono text-foreground">/staff/login</span> with their email and password.
+          Admins use <span className="font-mono text-foreground">/admin/login</span>.
           Assigned test drives appear under <strong className="text-foreground">My Test Drives</strong>.
           Sales Executives land on that page automatically; managers and above also see full TD Management.
           Pick <strong className="text-foreground">Other (custom position)</strong> to add any designation, and use{" "}
@@ -333,47 +412,59 @@ export default function AdminTDUsers() {
                   </Badge>
                   {(user.allowedModules?.length ?? 0) > 0 && (
                     <Badge variant="outline" className="border-primary/30 text-primary">
-                      <ShieldCheck className="mr-1 h-3 w-3" /> {user.allowedModules!.length} module{user.allowedModules!.length === 1 ? "" : "s"}
+                      <ShieldCheck className="mr-1 h-3 w-3" />
+                      {user.allowedModules!.length} module{user.allowedModules!.length === 1 ? "" : "s"}
+                      {(user.allowedActions?.length ?? 0) > 0
+                        ? ` · ${user.allowedActions!.length} action${user.allowedActions!.length === 1 ? "" : "s"}`
+                        : ""}
                     </Badge>
                   )}
                   <Badge variant="outline" className={user.active ? "border-green-400/30 text-green-400" : "border-red-400/30 text-red-400"}>
                     {user.active ? "Active" : "Inactive"}
                   </Badge>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={revealLoadingId === user._id}
-                    title={revealedPasswords[user._id] !== undefined ? "Hide password" : "View password"}
-                    onClick={() => void toggleRevealPassword(user)}
-                  >
-                    {revealLoadingId === user._id ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : revealedPasswords[user._id] !== undefined ? (
-                      <EyeOff className="w-4 h-4" />
-                    ) : (
-                      <Eye className="w-4 h-4" />
-                    )}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => openEdit(user)}>
-                    <Edit2 className="w-4 h-4 mr-1" /> Edit
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={actionLoading}
-                    onClick={() => void toggleActive(user)}
-                  >
-                    {user.active ? "Deactivate" : "Activate"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={actionLoading}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setDeleteTarget(user)}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" /> Delete
-                  </Button>
+                  {canViewPassword ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={revealLoadingId === user._id}
+                      title={revealedPasswords[user._id] !== undefined ? "Hide password" : "View password"}
+                      onClick={() => void toggleRevealPassword(user)}
+                    >
+                      {revealLoadingId === user._id ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : revealedPasswords[user._id] !== undefined ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
+                    </Button>
+                  ) : null}
+                  {canUpdate ? (
+                    <Button variant="outline" size="sm" onClick={() => void openEdit(user)}>
+                      <Edit2 className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                  ) : null}
+                  {canUpdate ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={actionLoading}
+                      onClick={() => void toggleActive(user)}
+                    >
+                      {user.active ? "Deactivate" : "Activate"}
+                    </Button>
+                  ) : null}
+                  {canDelete ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      disabled={actionLoading}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeleteTarget(user)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </Card>
@@ -396,14 +487,15 @@ export default function AdminTDUsers() {
               <Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>{form._id ? "New password (optional)" : "Password"}</Label>
+              <Label>Password</Label>
               <div className="relative">
                 <Input
                   type={showFormPassword ? "text" : "password"}
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder={form._id ? "Leave blank to keep current" : "Min 8 characters"}
-                  className="pr-10"
+                  placeholder={form._id ? "Current password loads here when available" : "Min 8 characters"}
+                  autoComplete="new-password"
+                  className="pr-10 font-mono"
                 />
                 <button
                   type="button"
@@ -414,6 +506,12 @@ export default function AdminTDUsers() {
                   {showFormPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
+              {form._id ? (
+                <p className="text-[11px] text-muted-foreground">
+                  Shown like name/email when a saved password exists. Edit and save to reset login credentials.
+                  Staff sign in at <span className="font-mono">/staff/login</span>.
+                </p>
+              ) : null}
             </div>
             <div className="space-y-2">
               <Label>Role / designation</Label>
@@ -426,6 +524,28 @@ export default function AdminTDUsers() {
                   <SelectItem value={OTHER_DESIGNATION}>Other (custom position)…</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Reports to</Label>
+              <Select
+                value={form.reportsTo}
+                onValueChange={(v) => setForm({ ...form, reportsTo: v })}
+              >
+                <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_MANAGER}>— Top of chain / none —</SelectItem>
+                  {users
+                    .filter((u) => u._id !== form._id && u.active)
+                    .map((u) => (
+                      <SelectItem key={u._id} value={u._id}>
+                        {u.name} ({u.designationLabel || designationLabel(u.designation)})
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Managers see leads and test drives assigned to themselves and their reports.
+              </p>
             </div>
             {isOtherDesignation && (
               <>
@@ -465,30 +585,57 @@ export default function AdminTDUsers() {
                     variant="ghost"
                     size="sm"
                     className="h-7 px-2 text-xs text-muted-foreground"
-                    onClick={() => setForm({ ...form, allowedModules: [] })}
+                    onClick={clearModuleAccess}
                   >
                     Clear (use role default)
                   </Button>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Tick the modules this user can open after login. Leave everything unticked for the default access of
-                their role (Sales Executives get the staff portal; managers and above get full TD Management).
+                Tick a module to grant access, then choose which actions they can perform (View, Edit, Delete, …).
+                Leave everything unticked for the default access of their role.
               </p>
-              <div className="space-y-3 pt-1">
+              <div className="max-h-[50vh] space-y-3 overflow-y-auto pt-1 pr-1">
                 {MODULE_GROUPS.map((group) => (
                   <div key={group}>
                     <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{group}</p>
-                    <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
-                      {modulesForGroup(group).map((m) => (
-                        <label key={m.key} className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
-                          <Checkbox
-                            checked={form.allowedModules.includes(m.key)}
-                            onCheckedChange={(v) => toggleModule(m.key, v === true)}
-                          />
-                          <span className="truncate">{m.label}</span>
-                        </label>
-                      ))}
+                    <div className="space-y-2">
+                      {modulesForGroup(group).map((m) => {
+                        const moduleOn = form.allowedModules.includes(m.key);
+                        return (
+                          <div
+                            key={m.key}
+                            className="rounded-lg border border-border/40 bg-secondary/20 px-2.5 py-2"
+                          >
+                            <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-foreground">
+                              <Checkbox
+                                checked={moduleOn}
+                                onCheckedChange={(v) => toggleModule(m.key, v === true)}
+                              />
+                              <span className="truncate">{m.label}</span>
+                            </label>
+                            {moduleOn && m.actions.length > 0 ? (
+                              <div className="mt-2 ml-6 flex flex-wrap gap-x-3 gap-y-1.5">
+                                {m.actions.map((action) => {
+                                  const token = actionToken(m.key, action);
+                                  return (
+                                    <label
+                                      key={token}
+                                      className="flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground"
+                                    >
+                                      <Checkbox
+                                        checked={form.allowedActions.includes(token)}
+                                        onCheckedChange={(v) => toggleAction(m.key, action, v === true)}
+                                      />
+                                      <span>{ACTION_LABELS[action]}</span>
+                                    </label>
+                                  );
+                                })}
+                              </div>
+                            ) : null}
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 ))}

@@ -32,10 +32,17 @@ import DistrictLandingPage from "./pages/seo/DistrictLandingPage";
 import SeoStaticContentPage from "./pages/seo/SeoStaticContentPage";
 import FaqPage from "./pages/seo/FaqPage";
 import BiharDistrictsIndexPage from "./pages/seo/BiharDistrictsIndexPage";
-import { CompareHubPage, ComparisonDetailPage } from "./pages/seo/ComparisonPages";
+import {
+  CompareHubPage,
+  ComparisonDetailPage,
+} from "./pages/seo/ComparisonPages";
 import { BlogIndexPage, BlogPostPage } from "./pages/seo/BlogPages";
-import { ChargingCalculatorPage, RunningCostCalculatorPage } from "./pages/seo/CalculatorPages";
+import {
+  ChargingCalculatorPage,
+  RunningCostCalculatorPage,
+} from "./pages/seo/CalculatorPages";
 import AdminLogin from "./pages/admin/AdminLogin";
+import StaffLogin from "./pages/staff/StaffLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminLeads from "./pages/admin/AdminLeads";
@@ -64,7 +71,9 @@ import AdminTDLeadReports from "./pages/admin/AdminTDLeadReports";
 import CustomerLogin from "./pages/customer/CustomerLogin";
 import CustomerLayout from "./pages/customer/CustomerLayout";
 import CustomerBookings from "./pages/customer/CustomerBookings";
-import LoginPage from "./pages/LoginPage";
+import AdminCalendar from "./pages/admin/AdminCalendar";
+import AdminRescheduleHistory from "./pages/admin/AdminRescheduleHistory";
+import AdminFleetHealth from "./pages/admin/AdminFleetHealth";
 
 const queryClient = new QueryClient();
 
@@ -72,7 +81,9 @@ const App = () => {
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
-    const media = globalThis.matchMedia("(max-width: 768px), (prefers-reduced-motion: reduce)");
+    const media = globalThis.matchMedia(
+      "(max-width: 768px), (prefers-reduced-motion: reduce)",
+    );
     const sync = () => setReduceMotion(media.matches);
     sync();
     media.addEventListener("change", sync);
@@ -82,105 +93,240 @@ const App = () => {
   return (
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
           <TooltipProvider>
             <Sonner />
             <PublicRecaptchaProvider>
               <PublicSiteProvider>
                 <MotionConfig reducedMotion={reduceMotion ? "always" : "user"}>
-                  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+                  <BrowserRouter
+                    future={{
+                      v7_startTransition: true,
+                      v7_relativeSplatPath: true,
+                    }}
+                  >
                     <ScrollToTop />
                     <GlobalSeo />
                     <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/models/vf7" element={<ModelVF7 />} />
-            <Route path="/models/vf6" element={<ModelVF6 />} />
-            <Route path="/models/mpv7" element={<ModelMPV7 />} />
-            <Route path="/models/limo-green" element={<ModelLimoGreen />} />
-            {/* SEO-friendly model URL aliases (sitemap / AEO) */}
-            <Route path="/vinfast-vf7" element={<ModelVF7 />} />
-            <Route path="/vinfast-vf6" element={<ModelVF6 />} />
-            <Route path="/vinfast-mpv7" element={<ModelMPV7 />} />
-            <Route path="/vinfast-limo-green" element={<ModelLimoGreen />} />
-            <Route path="/book-now" element={<BookNow />} />
-            <Route path="/test-drive" element={<TestDrive />} />
-            <Route path="/emi-calculator" element={<EMICalculator />} />
-            <Route path="/charging-calculator" element={<ChargingCalculatorPage />} />
-            <Route path="/running-cost-calculator" element={<RunningCostCalculatorPage />} />
-            <Route path="/compare" element={<ComparePage />} />
-            <Route path="/compare-models" element={<CompareHubPage />} />
-            <Route path="/compare/:slug" element={<ComparisonDetailPage />} />
-            <Route path="/ev-buying-guide" element={<SeoStaticContentPage />} />
-            <Route path="/finance" element={<SeoStaticContentPage />} />
-            <Route path="/exchange" element={<SeoStaticContentPage />} />
-            <Route path="/insurance" element={<SeoStaticContentPage />} />
-            <Route path="/corporate-sales" element={<SeoStaticContentPage />} />
-            <Route path="/charging-infrastructure" element={<SeoStaticContentPage />} />
-            <Route path="/ownership-experience" element={<SeoStaticContentPage />} />
-            <Route path="/customer-stories" element={<SeoStaticContentPage />} />
-            <Route path="/faq" element={<FaqPage />} />
-            <Route path="/blogs" element={<BlogIndexPage />} />
-            <Route path="/blogs/:slug" element={<BlogPostPage />} />
-            <Route path="/bihar" element={<BiharDistrictsIndexPage />} />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-            <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-            <Route path="/terms-and-conditions" element={<TermsAndConditionsPage />} />
-            <Route path="/payment-refund-policy" element={<PaymentRefundPolicyPage />} />
-            {/* URL-only pages (QR code) — intentionally not linked from any menu or footer */}
-            <Route path="/post-delivery-feedback" element={<PostDeliveryFeedback />} />
-            <Route path="/test-drive-feedback" element={<TestDriveFeedback />} />
+                      {/* Public routes */}
+                      <Route path="/" element={<Index />} />
+                      <Route path="/models/vf7" element={<ModelVF7 />} />
+                      <Route path="/models/vf6" element={<ModelVF6 />} />
+                      <Route path="/models/mpv7" element={<ModelMPV7 />} />
+                      <Route
+                        path="/models/limo-green"
+                        element={<ModelLimoGreen />}
+                      />
+                      {/* SEO-friendly model URL aliases (sitemap / AEO) */}
+                      <Route path="/vinfast-vf7" element={<ModelVF7 />} />
+                      <Route path="/vinfast-vf6" element={<ModelVF6 />} />
+                      <Route path="/vinfast-mpv7" element={<ModelMPV7 />} />
+                      <Route
+                        path="/vinfast-limo-green"
+                        element={<ModelLimoGreen />}
+                      />
+                      <Route path="/book-now" element={<BookNow />} />
+                      <Route path="/test-drive" element={<TestDrive />} />
+                      <Route
+                        path="/emi-calculator"
+                        element={<EMICalculator />}
+                      />
+                      <Route
+                        path="/charging-calculator"
+                        element={<ChargingCalculatorPage />}
+                      />
+                      <Route
+                        path="/running-cost-calculator"
+                        element={<RunningCostCalculatorPage />}
+                      />
+                      <Route path="/compare" element={<ComparePage />} />
+                      <Route
+                        path="/compare-models"
+                        element={<CompareHubPage />}
+                      />
+                      <Route
+                        path="/compare/:slug"
+                        element={<ComparisonDetailPage />}
+                      />
+                      <Route
+                        path="/ev-buying-guide"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/finance"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/exchange"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/insurance"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/corporate-sales"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/charging-infrastructure"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/ownership-experience"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route
+                        path="/customer-stories"
+                        element={<SeoStaticContentPage />}
+                      />
+                      <Route path="/faq" element={<FaqPage />} />
+                      <Route path="/blogs" element={<BlogIndexPage />} />
+                      <Route path="/blogs/:slug" element={<BlogPostPage />} />
+                      <Route
+                        path="/bihar"
+                        element={<BiharDistrictsIndexPage />}
+                      />
+                      <Route path="/about" element={<AboutPage />} />
+                      <Route path="/contact" element={<ContactPage />} />
+                      <Route
+                        path="/privacy-policy"
+                        element={<PrivacyPolicyPage />}
+                      />
+                      <Route
+                        path="/terms-of-service"
+                        element={<TermsOfServicePage />}
+                      />
+                      <Route
+                        path="/terms-and-conditions"
+                        element={<TermsAndConditionsPage />}
+                      />
+                      <Route
+                        path="/payment-refund-policy"
+                        element={<PaymentRefundPolicyPage />}
+                      />
+                      {/* URL-only pages (QR code) — intentionally not linked from any menu or footer */}
+                      <Route
+                        path="/post-delivery-feedback"
+                        element={<PostDeliveryFeedback />}
+                      />
+                      <Route
+                        path="/test-drive-feedback"
+                        element={<TestDriveFeedback />}
+                      />
 
-            {/* Login chooser + portals */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/customer/login" element={<CustomerLogin />} />
-            <Route path="/customer" element={<CustomerLayout />}>
-              <Route index element={<Navigate to="bookings" replace />} />
-              <Route path="bookings" element={<CustomerBookings />} />
-            </Route>
+                      {/* Auth portals — chooser lives in the navbar Login hover menu */}
+                      <Route
+                        path="/login"
+                        element={<Navigate to="/" replace />}
+                      />
+                      <Route
+                        path="/customer/login"
+                        element={<CustomerLogin />}
+                      />
+                      <Route path="/customer" element={<CustomerLayout />}>
+                        <Route
+                          index
+                          element={<Navigate to="bookings" replace />}
+                        />
+                        <Route path="bookings" element={<CustomerBookings />} />
+                      </Route>
 
-            {/* Admin routes */}
-            <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="dashboard" element={<AdminDashboard />} />
-              <Route path="leads" element={<AdminLeads />} />
-              <Route path="meta-lead" element={<AdminMetaLeadCRM />} />
-              <Route path="test-drives" element={<AdminTestDrives />} />
-              <Route path="enquiries" element={<AdminEnquiries />} />
-              <Route path="products" element={<AdminProducts />} />
-              <Route path="offers" element={<AdminOffers />} />
-              <Route path="content" element={<AdminContent />} />
-              <Route path="homepage" element={<AdminHomepage />} />
-              <Route path="media" element={<AdminMedia />} />
-              <Route path="settings" element={<AdminSettings />} />
+                      {/* Admin routes */}
+                      <Route path="/admin/login" element={<AdminLogin />} />
+                      <Route path="/staff/login" element={<StaffLogin />} />
+                      <Route path="/admin" element={<AdminLayout />}>
+                        <Route path="dashboard" element={<AdminDashboard />} />
+                        <Route path="calendar" element={<AdminCalendar />} />
+                        <Route path="leads" element={<AdminLeads />} />
+                        <Route
+                          path="meta-lead"
+                          element={<AdminMetaLeadCRM />}
+                        />
+                        <Route
+                          path="test-drives"
+                          element={<AdminTestDrives />}
+                        />
+                        <Route path="enquiries" element={<AdminEnquiries />} />
+                        <Route path="products" element={<AdminProducts />} />
+                        <Route path="offers" element={<AdminOffers />} />
+                        <Route path="content" element={<AdminContent />} />
+                        <Route path="homepage" element={<AdminHomepage />} />
+                        <Route path="media" element={<AdminMedia />} />
+                        <Route path="settings" element={<AdminSettings />} />
 
-              {/* Lead CRM module */}
-              <Route path="my-dashboard" element={<AdminExecutiveDashboard />} />
-              <Route path="crm/leads" element={<AdminCrmLeads />} />
+                        {/* Lead CRM module */}
+                        <Route
+                          path="my-dashboard"
+                          element={<AdminExecutiveDashboard />}
+                        />
+                        <Route path="crm/leads" element={<AdminCrmLeads />} />
 
-              {/* Customer feedback form submissions (QR pages) */}
-              <Route path="feedback/test-drive" element={<AdminFeedbackSubmissions kind="testDrive" />} />
-              <Route path="feedback/post-delivery" element={<AdminFeedbackSubmissions kind="postDelivery" />} />
+                        {/* Customer feedback form submissions (QR pages) */}
+                        <Route
+                          path="feedback/test-drive"
+                          element={
+                            <AdminFeedbackSubmissions kind="testDrive" />
+                          }
+                        />
+                        <Route
+                          path="feedback/post-delivery"
+                          element={
+                            <AdminFeedbackSubmissions kind="postDelivery" />
+                          }
+                        />
 
-              {/* Test Drive Management Module */}
-              <Route path="td/bookings" element={<AdminTDBookings />} />
-              <Route path="td/my-bookings" element={<AdminTDMyBookings />} />
-              <Route path="td/leads" element={<AdminTDLeads />} />
-              <Route path="td/leads/reports" element={<AdminTDLeadReports />} />
-              <Route path="td/vehicles" element={<AdminTDDemoVehicles />} />
-              <Route path="td/models" element={<AdminVehicleModels />} />
-              <Route path="stock" element={<AdminVehicleStock />} />
-              <Route path="td/reports" element={<AdminTDReports />} />
-              <Route path="td/config" element={<AdminTDSlotConfig />} />
-              <Route path="td/users" element={<AdminTDUsers />} />
-            </Route>
+                        {/* Test Drive Management Module */}
+                        <Route
+                          path="td/bookings"
+                          element={<AdminTDBookings />}
+                        />
+                        <Route
+                          path="td/my-bookings"
+                          element={<AdminTDMyBookings />}
+                        />
+                        <Route
+                          path="td/reschedule-history"
+                          element={<AdminRescheduleHistory />}
+                        />
+                        <Route
+                          path="td/fleet-health"
+                          element={<AdminFleetHealth />}
+                        />
+                        <Route path="td/leads" element={<AdminTDLeads />} />
+                        <Route
+                          path="td/leads/reports"
+                          element={<AdminTDLeadReports />}
+                        />
+                        <Route
+                          path="td/vehicles"
+                          element={<AdminTDDemoVehicles />}
+                        />
+                        <Route
+                          path="td/models"
+                          element={<AdminVehicleModels />}
+                        />
+                        <Route path="stock" element={<AdminVehicleStock />} />
+                        <Route path="td/reports" element={<AdminTDReports />} />
+                        <Route
+                          path="td/config"
+                          element={<AdminTDSlotConfig />}
+                        />
+                        <Route path="td/users" element={<AdminTDUsers />} />
+                      </Route>
 
-            {/* Hyperlocal SEO: /patna/vinfast-vf6 (must stay after static two-segment routes) */}
-            <Route path="/:districtSlug/:modelSlug" element={<DistrictLandingPage />} />
+                      {/* Hyperlocal SEO: /patna/vinfast-vf6 (must stay after static two-segment routes) */}
+                      <Route
+                        path="/:districtSlug/:modelSlug"
+                        element={<DistrictLandingPage />}
+                      />
 
-            <Route path="*" element={<NotFound />} />
+                      <Route path="*" element={<NotFound />} />
                     </Routes>
                   </BrowserRouter>
                 </MotionConfig>

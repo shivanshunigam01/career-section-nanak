@@ -31,6 +31,12 @@ const navLinks = [
   { label: "Contact", href: "/contact" },
 ];
 
+const loginOptions = [
+  { label: "Customer", href: "/customer/login" },
+  { label: "Staff", href: "/staff/login" },
+  { label: "Admin", href: "/admin/login" },
+] as const;
+
 const GAP_PX = 2;
 const MORE_BTN_RESERVE_PX = 84;
 
@@ -42,7 +48,10 @@ const Navbar = () => {
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
   const wa = waMeUrl(siteConfig.whatsappNumber || dealer.whatsapp);
   const customerLoggedIn = Boolean(getCustomerToken());
-  const loginHref = customerLoggedIn ? "/customer/bookings" : "/login";
+  const loginActive =
+    location.pathname.startsWith("/customer") ||
+    location.pathname.startsWith("/admin/login") ||
+    location.pathname.startsWith("/staff/login");
 
   const navSlotRef = useRef<HTMLDivElement>(null);
   const measureRef = useRef<HTMLDivElement>(null);
@@ -200,20 +209,68 @@ const Navbar = () => {
             </div>
 
             <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2 lg:ml-0">
-              <Link
-                to={loginHref}
-                className={cn(
-                  "hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors lg:inline-flex",
-                  location.pathname === "/login" ||
-                    location.pathname.startsWith("/customer") ||
-                    location.pathname.startsWith("/admin/login")
-                    ? "text-primary"
-                    : "text-foreground/70 hover:text-foreground",
-                )}
-              >
-                <UserCircle className="h-4 w-4" />
-                {customerLoggedIn ? "My Bookings" : "Login"}
-              </Link>
+              {customerLoggedIn ? (
+                <Link
+                  to="/customer/bookings"
+                  className={cn(
+                    "hidden items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors lg:inline-flex",
+                    location.pathname.startsWith("/customer")
+                      ? "text-primary"
+                      : "text-foreground/70 hover:text-foreground",
+                  )}
+                >
+                  <UserCircle className="h-4 w-4" />
+                  My Bookings
+                </Link>
+              ) : (
+                <div className="relative hidden lg:block">
+                  <div className="group/login">
+                    <button
+                      type="button"
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors outline-none",
+                        loginActive
+                          ? "text-primary"
+                          : "text-foreground/70 hover:text-foreground group-hover/login:text-foreground",
+                      )}
+                      aria-haspopup="menu"
+                      aria-label="Login options"
+                    >
+                      <UserCircle className="h-4 w-4" />
+                      Login
+                      <ChevronDown className="h-3.5 w-3.5 opacity-70 transition-transform group-hover/login:rotate-180" />
+                    </button>
+                    <div
+                      className={cn(
+                        "invisible absolute right-0 top-full z-50 min-w-[9.5rem] pt-1.5 opacity-0 transition-[opacity,visibility] duration-150",
+                        "group-hover/login:visible group-hover/login:opacity-100",
+                        "group-focus-within/login:visible group-focus-within/login:opacity-100",
+                      )}
+                    >
+                      <div
+                        role="menu"
+                        className="rounded-xl border border-border/70 bg-popover p-1.5 shadow-md"
+                      >
+                        {loginOptions.map((option) => (
+                          <Link
+                            key={option.href}
+                            to={option.href}
+                            role="menuitem"
+                            className={cn(
+                              "block rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                              location.pathname === option.href
+                                ? "bg-primary/10 text-primary"
+                                : "text-foreground/80 hover:bg-muted/60 hover:text-foreground",
+                            )}
+                          >
+                            {option.label}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
               <a
                 href={tel}
                 className="hidden text-foreground/60 transition-colors hover:text-foreground xl:block"
@@ -298,28 +355,23 @@ const Navbar = () => {
                   </Link>
                 ) : (
                   <>
-                    <Link
-                      to="/customer/login"
-                      className={cn(
-                        "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
-                        location.pathname === "/customer/login"
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
-                      )}
-                    >
-                      Login as Customer
-                    </Link>
-                    <Link
-                      to="/admin/login"
-                      className={cn(
-                        "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
-                        location.pathname === "/admin/login"
-                          ? "bg-primary/10 text-primary"
-                          : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
-                      )}
-                    >
-                      Login as Admin
-                    </Link>
+                    <p className="px-4 pt-3 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                      Login
+                    </p>
+                    {loginOptions.map((option) => (
+                      <Link
+                        key={option.href}
+                        to={option.href}
+                        className={cn(
+                          "rounded-xl px-4 py-3 text-base font-medium transition-colors sm:text-lg",
+                          location.pathname === option.href
+                            ? "bg-primary/10 text-primary"
+                            : "text-foreground/70 hover:bg-muted/50 hover:text-foreground",
+                        )}
+                      >
+                        {option.label}
+                      </Link>
+                    ))}
                   </>
                 )}
                 <div className="mt-5 flex flex-col gap-3">

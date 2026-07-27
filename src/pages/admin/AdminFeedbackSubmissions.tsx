@@ -20,6 +20,8 @@ import {
   ChevronLeft, ChevronRight, CarFront, PackageCheck, Inbox
 } from "lucide-react";
 import { toast } from "sonner";
+import { getAdminUser, canPerformManagerAction } from "@/lib/adminAuth";
+import type { AdminModuleKey } from "@/lib/adminModules";
 
 type FeedbackRow = {
   _id: string;
@@ -34,6 +36,9 @@ type FeedbackRow = {
   leadSource?: string;
   purchaseIntent?: string;
   mainConcern?: string;
+  likedFeatures?: string[];
+  dislikedAboutProduct?: string;
+  dealerSuggestions?: string;
   comment?: string;
   reference?: string;
   ratings?: Record<string, number>;
@@ -145,6 +150,9 @@ function Stars({ value, size = "h-3.5 w-3.5" }: { value?: number; size?: string 
 
 export default function AdminFeedbackSubmissions({ kind }: { kind: "testDrive" | "postDelivery" }) {
   const config = CONFIGS[kind];
+  const moduleKey: AdminModuleKey =
+    kind === "testDrive" ? "feedback_test_drive" : "feedback_post_delivery";
+  const canDelete = canPerformManagerAction(getAdminUser(), moduleKey, "delete");
 
   const [rows, setRows] = useState<FeedbackRow[]>([]);
   const [meta, setMeta] = useState<FeedbackMeta | null>(null);
@@ -290,14 +298,16 @@ export default function AdminFeedbackSubmissions({ kind }: { kind: "testDrive" |
                   <Button variant="outline" size="sm" onClick={() => setViewRow(row)}>
                     <Eye className="w-4 h-4 mr-1" /> View
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => setDeleteRow(row)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {canDelete ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => setDeleteRow(row)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  ) : null}
                 </div>
               </div>
             </Card>
@@ -358,6 +368,39 @@ export default function AdminFeedbackSubmissions({ kind }: { kind: "testDrive" |
                   </div>
                 ))}
               </div>
+
+              {Boolean(viewRow.likedFeatures?.length) && (
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                    Liked about the product
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {viewRow.likedFeatures!.map((item) => (
+                      <Badge key={item} variant="outline" className="border-primary/30 text-primary">
+                        {item}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewRow.dislikedAboutProduct && (
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                    Did not like about the product
+                  </p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{viewRow.dislikedAboutProduct}</p>
+                </div>
+              )}
+
+              {viewRow.dealerSuggestions && (
+                <div className="rounded-lg border border-border/50 p-3">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                    Suggestions for Patliputra VinFast
+                  </p>
+                  <p className="text-sm text-foreground whitespace-pre-wrap">{viewRow.dealerSuggestions}</p>
+                </div>
+              )}
 
               {viewRow.comment && (
                 <div className="rounded-lg border border-border/50 p-3">

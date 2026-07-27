@@ -1,12 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   Warehouse, Plus, RefreshCw, Search, Loader2, Pencil, Trash2,
-  BatteryCharging, MapPin, Car, Gauge, CheckCircle2,
+  BatteryCharging, MapPin, Car, Gauge, CheckCircle2, CalendarDays,
 } from "lucide-react";
 import { adminGet, adminPostJson, adminPatchJson, adminRequest, formatApiErrors } from "@/lib/api";
-import { getAdminUser } from "@/lib/adminAuth";
+import { getAdminUser, canPerformManagerAction } from "@/lib/adminAuth";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
+import {
+  exteriorColoursForModel,
+  interiorColoursFor,
+  needsDualMotorNumbers,
+} from "@/data/stockColourOptions";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,8 +28,13 @@ type StockItem = {
   model: string;
   variant: string | null;
   colour: string | null;
+  interiorColour: string | null;
   vinNo: string;
   registrationNo: string | null;
+  motorNo: string | null;
+  motorNo2: string | null;
+  grnDate: string | null;
+  billingDate: string | null;
   batteryPercent: number | null;
   batteryStatus: string;
   location: string | null;
@@ -51,8 +61,13 @@ const emptyForm = () => ({
   model: "",
   variant: "",
   colour: "",
+  interiorColour: "",
   vinNo: "",
   registrationNo: "",
+  motorNo: "",
+  motorNo2: "",
+  grnDate: "",
+  billingDate: "",
   batteryPercent: "100",
   batteryStatus: "OK",
   location: "",
@@ -60,9 +75,17 @@ const emptyForm = () => ({
   remarks: "",
 });
 
+function dateInputValue(value: string | null | undefined): string {
+  if (!value) return "";
+  return value.slice(0, 10);
+}
+
 export default function AdminVehicleStock() {
   const adminUser = getAdminUser();
-  const canManage = adminUser?.role === "manager" || adminUser?.role === "superadmin";
+  const canCreate = canPerformManagerAction(adminUser, "vehicle_stock", "create");
+  const canUpdate = canPerformManagerAction(adminUser, "vehicle_stock", "update");
+  const canDelete = canPerformManagerAction(adminUser, "vehicle_stock", "delete");
+  const canTagDemo = canPerformManagerAction(adminUser, "vehicle_stock", "tag_demo");
   const { models: catalogModels, trimsFor } = useVehicleCatalog();
 
   const [items, setItems] = useState<StockItem[]>([]);
@@ -78,6 +101,43 @@ export default function AdminVehicleStock() {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StockItem | null>(null);
   const [demoBusyId, setDemoBusyId] = useState<string | null>(null);
+
+  const exteriorOptions = useMemo(() => {
+    const base = exteriorColoursForModel(form.model);
+    if (form.colour && !base.includes(form.colour)) return [form.colour, ...base];
+    return base;
+  }, [form.model, form.colour]);
+  const interiorOptions = useMemo(() => {
+    const base = interiorColoursFor(form.model, form.variant);
+    if (form.interiorColour && !base.includes(form.interiorColour)) return [form.interiorColour, ...base];
+    return base;
+  }, [form.model, form.variant, form.interiorColour]);
+  const dualMotors = needsDualMotorNumbers(form.model, form.variant);
+
+  const applyModelChange = (model: string) => {
+    const nextVariant = trimsFor(model)[0] ?? "";
+    const nextInterior = interiorColoursFor(model, nextVariant)[0] ?? "";
+    setForm((f) => ({
+      ...f,
+      model,
+      variant: nextVariant,
+      colour: "",
+      interiorColour: nextInterior,
+      motorNo2: needsDualMotorNumbers(model, nextVariant) ? f.motorNo2 : "",
+    }));
+  };
+
+  const applyVariantChange = (variant: string) => {
+    const nextInteriorOptions = interiorColoursFor(form.model, variant);
+    setForm((f) => ({
+      ...f,
+      variant,
+      interiorColour: nextInteriorOptions.includes(f.interiorColour)
+        ? f.interiorColour
+        : (nextInteriorOptions[0] ?? ""),
+      motorNo2: needsDualMotorNumbers(f.model, variant) ? f.motorNo2 : "",
+    }));
+  };
 
   const fetchStock = useCallback(async () => {
     setLoading(true);
@@ -104,18 +164,33 @@ export default function AdminVehicleStock() {
 
   const openCreate = () => {
     setEditing(null);
-    setForm({ ...emptyForm(), model: catalogModels[0] ?? "" });
+    const model = catalogModels[0] ?? "";
+    const variant = trimsFor(model)[0] ?? "";
+    setForm({
+      ...emptyForm(),
+      model,
+      variant,
+      interiorColour: interiorColoursFor(model, variant)[0] ?? "",
+    });
     setShowForm(true);
   };
 
   const openEdit = (item: StockItem) => {
     setEditing(item);
+    const interiorOpts = interiorColoursFor(item.model, item.variant ?? "");
     setForm({
       model: item.model,
       variant: item.variant ?? "",
       colour: item.colour ?? "",
+      interiorColour: item.interiorColour && interiorOpts.includes(item.interiorColour)
+        ? item.interiorColour
+        : (interiorOpts[0] ?? ""),
       vinNo: item.vinNo,
       registrationNo: item.registrationNo ?? "",
+      motorNo: item.motorNo ?? "",
+      motorNo2: item.motorNo2 ?? "",
+      grnDate: dateInputValue(item.grnDate),
+      billingDate: dateInputValue(item.billingDate),
       batteryPercent: item.batteryPercent != null ? String(item.batteryPercent) : "100",
       batteryStatus: item.batteryStatus || "OK",
       location: item.location ?? "",
@@ -128,12 +203,18 @@ export default function AdminVehicleStock() {
   const handleSave = async () => {
     if (!form.model) { toast.error("Select a model"); return; }
     if (!form.vinNo.trim()) { toast.error("VIN/chassis number is required"); return; }
+    const dual = needsDualMotorNumbers(form.model, form.variant);
     const payload = {
       model: form.model,
       variant: form.variant || undefined,
-      colour: form.colour.trim() || undefined,
+      colour: form.colour || undefined,
+      interiorColour: form.interiorColour || undefined,
       vinNo: form.vinNo.trim().toUpperCase(),
       registrationNo: form.registrationNo.trim().toUpperCase() || undefined,
+      motorNo: form.motorNo.trim().toUpperCase() || undefined,
+      motorNo2: dual ? form.motorNo2.trim().toUpperCase() : "",
+      grnDate: form.grnDate || "",
+      billingDate: form.billingDate || "",
       batteryPercent: Number(form.batteryPercent) || 0,
       batteryStatus: form.batteryStatus,
       location: form.location.trim() || undefined,
@@ -206,7 +287,7 @@ export default function AdminVehicleStock() {
           <Button onClick={() => void fetchStock()} variant="outline" size="sm">
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </Button>
-          {canManage ? (
+          {canCreate ? (
             <Button onClick={openCreate} size="sm">
               <Plus className="w-4 h-4 mr-2" /> Add vehicle
             </Button>
@@ -235,7 +316,7 @@ export default function AdminVehicleStock() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
-            placeholder="Search stock ID / VIN / registration…"
+            placeholder="Search stock ID / VIN / motor / registration…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="pl-10 bg-secondary/50"
@@ -263,7 +344,7 @@ export default function AdminVehicleStock() {
         <Card className="p-12 text-center text-muted-foreground border-dashed">
           <Warehouse className="w-12 h-12 mx-auto mb-3 opacity-40" />
           <p>No stock entries found.</p>
-          {canManage ? (
+          {canCreate ? (
             <Button size="sm" className="mt-4" onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" /> Add vehicle
             </Button>
@@ -279,7 +360,9 @@ export default function AdminVehicleStock() {
                   <p className="font-semibold text-foreground truncate">
                     {item.model}{item.variant ? ` ${item.variant}` : ""}
                   </p>
-                  <p className="text-xs text-muted-foreground">{item.colour || "—"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {[item.colour, item.interiorColour].filter(Boolean).join(" · ") || "—"}
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
                   <Badge className={`text-[10px] border ${STATUS_COLORS[item.status] ?? "bg-secondary"}`}>
@@ -298,6 +381,14 @@ export default function AdminVehicleStock() {
                   <Car className="w-3.5 h-3.5 shrink-0" />
                   <span className="font-mono truncate" title={item.vinNo}>{item.vinNo}</span>
                 </div>
+                {(item.motorNo || item.motorNo2) ? (
+                  <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
+                    <Gauge className="w-3.5 h-3.5 shrink-0" />
+                    <span className="font-mono truncate" title={[item.motorNo, item.motorNo2].filter(Boolean).join(" / ")}>
+                      Motor {[item.motorNo, item.motorNo2].filter(Boolean).join(" / ")}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex items-center gap-1.5 text-muted-foreground">
                   <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.registrationNo || "Unregistered"}</span>
@@ -306,41 +397,56 @@ export default function AdminVehicleStock() {
                   <BatteryCharging className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.batteryPercent ?? "—"}% · {item.batteryStatus}</span>
                 </div>
+                {(item.grnDate || item.billingDate) ? (
+                  <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
+                    <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+                    <span>
+                      {[
+                        item.grnDate ? `GRN ${item.grnDate}` : null,
+                        item.billingDate ? `Bill ${item.billingDate}` : null,
+                      ].filter(Boolean).join(" · ")}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex items-center gap-1.5 text-muted-foreground col-span-2">
                   <MapPin className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.location || "—"}</span>
                 </div>
               </div>
 
-              {canManage ? (
+              {canTagDemo || canUpdate || canDelete ? (
                 <div className="flex gap-2 border-t border-border/30 pt-3">
-                  {item.isDemo ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs h-8"
-                      disabled={demoBusyId === item._id}
-                      onClick={() => void handleTagDemo(item, false)}
-                    >
-                      {demoBusyId === item._id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Gauge className="w-3.5 h-3.5 mr-1" />}
-                      Untag demo
+                  {canTagDemo ? (
+                    item.isDemo ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs h-8"
+                        disabled={demoBusyId === item._id}
+                        onClick={() => void handleTagDemo(item, false)}
+                      >
+                        {demoBusyId === item._id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Gauge className="w-3.5 h-3.5 mr-1" />}
+                        Untag demo
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1 text-xs h-8"
+                        disabled={demoBusyId === item._id || item.status === "SOLD"}
+                        onClick={() => void handleTagDemo(item, true)}
+                      >
+                        {demoBusyId === item._id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Gauge className="w-3.5 h-3.5 mr-1" />}
+                        Tag as demo
+                      </Button>
+                    )
+                  ) : null}
+                  {canUpdate ? (
+                    <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => openEdit(item)}>
+                      <Pencil className="w-3.5 h-3.5" />
                     </Button>
-                  ) : (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 text-xs h-8"
-                      disabled={demoBusyId === item._id || item.status === "SOLD"}
-                      onClick={() => void handleTagDemo(item, true)}
-                    >
-                      {demoBusyId === item._id ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Gauge className="w-3.5 h-3.5 mr-1" />}
-                      Tag as demo
-                    </Button>
-                  )}
-                  <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => openEdit(item)}>
-                    <Pencil className="w-3.5 h-3.5" />
-                  </Button>
-                  {adminUser?.role === "superadmin" && !item.isDemo ? (
+                  ) : null}
+                  {canDelete && !item.isDemo ? (
                     <Button
                       size="sm"
                       variant="outline"
@@ -371,7 +477,7 @@ export default function AdminVehicleStock() {
                 <Label className="text-xs">Model *</Label>
                 <Select
                   value={form.model || undefined}
-                  onValueChange={(v) => setForm((f) => ({ ...f, model: v, variant: trimsFor(v)[0] ?? "" }))}
+                  onValueChange={applyModelChange}
                 >
                   <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select model" /></SelectTrigger>
                   <SelectContent>
@@ -384,7 +490,7 @@ export default function AdminVehicleStock() {
                 {trimsFor(form.model).length === 0 ? (
                   <Input value="Single lineup" disabled className="bg-secondary/50" />
                 ) : (
-                  <Select value={form.variant || undefined} onValueChange={(v) => setForm((f) => ({ ...f, variant: v }))}>
+                  <Select value={form.variant || undefined} onValueChange={applyVariantChange}>
                     <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select variant" /></SelectTrigger>
                     <SelectContent>
                       {trimsFor(form.model).map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
@@ -393,8 +499,30 @@ export default function AdminVehicleStock() {
                 )}
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Colour</Label>
-                <Input value={form.colour} onChange={(e) => setForm((f) => ({ ...f, colour: e.target.value }))} className="bg-secondary/50" />
+                <Label className="text-xs">Exterior Colour</Label>
+                <Select
+                  value={form.colour || undefined}
+                  onValueChange={(v) => setForm((f) => ({ ...f, colour: v }))}
+                  disabled={exteriorOptions.length === 0}
+                >
+                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select colour" /></SelectTrigger>
+                  <SelectContent>
+                    {exteriorOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Interior Colour</Label>
+                <Select
+                  value={form.interiorColour || undefined}
+                  onValueChange={(v) => setForm((f) => ({ ...f, interiorColour: v }))}
+                  disabled={interiorOptions.length === 0}
+                >
+                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select interior" /></SelectTrigger>
+                  <SelectContent>
+                    {interiorOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VIN / chassis no. *</Label>
@@ -405,12 +533,50 @@ export default function AdminVehicleStock() {
                 />
               </div>
               <div className="space-y-1.5">
+                <Label className="text-xs">{dualMotors ? "Motor No. 1" : "Motor No."}</Label>
+                <Input
+                  value={form.motorNo}
+                  onChange={(e) => setForm((f) => ({ ...f, motorNo: e.target.value.toUpperCase() }))}
+                  className="bg-secondary/50 uppercase font-mono"
+                  placeholder="Motor number"
+                />
+              </div>
+              {dualMotors ? (
+                <div className="space-y-1.5">
+                  <Label className="text-xs">Motor No. 2</Label>
+                  <Input
+                    value={form.motorNo2}
+                    onChange={(e) => setForm((f) => ({ ...f, motorNo2: e.target.value.toUpperCase() }))}
+                    className="bg-secondary/50 uppercase font-mono"
+                    placeholder="Second motor (Sky Infinity)"
+                  />
+                </div>
+              ) : null}
+              <div className="space-y-1.5">
                 <Label className="text-xs">Registration no. (if available)</Label>
                 <Input
                   value={form.registrationNo}
                   onChange={(e) => setForm((f) => ({ ...f, registrationNo: e.target.value.toUpperCase() }))}
                   className="bg-secondary/50 uppercase"
                   placeholder="e.g. BR01AB1234"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">GRN Date</Label>
+                <Input
+                  type="date"
+                  value={form.grnDate}
+                  onChange={(e) => setForm((f) => ({ ...f, grnDate: e.target.value }))}
+                  className="bg-secondary/50"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Billing Date</Label>
+                <Input
+                  type="date"
+                  value={form.billingDate}
+                  onChange={(e) => setForm((f) => ({ ...f, billingDate: e.target.value }))}
+                  className="bg-secondary/50"
                 />
               </div>
               <div className="space-y-1.5">

@@ -71,14 +71,13 @@ export async function customerCheckMobile(mobile: string): Promise<{ name: strin
 
 export async function customerLogin(
   mobile: string,
-  options: { whatsappVerificationToken?: string; otp?: string },
+  options: { whatsappVerificationToken: string },
 ): Promise<{ token: string; customer: CustomerUser }> {
   const { res, json } = await customerRequest("/customer/auth/login", {
     method: "POST",
     json: {
       mobile,
       whatsappVerificationToken: options.whatsappVerificationToken,
-      otp: options.otp,
     },
   });
   assertOk(res, json);
@@ -99,6 +98,7 @@ export type CustomerBooking = {
   preferredModel?: string;
   canReschedule?: boolean;
   rescheduleCount?: number;
+  hasPendingReschedule?: boolean;
   branchId?: { _id: string; name: string; code: string; city?: string } | null;
   testDriveId?: {
     model?: string;
@@ -112,21 +112,24 @@ export type CustomerBooking = {
   createdAt?: string;
 };
 
+export type PreferredSlotOption = { slotDate: string; slotTime: string };
+
 export async function fetchCustomerBookings(): Promise<CustomerBooking[]> {
   const { res, json } = await customerRequest("/customer/bookings");
   assertOk(res, json);
   return (json.data as CustomerBooking[]) ?? [];
 }
 
-export async function customerRescheduleBooking(
+/** MoM #4: submit exactly 3 preferred slots for dealership approval. */
+export async function customerRequestReschedule(
   bookingId: string,
-  slotDate: string,
-  slotTime: string,
-): Promise<CustomerBooking> {
+  body: { preferredSlots: PreferredSlotOption[]; reason?: string },
+): Promise<{ booking: CustomerBooking }> {
   const { res, json } = await customerRequest(`/customer/bookings/${bookingId}/reschedule`, {
     method: "PATCH",
-    json: { slotDate, slotTime },
+    json: body,
   });
   assertOk(res, json);
-  return json.data as CustomerBooking;
+  const data = json.data as { booking?: CustomerBooking };
+  return { booking: data?.booking ?? (json.data as CustomerBooking) };
 }

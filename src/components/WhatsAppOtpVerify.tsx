@@ -8,10 +8,9 @@ import { toast } from "sonner";
 import { CheckCircle2, Loader2, MessageCircle } from "lucide-react";
 
 const MOBILE_OK = /^[6-9]\d{9}$/;
-const BYPASS_OTP = "0000";
 
 function isValidOtpInput(digits: string): boolean {
-  return digits === BYPASS_OTP || digits.length === 4;
+  return digits.length === 4;
 }
 
 type WhatsAppOtpVerifyProps = {
@@ -45,13 +44,21 @@ export function WhatsAppOtpVerify({
   const [verifying, setVerifying] = useState(false);
   const [sent, setSent] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [cooldownSec, setCooldownSec] = useState(0);
 
   useEffect(() => {
     setCode("");
     setSent(false);
     setVerified(false);
+    setCooldownSec(0);
     onTokenChange(null);
   }, [mobile, onTokenChange]);
+
+  useEffect(() => {
+    if (cooldownSec <= 0) return;
+    const t = window.setTimeout(() => setCooldownSec((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [cooldownSec]);
 
   const otpGateActive = enabled && !verified;
 
@@ -77,6 +84,7 @@ export function WhatsAppOtpVerify({
         recaptchaToken,
       });
       setSent(true);
+      setCooldownSec(60);
       toast.success("Check WhatsApp for your verification code.");
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -142,7 +150,7 @@ export function WhatsAppOtpVerify({
             type="button"
             variant="outline"
             size="sm"
-            disabled={!mobileOk || sending}
+            disabled={!mobileOk || sending || cooldownSec > 0}
             onClick={() => void handleSend()}
             className="shrink-0 border-primary/40"
           >
@@ -151,6 +159,10 @@ export function WhatsAppOtpVerify({
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 Sending…
               </>
+            ) : cooldownSec > 0 ? (
+              `Resend in ${cooldownSec}s`
+            ) : sent ? (
+              "Resend code"
             ) : (
               "Send code on WhatsApp"
             )}
