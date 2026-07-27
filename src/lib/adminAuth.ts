@@ -51,17 +51,26 @@ function getSessionStartedAt(): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Paths executives can access in the staff portal. */
+/** Paths sales executives can access in the staff portal. */
 export const STAFF_PORTAL_PREFIXES = ["/admin/my-dashboard", "/admin/td/my-bookings", "/admin/crm/leads"] as const;
 
-export function isStaffPortalPath(pathname: string): boolean {
-  return STAFF_PORTAL_PREFIXES.some((p) => pathname.startsWith(p));
+/** CRE portal is dashboard + full Lead CRM only (no TD bookings). */
+export const CRE_PORTAL_PREFIXES = ["/admin/my-dashboard", "/admin/crm/leads"] as const;
+
+/** Customer Relationship Executive accounts (staff portal). */
+export function isCreUser(user: AdminUser | null | undefined): boolean {
+  return Boolean(user && String(user.designation || "").toLowerCase() === "cre");
 }
 
-/** Executives and managers use the TD lead CRM module. */
+export function isStaffPortalPath(pathname: string, user?: AdminUser | null): boolean {
+  const prefixes = isCreUser(user) ? CRE_PORTAL_PREFIXES : STAFF_PORTAL_PREFIXES;
+  return prefixes.some((p) => pathname.startsWith(p));
+}
+
+/** Executives, managers, and CRE use the Lead CRM module. */
 export function isCrmStaffUser(user: AdminUser | null | undefined): boolean {
   if (!user) return false;
-  return user.role === "executive" || user.role === "manager";
+  return user.role === "executive" || user.role === "manager" || isCreUser(user);
 }
 
 /**
@@ -109,7 +118,7 @@ export function canPerformAction(
 
 /**
  * For destructive/manager-gated UI: custom ACL users follow action tokens;
- * unrestricted users need manager/superadmin (or admin portal).
+ * CRE has full Lead CRM rights; other unrestricted users need manager/superadmin.
  */
 export function canPerformManagerAction(
   user: AdminUser | null | undefined,
@@ -118,6 +127,9 @@ export function canPerformManagerAction(
 ): boolean {
   if (!user) return false;
   if (user.userType === "admin") return true;
+  if (isCreUser(user) && moduleKey === "crm_leads") {
+    return canPerformAction(user, moduleKey, action);
+  }
   if (getRestrictedModules(user)) return canPerformAction(user, moduleKey, action);
   return user.role === "manager" || user.role === "superadmin";
 }
@@ -132,22 +144,32 @@ export function isPathAllowed(user: AdminUser | null | undefined, pathname: stri
 }
 
 /**
- * Sales executives use a focused portal (test drives + assigned leads).
- * Users given explicit module access in User Master follow that instead.
+ * Sales executives / CRE use a focused staff portal.
+ * CRE always stays on the CRE shell (dashboard + Lead CRM).
+ * Other users with explicit User Master modules follow that ACL instead.
  */
 export function isFieldStaffUser(user: AdminUser | null | undefined): boolean {
   if (!user) return false;
+  if (isCreUser(user)) return true;
   if (getRestrictedModules(user)) return false;
   return user.role === "executive" || user.designation === "sales_executive";
 }
 
+/** Leaf sales executives only (assigned-leads scope) — not CRE. */
+export function isExecutiveScopedStaff(user: AdminUser | null | undefined): boolean {
+  if (!user || isCreUser(user)) return false;
+  return isFieldStaffUser(user);
+}
+
 export function getAdminLoginRedirect(user: AdminUser | null | undefined): string {
+  // CRE / field staff always land on their separate dashboard first.
+  if (isCreUser(user) || isFieldStaffUser(user)) return "/admin/my-dashboard";
   const restricted = getRestrictedModules(user);
   if (restricted) {
+    if (restricted.includes("my_dashboard")) return "/admin/my-dashboard";
     const first = ADMIN_MODULES.find((m) => restricted.includes(m.key));
     if (first) return first.path;
   }
-  if (isFieldStaffUser(user)) return "/admin/my-dashboard";
   return "/admin/dashboard";
 }
 

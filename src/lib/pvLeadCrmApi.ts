@@ -21,12 +21,16 @@ export type PvCrmLead = {
   mobile: string;
   email?: string;
   city?: string;
+  area?: string;
+  address?: string;
+  leadType?: string;
   model: string;
   source?: string;
   status: string;
   remarks?: string;
   nextFollowUp?: string;
-  assignedTo?: { _id: string; name: string; email?: string } | null;
+  assignedTo?: { _id: string; name: string; email?: string; designation?: string } | null;
+  createdBy?: { _id: string; name: string; email?: string; designation?: string } | null;
   createdAt?: string;
   updatedAt?: string;
   lastActivityAt?: string;
@@ -77,6 +81,8 @@ export type CreatePvCrmLeadPayload = {
   email?: string;
   city: string;
   otherCity?: string;
+  area?: string;
+  address?: string;
   model: string;
   source?: string;
   remarks?: string;
@@ -84,13 +90,32 @@ export type CreatePvCrmLeadPayload = {
   financeNeeded?: boolean;
   exchangeNeeded?: boolean;
   executiveId?: string;
+  /** Match sales consultant by name when executiveId is not set (Excel import). */
+  salesConsultant?: string;
+  status?: string;
+  leadType?: string;
+  enquiryDate?: string;
+  callDate?: string;
+  existingVariant?: string;
   subCustomerName?: string;
   subCustomerMobile?: string;
   vehicleRegistration?: string;
+  followUps?: { scheduledAt?: string; note: string }[];
+};
+
+export type BulkCreLeadImportResult = {
+  created: number;
+  failed: { row: number; name?: string; mobile?: string; message: string }[];
 };
 
 export async function createPvCrmLead(payload: CreatePvCrmLeadPayload): Promise<PvCrmLead> {
   return adminPostJson<PvCrmLead>(CRM_BASE, payload);
+}
+
+export async function bulkCreatePvCrmLeads(
+  leads: CreatePvCrmLeadPayload[],
+): Promise<BulkCreLeadImportResult> {
+  return adminPostJson<BulkCreLeadImportResult>(`${CRM_BASE}/bulk`, { leads });
 }
 
 export async function fetchAssignableStaffUsers(): Promise<AssignableStaffUser[]> {
@@ -110,6 +135,10 @@ export async function fetchPvCrmLeads(params?: {
   search?: string;
   status?: string;
   source?: string;
+  city?: string;
+  area?: string;
+  leadType?: string;
+  address?: string;
   followUpDue?: boolean;
   assignedTo?: string;
   from?: string;
@@ -127,6 +156,10 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.search) q.set("search", params.search);
   if (params?.status && params.status !== "all") q.set("status", params.status);
   if (params?.source && params.source !== "all") q.set("source", params.source);
+  if (params?.city && params.city !== "all") q.set("city", params.city);
+  if (params?.area && params.area !== "all") q.set("area", params.area);
+  if (params?.leadType && params.leadType !== "all") q.set("leadType", params.leadType);
+  if (params?.address) q.set("address", params.address);
   if (params?.followUpDue) q.set("followUpDue", "true");
   if (params?.assignedTo) q.set("assignedTo", params.assignedTo);
   if (params?.from) q.set("from", params.from);
