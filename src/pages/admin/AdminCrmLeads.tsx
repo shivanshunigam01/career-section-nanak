@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
   MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight, Pencil,
-  History, Trophy, ShieldAlert, Trash2,
+  History, Trophy, ShieldAlert, Trash2, Upload, FileSpreadsheet, Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -16,10 +16,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatApiErrors } from "@/lib/api";
-import { getAdminUser, isFieldStaffUser, canPerformAction, canPerformManagerAction } from "@/lib/adminAuth";
+import { getAdminUser, isCreUser, isExecutiveScopedStaff, canPerformAction, canPerformManagerAction } from "@/lib/adminAuth";
 import {
   addPvCrmFollowUp,
   assignPvCrmLeadExecutive,
+  bulkCreatePvCrmLeads,
   completePvCrmFollowUp,
   fetchAssignableStaffUsers,
   fetchPvCrmLeadDetail,
@@ -42,9 +43,16 @@ import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog"
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
 import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
+import { AddCreLeadDialog } from "@/components/admin/AddCreLeadDialog";
 import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
 import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
+import {
+  downloadCreLeadImportTemplate,
+  parseCreLeadSpreadsheet,
+  CRE_LEAD_TYPE_OPTIONS,
+  type CreLeadImportRow,
+} from "@/lib/creLeadImport";
 
 function stageBadgeClass(stage: string) {
   const normalized = normalizeCrmStage(stage);
@@ -64,7 +72,8 @@ const PAGE_SIZE = 20;
 
 export default function AdminCrmLeads() {
   const adminUser = getAdminUser();
-  const isExecutive = isFieldStaffUser(adminUser);
+  const creUser = isCreUser(adminUser);
+  const isExecutive = isExecutiveScopedStaff(adminUser);
   const canCreate = canPerformAction(adminUser, "crm_leads", "create");
   const canUpdate = canPerformAction(adminUser, "crm_leads", "update");
   const canAssignLeads = canPerformManagerAction(adminUser, "crm_leads", "assign");
@@ -75,9 +84,15 @@ export default function AdminCrmLeads() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [filterSource, setFilterSource] = useState("all");
+  const [filterArea, setFilterArea] = useState("");
+  const [filterLeadType, setFilterLeadType] = useState("all");
   const [executives, setExecutives] = useState<AssignableStaffUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [importRows, setImportRows] = useState<CreLeadImportRow[]>([]);
+  const [showImport, setShowImport] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterExecutive, setFilterExecutive] = useState("all");
   const [followUpDueOnly, setFollowUpDueOnly] = useState(false);
@@ -156,6 +171,8 @@ export default function AdminCrmLeads() {
         search: search.trim() || undefined,
         status: filterStatus,
         source: filterSource,
+        area: filterArea.trim() || undefined,
+        leadType: filterLeadType,
         followUpDue: followUpDueOnly,
         from: filterDateFrom || undefined,
         to: filterDateTo || undefined,
@@ -178,7 +195,7 @@ export default function AdminCrmLeads() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, followUpDueOnly, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page]);
+  }, [search, filterStatus, filterSource, filterArea, filterLeadType, followUpDueOnly, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page]);
 
   const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
 
@@ -413,6 +430,59 @@ export default function AdminCrmLeads() {
     }
   };
 
+  const handleCreExcelFile = async (file: File) => {
+    try {
+      const rows = await parseCreLeadSpreadsheet(file);
+      if (rows.length === 0) {
+        toast.error("No valid rows found. Customer Name + Phone are required.");
+        return;
+      }
+      setImportRows(rows);
+      setShowImport(true);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not read Excel file.");
+    }
+  };
+
+  const runCreBulkImport = async () => {
+    if (importRows.length === 0) return;
+    setImporting(true);
+    try {
+      const payload = importRows.map((row) => ({
+        name: row.name,
+        mobile: row.mobile,
+        email: row.email,
+        city: row.city,
+        area: row.area || row.city,
+        address: row.address,
+        model: row.model,
+        source: row.source,
+        remarks: row.remarks,
+        exchangeNeeded: row.exchangeNeeded,
+        salesConsultant: row.salesConsultant,
+        status: row.status,
+        leadType: row.leadType,
+        enquiryDate: row.enquiryDate,
+        callDate: row.callDate,
+        existingVariant: row.existingVariant,
+        followUps: row.followUps,
+      }));
+      const result = await bulkCreatePvCrmLeads(payload);
+      if (result.failed.length > 0) {
+        toast.warning(`Imported ${result.created} of ${importRows.length}. ${result.failed.length} failed.`);
+      } else {
+        toast.success(`Imported ${result.created} lead(s).`);
+      }
+      setShowImport(false);
+      setImportRows([]);
+      await loadLeads();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setImporting(false);
+    }
+  };
+
   const handleCompleteFollowUp = async (followUpId: string) => {
     if (!selected) return;
     setSaving(true);
@@ -455,9 +525,11 @@ export default function AdminCrmLeads() {
             <Users className="w-6 h-6 text-primary" /> Lead CRM
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {isExecutive
-              ? "Your assigned leads from website, Meta Ads, test drives, and enquiries."
-              : "Unified lead pipeline — assign executives, track stages, notes, and follow-ups."}
+            {creUser
+              ? "Add leads in Current Format and assign them to sales consultants. Bulk Excel import supported."
+              : isExecutive
+                ? "Your assigned leads from website, Meta Ads, test drives, and enquiries."
+                : "Unified lead pipeline — assign executives, track stages, notes, and follow-ups."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -466,7 +538,28 @@ export default function AdminCrmLeads() {
               <Plus className="w-4 h-4 mr-2" /> Add Lead
             </Button>
           ) : null}
-          {canAssignLeads ? (
+          {canCreate ? (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void handleCreExcelFile(file);
+                }}
+              />
+              <Button size="sm" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                <Upload className="w-4 h-4 mr-2" /> Import Excel
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => downloadCreLeadImportTemplate()}>
+                <Download className="w-4 h-4 mr-2" /> Template
+              </Button>
+            </>
+          ) : null}
+          {canAssignLeads && !creUser ? (
             <Button variant="outline" size="sm" onClick={() => void openOpportunityReport()}>
               <ShieldAlert className="w-4 h-4 mr-2" /> Opportunity health
             </Button>
@@ -532,6 +625,32 @@ export default function AdminCrmLeads() {
             ))}
           </SelectContent>
         </Select>
+        <Select
+          value={filterLeadType}
+          onValueChange={(v) => {
+            setPage(1);
+            setFilterLeadType(v);
+          }}
+        >
+          <SelectTrigger className="bg-secondary/50">
+            <SelectValue placeholder="Lead type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All lead types</SelectItem>
+            {CRE_LEAD_TYPE_OPTIONS.map((t) => (
+              <SelectItem key={t} value={t}>{t}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Input
+          placeholder="Filter by area / city…"
+          value={filterArea}
+          onChange={(e) => {
+            setPage(1);
+            setFilterArea(e.target.value);
+          }}
+          className="bg-secondary/50"
+        />
         {canAssignLeads ? (
           <Select
             value={filterExecutive}
@@ -661,6 +780,10 @@ export default function AdminCrmLeads() {
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
                 <p>{lead.model} · {lead.source ?? "Website"}</p>
+                <p>
+                  {(lead.area || lead.city) ? `${lead.area || lead.city}` : "—"}
+                  {lead.leadType ? ` · ${lead.leadType}` : ""}
+                </p>
                 {(lead.lastActivityAt || lead.updatedAt) ? (
                   <p className="text-[11px]">
                     Updated {formatDateTime(lead.lastActivityAt || lead.updatedAt)}
@@ -789,15 +912,24 @@ export default function AdminCrmLeads() {
                 <p><span className="text-muted-foreground">Mobile</span><br />{detail.lead.mobile}</p>
                 <p><span className="text-muted-foreground">Email</span><br />{detail.lead.email || "—"}</p>
                 <p><span className="text-muted-foreground">City</span><br />{detail.lead.city || "—"}</p>
+                <p><span className="text-muted-foreground">Area</span><br />{detail.lead.area || detail.lead.city || "—"}</p>
+                <p><span className="text-muted-foreground">Address</span><br />{detail.lead.address || "—"}</p>
+                <p><span className="text-muted-foreground">Lead type</span><br />{detail.lead.leadType || "—"}</p>
                 <p><span className="text-muted-foreground">Source</span><br />{detail.lead.source || "—"}</p>
                 <p><span className="text-muted-foreground">Assigned to</span><br />{detail.lead.assignedTo?.name || "—"}</p>
+                <p><span className="text-muted-foreground">Created by</span><br />{detail.lead.createdBy?.name || "—"}</p>
                 <p><span className="text-muted-foreground">Next follow-up</span><br />{formatDateTime(detail.lead.nextFollowUp)}</p>
               </div>
 
               {canAssignLeads ? (
                 <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
                   <p className="text-xs font-semibold uppercase tracking-wide text-foreground flex items-center gap-1.5">
-                    <UserCheck className="w-3.5 h-3.5 text-primary" /> Assign staff (User Master)
+                    <UserCheck className="w-3.5 h-3.5 text-primary" /> Assign executive (by area / lead type)
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    Route this lead to the right sales executive so they can manage it for{" "}
+                    <strong>{detail.lead.area || detail.lead.city || "this area"}</strong>
+                    {detail.lead.leadType ? <> · <strong>{detail.lead.leadType}</strong></> : null}.
                   </p>
                   {staffUsers.length === 0 ? (
                     <p className="text-xs text-amber-600 dark:text-amber-400">
@@ -1251,15 +1383,83 @@ export default function AdminCrmLeads() {
       />
 
       {showAddLead ? (
-        <AddPvLeadDialog
-          open={showAddLead}
-          onOpenChange={setShowAddLead}
-          isExecutive={isExecutive}
-          canAssignToExecutive={canAssignLeads}
-          executives={staffUsers}
-          onCreated={() => void loadLeads()}
-        />
+        creUser ? (
+          <AddCreLeadDialog
+            open={showAddLead}
+            onOpenChange={setShowAddLead}
+            executives={staffUsers}
+            onCreated={() => void loadLeads()}
+          />
+        ) : (
+          <AddPvLeadDialog
+            open={showAddLead}
+            onOpenChange={setShowAddLead}
+            isExecutive={isExecutive}
+            canAssignToExecutive={canAssignLeads}
+            executives={staffUsers}
+            onCreated={() => void loadLeads()}
+          />
+        )
       ) : null}
+
+      <Dialog open={showImport} onOpenChange={setShowImport}>
+        <DialogContent className="bg-card border-border max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <FileSpreadsheet className="w-5 h-5 text-primary" />
+              Import Current Format Excel
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Preview of {importRows.length} lead(s). Sales consultant names are matched to User Master for assignment.
+          </p>
+          <div className="rounded-lg border border-border overflow-auto max-h-[45vh]">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/50 sticky top-0">
+                <tr className="text-left">
+                  <th className="p-2">#</th>
+                  <th className="p-2">Customer</th>
+                  <th className="p-2">Phone</th>
+                  <th className="p-2">Model</th>
+                  <th className="p-2">Source</th>
+                  <th className="p-2">Stage</th>
+                  <th className="p-2">Assign to</th>
+                </tr>
+              </thead>
+              <tbody>
+                {importRows.slice(0, 50).map((row, i) => (
+                  <tr key={`${row.mobile}-${i}`} className="border-t border-border/60">
+                    <td className="p-2 text-muted-foreground">{i + 1}</td>
+                    <td className="p-2 font-medium">{row.name}</td>
+                    <td className="p-2 font-mono">{row.mobile}</td>
+                    <td className="p-2">{row.model}</td>
+                    <td className="p-2">{row.source}</td>
+                    <td className="p-2">{row.status}</td>
+                    <td className="p-2">{row.salesConsultant || "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {importRows.length > 50 ? (
+              <p className="p-2 text-[11px] text-muted-foreground border-t border-border">
+                Showing first 50 of {importRows.length} rows.
+              </p>
+            ) : null}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <Button variant="outline" onClick={() => setShowImport(false)} disabled={importing}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-primary text-primary-foreground"
+              onClick={() => void runCreBulkImport()}
+              disabled={importing || importRows.length === 0}
+            >
+              {importing ? "Importing…" : `Import ${importRows.length} lead(s)`}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

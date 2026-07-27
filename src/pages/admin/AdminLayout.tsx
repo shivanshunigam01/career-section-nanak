@@ -28,6 +28,7 @@ import {
   isAdminSessionTimedOut,
   canAccessFullAdmin,
   isFieldStaffUser,
+  isCreUser,
   isStaffPortalPath,
   getRestrictedModules,
   isPathAllowed,
@@ -107,6 +108,7 @@ const AdminLayout = () => {
 
   const adminUser = getAdminUser();
   const fieldStaff = isFieldStaffUser(adminUser);
+  const creUser = isCreUser(adminUser);
   const fullAdmin = canAccessFullAdmin(adminUser);
   // Per-user module access configured in User Master (null = no restriction).
   const restrictedModules = getRestrictedModules(adminUser);
@@ -246,7 +248,7 @@ const AdminLayout = () => {
       navigate(`${loginPath}?reason=session-expired`);
       return;
     }
-    if (fieldStaff && !isStaffPortalPath(location.pathname)) {
+    if (fieldStaff && !isStaffPortalPath(location.pathname, adminUser)) {
       navigate("/admin/my-dashboard", { replace: true });
       return;
     }
@@ -354,7 +356,8 @@ const AdminLayout = () => {
                   </Link>
                 );
               })}
-              {visibleTdItems.filter((item) => item.staff).map((item) => {
+              {/* CRE portal is dashboard + Lead CRM only; executives also get My Test Drives */}
+              {!creUser && visibleTdItems.filter((item) => item.staff).map((item) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link

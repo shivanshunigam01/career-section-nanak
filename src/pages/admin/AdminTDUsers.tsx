@@ -65,6 +65,7 @@ const emptyForm = {
 
 const DESIGNATION_COLORS: Record<string, string> = {
   sales_executive: "bg-blue-400/10 text-blue-400 border-blue-400/20",
+  cre: "bg-cyan-400/10 text-cyan-400 border-cyan-400/20",
   sales_manager: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
   sales_head: "bg-violet-400/10 text-violet-400 border-violet-400/20",
   branch_manager: "bg-purple-400/10 text-purple-400 border-purple-400/20",
