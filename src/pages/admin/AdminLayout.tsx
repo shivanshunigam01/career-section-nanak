@@ -3,7 +3,7 @@ import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, Users, Car, FileText, Settings, LogOut, Menu, X,
   Tag, Bell, Home, Image,
-  CalendarCheck, Gauge, BarChart3, Building2, ChevronDown, ChevronRight as ChevRight, User,
+  CalendarCheck, Gauge, BarChart3, Building2, ChevronRight as ChevRight, User,
   MessageSquare, Clock, BellOff, Warehouse, CarFront, PackageCheck
 } from "lucide-react";
 import vinLogo from "@/assets/patliputra-vinfast-logo.png";
@@ -32,6 +32,7 @@ import {
   getRestrictedModules,
   isPathAllowed,
   getAdminLoginRedirect,
+  getPortalLoginPath,
 } from "@/lib/adminAuth";
 import { MODULE_BY_PATH } from "@/lib/adminModules";
 import {
@@ -47,6 +48,7 @@ const ADMIN_SESSION_EXPIRED_TOAST =
 
 const coreNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
+  { label: "Calendar",  icon: Clock,           path: "/admin/calendar" },
   { label: "Homepage",  icon: Home,            path: "/admin/homepage" },
   { label: "Lead CRM",  icon: Users,           path: "/admin/crm/leads" },
   { label: "Products",  icon: Car,             path: "/admin/products" },
@@ -71,6 +73,8 @@ const tdNavItems = [
   { label: "My Test Drives", icon: User,         path: "/admin/td/my-bookings", staff: true },
   { label: "Lead Reports",    icon: BarChart3,    path: "/admin/td/leads/reports", staff: false },
   { label: "TD Bookings",    icon: CalendarCheck, path: "/admin/td/bookings",    staff: false },
+  { label: "Reschedule History", icon: Clock, path: "/admin/td/reschedule-history", staff: false },
+  { label: "Fleet Health",   icon: Gauge,         path: "/admin/td/fleet-health", staff: false },
   { label: "User Master",    icon: Users,         path: "/admin/td/users",       staff: false },
   { label: "Demo Fleet",     icon: Gauge,         path: "/admin/td/vehicles",    staff: false },
   { label: "Model Master",   icon: Car,           path: "/admin/td/models",      staff: false },
@@ -95,7 +99,7 @@ const AdminLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tdExpanded, setTdExpanded] = useState(location.pathname.startsWith("/admin/td"));
+  const [tdMenuOpen, setTdMenuOpen] = useState(false);
   const [notifications, setNotifications] = useState<HeaderNotification[]>([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
@@ -231,14 +235,15 @@ const AdminLayout = () => {
   useEffect(() => {
     const api = hasApi();
     const tokenOk = api ? Boolean(getAdminToken()) : localStorage.getItem("admin_logged_in") === "true";
+    const loginPath = getPortalLoginPath(adminUser);
     if (!tokenOk) {
-      navigate("/admin/login");
+      navigate(loginPath);
       return;
     }
     if (isAdminSessionTimedOut()) {
       clearAdminSession();
       toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
-      navigate("/admin/login?reason=session-expired");
+      navigate(`${loginPath}?reason=session-expired`);
       return;
     }
     if (fieldStaff && !isStaffPortalPath(location.pathname)) {
@@ -255,16 +260,18 @@ const AdminLayout = () => {
   useEffect(() => {
     const id = window.setInterval(() => {
       if (!isAdminSessionTimedOut()) return;
+      const loginPath = getPortalLoginPath(getAdminUser());
       clearAdminSession();
       toast.warning(ADMIN_SESSION_EXPIRED_TOAST, { duration: 10_000 });
-      navigate("/admin/login?reason=session-expired");
+      navigate(`${loginPath}?reason=session-expired`);
     }, 60_000);
     return () => clearInterval(id);
   }, [navigate]);
 
   const handleLogout = () => {
+    const loginPath = getPortalLoginPath(adminUser);
     clearAdminSession();
-    navigate("/admin/login");
+    navigate(loginPath);
   };
 
   const visibleTdItems = tdNavItems.filter((item) => (item.staff || fullAdmin) && canSeePath(item.path));
@@ -298,13 +305,13 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* Sidebar — wider on lg for larger brand lockup; drawer uses most of small screens safely */}
+      {/* Sidebar stays fixed to the viewport; Sign Out never follows page scrolling. */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 z-50 flex h-screen max-h-[100dvh] w-[min(20rem,calc(100vw-2.5rem))] sm:w-72 lg:w-72 xl:w-80 flex-col border-r border-border bg-card shadow-xl transition-transform duration-300 ease-out lg:shadow-none ${
+        className={`fixed inset-y-0 left-0 z-50 flex h-[100dvh] w-[min(18rem,calc(100vw-2.5rem))] sm:w-64 lg:w-64 xl:w-72 flex-col overflow-hidden border-r border-border bg-card shadow-xl transition-transform duration-300 ease-out lg:shadow-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
-        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-4 sm:px-5 sm:py-5">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-3 py-2.5 sm:px-3.5 sm:py-3">
           <Link
             to="/admin/dashboard"
             className="flex min-w-0 flex-1 items-center"
@@ -313,20 +320,20 @@ const AdminLayout = () => {
             <img
               src={vinLogo}
               alt="Patliputra VinFast"
-              className="h-12 w-auto max-h-16 max-w-full object-contain object-left sm:h-14 sm:max-h-[4.5rem] lg:h-16 lg:max-h-[5rem]"
+              className="h-9 w-auto max-w-full object-contain object-left sm:h-10"
             />
           </Link>
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
-            className="shrink-0 rounded-lg p-2 text-muted-foreground hover:bg-muted lg:hidden touch-manipulation"
+            className="shrink-0 rounded-lg p-1.5 text-muted-foreground hover:bg-muted lg:hidden touch-manipulation"
             aria-label="Close menu"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <nav className="flex-1 space-y-0.5 overflow-y-auto overflow-x-hidden p-3 sm:p-4 overscroll-contain">
+        <nav className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden px-2 py-2 sm:px-2.5">
           {fieldStaff ? (
             <>
               {crmNavItems.map((item) => {
@@ -336,13 +343,13 @@ const AdminLayout = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                    className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-tight transition-colors touch-manipulation ${
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                     }`}
                   >
-                    <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                    <item.icon className="h-4 w-4 shrink-0 opacity-90" />
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
@@ -354,13 +361,13 @@ const AdminLayout = () => {
                   key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                  className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-tight transition-colors touch-manipulation ${
                     isActive
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                   }`}
                 >
-                  <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                  <item.icon className="h-4 w-4 shrink-0 opacity-90" />
                   <span className="truncate">{item.label}</span>
                 </Link>
               );
@@ -375,22 +382,22 @@ const AdminLayout = () => {
                     key={item.path}
                     to={item.path}
                     onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                    className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-tight transition-colors touch-manipulation ${
                       isActive
                         ? "bg-primary/10 text-primary"
                         : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                     }`}
                   >
-                    <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                    <item.icon className="h-4 w-4 shrink-0 opacity-90" />
                     <span className="truncate">{item.label}</span>
                   </Link>
                 );
               })}
 
               {visibleFeedbackItems.length > 0 && (
-                <div className="pt-1">
-                  <div className="mx-1 my-2 border-t border-border/50" />
-                  <p className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                <div className="pt-0.5">
+                  <div className="mx-1 my-1 border-t border-border/50" />
+                  <p className="px-2.5 pb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
                     Feedback
                   </p>
                   {visibleFeedbackItems.map((item) => {
@@ -400,13 +407,13 @@ const AdminLayout = () => {
                         key={item.path}
                         to={item.path}
                         onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
+                        className={`flex items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-tight transition-colors touch-manipulation ${
                           isActive
                             ? "bg-primary/10 text-primary"
                             : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
                         }`}
                       >
-                        <item.icon className="h-5 w-5 shrink-0 opacity-90" />
+                        <item.icon className="h-4 w-4 shrink-0 opacity-90" />
                         <span className="truncate">{item.label}</span>
                       </Link>
                     );
@@ -415,65 +422,77 @@ const AdminLayout = () => {
               )}
 
               {visibleTdItems.length > 0 && (
-              <div className="pt-1">
-                <div className="mx-1 my-2 border-t border-border/50" />
-                <button
-                  type="button"
-                  onClick={() => setTdExpanded(!tdExpanded)}
-                  className={`w-full flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
-                    location.pathname.startsWith("/admin/td")
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                  }`}
-                >
-                  <CalendarCheck className="h-5 w-5 shrink-0 opacity-90" />
-                  <span className="truncate flex-1 text-left">TD Management</span>
-                  {tdExpanded
-                    ? <ChevronDown className="h-4 w-4 shrink-0 opacity-60" />
-                    : <ChevRight className="h-4 w-4 shrink-0 opacity-60" />}
-                </button>
-                {tdExpanded && (
-                  <div className="ml-4 border-l border-border/40 pl-1 space-y-0.5 mt-0.5">
-                    {visibleTdItems.map((item) => {
-                      const isActive = location.pathname === item.path;
-                      return (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => setSidebarOpen(false)}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium transition-colors sm:py-2.5 sm:text-[0.9375rem] touch-manipulation ${
-                            isActive
-                              ? "bg-primary/10 text-primary"
-                              : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-                          }`}
-                        >
-                          <item.icon className="h-5 w-5 shrink-0 opacity-90" />
-                          <span className="truncate">{item.label}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+              <div className="pt-0.5">
+                <div className="mx-1 my-1 border-t border-border/50" />
+                <Popover open={tdMenuOpen} onOpenChange={setTdMenuOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className={`flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium leading-tight transition-colors touch-manipulation ${
+                        location.pathname.startsWith("/admin/td") || location.pathname.startsWith("/admin/stock")
+                          ? "bg-primary/10 text-primary"
+                          : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                      }`}
+                    >
+                      <CalendarCheck className="h-4 w-4 shrink-0 opacity-90" />
+                      <span className="truncate flex-1 text-left">TD Management</span>
+                      <ChevRight className="h-3.5 w-3.5 shrink-0 opacity-60" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    side="right"
+                    align="start"
+                    sideOffset={8}
+                    className="w-56 p-1.5"
+                  >
+                    <p className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      TD Management
+                    </p>
+                    <div className="space-y-px">
+                      {visibleTdItems.map((item) => {
+                        const isActive = location.pathname === item.path;
+                        return (
+                          <Link
+                            key={item.path}
+                            to={item.path}
+                            onClick={() => {
+                              setTdMenuOpen(false);
+                              setSidebarOpen(false);
+                            }}
+                            className={`flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors ${
+                              isActive
+                                ? "bg-primary/10 text-primary"
+                                : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+                            }`}
+                          >
+                            <item.icon className="h-4 w-4 shrink-0 opacity-90" />
+                            <span className="truncate">{item.label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
               )}
             </>
           )}
         </nav>
 
-        <div className="shrink-0 border-t border-border p-3 sm:p-4">
+        <div className="shrink-0 border-t border-border px-2 py-2 sm:px-2.5">
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive touch-manipulation sm:py-2.5"
+            className="flex w-full items-center gap-2.5 rounded-md px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive touch-manipulation"
           >
-            <LogOut className="h-5 w-5 shrink-0 opacity-90" />
+            <LogOut className="h-4 w-4 shrink-0 opacity-90" />
             Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main content */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col lg:ml-64 xl:ml-72">
         <header className="sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-border bg-card/95 px-3 py-2 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80 sm:min-h-16 sm:gap-4 sm:px-4 sm:py-0 pt-[max(0.5rem,env(safe-area-inset-top))]">
           <button
             type="button"

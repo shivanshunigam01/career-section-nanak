@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminGet, adminPatchJson, formatApiErrors } from "@/lib/api";
-import { getAdminUser, isFieldStaffUser } from "@/lib/adminAuth";
+import { getAdminUser, isFieldStaffUser, canPerformAction } from "@/lib/adminAuth";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,6 +34,7 @@ type Booking = {
   _id: string;
   bookingId: string;
   bookingStatus: string;
+  assignmentStatus?: string;
   slotDate: string;
   slotTime: string;
   slotDuration: number;
@@ -116,6 +117,15 @@ export default function AdminTDMyBookings() {
   const [showAddLead, setShowAddLead] = useState(false);
 
   const isExecutive = isFieldStaffUser(adminUser);
+  const canVerifyDl = canPerformAction(adminUser, "td_my_bookings", "verify_dl");
+  const canUpdateAssignment = canPerformAction(adminUser, "td_my_bookings", "update");
+  const canStartDrive = canPerformAction(adminUser, "td_my_bookings", "start_drive");
+  const canComplete = canPerformAction(adminUser, "td_my_bookings", "complete");
+  const canReschedule = canPerformAction(adminUser, "td_my_bookings", "reschedule");
+  const canCancel = canPerformAction(adminUser, "td_my_bookings", "cancel");
+  const canCreateLead = canPerformAction(adminUser, "crm_leads", "create");
+  const canManageDrive =
+    canUpdateAssignment || canStartDrive || canComplete || canReschedule || canCancel;
 
   const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
 
@@ -228,6 +238,14 @@ export default function AdminTDMyBookings() {
   };
 
   const handleStartDriving = async (id: string) => {
+    if (!selected?.dlVerified || !selected?.dlImageUrl) {
+      toast.error("Upload and verify driving licence before starting the test drive");
+      return;
+    }
+    if (selected.assignmentStatus === "PENDING_ACCEPTANCE") {
+      toast.error("Accept this assignment before starting the test drive");
+      return;
+    }
     const opening = Number(openingOdometer);
     if (!openingOdometer.trim() || Number.isNaN(opening) || opening < 0) {
       toast.error("Enter opening odometer reading (km) before starting the drive");
@@ -244,6 +262,35 @@ export default function AdminTDMyBookings() {
       toast.success("Test drive started — opening odometer recorded");
       void fetchBookings();
       if (selected?._id === id) await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleAcceptAssignment = async (id: string) => {
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/accept-assignment`, {});
+      toast.success("Assignment accepted");
+      void fetchBookings();
+      await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectAssignment = async (id: string) => {
+    const reason = window.prompt("Reason for rejecting this assignment (optional)") || undefined;
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/reject-assignment`, { reason });
+      toast.success("Assignment rejected — returned for reassignment");
+      setSelected(null);
+      void fetchBookings();
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
@@ -332,9 +379,11 @@ export default function AdminTDMyBookings() {
           </p>
         </div>
         <div className="flex gap-2 shrink-0 flex-wrap">
+          {canCreateLead ? (
           <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
             <Plus className="w-4 h-4 mr-2" /> Add Lead
           </Button>
+          ) : null}
           <Button onClick={() => setFilterDate(todayIso())} variant={filterDate === todayIso() ? "default" : "outline"} size="sm">Today</Button>
           <Button onClick={() => setFilterDate("")} variant={filterDate === "" ? "default" : "outline"} size="sm">All dates</Button>
           <Button onClick={() => void fetchBookings()} variant="outline" size="sm"><RefreshCw className="w-4 h-4" /></Button>
@@ -419,6 +468,7 @@ export default function AdminTDMyBookings() {
                       dlNumber={selected.dlNumber}
                       dlValidUntil={selected.dlValidUntil}
                       disabled={actionLoading}
+                      canEdit={canVerifyDl}
                       onVerified={async () => {
                         await refreshSelected(selected._id);
                         void fetchBookings();
@@ -426,9 +476,37 @@ export default function AdminTDMyBookings() {
                     />
                   </div>
 
-                  {!isTerminalStatus(selected.bookingStatus) ? (
+                  {!isTerminalStatus(selected.bookingStatus) && canManageDrive ? (
                     <div className="rounded-lg border border-primary/25 bg-primary/5 p-4 space-y-3">
                       <p className="text-xs font-semibold uppercase tracking-wide text-primary">Manage test drive</p>
+                      {canUpdateAssignment && selected.assignmentStatus === "PENDING_ACCEPTANCE" ? (
+                        <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
+                          <p className="text-sm text-foreground font-medium">Assignment awaiting your response</p>
+                          <p className="text-xs text-muted-foreground">
+                            Accept to confirm this test drive, or reject to return it for reassignment.
+                          </p>
+                          <div className="grid grid-cols-2 gap-2">
+                            <Button
+                              size="sm"
+                              className="h-10"
+                              disabled={actionLoading}
+                              onClick={() => void handleAcceptAssignment(selected._id)}
+                            >
+                              <CheckCircle2 className="w-4 h-4 mr-2" /> Accept
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-10"
+                              disabled={actionLoading}
+                              onClick={() => void handleRejectAssignment(selected._id)}
+                            >
+                              <XCircle className="w-4 h-4 mr-2" /> Reject
+                            </Button>
+                          </div>
+                        </div>
+                      ) : null}
+                      {(canStartDrive || canComplete) ? (
                       <div className="grid sm:grid-cols-2 gap-3">
                         <div className="space-y-1.5">
                           <Label htmlFor="my-opening-odometer" className="text-xs">
@@ -443,7 +521,7 @@ export default function AdminTDMyBookings() {
                             placeholder="e.g. 1240"
                             value={openingOdometer}
                             onChange={(e) => setOpeningOdometer(e.target.value)}
-                            disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                            disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS" || !canStartDrive}
                             className="bg-background/80"
                           />
                           {selected.vehicleId?.currentOdometer != null ? (
@@ -465,7 +543,7 @@ export default function AdminTDMyBookings() {
                             placeholder="After test drive"
                             value={closingOdometer}
                             onChange={(e) => setClosingOdometer(e.target.value)}
-                            disabled={actionLoading || selected.bookingStatus !== "IN_PROGRESS"}
+                            disabled={actionLoading || selected.bookingStatus !== "IN_PROGRESS" || !canComplete}
                             className="bg-background/80"
                           />
                           {tdLog?.totalKM != null ? (
@@ -475,15 +553,24 @@ export default function AdminTDMyBookings() {
                           ) : null}
                         </div>
                       </div>
+                      ) : null}
                       <div className="grid grid-cols-2 gap-2">
+                        {canStartDrive ? (
                         <Button
                           size="sm"
                           className="h-10"
-                          disabled={actionLoading || selected.bookingStatus === "IN_PROGRESS"}
+                          disabled={
+                            actionLoading ||
+                            selected.bookingStatus === "IN_PROGRESS" ||
+                            selected.assignmentStatus === "PENDING_ACCEPTANCE" ||
+                            !selected.dlVerified
+                          }
                           onClick={() => void handleStartDriving(selected._id)}
                         >
                           <Play className="w-4 h-4 mr-2" /> Start driving
                         </Button>
+                        ) : null}
+                        {canComplete ? (
                         <Button
                           size="sm"
                           className="h-10 bg-green-600 hover:bg-green-700 disabled:opacity-40"
@@ -492,17 +579,26 @@ export default function AdminTDMyBookings() {
                         >
                           <CheckCircle2 className="w-4 h-4 mr-2" /> Mark completed
                         </Button>
+                        ) : null}
+                        {canReschedule ? (
                         <Button size="sm" variant="outline" className="h-10" disabled={actionLoading} onClick={() => { openRescheduleDialog(selected); setSelected(null); }}>
                           <CalendarClock className="w-4 h-4 mr-2" /> Reschedule
                         </Button>
+                        ) : null}
+                        {canCancel ? (
                         <Button size="sm" variant="destructive" className="h-10" disabled={actionLoading} onClick={() => { setCancelDialog(selected); setSelected(null); }}>
                           <Ban className="w-4 h-4 mr-2" /> Cancel booking
                         </Button>
+                        ) : null}
                       </div>
                       <p className="text-[11px] text-muted-foreground">
-                        {selected.bookingStatus === "IN_PROGRESS"
-                          ? "Tap Mark completed to capture the closing odometer, photos, location, and customer feedback."
-                          : "Enter opening odometer before starting the test drive."}
+                        {selected.assignmentStatus === "PENDING_ACCEPTANCE"
+                          ? "Accept or reject this assignment before starting."
+                          : !selected.dlVerified
+                            ? "Driving licence must be verified before starting the test drive."
+                            : selected.bookingStatus === "IN_PROGRESS"
+                              ? "Tap Mark completed to capture the closing odometer, photos, location, and customer feedback."
+                              : "Enter opening odometer before starting the test drive."}
                       </p>
                     </div>
                   ) : selected.bookingStatus === "COMPLETED" ? (
