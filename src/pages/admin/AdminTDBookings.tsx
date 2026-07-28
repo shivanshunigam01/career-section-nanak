@@ -30,6 +30,7 @@ import {
   CompleteTestDriveDialog,
   TestDriveCompletionSummary,
 } from "@/components/admin/CompleteTestDriveDialog";
+import { UpdateCompletionMediaDialog } from "@/components/admin/UpdateCompletionMediaDialog";
 import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 
 type TestDriveDetails = {
@@ -154,6 +155,7 @@ export default function AdminTDBookings() {
   const [openingOdometer, setOpeningOdometer] = useState("");
   const [closingOdometer, setClosingOdometer] = useState("");
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
+  const [updateMediaOpen, setUpdateMediaOpen] = useState(false);
   const [editingDetails, setEditingDetails] = useState(false);
   const [detailName, setDetailName] = useState("");
   const [detailMobile, setDetailMobile] = useState("");
@@ -1137,7 +1139,12 @@ export default function AdminTDBookings() {
                             </div>
                           </div>
                         ) : null}
-                        {tdLog ? <TestDriveCompletionSummary log={tdLog} /> : null}
+                        {tdLog ? (
+                          <TestDriveCompletionSummary
+                            log={tdLog}
+                            onEdit={() => setUpdateMediaOpen(true)}
+                          />
+                        ) : null}
                         {feedbackLoading ? (
                           <div className="flex justify-center py-6"><Loader2 className="w-5 h-5 animate-spin text-primary" /></div>
                         ) : (
@@ -1195,6 +1202,17 @@ export default function AdminTDBookings() {
           onCompleted={handleDriveCompleted}
         />
       ) : null}
+
+      <UpdateCompletionMediaDialog
+        open={updateMediaOpen}
+        onOpenChange={setUpdateMediaOpen}
+        log={tdLog}
+        onUpdated={async () => {
+          if (!selected) return;
+          const log = await fetchTdLogByBooking(selected._id);
+          setTdLog(log);
+        }}
+      />
 
       {/* Reschedule Dialog */}
       <Dialog open={!!rescheduleDialog} onOpenChange={(o) => !o && setRescheduleDialog(null)}>

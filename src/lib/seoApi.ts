@@ -12,6 +12,9 @@ export type SeoModelSummary = {
   variants: string[];
 };
 
+/** Alias used by DistrictLanding (CRM commit). */
+export type SeoModel = SeoModelSummary;
+
 export type SeoFaq = { question: string; answer: string };
 
 export type SeoSection = { heading: string; body: string };
@@ -31,6 +34,11 @@ export type DistrictPagePayload = {
   faqs: SeoFaq[];
   canonicalUrl?: string;
   schemas?: Record<string, unknown>[];
+};
+
+/** Alias / extended shape used by DistrictLanding. */
+export type DistrictPageData = DistrictPagePayload & {
+  _id?: string;
 };
 
 export type GlobalSeoPayload = {
@@ -64,7 +72,7 @@ export function fetchSeoModels() {
 
 export function fetchDistrictPage(districtSlug: string, modelSlug: string) {
   return publicGet<DistrictPagePayload>(
-    `/public/seo/district-pages/${encodeURIComponent(districtSlug)}/${encodeURIComponent(modelSlug)}`
+    `/public/seo/district-pages/${encodeURIComponent(districtSlug)}/${encodeURIComponent(modelSlug)}`,
   );
 }
 
@@ -74,4 +82,9 @@ export function fetchDistrictPageList(params?: { district?: string; model?: stri
   if (params?.model) q.set("model", params.model);
   const qs = q.toString();
   return publicGet<DistrictPageListItem[]>(`/public/seo/district-pages${qs ? `?${qs}` : ""}`);
+}
+
+/** Route path for a model's main product page from its SEO catalog key. */
+export function modelPagePath(modelKey: string): string {
+  return `/models/${modelKey}`;
 }
