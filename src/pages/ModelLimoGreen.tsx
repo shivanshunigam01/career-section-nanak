@@ -18,6 +18,8 @@ import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
+import { usePageSeo } from "@/lib/seo";
+import { LIMO_GREEN_SEO } from "@/data/modelSeo";
 import limoGreenHeroDesktop from "@/assets/limo-green/hero-desktop.jpg";
 import limoGreenHeroPortrait from "@/assets/limo-green/modal-car.webp";
 import limoGreenIntro from "@/assets/limo-green/intro-car.webp";
@@ -69,6 +71,7 @@ const inputClass =
   "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
 
 const ModelLimoGreen = () => {
+  usePageSeo(LIMO_GREEN_SEO);
   const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();

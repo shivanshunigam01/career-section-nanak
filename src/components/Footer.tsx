@@ -112,6 +112,8 @@ const Footer = () => {
               {[
                 { label: "About Us", href: "/about" },
                 { label: "EV Buying Guide", href: "/ev-buying-guide" },
+                { label: "Charging Calculator", href: "/charging-calculator" },
+                { label: "Running Cost Calculator", href: "/running-cost-calculator" },
                 { label: "Finance Options", href: "/finance" },
                 { label: "Exchange Car", href: "/exchange" },
                 { label: "Insurance", href: "/insurance" },
@@ -175,6 +177,37 @@ const Footer = () => {
                 </span>
               </li>
             </ul>
+          </div>
+        </div>
+
+        {/* VinFast across Bihar — hyperlocal SEO internal links */}
+        <div className="mt-12 pt-8 border-t border-border/30">
+          <h4 className="font-display font-semibold text-sm uppercase tracking-wider mb-4">
+            VinFast across Bihar
+          </h4>
+          <div className="flex flex-wrap gap-x-4 gap-y-2">
+            {[
+              { name: "Patna", slug: "patna" },
+              { name: "Muzaffarpur", slug: "muzaffarpur" },
+              { name: "Gaya", slug: "gaya" },
+              { name: "Bhagalpur", slug: "bhagalpur" },
+              { name: "Darbhanga", slug: "darbhanga" },
+              { name: "Purnia", slug: "purnia" },
+              { name: "Begusarai", slug: "begusarai" },
+              { name: "Nalanda", slug: "nalanda" },
+              { name: "Rohtas", slug: "rohtas" },
+              { name: "Samastipur", slug: "samastipur" },
+              { name: "Saran", slug: "saran" },
+              { name: "Vaishali", slug: "vaishali" },
+            ].map((d) => (
+              <Link
+                key={d.slug}
+                to={`/${d.slug}/vinfast-vf6`}
+                className="text-muted-foreground text-xs hover:text-foreground transition-colors"
+              >
+                VinFast {d.name}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

@@ -16,6 +16,7 @@ import {
   useFeedbackVariantChoices,
   type RatingKey,
 } from "@/components/admin/TDFeedbackForm";
+import { LocationPinMap } from "@/components/admin/LocationPinMap";
 
 type GeoFix = { lat: number; lng: number; accuracy?: number };
 
@@ -113,7 +114,13 @@ function PhotoField({
 }
 
 /** Read-only card showing everything captured at completion (photos, GPS, remarks, timestamp). */
-export function TestDriveCompletionSummary({ log }: { log: TDLogRecord }) {
+export function TestDriveCompletionSummary({
+  log,
+  onEdit,
+}: {
+  log: TDLogRecord;
+  onEdit?: () => void;
+}) {
   const photos = [
     { label: "Customer photo", url: log.customerPhotoUrl },
     { label: "Vehicle photo", url: log.vehiclePhotoUrl },
@@ -126,7 +133,14 @@ export function TestDriveCompletionSummary({ log }: { log: TDLogRecord }) {
 
   return (
     <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
-      <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Completion capture</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-foreground">Completion capture</p>
+        {onEdit ? (
+          <Button type="button" size="sm" variant="outline" className="h-7 text-[11px]" onClick={onEdit}>
+            Update photo / location
+          </Button>
+        ) : null}
+      </div>
       <div className="grid sm:grid-cols-2 gap-3 text-xs">
         <div>
           <p className="text-muted-foreground">Completed at</p>
@@ -143,7 +157,7 @@ export function TestDriveCompletionSummary({ log }: { log: TDLogRecord }) {
           </p>
         </div>
         <div>
-          <p className="text-muted-foreground">Location (lat, lng)</p>
+          <p className="text-muted-foreground">Google-pinned location</p>
           {hasLocation ? (
             <a
               href={`https://www.google.com/maps?q=${endLat},${endLng}`}
@@ -239,12 +253,11 @@ export function CompleteTestDriveDialog({
         setGeoStatus("ok");
       },
       (err) => {
-        setGeo(null);
         setGeoStatus("error");
         setGeoError(
           err.code === err.PERMISSION_DENIED
-            ? "Location permission denied — allow location access and retry."
-            : "Could not get the current location. Retry near a window / outdoors.",
+            ? "Location permission denied — allow location access and retry, or pin the map manually."
+            : "Could not get GPS — pin the location on the map manually.",
         );
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 },
@@ -267,6 +280,8 @@ export function CompleteTestDriveDialog({
     });
     setPreferredVariant("");
     setFeedbackRemarks("");
+    setGeo(null);
+    setGeoStatus("idle");
     captureLocation();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, bookingMongoId]);
@@ -293,6 +308,10 @@ export function CompleteTestDriveDialog({
       toast.error("Capture the customer photo — it is required at completion.");
       return;
     }
+    if (!geo || geo.lat == null || geo.lng == null) {
+      toast.error("Pin the test drive location on the map (or use GPS).");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -302,9 +321,9 @@ export function CompleteTestDriveDialog({
         executiveRemarks: executiveRemarks.trim() || undefined,
         customerPhoto: customerPhoto.file,
         vehiclePhoto: vehiclePhoto.file,
-        endLat: geo?.lat,
-        endLng: geo?.lng,
-        endAccuracy: geo?.accuracy,
+        endLat: geo.lat,
+        endLng: geo.lng,
+        endAccuracy: geo.accuracy,
       });
       toast.success(
         updated.totalKM != null
@@ -359,59 +378,24 @@ export function CompleteTestDriveDialog({
             </div>
           ) : null}
 
-          {/* Odometer */}
-          <div className="grid sm:grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs">Closing odometer (km) *</Label>
-              <Input
-                type="number"
-                min={0}
-                step={1}
-                inputMode="numeric"
-                value={closingOdometer}
-                onChange={(e) => setClosingOdometer(e.target.value)}
-                className="bg-secondary/50"
-                placeholder="After test drive"
-                disabled={saving}
-              />
-              {log?.openingOdometer != null ? (
-                <p className="text-[10px] text-muted-foreground">Opening reading: {log.openingOdometer} km</p>
-              ) : null}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Completion location</Label>
-              <div className="rounded-md border border-border/50 bg-secondary/30 px-3 py-2 text-xs flex items-center gap-2 min-h-10">
-                {geoStatus === "loading" ? (
-                  <>
-                    <Loader2 className="w-3.5 h-3.5 animate-spin text-primary shrink-0" />
-                    <span className="text-muted-foreground">Getting GPS location…</span>
-                  </>
-                ) : geoStatus === "ok" && geo ? (
-                  <>
-                    <MapPin className="w-3.5 h-3.5 text-green-500 shrink-0" />
-                    <span className="font-mono text-[11px]">
-                      {geo.lat.toFixed(6)}, {geo.lng.toFixed(6)}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                    <span className="text-muted-foreground flex-1">{geoError || "Location not captured yet."}</span>
-                    <button
-                      type="button"
-                      className="text-primary hover:underline inline-flex items-center gap-1 shrink-0"
-                      onClick={captureLocation}
-                      disabled={saving}
-                    >
-                      <RefreshCw className="w-3 h-3" /> Retry
-                    </button>
-                  </>
-                )}
-              </div>
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Closing odometer (km) *</Label>
+            <Input
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              value={closingOdometer}
+              onChange={(e) => setClosingOdometer(e.target.value)}
+              className="bg-secondary/50"
+              placeholder="After test drive"
+              disabled={saving}
+            />
+            {log?.openingOdometer != null ? (
+              <p className="text-[10px] text-muted-foreground">Opening reading: {log.openingOdometer} km</p>
+            ) : null}
           </div>
 
-          {/* Photos */}
           <div className="grid sm:grid-cols-2 gap-3">
             <PhotoField
               id={`${idBase}-customer-photo`}
@@ -430,7 +414,56 @@ export function CompleteTestDriveDialog({
             />
           </div>
 
-          {/* Ratings & feedback */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between gap-2">
+              <Label className="text-xs">Google-pinned location *</Label>
+              <button
+                type="button"
+                className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+                onClick={captureLocation}
+                disabled={saving}
+              >
+                {geoStatus === "loading" ? (
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-3 h-3" />
+                )}
+                Use my location
+              </button>
+            </div>
+            <LocationPinMap
+              key={open ? bookingMongoId : "closed"}
+              value={geo}
+              onChange={(pin) => {
+                setGeo((prev) => ({ ...prev, ...pin }));
+                setGeoStatus("ok");
+                setGeoError("");
+              }}
+              disabled={saving}
+            />
+            {geo ? (
+              <a
+                href={`https://www.google.com/maps?q=${geo.lat},${geo.lng}`}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
+              >
+                <MapPin className="w-3 h-3" />
+                Open in Google Maps ({geo.lat.toFixed(5)}, {geo.lng.toFixed(5)})
+              </a>
+            ) : (
+              <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                {geoError ? (
+                  <>
+                    <AlertTriangle className="w-3 h-3 text-amber-500" /> {geoError}
+                  </>
+                ) : (
+                  "Click the map to drop a pin, or use GPS."
+                )}
+              </p>
+            )}
+          </div>
+
           <div className="rounded-lg border border-primary/25 bg-primary/5 p-4 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-primary">Customer ratings & feedback</p>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -456,7 +489,9 @@ export function CompleteTestDriveDialog({
                   <SelectContent>
                     <SelectItem value="none">— Not specified —</SelectItem>
                     {variantChoices.map((v) => (
-                      <SelectItem key={v} value={v}>{v}</SelectItem>
+                      <SelectItem key={v} value={v}>
+                        {v}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -475,7 +510,6 @@ export function CompleteTestDriveDialog({
             </div>
           </div>
 
-          {/* Executive remarks */}
           <div className="space-y-1.5">
             <Label className="text-xs">Executive remarks</Label>
             <Textarea
@@ -491,7 +525,7 @@ export function CompleteTestDriveDialog({
           <div className="flex gap-2 pt-1">
             <Button
               className="flex-1 bg-green-600 hover:bg-green-700"
-              disabled={saving || !dlVerified || !customerPhoto.file || !closingOdometer.trim()}
+              disabled={saving || !dlVerified || !customerPhoto.file || !closingOdometer.trim() || !geo}
               onClick={() => void handleSubmit()}
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
@@ -502,8 +536,8 @@ export function CompleteTestDriveDialog({
             </Button>
           </div>
           <p className="text-[11px] text-muted-foreground">
-            The completion timestamp, GPS location, photos, DL data, ratings, and remarks are stored on the test
-            drive record.
+            The completion timestamp, Google-pinned location, customer photo, DL data, ratings, and remarks are stored
+            on the test drive record.
           </p>
         </div>
       </DialogContent>

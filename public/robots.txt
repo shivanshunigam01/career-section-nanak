@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /api/
+Disallow: /staff
+Disallow: /customer
 
 Sitemap: https://patliputravinfast.in/sitemap.xml

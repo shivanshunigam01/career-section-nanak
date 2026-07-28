@@ -25,6 +25,8 @@ import vf6GalDetail04 from "@/assets/vf6-gallery/vf6-gallery-detail-04.png";
 import vf6GalDetail05 from "@/assets/vf6-gallery/vf6-gallery-detail-05.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { VF6_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
+import { usePageSeo } from "@/lib/seo";
+import { VF6_SEO } from "@/data/modelSeo";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
@@ -343,6 +345,7 @@ function SpecTable({ title, rows }: { title: string; rows: [string, string, stri
 }
 
 const ModelVF6 = () => {
+  usePageSeo(VF6_SEO);
   const { siteConfig } = usePublicSite();
   const [selectedColor, setSelectedColor] = useState(0);
   const [variant, setVariant] = useState<VariantId>("earth");

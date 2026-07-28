@@ -27,6 +27,7 @@ import {
   parseMetaLeadSpreadsheet,
   type MetaLeadImportRow,
 } from "@/lib/metaLeadImport";
+import { downloadImportErrors } from "@/lib/crmLeadImportExport";
 import { getAdminUser, canPerformAction, canPerformManagerAction } from "@/lib/adminAuth";
 
 const EMPTY_META_LEAD: MetaLeadRow = {
@@ -69,6 +70,10 @@ const AdminMetaLeadCRM = () => {
   const [showAdd, setShowAdd] = useState(false);
   const [importRows, setImportRows] = useState<MetaLeadImportRow[]>([]);
   const [showImport, setShowImport] = useState(false);
+  const [importFailed, setImportFailed] = useState<
+    { row: number; name?: string; mobile?: string; message: string }[]
+  >([]);
+  const [importCreated, setImportCreated] = useState<number | null>(null);
   const [importing, setImporting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -171,6 +176,8 @@ const AdminMetaLeadCRM = () => {
         return;
       }
       setImportRows(rows);
+      setImportFailed([]);
+      setImportCreated(null);
       setShowImport(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not read Excel file.");
@@ -182,13 +189,15 @@ const AdminMetaLeadCRM = () => {
     setImporting(true);
     try {
       const result = await bulkCreateMetaLeads(importRows);
+      setImportCreated(result.created);
+      setImportFailed(result.failed || []);
       if (result.failed.length > 0) {
         toast.warning(`Imported ${result.created} of ${importRows.length}. ${result.failed.length} failed.`);
       } else {
         toast.success(`Imported ${result.created} lead(s).`);
+        setShowImport(false);
+        setImportRows([]);
       }
-      setShowImport(false);
-      setImportRows([]);
       await refreshFromApi();
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -516,7 +525,11 @@ const AdminMetaLeadCRM = () => {
         open={showImport}
         onOpenChange={(open) => {
           setShowImport(open);
-          if (!open) setImportRows([]);
+          if (!open) {
+            setImportRows([]);
+            setImportFailed([]);
+            setImportCreated(null);
+          }
         }}
       >
         <DialogContent className="bg-card border-border max-w-lg">
@@ -525,6 +538,7 @@ const AdminMetaLeadCRM = () => {
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
             {importRows.length} valid row(s) ready to import. Name and Mobile are required per row.
+            Duplicate open leads are rejected.
           </p>
           <div className="max-h-48 overflow-y-auto rounded border border-border/50 bg-secondary/20 p-2 text-xs space-y-1">
             {importRows.slice(0, 8).map((r, i) => (
@@ -537,16 +551,41 @@ const AdminMetaLeadCRM = () => {
               <p className="text-muted-foreground">…and {importRows.length - 8} more</p>
             )}
           </div>
+          {importCreated != null ? (
+            <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-xs space-y-2">
+              <p>
+                Created {importCreated} of {importRows.length}.
+                {importFailed.length ? ` ${importFailed.length} failed.` : ""}
+              </p>
+              {importFailed.length ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => downloadImportErrors(importFailed, "meta-import-errors.xlsx")}
+                >
+                  <Download className="w-3.5 h-3.5 mr-1.5" /> Download error details
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
           <div className="flex gap-3 pt-2">
+            {importCreated == null ? (
+              <Button
+                onClick={() => void runBulkImport()}
+                className="bg-primary text-primary-foreground flex-1"
+                disabled={importing}
+              >
+                {importing ? "Importing…" : `Import ${importRows.length} lead(s)`}
+              </Button>
+            ) : null}
             <Button
-              onClick={() => void runBulkImport()}
-              className="bg-primary text-primary-foreground flex-1"
+              variant="outline"
+              className="flex-1"
+              onClick={() => setShowImport(false)}
               disabled={importing}
             >
-              {importing ? "Importing…" : `Import ${importRows.length} lead(s)`}
-            </Button>
-            <Button variant="outline" className="flex-1" onClick={() => setShowImport(false)} disabled={importing}>
-              Cancel
+              {importCreated != null ? "Close" : "Cancel"}
             </Button>
           </div>
         </DialogContent>

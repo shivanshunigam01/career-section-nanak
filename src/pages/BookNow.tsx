@@ -12,6 +12,8 @@ import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
 import { hasApi, isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { formatApiErrors } from "@/lib/api";
+import { usePageSeo } from "@/lib/seo";
+import { breadcrumbSchema } from "@/lib/seoSchemas";
 import { submitPublicLead } from "@/lib/publicFormsApi";
 import { DEFAULT_VF7_TRIM, DEFAULT_MPV7_TRIM, DEFAULT_LIMO_GREEN_TRIM, leadModelLabel } from "@/data/vinfastModels";
 import { ModelTrimSelect } from "@/components/ModelTrimSelect";
@@ -39,6 +41,25 @@ const getLocalISODate = () => {
 };
 
 const BookNowPage = () => {
+  usePageSeo({
+    title: "Book Your VinFast Online in Bihar | VF6, VF7 & MPV7 Booking",
+    description:
+      "Book your VinFast VF6, VF7 or MPV7 online with Patliputra VinFast — Bihar's authorised dealer. Simple booking, transparent pricing and doorstep support in Patna.",
+    keywords: [
+      "VinFast booking",
+      "Book VinFast VF6",
+      "VinFast VF7 booking",
+      "Buy electric SUV Patna",
+      "Buy VinFast Bihar",
+    ],
+    canonicalPath: "/book-now",
+    schemas: [
+      breadcrumbSchema([
+        { name: "Home", path: "/" },
+        { name: "Book Now", path: "/book-now" },
+      ]),
+    ],
+  });
   const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const paymentCardRef = useRef<HTMLDivElement | null>(null);

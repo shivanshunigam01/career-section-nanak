@@ -21,6 +21,8 @@ import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
+import { usePageSeo } from "@/lib/seo";
+import { MPV7_SEO } from "@/data/modelSeo";
 import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import mpv7HeroPagePortrait from "@/assets/mpv7-hero-page-portrait.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
@@ -70,6 +72,7 @@ const inputClass =
   "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
 
 const ModelMPV7 = () => {
+  usePageSeo(MPV7_SEO);
   const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();

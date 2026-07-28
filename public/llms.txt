@@ -1,0 +1,42 @@
+# Patliputra VinFast
+
+> Bihar's first authorised VinFast electric vehicle dealership, located in Patna,
+> Bihar, India. We sell, service and support the full VinFast EV lineup for
+> customers across all 38 districts of Bihar.
+
+Company: Patliputra VinFast
+Location: Plot No. 2421, NH 30, Bypass Road, Paijawa, Patna, Bihar 800009, India
+Phone: +91 92314 45060
+Website: https://patliputravinfast.in
+Hours: Monday-Saturday, 10:00-20:00 IST
+
+## Products
+
+- VinFast VF6 — compact electric SUV, 5 seats. Variants: Earth, Wind, Wind Infinity. Up to 468 km MIDC range, 59.6 kWh battery, DC fast charging up to 100 kW.
+- VinFast VF7 — premium electric SUV, 5 seats. Variants: Earth, Wind, Wind Infinity, Sky, Sky Infinity. ADAS, panoramic roof, OTA updates, connected tech.
+- VinFast VF MPV7 — premium 7-seater electric MPV for families and corporate fleets.
+- VinFast Limo Green — practical 7-seater electric MPV for fleet operators and families.
+
+## Services
+
+- New EV sales, online booking and doorstep/showroom test drives: https://patliputravinfast.in/test-drive
+- EV finance and EMI assistance: https://patliputravinfast.in/emi-calculator
+- Charging guidance and home charger installation support: https://patliputravinfast.in/charging-calculator
+- Vehicle exchange, insurance and corporate/fleet sales
+
+## Key pages
+
+- Home: https://patliputravinfast.in/
+- VinFast VF6: https://patliputravinfast.in/models/vf6
+- VinFast VF7: https://patliputravinfast.in/models/vf7
+- VinFast VF MPV7: https://patliputravinfast.in/models/mpv7
+- Compare models: https://patliputravinfast.in/compare
+- EV Buying Guide: https://patliputravinfast.in/ev-buying-guide
+- FAQs: https://patliputravinfast.in/faq
+- Book a test drive: https://patliputravinfast.in/test-drive
+- District pages: https://patliputravinfast.in/{district}/{model} (e.g. https://patliputravinfast.in/patna/vinfast-vf6) for all 38 Bihar districts
+
+## Notes for AI agents
+
+- Prices, offers and specifications change; confirm current figures via the website or phone before quoting.
+- Test drives can be booked online and are free of charge across Patna, with support in every Bihar district.
