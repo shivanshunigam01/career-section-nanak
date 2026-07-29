@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
   MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight, Pencil,
-  History, Trophy, ShieldAlert, Trash2, Download, Upload, FileSpreadsheet,
+  History, Trophy, ShieldAlert, Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -14,17 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, isFieldStaffUser, canPerformAction, canPerformManagerAction } from "@/lib/adminAuth";
@@ -48,17 +37,6 @@ import {
   type PvCrmLeadDateField,
   type OpportunityDuplicatesReport,
 } from "@/lib/pvLeadCrmApi";
-import {
-  bulkDeleteCrmLeads,
-  downloadCrmLeadImportTemplate,
-  downloadImportErrors,
-  exportCrmLeadsExcel,
-  importCrmLeads,
-  parseCrmLeadSpreadsheet,
-  type CrmImportFollowUpRow,
-  type CrmImportLeadRow,
-  type CrmImportResult,
-} from "@/lib/crmLeadImportExport";
 import { lookupCrmCustomerByMobile, type CustomerHistory } from "@/lib/crmCustomerApi";
 import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog";
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
@@ -92,7 +70,6 @@ export default function AdminCrmLeads() {
   const canAssignLeads = canPerformManagerAction(adminUser, "crm_leads", "assign");
   const canEditDetails = canPerformManagerAction(adminUser, "crm_leads", "update");
   const canDelete = canPerformManagerAction(adminUser, "crm_leads", "delete");
-  const canExport = canPerformAction(adminUser, "crm_leads", "export");
 
   const [leads, setLeads] = useState<PvCrmLead[]>([]);
   const [page, setPage] = useState(1);
@@ -111,16 +88,6 @@ export default function AdminCrmLeads() {
   const [detail, setDetail] = useState<PvCrmLeadDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [showBulkDelete, setShowBulkDelete] = useState(false);
-  const [bulkDeleting, setBulkDeleting] = useState(false);
-  const [showImport, setShowImport] = useState(false);
-  const [importLeads, setImportLeads] = useState<CrmImportLeadRow[]>([]);
-  const [importFollowUps, setImportFollowUps] = useState<CrmImportFollowUpRow[]>([]);
-  const [importing, setImporting] = useState(false);
-  const [importResult, setImportResult] = useState<CrmImportResult | null>(null);
-  const [exporting, setExporting] = useState(false);
 
   const [stageDraft, setStageDraft] = useState("");
   const [stageReason, setStageReason] = useState("");
@@ -480,99 +447,6 @@ export default function AdminCrmLeads() {
     }
   };
 
-  const toggleSelectLead = (id: string, checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (checked) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  };
-
-  const toggleSelectAllPage = (checked: boolean) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      for (const lead of safeLeads) {
-        if (checked) next.add(lead._id);
-        else next.delete(lead._id);
-      }
-      return next;
-    });
-  };
-
-  const handleBulkDelete = async () => {
-    if (!canDelete || selectedIds.size === 0) return;
-    setBulkDeleting(true);
-    try {
-      const result = await bulkDeleteCrmLeads([...selectedIds]);
-      toast.success(`Deleted ${result.deleted} lead(s)`);
-      setSelectedIds(new Set());
-      setShowBulkDelete(false);
-      void loadLeads();
-    } catch (e) {
-      toast.error(formatApiErrors(e));
-    } finally {
-      setBulkDeleting(false);
-    }
-  };
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      const q: Record<string, string> = {};
-      if (filterStatus !== "all") q.status = filterStatus;
-      if (filterSource !== "all") q.source = filterSource;
-      if (filterExecutive !== "all") q.assignedTo = filterExecutive;
-      if (search.trim()) q.search = search.trim();
-      await exportCrmLeadsExcel(q);
-      toast.success("Excel export downloaded");
-    } catch (e) {
-      toast.error(formatApiErrors(e));
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleImportFile = async (file: File | null) => {
-    if (!file) return;
-    try {
-      const parsed = await parseCrmLeadSpreadsheet(file);
-      if (!parsed.leads.length) {
-        toast.error("No valid lead rows found. Name and Mobile are required.");
-        return;
-      }
-      setImportLeads(parsed.leads);
-      setImportFollowUps(parsed.followUps);
-      setImportResult(null);
-      setShowImport(true);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Could not read Excel file.");
-    }
-  };
-
-  const runImport = async () => {
-    if (!importLeads.length) return;
-    setImporting(true);
-    try {
-      const result = await importCrmLeads(importLeads, importFollowUps);
-      setImportResult(result);
-      if (result.failed.length) {
-        toast.warning(
-          `Imported ${result.created} lead(s), ${result.followUpsCreated ?? 0} follow-up(s). ${result.failed.length} failed.`,
-        );
-      } else {
-        toast.success(
-          `Imported ${result.created} lead(s) and ${result.followUpsCreated ?? 0} follow-up(s).`,
-        );
-      }
-      void loadLeads();
-    } catch (e) {
-      toast.error(formatApiErrors(e));
-    } finally {
-      setImporting(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -590,46 +464,6 @@ export default function AdminCrmLeads() {
           {canCreate ? (
             <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
               <Plus className="w-4 h-4 mr-2" /> Add Lead
-            </Button>
-          ) : null}
-          {canCreate ? (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => downloadCrmLeadImportTemplate()}
-              >
-                <FileSpreadsheet className="w-4 h-4 mr-2" /> Template
-              </Button>
-              <Button variant="outline" size="sm" className="relative overflow-hidden">
-                <Upload className="w-4 h-4 mr-2" /> Import Excel
-                <input
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  className="absolute inset-0 opacity-0 cursor-pointer"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0] || null;
-                    e.target.value = "";
-                    void handleImportFile(f);
-                  }}
-                />
-              </Button>
-            </>
-          ) : null}
-          {canExport ? (
-            <Button variant="outline" size="sm" disabled={exporting} onClick={() => void handleExport()}>
-              {exporting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Download className="w-4 h-4 mr-2" />}
-              Export Excel
-            </Button>
-          ) : null}
-          {canDelete && selectedIds.size > 0 ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-destructive border-destructive/40 hover:bg-destructive/10"
-              onClick={() => setShowBulkDelete(true)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" /> Delete selected ({selectedIds.size})
             </Button>
           ) : null}
           {canAssignLeads ? (
@@ -710,11 +544,14 @@ export default function AdminCrmLeads() {
               <SelectValue placeholder="Staff" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All staff</SelectItem>
+              <SelectItem value="all">All (my team)</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
               {staffUsers.map((e) => (
                 <SelectItem key={e._id} value={e._id}>
                   {e.name}{e.designationLabel ? ` · ${e.designationLabel}` : ""}
+                  {adminUser && (e._id === adminUser._id || e.email?.toLowerCase() === adminUser.email?.toLowerCase())
+                    ? " · Me"
+                    : ""}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -805,41 +642,13 @@ export default function AdminCrmLeads() {
         </Card>
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {canDelete && safeLeads.length > 0 ? (
-            <div className="sm:col-span-2 xl:col-span-3 flex items-center gap-2 text-sm">
-              <Checkbox
-                checked={safeLeads.every((l) => selectedIds.has(l._id)) && safeLeads.length > 0}
-                onCheckedChange={(c) => toggleSelectAllPage(Boolean(c))}
-                id="select-all-leads"
-              />
-              <label htmlFor="select-all-leads" className="text-muted-foreground cursor-pointer">
-                Select all on this page
-              </label>
-            </div>
-          ) : null}
           {safeLeads.map((lead) => (
             <Card
               key={lead._id}
-              className={cn(
-                "p-4 border-border/50 bg-card/50 cursor-pointer hover:border-primary/40 transition-colors relative",
-                selectedIds.has(lead._id) && "border-primary/50 bg-primary/5",
-              )}
+              className="p-4 border-border/50 bg-card/50 cursor-pointer hover:border-primary/40 transition-colors"
               onClick={() => void openLead(lead)}
             >
-              {canDelete ? (
-                <div
-                  className="absolute top-3 left-3 z-10"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                >
-                  <Checkbox
-                    checked={selectedIds.has(lead._id)}
-                    onCheckedChange={(c) => toggleSelectLead(lead._id, Boolean(c))}
-                    aria-label={`Select ${lead.name}`}
-                  />
-                </div>
-              ) : null}
-              <div className={cn("flex items-start justify-between gap-2 mb-2", canDelete && "pl-6")}>
+              <div className="flex items-start justify-between gap-2 mb-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-foreground truncate">{lead.name}</p>
                   <p className="text-[10px] font-mono text-muted-foreground mt-0.5">
@@ -1454,104 +1263,6 @@ export default function AdminCrmLeads() {
           onCreated={() => void loadLeads()}
         />
       ) : null}
-
-      <Dialog
-        open={showImport}
-        onOpenChange={(open) => {
-          setShowImport(open);
-          if (!open) {
-            setImportLeads([]);
-            setImportFollowUps([]);
-            setImportResult(null);
-          }
-        }}
-      >
-        <DialogContent className="bg-card border-border max-w-lg">
-          <DialogHeader>
-            <DialogTitle className="font-display">Import CRM leads</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            {importLeads.length} lead row(s)
-            {importFollowUps.length ? ` · ${importFollowUps.length} follow-up row(s)` : ""}.
-            Duplicate mobiles (open leads) will be rejected.
-          </p>
-          <div className="max-h-40 overflow-y-auto rounded border border-border/50 bg-secondary/20 p-2 text-xs space-y-1">
-            {importLeads.slice(0, 8).map((r, i) => (
-              <p key={`${r.mobile}-${i}`}>
-                {i + 1}. {r.name} — {r.mobile}
-                {r.model ? ` (${r.model})` : ""}
-              </p>
-            ))}
-            {importLeads.length > 8 ? (
-              <p className="text-muted-foreground">…and {importLeads.length - 8} more</p>
-            ) : null}
-          </div>
-          {importResult ? (
-            <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-xs space-y-2">
-              <p>
-                Created {importResult.created} lead(s), {importResult.followUpsCreated ?? 0} follow-up(s).
-                {importResult.failed.length ? ` ${importResult.failed.length} failed.` : ""}
-              </p>
-              {importResult.failed.length ? (
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() =>
-                    downloadImportErrors(importResult.failed, "crm-import-errors.xlsx")
-                  }
-                >
-                  <Download className="w-3.5 h-3.5 mr-1.5" /> Download error details
-                </Button>
-              ) : null}
-            </div>
-          ) : null}
-          <div className="flex gap-3 pt-1">
-            {!importResult ? (
-              <Button
-                className="bg-primary text-primary-foreground flex-1"
-                disabled={importing}
-                onClick={() => void runImport()}
-              >
-                {importing ? "Importing…" : `Import ${importLeads.length} lead(s)`}
-              </Button>
-            ) : null}
-            <Button
-              variant="outline"
-              className="flex-1"
-              disabled={importing}
-              onClick={() => setShowImport(false)}
-            >
-              {importResult ? "Close" : "Cancel"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <AlertDialog open={showBulkDelete} onOpenChange={setShowBulkDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedIds.size} selected lead(s)?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently deletes the selected junk leads along with their follow-ups and stage
-              history. This cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={bulkDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              disabled={bulkDeleting}
-              onClick={(e) => {
-                e.preventDefault();
-                void handleBulkDelete();
-              }}
-            >
-              {bulkDeleting ? "Deleting…" : "Delete permanently"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

@@ -207,9 +207,9 @@ const AdminLogin = () => {
 
           <p className="mt-6 text-center text-xs text-muted-foreground space-y-1">
             <span className="block">
-              Employee / CRM access?{" "}
+              Staff / CRM access?{" "}
               <Link to="/staff/login" className="text-primary hover:underline">
-                Employee Login
+                Login as staff
               </Link>
             </span>
             <span className="block">

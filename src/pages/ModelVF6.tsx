@@ -1,12 +1,10 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
 import { Check, Download, Gauge, Sparkles, Timer } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import SeoHead from "@/components/seo/SeoHead";
 import vf6Hero from "@/assets/vf6-product-hero.png";
 import vf6HeroPagePortrait from "@/assets/vf6-hero-page-portrait.png";
 import vf6WhyInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
@@ -24,9 +22,8 @@ import vf6GalDetail03 from "@/assets/vf6-gallery/vf6-gallery-detail-03.png";
 import vf6GalDetail04 from "@/assets/vf6-gallery/vf6-gallery-detail-04.png";
 import vf6GalDetail05 from "@/assets/vf6-gallery/vf6-gallery-detail-05.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { usePageSeo } from "@/hooks/usePageSeo";
 import { VF6_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
-import { usePageSeo } from "@/lib/seo";
-import { VF6_SEO } from "@/data/modelSeo";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
@@ -345,10 +342,17 @@ function SpecTable({ title, rows }: { title: string; rows: [string, string, stri
 }
 
 const ModelVF6 = () => {
-  usePageSeo(VF6_SEO);
   const { siteConfig } = usePublicSite();
   const [selectedColor, setSelectedColor] = useState(0);
   const [variant, setVariant] = useState<VariantId>("earth");
+
+  usePageSeo({
+    title: "VinFast VF6 Price, Specs & Test Drive in Bihar | Patliputra VinFast",
+    description:
+      "Explore VinFast VF6 electric SUV — variants, features, range and booking at Patliputra VinFast, Patna. Serve customers across Bihar.",
+    keywords: ["VinFast VF6", "VF6 price Bihar", "VF6 test drive Patna", "electric SUV Bihar"],
+    canonical: "/models/vf6",
+  });
 
   useEffect(() => {
     // Preload all colour images so palette switches feel instant.
@@ -360,28 +364,11 @@ const ModelVF6 = () => {
 
   const stats = variantHeroStats[variant];
   const vMeta = vf6Variants.find((v) => v.id === variant)!;
-  const location = useLocation();
   const displayExShowroom =
     variant === "earth" ? siteConfig.vf6Price : variantExShowroomPrice[variant];
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
-      <SeoHead
-        title="VinFast VF6 Price Bihar | Earth, Wind, Wind Infinity | Patliputra VinFast"
-        description="Buy VinFast VF6 in Bihar — Earth, Wind and Wind Infinity. Price, range, features, booking and test drive from Patliputra VinFast across 38 districts."
-        path={location.pathname.startsWith("/vinfast-") ? location.pathname : "/vinfast-vf6"}
-        keywords={[
-          "VinFast VF6",
-          "VinFast VF6 Price Bihar",
-          "VinFast VF6 Price Patna",
-          "Buy VinFast VF6",
-          "VinFast VF6 Earth",
-          "VinFast VF6 Wind",
-          "VinFast VF6 Wind Infinity",
-          "Best Electric SUV under 20 lakh",
-        ]}
-        type="product"
-      />
       <Navbar />
 
       <section

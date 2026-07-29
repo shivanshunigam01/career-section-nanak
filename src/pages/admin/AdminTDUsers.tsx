@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Users, Search, RefreshCw, Loader2, Plus, Edit2, UserCircle2, Trash2, ShieldCheck, Eye, EyeOff
 } from "lucide-react";
@@ -31,8 +30,6 @@ import {
 } from "@/lib/staffRoles";
 import { MODULE_GROUPS, modulesForGroup, actionToken, ACTION_LABELS, allActionTokensForModules, type AdminModuleKey, type AdminModuleAction } from "@/lib/adminModules";
 import { getAdminUser, canPerformManagerAction } from "@/lib/adminAuth";
-import { StaffRolesPanel } from "@/components/admin/StaffRolesPanel";
-import { fetchStaffRoles, type StaffRoleRecord } from "@/lib/staffRolesApi";
 
 type StaffUser = {
   _id: string;
@@ -43,8 +40,6 @@ type StaffUser = {
   designationLabel?: string;
   isCustomDesignation?: boolean;
   reportsTo?: string | { _id: string; name?: string } | null;
-  staffRoleId?: string | null;
-  staffRole?: { _id: string; name?: string; authRole?: string } | null;
   active: boolean;
   allowedModules?: string[];
   allowedActions?: string[];
@@ -54,7 +49,6 @@ type StaffUser = {
 /** Sentinel value in the designation dropdown for admin-typed custom positions. */
 const OTHER_DESIGNATION = "__other__";
 const NO_MANAGER = "__none__";
-const NO_STAFF_ROLE = "__none__";
 
 const emptyForm = {
   name: "",
@@ -64,7 +58,6 @@ const emptyForm = {
   customDesignation: "",
   accessLevel: "executive" as "executive" | "manager",
   reportsTo: NO_MANAGER as string,
-  staffRoleId: NO_STAFF_ROLE as string,
   allowedModules: [] as AdminModuleKey[],
   allowedActions: [] as string[],
   active: true,
@@ -72,7 +65,6 @@ const emptyForm = {
 
 const DESIGNATION_COLORS: Record<string, string> = {
   sales_executive: "bg-blue-400/10 text-blue-400 border-blue-400/20",
-  cre: "bg-cyan-400/10 text-cyan-400 border-cyan-400/20",
   sales_manager: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
   sales_head: "bg-violet-400/10 text-violet-400 border-violet-400/20",
   branch_manager: "bg-purple-400/10 text-purple-400 border-purple-400/20",
@@ -100,8 +92,6 @@ export default function AdminTDUsers() {
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string>>({});
   const [revealLoadingId, setRevealLoadingId] = useState<string | null>(null);
   const [showFormPassword, setShowFormPassword] = useState(false);
-  const [staffRoles, setStaffRoles] = useState<StaffRoleRecord[]>([]);
-  const [mainTab, setMainTab] = useState("users");
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -117,16 +107,7 @@ export default function AdminTDUsers() {
     }
   }, [filterDesignation]);
 
-  const loadStaffRoles = useCallback(async () => {
-    try {
-      setStaffRoles(await fetchStaffRoles(true));
-    } catch {
-      /* roles optional for user form */
-    }
-  }, []);
-
   useEffect(() => { void fetchUsers(); }, [fetchUsers]);
-  useEffect(() => { void loadStaffRoles(); }, [loadStaffRoles]);
 
   const filtered = users.filter((u) => {
     if (!search) return true;
@@ -137,7 +118,6 @@ export default function AdminTDUsers() {
   const openCreate = () => {
     setForm(emptyForm);
     setShowFormPassword(true);
-    void loadStaffRoles();
     setShowForm(true);
   };
 
@@ -149,10 +129,6 @@ export default function AdminTDUsers() {
         : typeof user.reportsTo === "string"
           ? user.reportsTo
           : NO_MANAGER;
-    const roleId =
-      (typeof user.staffRoleId === "string" && user.staffRoleId) ||
-      user.staffRole?._id ||
-      NO_STAFF_ROLE;
     setForm({
       _id: user._id,
       name: user.name,
@@ -162,13 +138,11 @@ export default function AdminTDUsers() {
       customDesignation: isKnown ? "" : user.designation,
       accessLevel: user.role === "manager" ? "manager" : "executive",
       reportsTo: reportsToId || NO_MANAGER,
-      staffRoleId: roleId,
       allowedModules: (user.allowedModules ?? []) as AdminModuleKey[],
       allowedActions: user.allowedActions ?? [],
       active: user.active,
     });
     setShowFormPassword(true);
-    void loadStaffRoles();
     setShowForm(true);
 
     // Prefill the current password (same as name/email) when a recoverable copy exists.
@@ -183,25 +157,6 @@ export default function AdminTDUsers() {
     } catch {
       // Eye / preview stays empty if the viewer lacks permission or no plain copy exists yet.
     }
-  };
-
-  const applyStaffRole = (roleId: string) => {
-    if (roleId === NO_STAFF_ROLE) {
-      setForm((f) => ({ ...f, staffRoleId: NO_STAFF_ROLE }));
-      return;
-    }
-    const role = staffRoles.find((r) => r._id === roleId);
-    if (!role) {
-      setForm((f) => ({ ...f, staffRoleId: roleId }));
-      return;
-    }
-    setForm((f) => ({
-      ...f,
-      staffRoleId: roleId,
-      accessLevel: role.authRole === "manager" ? "manager" : "executive",
-      allowedModules: (role.allowedModules || []) as AdminModuleKey[],
-      allowedActions: role.allowedActions || [],
-    }));
   };
 
   const toggleModule = (key: AdminModuleKey, checked: boolean) => {
@@ -275,10 +230,9 @@ export default function AdminTDUsers() {
         allowedModules: form.allowedModules,
         allowedActions: form.allowedModules.length ? form.allowedActions : [],
         reportsTo: form.reportsTo === NO_MANAGER ? null : form.reportsTo,
-        staffRoleId: form.staffRoleId === NO_STAFF_ROLE ? null : form.staffRoleId,
       };
       // Custom positions carry an explicit access level; standard ones derive it from the designation.
-      if (isOtherDesignation || form.staffRoleId !== NO_STAFF_ROLE) payload.role = form.accessLevel;
+      if (isOtherDesignation) payload.role = form.accessLevel;
       if (form.password.trim()) payload.password = form.password.trim();
 
       if (form._id) {
@@ -384,25 +338,16 @@ export default function AdminTDUsers() {
       </div>
 
       <Card className="p-4 border-primary/20 bg-primary/5 text-sm">
-        <p className="font-medium text-foreground mb-1">Employee login</p>
+        <p className="font-medium text-foreground mb-1">Staff login</p>
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Every employee signs in at <span className="font-mono text-foreground">/staff/login</span> with their email and password.
+          Every staff user signs in at <span className="font-mono text-foreground">/staff/login</span> with their email and password.
           Admins use <span className="font-mono text-foreground">/admin/login</span>.
-          Create reusable <strong className="text-foreground">Roles</strong> with permissions, then assign a role when adding an employee — permissions apply automatically.
+          Assigned test drives appear under <strong className="text-foreground">My Test Drives</strong>.
+          Sales Executives land on that page automatically; managers and above also see full TD Management.
+          Pick <strong className="text-foreground">Other (custom position)</strong> to add any designation, and use{" "}
+          <strong className="text-foreground">Module access</strong> to control exactly which sections a user sees after login.
         </p>
       </Card>
-
-      <Tabs value={mainTab} onValueChange={setMainTab} className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="users">Users</TabsTrigger>
-          <TabsTrigger value="roles">Roles & permissions</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="roles" className="space-y-4">
-          <StaffRolesPanel canCreate={canCreate} canUpdate={canUpdate} canDelete={canDelete} />
-        </TabsContent>
-
-        <TabsContent value="users" className="space-y-4">
 
       <Card className="p-4 border-border/50 bg-card/50">
         <div className="flex flex-col sm:flex-row gap-3">
@@ -465,11 +410,6 @@ export default function AdminTDUsers() {
                   <Badge variant="outline" className={DESIGNATION_COLORS[user.designation] || CUSTOM_DESIGNATION_COLOR}>
                     {user.designationLabel || designationLabel(user.designation)}
                   </Badge>
-                  {user.staffRole?.name ? (
-                    <Badge variant="outline" className="border-indigo-400/30 text-indigo-400">
-                      Role: {user.staffRole.name}
-                    </Badge>
-                  ) : null}
                   {(user.allowedModules?.length ?? 0) > 0 && (
                     <Badge variant="outline" className="border-primary/30 text-primary">
                       <ShieldCheck className="mr-1 h-3 w-3" />
@@ -532,9 +472,6 @@ export default function AdminTDUsers() {
         </div>
       )}
 
-        </TabsContent>
-      </Tabs>
-
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="sm:max-w-lg max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
@@ -572,26 +509,9 @@ export default function AdminTDUsers() {
               {form._id ? (
                 <p className="text-[11px] text-muted-foreground">
                   Shown like name/email when a saved password exists. Edit and save to reset login credentials.
-                  Employees sign in at <span className="font-mono">/staff/login</span>.
+                  Staff sign in at <span className="font-mono">/staff/login</span>.
                 </p>
               ) : null}
-            </div>
-            <div className="space-y-2">
-              <Label>Permission role</Label>
-              <Select value={form.staffRoleId} onValueChange={applyStaffRole}>
-                <SelectTrigger><SelectValue placeholder="Select role" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={NO_STAFF_ROLE}>— No role template —</SelectItem>
-                  {staffRoles.map((r) => (
-                    <SelectItem key={r._id} value={r._id}>
-                      {r.name} ({r.authRole})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-[11px] text-muted-foreground">
-                Selecting a role fills module permissions below. You can still tweak them before saving.
-              </p>
             </div>
             <div className="space-y-2">
               <Label>Role / designation</Label>
