@@ -27,7 +27,6 @@ import {
   CompleteTestDriveDialog,
   TestDriveCompletionSummary,
 } from "@/components/admin/CompleteTestDriveDialog";
-import { UpdateCompletionMediaDialog } from "@/components/admin/UpdateCompletionMediaDialog";
 import { AddCrmLeadDialog } from "@/components/admin/AddCrmLeadDialog";
 import { DrivingLicenceVerify } from "@/components/admin/DrivingLicenceVerify";
 
@@ -115,7 +114,6 @@ export default function AdminTDMyBookings() {
   const [openingOdometer, setOpeningOdometer] = useState("");
   const [closingOdometer, setClosingOdometer] = useState("");
   const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  const [updateMediaOpen, setUpdateMediaOpen] = useState(false);
   const [showAddLead, setShowAddLead] = useState(false);
 
   const isExecutive = isFieldStaffUser(adminUser);
@@ -621,12 +619,7 @@ export default function AdminTDMyBookings() {
                           </div>
                         </div>
                       ) : null}
-                      {tdLog ? (
-                        <TestDriveCompletionSummary
-                          log={tdLog}
-                          onEdit={() => setUpdateMediaOpen(true)}
-                        />
-                      ) : null}
+                      {tdLog ? <TestDriveCompletionSummary log={tdLog} /> : null}
                       <div className="rounded-lg border border-border/50 bg-muted/20 px-4 py-3 text-xs text-muted-foreground">
                         Test drive completed — customer added to your Leads (source: Test Drive). Capture feedback below to update their status.
                       </div>
@@ -673,17 +666,6 @@ export default function AdminTDMyBookings() {
           onCompleted={handleDriveCompleted}
         />
       ) : null}
-
-      <UpdateCompletionMediaDialog
-        open={updateMediaOpen}
-        onOpenChange={setUpdateMediaOpen}
-        log={tdLog}
-        onUpdated={async () => {
-          if (!selected) return;
-          const log = await fetchTdLogByBooking(selected._id);
-          setTdLog(log);
-        }}
-      />
 
       <Dialog open={!!rescheduleDialog} onOpenChange={(o) => !o && setRescheduleDialog(null)}>
         <DialogContent className="bg-card border-border max-w-md">

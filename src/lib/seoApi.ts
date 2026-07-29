@@ -1,8 +1,16 @@
 import { publicGet } from "@/lib/api";
 
+export type GlobalSeo = {
+  siteUrl: string;
+  defaultMetaTitle: string;
+  defaultMetaDescription: string;
+  googleSiteVerification: string | null;
+  schemas: unknown[];
+};
+
 export type SeoDistrict = { name: string; slug: string };
 
-export type SeoModelSummary = {
+export type SeoModel = {
   key: string;
   slug: string;
   name: string;
@@ -12,14 +20,10 @@ export type SeoModelSummary = {
   variants: string[];
 };
 
-/** Alias used by DistrictLanding (CRM commit). */
-export type SeoModel = SeoModelSummary;
+export type DistrictPageFaq = { question: string; answer: string };
+export type DistrictPageSection = { heading?: string; body?: string };
 
-export type SeoFaq = { question: string; answer: string };
-
-export type SeoSection = { heading: string; body: string };
-
-export type DistrictPagePayload = {
+export type DistrictLanding = {
   districtSlug: string;
   districtName: string;
   modelKey: string;
@@ -29,24 +33,11 @@ export type DistrictPagePayload = {
   metaDescription: string;
   h1: string;
   intro: string;
-  sections: SeoSection[];
+  sections: DistrictPageSection[];
   keywords: string[];
-  faqs: SeoFaq[];
-  canonicalUrl?: string;
-  schemas?: Record<string, unknown>[];
-};
-
-/** Alias / extended shape used by DistrictLanding. */
-export type DistrictPageData = DistrictPagePayload & {
-  _id?: string;
-};
-
-export type GlobalSeoPayload = {
-  siteUrl: string;
-  defaultMetaTitle: string;
-  defaultMetaDescription: string;
-  googleSiteVerification: string | null;
-  schemas: Record<string, unknown>[];
+  faqs: DistrictPageFaq[];
+  canonicalUrl: string;
+  schemas: unknown[];
 };
 
 export type DistrictPageListItem = {
@@ -59,7 +50,7 @@ export type DistrictPageListItem = {
 };
 
 export function fetchGlobalSeo() {
-  return publicGet<GlobalSeoPayload>("/public/seo/global");
+  return publicGet<GlobalSeo>("/public/seo/global");
 }
 
 export function fetchSeoDistricts() {
@@ -67,13 +58,7 @@ export function fetchSeoDistricts() {
 }
 
 export function fetchSeoModels() {
-  return publicGet<SeoModelSummary[]>("/public/seo/models");
-}
-
-export function fetchDistrictPage(districtSlug: string, modelSlug: string) {
-  return publicGet<DistrictPagePayload>(
-    `/public/seo/district-pages/${encodeURIComponent(districtSlug)}/${encodeURIComponent(modelSlug)}`,
-  );
+  return publicGet<SeoModel[]>("/public/seo/models");
 }
 
 export function fetchDistrictPageList(params?: { district?: string; model?: string }) {
@@ -84,7 +69,8 @@ export function fetchDistrictPageList(params?: { district?: string; model?: stri
   return publicGet<DistrictPageListItem[]>(`/public/seo/district-pages${qs ? `?${qs}` : ""}`);
 }
 
-/** Route path for a model's main product page from its SEO catalog key. */
-export function modelPagePath(modelKey: string): string {
-  return `/models/${modelKey}`;
+export function fetchDistrictLanding(districtSlug: string, modelSlug: string) {
+  return publicGet<DistrictLanding>(
+    `/public/seo/district-pages/${encodeURIComponent(districtSlug)}/${encodeURIComponent(modelSlug)}`,
+  );
 }

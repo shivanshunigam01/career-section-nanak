@@ -27,8 +27,7 @@ import {
 } from "@/data/compareCatalog";
 import { hasApi } from "@/lib/apiConfig";
 import { usePublicOffers } from "@/hooks/usePublicOffers";
-import { usePageSeo } from "@/lib/seo";
-import { breadcrumbSchema } from "@/lib/seoSchemas";
+import { usePageSeo } from "@/hooks/usePageSeo";
 
 type Slot = CompareSelection | null;
 
@@ -51,24 +50,11 @@ function VsBadge() {
 
 const ComparePage = () => {
   usePageSeo({
-    title: "Compare VinFast Models & Variants | VF6 vs VF7 vs MPV7 — Bihar",
+    title: "Compare VinFast Models | VF6 VF7 MPV7 | Patliputra VinFast",
     description:
-      "Compare VinFast VF6, VF7, MPV7 and Limo Green variants side by side — range, ADAS, features, dimensions and prices — and pick the right electric vehicle for Bihar.",
-    keywords: [
-      "Compare VinFast models",
-      "VinFast VF6 vs VF7",
-      "VF7 variants comparison",
-      "VF6 Earth vs Wind vs Wind Infinity",
-      "Best electric SUV comparison Bihar",
-      "Electric SUV comparison India",
-    ],
-    canonicalPath: "/compare",
-    schemas: [
-      breadcrumbSchema([
-        { name: "Home", path: "/" },
-        { name: "Compare Models", path: "/compare" },
-      ]),
-    ],
+      "Compare VinFast electric models side by side — specs, variants and features. Patliputra VinFast, Bihar.",
+    keywords: ["compare VinFast", "VF6 vs VF7", "electric SUV compare"],
+    canonical: "/compare",
   });
   const { loaded: offersLoaded, hasOffers } = usePublicOffers();
   const [slots, setSlots] = useState<[Slot, Slot, Slot]>(defaultSlots);

@@ -73,39 +73,3 @@ export async function endTestDriveLog(logId: string, payload: EndTestDrivePayloa
   }
   return json.data as TDLogRecord;
 }
-
-export type CompletionMediaPayload = {
-  customerPhoto?: File | null;
-  vehiclePhoto?: File | null;
-  endLat?: number;
-  endLng?: number;
-  endAccuracy?: number;
-};
-
-/** Update customer photo and/or Google-pinned location after (or during) a drive. */
-export async function updateCompletionMedia(
-  logId: string,
-  payload: CompletionMediaPayload,
-): Promise<TDLogRecord> {
-  const fd = new FormData();
-  if (payload.customerPhoto) fd.append("customerPhoto", payload.customerPhoto);
-  if (payload.vehiclePhoto) fd.append("vehiclePhoto", payload.vehiclePhoto);
-  if (payload.endLat != null && payload.endLng != null) {
-    fd.append("endLat", String(payload.endLat));
-    fd.append("endLng", String(payload.endLng));
-    if (payload.endAccuracy != null) fd.append("endAccuracy", String(payload.endAccuracy));
-  }
-
-  const { res, json } = await adminRequest(`/admin/td/logs/${logId}/completion-media`, {
-    method: "PATCH",
-    body: fd,
-  });
-  if (!res.ok) {
-    throw new ApiRequestError(
-      String(json.message ?? "Could not update photo/location"),
-      res.status,
-      json.errors as ApiRequestError["errors"],
-    );
-  }
-  return json.data as TDLogRecord;
-}

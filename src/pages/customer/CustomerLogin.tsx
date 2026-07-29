@@ -246,9 +246,9 @@ export default function CustomerLogin() {
               </Link>
             </p>
             <p className="mt-3 text-center text-xs text-muted-foreground">
-              Employee?{" "}
+              Staff member?{" "}
               <Link to="/staff/login" className="text-primary hover:underline">
-                Employee Login
+                Login as Staff
               </Link>
               {" · "}
               <Link to="/admin/login" className="text-primary hover:underline">

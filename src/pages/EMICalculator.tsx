@@ -5,11 +5,19 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import SeoHead from "@/components/seo/SeoHead";
+import { usePageSeo } from "@/hooks/usePageSeo";
 
 const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
 
 const EMICalculator = () => {
+  usePageSeo({
+    title: "EV EMI Calculator | VinFast Finance Estimates | Patliputra VinFast",
+    description:
+      "Estimate monthly EMI for VinFast VF6, VF7 and MPV models. Plan your EV purchase with Patliputra VinFast, Bihar.",
+    keywords: ["VinFast EMI calculator", "EV finance Bihar", "VF6 EMI", "VF7 EMI"],
+    canonical: "/emi-calculator",
+  });
+
   const [price, setPrice] = useState(2299000);
   const [downPayment, setDownPayment] = useState(500000);
   const [tenure, setTenure] = useState(60);
@@ -37,12 +45,6 @@ const EMICalculator = () => {
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
-      <SeoHead
-        title="VinFast EMI Calculator Bihar | EV Loan EMI | Patliputra VinFast"
-        description="Calculate monthly EMI for VinFast VF6, VF7, MPV7 and Limo Green. Plan down payment, tenure and interest for EV finance in Bihar."
-        path="/emi-calculator"
-        keywords={["VinFast EMI calculator", "EV loan EMI Bihar", "VF6 EMI", "VF7 EMI"]}
-      />
       <Navbar />
       <div className="pt-24 pb-20 lg:pt-32 lg:pb-32">
         <div className="container mx-auto px-4 lg:px-8">

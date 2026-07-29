@@ -7,7 +7,6 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
-import SeoHead from "@/components/seo/SeoHead";
 import { toast } from "sonner";
 import { addLead } from "@/lib/vfLocalStorage";
 import type { Lead } from "@/data/mockData";
@@ -20,9 +19,8 @@ import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { usePageSeo } from "@/hooks/usePageSeo";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
-import { usePageSeo } from "@/lib/seo";
-import { MPV7_SEO } from "@/data/modelSeo";
 import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import mpv7HeroPagePortrait from "@/assets/mpv7-hero-page-portrait.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
@@ -72,10 +70,16 @@ const inputClass =
   "h-12 px-4 rounded-xl bg-background/50 border border-border text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 w-full";
 
 const ModelMPV7 = () => {
-  usePageSeo(MPV7_SEO);
   const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();
+  usePageSeo({
+    title: "VinFast VF MPV7 | 7-Seater Electric MPV in Bihar | Patliputra VinFast",
+    description:
+      "Discover VinFast VF MPV7 — spacious 7-seater electric MPV for families and fleets. Book with Patliputra VinFast, Patna.",
+    keywords: ["VinFast MPV7", "7 seater electric car Bihar", "VF MPV7 Patna"],
+    canonical: "/models/mpv7",
+  });
   const [prebookUnlocked, setPrebookUnlocked] = useState(
     () => typeof sessionStorage !== "undefined" && sessionStorage.getItem(MPV7_PREBOOK_SESSION_KEY) === "1",
   );
@@ -209,20 +213,6 @@ const ModelMPV7 = () => {
 
   return (
     <div className="min-h-screen bg-background pb-36 lg:pb-0">
-      <SeoHead
-        title="VinFast MPV7 Price Bihar | 7 Seater Electric Car | Patliputra VinFast"
-        description="VinFast VF MPV7 in Bihar — 7 seater electric MPV for large families and corporate fleets. Price, booking, features and test drive from Patliputra VinFast."
-        path={location.pathname.startsWith("/vinfast-") ? location.pathname : "/vinfast-mpv7"}
-        keywords={[
-          "VinFast MPV7",
-          "VinFast MPV7 Price",
-          "7 Seater Electric Car",
-          "Best Electric MPV",
-          "Premium Family EV",
-          "Electric Car for Large Family",
-        ]}
-        type="product"
-      />
       <Navbar />
 
       {/* Mobile: HeroSection-style portrait; lg+: original shared wide hero */}

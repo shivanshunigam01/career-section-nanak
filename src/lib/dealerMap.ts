@@ -2,8 +2,8 @@
  * Showroom pin: Near Deedarganj Check Post, NH-30, Patna 800009
  * (same location as https://www.google.com/maps/.../@25.580227,85.248147,...)
  */
-export const SHOWROOM_LAT = 25.580227;
-export const SHOWROOM_LNG = 85.248147;
+const SHOWROOM_LAT = 25.580227;
+const SHOWROOM_LNG = 85.248147;
 
 /** Open in Google Maps (mobile app + desktop) — search view at the correct pin. */
 export const SHOWROOM_GOOGLE_MAPS_URL =

@@ -1,134 +1,100 @@
-/**
- * Lightweight SEO head manager for the SPA (no react-helmet dependency).
- *
- * - `usePageSeo(...)` — per-route title / description / keywords / canonical /
- *   Open Graph / JSON-LD. Each page owns its tags; they are replaced on route
- *   change so crawlers rendering JS (Googlebot, Bingbot) see unique metadata.
- * - `useGlobalSeo()` — fetches GET /public/seo/global once per session and
- *   injects the site-wide Organization / AutoDealer / WebSite JSON-LD plus the
- *   Google Search Console verification meta.
- */
-import { useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { publicGet } from "./api";
-
+/** Canonical public site origin used in meta, OG, and JSON-LD. */
 export const SITE_URL = "https://patliputravinfast.in";
 
-export function absoluteUrl(path: string): string {
-  return `${SITE_URL}${path.startsWith("/") ? path : `/${path}`}`;
-}
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/preview.jpg`;
 
-export type PageSeo = {
+export type SeoPayload = {
   title: string;
-  description?: string;
-  keywords?: string[];
-  /** Canonical path (defaults to the current pathname). */
-  canonicalPath?: string;
+  description: string;
+  keywords?: string | string[];
+  /** Path starting with `/`, or absolute URL */
+  canonical?: string;
   ogImage?: string;
-  ogType?: "website" | "article" | "product";
-  /** Page-scoped JSON-LD objects (schema.org). */
-  schemas?: object[];
-  noindex?: boolean;
+  ogType?: string;
+  noIndex?: boolean;
+  schemas?: unknown[];
 };
 
-function upsertMeta(attr: "name" | "property", key: string, content: string | null | undefined) {
-  let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
-  if (!content) {
-    if (el && el.dataset.seoManaged === "true") el.remove();
-    return;
-  }
+function upsertMeta(attr: "name" | "property", key: string, content: string) {
+  let el = document.head.querySelector(`meta[${attr}="${key}"]`);
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute(attr, key);
-    el.dataset.seoManaged = "true";
     document.head.appendChild(el);
   }
   el.setAttribute("content", content);
 }
 
-function upsertCanonical(href: string) {
-  let el = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+function upsertLink(rel: string, href: string) {
+  let el = document.head.querySelector(`link[rel="${rel}"]`) as HTMLLinkElement | null;
   if (!el) {
     el = document.createElement("link");
-    el.setAttribute("rel", "canonical");
+    el.rel = rel;
     document.head.appendChild(el);
   }
-  el.setAttribute("href", href);
+  el.href = href;
 }
 
-/** One <script type="application/ld+json"> per scope, replaced in-place. */
-function setJsonLd(scope: "page" | "global", schemas: object[] | undefined) {
-  const selector = `script[type="application/ld+json"][data-seo-scope="${scope}"]`;
-  let el = document.head.querySelector<HTMLScriptElement>(selector);
-  if (!schemas || schemas.length === 0) {
-    if (el) el.remove();
-    return;
-  }
-  if (!el) {
-    el = document.createElement("script");
+function absoluteCanonical(canonical?: string): string {
+  if (!canonical) return `${SITE_URL}/`;
+  if (canonical.startsWith("http")) return canonical;
+  return `${SITE_URL}${canonical.startsWith("/") ? canonical : `/${canonical}`}`;
+}
+
+const SCHEMA_ATTR = "data-seo-jsonld";
+
+function clearSchemas() {
+  document.head.querySelectorAll(`script[${SCHEMA_ATTR}]`).forEach((n) => n.remove());
+}
+
+function injectSchemas(schemas?: unknown[]) {
+  clearSchemas();
+  if (!schemas?.length) return;
+  for (const schema of schemas) {
+    if (!schema) continue;
+    const el = document.createElement("script");
     el.type = "application/ld+json";
-    el.dataset.seoScope = scope;
+    el.setAttribute(SCHEMA_ATTR, "true");
+    el.textContent = JSON.stringify(schema);
     document.head.appendChild(el);
   }
-  el.textContent = JSON.stringify(schemas.length === 1 ? schemas[0] : schemas);
 }
 
-export function applyPageSeo(seo: PageSeo, pathname: string) {
-  document.title = seo.title;
-  upsertMeta("name", "description", seo.description);
-  upsertMeta("name", "keywords", seo.keywords?.length ? seo.keywords.join(", ") : undefined);
-  upsertMeta("name", "robots", seo.noindex ? "noindex, nofollow" : "index, follow");
+/** Apply document head SEO for the current route (SPA). */
+export function applyPageSeo(seo: SeoPayload) {
+  const title = seo.title.trim();
+  const description = seo.description.trim();
+  const canonical = absoluteCanonical(seo.canonical);
+  const ogImage = seo.ogImage || DEFAULT_OG_IMAGE;
+  const keywords = Array.isArray(seo.keywords)
+    ? seo.keywords.filter(Boolean).join(", ")
+    : seo.keywords || "";
 
-  const canonical = absoluteUrl(seo.canonicalPath ?? pathname);
-  upsertCanonical(canonical);
+  document.title = title;
+  upsertMeta("name", "description", description);
+  if (keywords) upsertMeta("name", "keywords", keywords);
+  upsertLink("canonical", canonical);
 
-  upsertMeta("property", "og:title", seo.title);
-  upsertMeta("property", "og:description", seo.description);
+  upsertMeta("property", "og:title", title);
+  upsertMeta("property", "og:description", description);
   upsertMeta("property", "og:url", canonical);
-  upsertMeta("property", "og:type", seo.ogType ?? "website");
-  upsertMeta("property", "og:site_name", "Patliputra VinFast");
-  if (seo.ogImage) upsertMeta("property", "og:image", seo.ogImage);
+  upsertMeta("property", "og:image", ogImage);
+  upsertMeta("property", "og:type", seo.ogType || "website");
+
   upsertMeta("name", "twitter:card", "summary_large_image");
-  upsertMeta("name", "twitter:title", seo.title);
-  upsertMeta("name", "twitter:description", seo.description);
-  if (seo.ogImage) upsertMeta("name", "twitter:image", seo.ogImage);
+  upsertMeta("name", "twitter:title", title);
+  upsertMeta("name", "twitter:description", description);
+  upsertMeta("name", "twitter:image", ogImage);
 
-  setJsonLd("page", seo.schemas);
+  if (seo.noIndex) {
+    upsertMeta("name", "robots", "noindex, nofollow");
+  } else {
+    upsertMeta("name", "robots", "index, follow");
+  }
+
+  injectSchemas(seo.schemas);
 }
 
-/**
- * Applies page SEO on mount and whenever the serialized config changes.
- * Call once near the top of every public page component.
- */
-export function usePageSeo(seo: PageSeo) {
-  const { pathname } = useLocation();
-  const serialized = JSON.stringify(seo);
-  useEffect(() => {
-    applyPageSeo(JSON.parse(serialized) as PageSeo, pathname);
-  }, [serialized, pathname]);
-}
-
-type GlobalSeoPayload = {
-  siteUrl: string;
-  defaultMetaTitle: string;
-  defaultMetaDescription: string;
-  googleSiteVerification: string | null;
-  schemas: object[];
-};
-
-let globalSeoLoaded = false;
-
-/** Injects the site-wide JSON-LD + Search Console verification once. */
-export function useGlobalSeo() {
-  useEffect(() => {
-    if (globalSeoLoaded) return;
-    globalSeoLoaded = true;
-    void publicGet<GlobalSeoPayload>("/public/seo/global").then((data) => {
-      if (!data) return;
-      setJsonLd("global", data.schemas ?? []);
-      if (data.googleSiteVerification) {
-        upsertMeta("name", "google-site-verification", data.googleSiteVerification);
-      }
-    });
-  }, []);
+export function clearDynamicSchemas() {
+  clearSchemas();
 }

@@ -22,18 +22,16 @@ const navLinks = [
   { label: "VF 6", href: "/models/vf6" },
   { label: "VF MPV 7", href: "/models/mpv7" },
   { label: "Limo Green", href: "/models/limo-green" },
-  { label: "Compare", href: "/compare-models" },
+  { label: "Compare", href: "/compare" },
   { label: "Test Drive", href: "/test-drive" },
   { label: "EMI Calculator", href: "/emi-calculator" },
-  { label: "Blogs", href: "/blogs" },
-  { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];
 
 const loginOptions = [
   { label: "Customer", href: "/customer/login" },
-  { label: "Employee", href: "/staff/login" },
+  { label: "Staff", href: "/staff/login" },
   { label: "Admin", href: "/admin/login" },
 ] as const;
 
