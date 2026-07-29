@@ -65,6 +65,7 @@ const emptyForm = {
 
 const DESIGNATION_COLORS: Record<string, string> = {
   sales_executive: "bg-blue-400/10 text-blue-400 border-blue-400/20",
+  cre: "bg-cyan-400/10 text-cyan-400 border-cyan-400/20",
   sales_manager: "bg-indigo-400/10 text-indigo-400 border-indigo-400/20",
   sales_head: "bg-violet-400/10 text-violet-400 border-violet-400/20",
   branch_manager: "bg-purple-400/10 text-purple-400 border-purple-400/20",
@@ -82,6 +83,7 @@ export default function AdminTDUsers() {
   const canDelete = canPerformManagerAction(adminUser, "td_users", "delete");
   const canViewPassword = canPerformManagerAction(adminUser, "td_users", "view_password");
   const [users, setUsers] = useState<StaffUser[]>([]);
+  const [managerOptions, setManagerOptions] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterDesignation, setFilterDesignation] = useState("all");
@@ -107,6 +109,16 @@ export default function AdminTDUsers() {
     }
   }, [filterDesignation]);
 
+  /** Full staff list for Reports-to — not affected by designation filter / pagination of the table. */
+  const fetchManagerOptions = useCallback(async () => {
+    try {
+      const { data } = await adminGet<StaffUser[]>("/admin/td/users?limit=200");
+      setManagerOptions(data ?? []);
+    } catch {
+      // Dropdown falls back to currently loaded table rows.
+    }
+  }, []);
+
   useEffect(() => { void fetchUsers(); }, [fetchUsers]);
 
   const filtered = users.filter((u) => {
@@ -119,6 +131,7 @@ export default function AdminTDUsers() {
     setForm(emptyForm);
     setShowFormPassword(true);
     setShowForm(true);
+    void fetchManagerOptions();
   };
 
   const openEdit = async (user: StaffUser) => {
@@ -144,6 +157,7 @@ export default function AdminTDUsers() {
     });
     setShowFormPassword(true);
     setShowForm(true);
+    void fetchManagerOptions();
 
     // Prefill the current password (same as name/email) when a recoverable copy exists.
     try {
@@ -534,7 +548,7 @@ export default function AdminTDUsers() {
                 <SelectTrigger><SelectValue placeholder="Select manager" /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value={NO_MANAGER}>— Top of chain / none —</SelectItem>
-                  {users
+                  {(managerOptions.length ? managerOptions : users)
                     .filter((u) => u._id !== form._id && u.active)
                     .map((u) => (
                       <SelectItem key={u._id} value={u._id}>

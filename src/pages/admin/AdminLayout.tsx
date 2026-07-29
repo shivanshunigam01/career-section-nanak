@@ -347,7 +347,7 @@ const AdminLayout = () => {
           </button>
         </div>
 
-        <nav className="flex min-h-0 flex-1 flex-col gap-px overflow-hidden px-2 py-2 sm:px-2.5">
+        <nav className="flex min-h-0 flex-1 flex-col gap-px overflow-y-auto overscroll-contain px-2 py-2 sm:px-2.5">
           {fieldStaff ? (
             <>
               {crmNavItems.map((item) => {

@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
   MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight, Pencil,
-  History, Trophy, ShieldAlert, Trash2, CheckSquare, Square, X,
+  History, Trophy, ShieldAlert, Trash2, CheckSquare, Square, X, Download, Upload, FileSpreadsheet,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -31,6 +31,9 @@ import {
   convertPvCrmLeadToSale,
   deletePvCrmLead,
   bulkDeletePvCrmLeads,
+  exportPvCrmLeadsExcel,
+  importPvCrmLeadsFile,
+  downloadPvCrmLeadImportTemplate,
   fetchOpportunityDuplicates,
   type AssignableStaffUser,
   type PvCrmLead,
@@ -67,12 +70,27 @@ const PAGE_SIZE = 20;
 export default function AdminCrmLeads() {
   const adminUser = getAdminUser();
   const isExecutive = isFieldStaffUser(adminUser);
+  const isCre = String(adminUser?.designation || "").toLowerCase() === "cre";
+  const isAdminPortal =
+    adminUser?.userType === "admin" || adminUser?.role === "superadmin";
   const canCreate = canPerformAction(adminUser, "crm_leads", "create");
   const canUpdate = canPerformAction(adminUser, "crm_leads", "update");
-  const canAssignLeads = canPerformManagerAction(adminUser, "crm_leads", "assign");
+  const canAssignLeads =
+    isCre || canPerformManagerAction(adminUser, "crm_leads", "assign");
   const canEditDetails = canPerformManagerAction(adminUser, "crm_leads", "update");
   const canDelete = canPerformManagerAction(adminUser, "crm_leads", "delete");
+  /** Bulk Excel download/upload — Admin + CRE (and managers with export/create). */
+  const canExportExcel =
+    isAdminPortal ||
+    isCre ||
+    canPerformAction(adminUser, "crm_leads", "export") ||
+    canAssignLeads;
+  const canImportExcel =
+    canCreate && (isAdminPortal || isCre || adminUser?.role === "manager" || canAssignLeads);
 
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [leads, setLeads] = useState<PvCrmLead[]>([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -496,6 +514,58 @@ export default function AdminCrmLeads() {
     }
   };
 
+  const handleExportExcel = async () => {
+    if (!canExportExcel) return;
+    setExporting(true);
+    try {
+      await exportPvCrmLeadsExcel({
+        search: search.trim() || undefined,
+        status: filterStatus,
+        source: filterSource,
+        from: filterDateFrom || undefined,
+        to: filterDateTo || undefined,
+        dateField: filterDateField,
+        assignedTo:
+          canAssignLeads && filterExecutive !== "all"
+            ? filterExecutive === "unassigned"
+              ? "unassigned"
+              : filterExecutive
+            : undefined,
+      });
+      toast.success("Excel download started");
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImportFile = async (file: File) => {
+    if (!canImportExcel) return;
+    setImporting(true);
+    try {
+      const result = await importPvCrmLeadsFile(file);
+      const failed = result.failed?.length ?? 0;
+      if (failed > 0) {
+        toast.warning(
+          `Imported ${result.created} lead(s)` +
+            (result.followUpsCreated ? `, ${result.followUpsCreated} follow-up(s)` : "") +
+            `. ${failed} row(s) failed.`,
+        );
+      } else {
+        toast.success(
+          `Imported ${result.created} lead(s)` +
+            (result.followUpsCreated ? ` and ${result.followUpsCreated} follow-up(s)` : ""),
+        );
+      }
+      void loadLeads();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setImporting(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -513,6 +583,38 @@ export default function AdminCrmLeads() {
           {canCreate ? (
             <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
               <Plus className="w-4 h-4 mr-2" /> Add Lead
+            </Button>
+          ) : null}
+          {canImportExcel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={importing}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              {importing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Upload className="w-4 h-4 mr-2" />}
+              Bulk upload
+            </Button>
+          ) : null}
+          {canImportExcel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              type="button"
+              onClick={() => downloadPvCrmLeadImportTemplate()}
+            >
+              <FileSpreadsheet className="w-4 h-4 mr-2" /> Template
+            </Button>
+          ) : null}
+          {canExportExcel ? (
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={exporting}
+              onClick={() => void handleExportExcel()}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
+              Download
             </Button>
           ) : null}
           {canDelete ? (
@@ -536,6 +638,19 @@ export default function AdminCrmLeads() {
           <Button variant="outline" size="sm" onClick={() => void loadLeads()}>
             <RefreshCw className="w-4 h-4 mr-2" /> Refresh
           </Button>
+          {canImportExcel ? (
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void handleImportFile(file);
+              }}
+            />
+          ) : null}
         </div>
       </div>
 
