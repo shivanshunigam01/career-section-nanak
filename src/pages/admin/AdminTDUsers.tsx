@@ -40,15 +40,27 @@ type StaffUser = {
   designationLabel?: string;
   isCustomDesignation?: boolean;
   reportsTo?: string | { _id: string; name?: string } | null;
+  staffRoleId?: string | null;
+  staffRole?: { _id: string; name?: string; authRole?: string } | null;
   active: boolean;
   allowedModules?: string[];
   allowedActions?: string[];
   createdAt?: string;
 };
 
+type StaffRoleOption = {
+  _id: string;
+  name: string;
+  authRole: "executive" | "manager";
+  allowedModules: string[];
+  allowedActions: string[];
+  active: boolean;
+};
+
 /** Sentinel value in the designation dropdown for admin-typed custom positions. */
 const OTHER_DESIGNATION = "__other__";
 const NO_MANAGER = "__none__";
+const NO_ROLE = "__none__";
 
 const emptyForm = {
   name: "",
@@ -58,6 +70,7 @@ const emptyForm = {
   customDesignation: "",
   accessLevel: "executive" as "executive" | "manager",
   reportsTo: NO_MANAGER as string,
+  staffRoleId: NO_ROLE as string,
   allowedModules: [] as AdminModuleKey[],
   allowedActions: [] as string[],
   active: true,
@@ -84,6 +97,7 @@ export default function AdminTDUsers() {
   const canViewPassword = canPerformManagerAction(adminUser, "td_users", "view_password");
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [managerOptions, setManagerOptions] = useState<StaffUser[]>([]);
+  const [roleTemplates, setRoleTemplates] = useState<StaffRoleOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterDesignation, setFilterDesignation] = useState("all");
@@ -119,7 +133,36 @@ export default function AdminTDUsers() {
     }
   }, []);
 
+  const fetchRoleTemplates = useCallback(async () => {
+    try {
+      const { data } = await adminGet<StaffRoleOption[]>("/admin/td/roles?active=true");
+      setRoleTemplates(data ?? []);
+    } catch {
+      setRoleTemplates([]);
+    }
+  }, []);
+
   useEffect(() => { void fetchUsers(); }, [fetchUsers]);
+  useEffect(() => { void fetchRoleTemplates(); }, [fetchRoleTemplates]);
+
+  const applyRoleTemplate = (roleId: string) => {
+    if (roleId === NO_ROLE) {
+      setForm((f) => ({ ...f, staffRoleId: NO_ROLE }));
+      return;
+    }
+    const role = roleTemplates.find((r) => r._id === roleId);
+    if (!role) {
+      setForm((f) => ({ ...f, staffRoleId: roleId }));
+      return;
+    }
+    setForm((f) => ({
+      ...f,
+      staffRoleId: role._id,
+      accessLevel: role.authRole === "manager" ? "manager" : "executive",
+      allowedModules: (role.allowedModules ?? []) as AdminModuleKey[],
+      allowedActions: role.allowedActions ?? [],
+    }));
+  };
 
   const filtered = users.filter((u) => {
     if (!search) return true;
@@ -132,6 +175,7 @@ export default function AdminTDUsers() {
     setShowFormPassword(true);
     setShowForm(true);
     void fetchManagerOptions();
+    void fetchRoleTemplates();
   };
 
   const openEdit = async (user: StaffUser) => {
@@ -142,6 +186,10 @@ export default function AdminTDUsers() {
         : typeof user.reportsTo === "string"
           ? user.reportsTo
           : NO_MANAGER;
+    const roleId =
+      (typeof user.staffRoleId === "string" && user.staffRoleId) ||
+      user.staffRole?._id ||
+      NO_ROLE;
     setForm({
       _id: user._id,
       name: user.name,
@@ -151,6 +199,7 @@ export default function AdminTDUsers() {
       customDesignation: isKnown ? "" : user.designation,
       accessLevel: user.role === "manager" ? "manager" : "executive",
       reportsTo: reportsToId || NO_MANAGER,
+      staffRoleId: roleId,
       allowedModules: (user.allowedModules ?? []) as AdminModuleKey[],
       allowedActions: user.allowedActions ?? [],
       active: user.active,
@@ -158,6 +207,7 @@ export default function AdminTDUsers() {
     setShowFormPassword(true);
     setShowForm(true);
     void fetchManagerOptions();
+    void fetchRoleTemplates();
 
     // Prefill the current password (same as name/email) when a recoverable copy exists.
     try {
@@ -244,8 +294,10 @@ export default function AdminTDUsers() {
         allowedModules: form.allowedModules,
         allowedActions: form.allowedModules.length ? form.allowedActions : [],
         reportsTo: form.reportsTo === NO_MANAGER ? null : form.reportsTo,
+        staffRoleId: form.staffRoleId === NO_ROLE ? null : form.staffRoleId,
       };
       // Custom positions carry an explicit access level; standard ones derive it from the designation.
+      // Role template also sets authRole on the server.
       if (isOtherDesignation) payload.role = form.accessLevel;
       if (form.password.trim()) payload.password = form.password.trim();
 
@@ -352,9 +404,9 @@ export default function AdminTDUsers() {
       </div>
 
       <Card className="p-4 border-primary/20 bg-primary/5 text-sm">
-        <p className="font-medium text-foreground mb-1">Staff login</p>
+        <p className="font-medium text-foreground mb-1">Employee login</p>
         <p className="text-muted-foreground text-xs leading-relaxed">
-          Every staff user signs in at <span className="font-mono text-foreground">/staff/login</span> with their email and password.
+          Every employee signs in at <span className="font-mono text-foreground">/staff/login</span> with their email and password.
           Admins use <span className="font-mono text-foreground">/admin/login</span>.
           Assigned test drives appear under <strong className="text-foreground">My Test Drives</strong>.
           Sales Executives land on that page automatically; managers and above also see full TD Management.
@@ -424,6 +476,12 @@ export default function AdminTDUsers() {
                   <Badge variant="outline" className={DESIGNATION_COLORS[user.designation] || CUSTOM_DESIGNATION_COLOR}>
                     {user.designationLabel || designationLabel(user.designation)}
                   </Badge>
+                  {user.staffRole?.name ? (
+                    <Badge variant="outline" className="border-primary/30 text-primary">
+                      <ShieldCheck className="mr-1 h-3 w-3" />
+                      {user.staffRole.name}
+                    </Badge>
+                  ) : null}
                   {(user.allowedModules?.length ?? 0) > 0 && (
                     <Badge variant="outline" className="border-primary/30 text-primary">
                       <ShieldCheck className="mr-1 h-3 w-3" />
@@ -523,7 +581,7 @@ export default function AdminTDUsers() {
               {form._id ? (
                 <p className="text-[11px] text-muted-foreground">
                   Shown like name/email when a saved password exists. Edit and save to reset login credentials.
-                  Staff sign in at <span className="font-mono">/staff/login</span>.
+                  Employee sign in at <span className="font-mono">/staff/login</span>.
                 </p>
               ) : null}
             </div>
@@ -538,6 +596,24 @@ export default function AdminTDUsers() {
                   <SelectItem value={OTHER_DESIGNATION}>Other (custom position)…</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Permission role template</Label>
+              <Select value={form.staffRoleId} onValueChange={applyRoleTemplate}>
+                <SelectTrigger><SelectValue placeholder="Select role template" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={NO_ROLE}>— None (manual modules) —</SelectItem>
+                  {roleTemplates.map((r) => (
+                    <SelectItem key={r._id} value={r._id}>
+                      {r.name} ({r.authRole})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-[11px] text-muted-foreground">
+                Choosing a template fills module permissions automatically. Create or edit templates under{" "}
+                <span className="font-medium text-foreground">TD Management → Roles</span>.
+              </p>
             </div>
             <div className="space-y-2">
               <Label>Reports to</Label>
