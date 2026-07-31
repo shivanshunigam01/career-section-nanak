@@ -34,12 +34,14 @@ import {
   exportPvCrmLeadsExcel,
   importPvCrmLeadsFile,
   downloadPvCrmLeadImportTemplate,
+  downloadCrmImportErrors,
   fetchOpportunityDuplicates,
   type AssignableStaffUser,
   type PvCrmLead,
   type PvCrmLeadDetail,
   type PvCrmLeadDateField,
   type OpportunityDuplicatesReport,
+  type CrmLeadImportFailure,
 } from "@/lib/pvLeadCrmApi";
 import { lookupCrmCustomerByMobile, type CustomerHistory } from "@/lib/crmCustomerApi";
 import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog";
@@ -78,7 +80,8 @@ export default function AdminCrmLeads() {
   const canAssignLeads =
     isCre || canPerformManagerAction(adminUser, "crm_leads", "assign");
   const canEditDetails = canPerformManagerAction(adminUser, "crm_leads", "update");
-  const canDelete = canPerformManagerAction(adminUser, "crm_leads", "delete");
+  const canDelete =
+    isCre || canPerformManagerAction(adminUser, "crm_leads", "delete");
   /** Bulk Excel download/upload — Admin + CRE (and managers with export/create). */
   const canExportExcel =
     isAdminPortal ||
@@ -145,6 +148,12 @@ export default function AdminCrmLeads() {
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [importFailures, setImportFailures] = useState<CrmLeadImportFailure[] | null>(null);
+  const [importSummary, setImportSummary] = useState<{
+    created: number;
+    updated?: number;
+    followUps: number;
+  } | null>(null);
 
   const primeEditDrafts = (lead: PvCrmLead) => {
     setEditName(lead.name ?? "");
@@ -546,17 +555,20 @@ export default function AdminCrmLeads() {
     try {
       const result = await importPvCrmLeadsFile(file);
       const failed = result.failed?.length ?? 0;
+      const followUps = result.followUpsCreated ?? 0;
+      const updated = result.updated ?? 0;
+      const summaryMsg =
+        `Created ${result.created}` +
+        (updated ? `, updated ${updated}` : "") +
+        (followUps ? `, ${followUps} follow-up(s)` : "");
       if (failed > 0) {
-        toast.warning(
-          `Imported ${result.created} lead(s)` +
-            (result.followUpsCreated ? `, ${result.followUpsCreated} follow-up(s)` : "") +
-            `. ${failed} row(s) failed.`,
-        );
+        setImportFailures(result.failed);
+        setImportSummary({ created: result.created, updated, followUps });
+        toast.warning(`${summaryMsg}. ${failed} row(s) failed — download the error file for details.`);
       } else {
-        toast.success(
-          `Imported ${result.created} lead(s)` +
-            (result.followUpsCreated ? ` and ${result.followUpsCreated} follow-up(s)` : ""),
-        );
+        setImportFailures(null);
+        setImportSummary(null);
+        toast.success(summaryMsg);
       }
       void loadLeads();
     } catch (e) {
@@ -1494,8 +1506,10 @@ export default function AdminCrmLeads() {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Permanently delete <strong className="text-foreground">{selectedIds.size}</strong> lead(s)?
-              Follow-ups and stage history will also be removed. This cannot be undone.
+              You are about to permanently delete{" "}
+              <strong className="text-foreground">{selectedIds.size}</strong> junk lead(s).
+              This also removes all follow-up history and stage history for those leads.
+              This action cannot be undone.
             </p>
             <div className="flex gap-3">
               <Button
@@ -1511,6 +1525,77 @@ export default function AdminCrmLeads() {
                 Keep
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!importFailures?.length}
+        onOpenChange={(o) => {
+          if (!o) {
+            setImportFailures(null);
+            setImportSummary(null);
+          }
+        }}
+      >
+        <DialogContent className="bg-card border-border max-w-lg max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-amber-500" />
+              Import errors
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Created {importSummary?.created ?? 0}
+              {importSummary?.updated ? `, updated ${importSummary.updated}` : ""}
+              {importSummary?.followUps ? `, ${importSummary.followUps} follow-up(s)` : ""}.{" "}
+              <strong className="text-foreground">{importFailures?.length ?? 0}</strong> row(s) failed
+              (duplicates, missing fields, or invalid data). Download the error file to review and fix.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => importFailures && downloadCrmImportErrors(importFailures, "xlsx")}
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Download errors (Excel)
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => importFailures && downloadCrmImportErrors(importFailures, "csv")}
+              >
+                <FileSpreadsheet className="w-4 h-4 mr-2" />
+                Download errors (CSV)
+              </Button>
+            </div>
+            <div className="max-h-60 overflow-y-auto rounded-md border border-border/50 text-xs">
+              <table className="w-full">
+                <thead className="bg-muted/40 sticky top-0">
+                  <tr className="text-left">
+                    <th className="p-2 font-medium">Row</th>
+                    <th className="p-2 font-medium">Name</th>
+                    <th className="p-2 font-medium">Mobile</th>
+                    <th className="p-2 font-medium">Error</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(importFailures || []).map((f, i) => (
+                    <tr key={`${f.row}-${i}`} className="border-t border-border/40">
+                      <td className="p-2 align-top whitespace-nowrap">{f.row}</td>
+                      <td className="p-2 align-top">{f.name || "—"}</td>
+                      <td className="p-2 align-top font-mono">{f.mobile || "—"}</td>
+                      <td className="p-2 align-top text-destructive">{f.message}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <Button variant="outline" className="w-full" onClick={() => { setImportFailures(null); setImportSummary(null); }}>
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
