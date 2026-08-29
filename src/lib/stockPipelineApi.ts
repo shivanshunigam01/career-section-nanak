@@ -108,6 +108,10 @@ export async function approvePurchaseOrder(id: string, remarks?: string) {
   return adminPostJson<PurchaseOrder>(`${BASE}/purchase-orders/${id}/approve`, { remarks });
 }
 
+export async function rejectPurchaseOrder(id: string, remarks?: string) {
+  return adminPostJson<PurchaseOrder>(`${BASE}/purchase-orders/${id}/reject`, { remarks });
+}
+
 export async function releasePurchaseOrder(id: string, remarks?: string) {
   return adminPostJson<PurchaseOrder>(`${BASE}/purchase-orders/${id}/release`, { remarks });
 }
@@ -146,6 +150,22 @@ export async function createReceipt(body: Record<string, unknown>) {
 
 export async function fetchPdiQueue() {
   const { data } = await adminGet<StockUnit[]>(`${BASE}/pdi/queue`);
+  return data ?? [];
+}
+
+export type StockPdiRecord = {
+  _id: string;
+  pdiNumber?: string;
+  type?: string;
+  result?: string;
+  vin?: string;
+  vehicleStockId?: string;
+  performedAt?: string;
+  notes?: string;
+};
+
+export async function fetchPdis(type = "PRE_STOCK") {
+  const { data } = await adminGet<StockPdiRecord[]>(`${BASE}/pdi?type=${encodeURIComponent(type)}&limit=50`);
   return data ?? [];
 }
 

@@ -360,7 +360,7 @@ export default function AdminVehicleStock() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {items.map((item) => (
-            <Card key={item._id} className="p-4 space-y-3 bg-card border-border/50">
+            <Card key={item._id} className="p-4 space-y-3 bg-card border-border/50 overflow-hidden">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="text-xs text-muted-foreground font-mono">{item.stockId}</p>
@@ -422,11 +422,11 @@ export default function AdminVehicleStock() {
               </div>
 
               {canTagDemo || canUpdate || canDelete || canYardPdi ? (
-                <div className="flex gap-2 border-t border-border/30 pt-3">
+                <div className="flex flex-wrap items-center gap-2 border-t border-border/30 pt-3">
                   {canYardPdi && item.status === "IN_TRANSIT" ? (
                     <Button
                       size="sm"
-                      className="flex-1 text-xs h-8"
+                      className="flex-1 min-w-[7rem] text-xs h-8"
                       disabled={yardBusyId === item._id}
                       onClick={() =>
                         void (async () => {
@@ -456,7 +456,7 @@ export default function AdminVehicleStock() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 text-xs h-8"
+                        className="flex-1 min-w-[7rem] text-xs h-8"
                         disabled={demoBusyId === item._id}
                         onClick={() => void handleTagDemo(item, false)}
                       >
@@ -467,7 +467,7 @@ export default function AdminVehicleStock() {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="flex-1 text-xs h-8"
+                        className="flex-1 min-w-[7rem] text-xs h-8"
                         disabled={demoBusyId === item._id || item.status === "SOLD"}
                         onClick={() => void handleTagDemo(item, true)}
                       >
@@ -476,21 +476,25 @@ export default function AdminVehicleStock() {
                       </Button>
                     )
                   ) : null}
-                  {canUpdate ? (
-                    <Button size="sm" variant="outline" className="text-xs h-8" onClick={() => openEdit(item)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                  ) : null}
-                  {canDelete && !item.isDemo ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="text-xs h-8 text-destructive hover:text-destructive"
-                      onClick={() => setDeleteTarget(item)}
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  ) : null}
+                  <div className="flex gap-2 ml-auto shrink-0">
+                    {canUpdate ? (
+                      <Button size="sm" variant="outline" className="text-xs h-8 px-3" onClick={() => openEdit(item)}>
+                        <Pencil className="w-3.5 h-3.5 mr-1" />
+                        Edit
+                      </Button>
+                    ) : null}
+                    {canDelete && !item.isDemo ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="text-xs h-8 px-3 text-destructive hover:text-destructive border-destructive/30"
+                        onClick={() => setDeleteTarget(item)}
+                      >
+                        <Trash2 className="w-3.5 h-3.5 mr-1" />
+                        Delete
+                      </Button>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
             </Card>
