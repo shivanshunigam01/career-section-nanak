@@ -27,6 +27,7 @@ export type PurchaseOrder = {
   poType?: string;
   status: string;
   supplier?: string;
+  supplierId?: string | { _id: string; name: string; legalName?: string; gstin?: string; type?: string; code?: string };
   deliveryLocation?: string;
   paymentTerms?: string;
   fundingBank?: string;

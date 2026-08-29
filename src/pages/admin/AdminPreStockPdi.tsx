@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import StockPrintButton from "@/components/admin/StockPrintButton";
 import {
   deletePdi,
   fetchPdiQueue,
@@ -136,10 +137,23 @@ export default function AdminPreStockPdi() {
                   <Card key={p._id} className="p-3 text-sm space-y-2">
                     <p className="font-mono font-medium truncate">{p.vin || p.pdiNumber}</p>
                     <p className="text-muted-foreground text-xs">
-                      {p.pdiNumber} · {p.result}
+                      {p.pdiNumber} · {p.result} · Vendor: VinFast
                       {p.performedAt ? ` · ${new Date(p.performedAt).toLocaleDateString()}` : ""}
                     </p>
-                    {canDelete ? (
+                    <div className="flex flex-wrap gap-2">
+                      <StockPrintButton
+                        getPrintOptions={() => ({
+                          title: "Pre-Stock PDI",
+                          documentNo: p.pdiNumber || p.vin || p._id,
+                          vendor: { name: "VinFast" },
+                          meta: [
+                            { label: "VIN", value: p.vin || "—" },
+                            { label: "Result", value: p.result || "—" },
+                          ],
+                          bodyHtml: `<p>Pre-stock PDI ${p.result || ""} for VIN ${p.vin || "—"}.</p>`,
+                        })}
+                      />
+                      {canDelete ? (
                       <PipelineDeleteButton
                         label="Delete"
                         title={`Delete PDI ${p.pdiNumber}?`}
@@ -155,7 +169,8 @@ export default function AdminPreStockPdi() {
                           }
                         }}
                       />
-                    ) : null}
+                      ) : null}
+                    </div>
                   </Card>
                 ))}
               </div>

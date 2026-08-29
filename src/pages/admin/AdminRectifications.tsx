@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import StockPrintButton from "@/components/admin/StockPrintButton";
 import { deleteRectification, fetchRectifications, updateRectification } from "@/lib/stockPipelineApi";
 
 type RectRow = {
@@ -97,6 +98,19 @@ export default function AdminRectifications() {
             <Badge className="mt-2">{r.status}</Badge>
           </div>
           <div className="flex flex-wrap gap-2 shrink-0">
+            <StockPrintButton
+              getPrintOptions={() => ({
+                title: "Rectification",
+                documentNo: r.rectificationNo || r._id,
+                vendor: { name: "VinFast" },
+                meta: [
+                  { label: "VIN", value: r.vin || "—" },
+                  { label: "Status", value: r.status || "—" },
+                  { label: "Severity", value: r.severity || "—" },
+                ],
+                bodyHtml: `<p>${r.issueDescription || "Rectification issue"}</p>`,
+              })}
+            />
             {canUpdate && r.status !== "CLOSED" && r.status !== "RE_PDI_PENDING" ? (
               <>
                 <Button size="sm" variant="outline" onClick={() => openEdit(r)}>

@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
-import { deleteGateEntry, fetchDispatches, fetchGateEntries } from "@/lib/stockPipelineApi";
+import StockPrintButton from "@/components/admin/StockPrintButton";
+import { vendorDisplayName, vendorFromPo } from "@/lib/stockVendorsApi";
+import { deleteGateEntry, fetchDispatches, fetchGateEntries, type PurchaseOrder } from "@/lib/stockPipelineApi";
 
 export default function AdminGateEntry() {
   const admin = getAdminUser();
@@ -51,12 +53,32 @@ export default function AdminGateEntry() {
           </Card>
           <div className="space-y-2">
             <p className="font-medium">Recent gate entries</p>
-            {entries.map((e) => (
+            {entries.map((e) => {
+              const dispatch = e.dispatchId as { dispatchNumber?: string; truckNumber?: string; purchaseOrderId?: PurchaseOrder } | undefined;
+              const vendor = vendorFromPo(dispatch?.purchaseOrderId);
+              return (
               <Card key={String(e._id)} className="p-4 flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="font-medium">{String(e.gateEntryNo)}</p>
-                  <p className="text-sm text-muted-foreground">Truck {String(e.truckNumber)}</p>
-                  <Badge variant="secondary" className="mt-1">{String(e.status ?? "ARRIVED")}</Badge>
+                <div className="space-y-2">
+                  <div>
+                    <p className="font-medium">{String(e.gateEntryNo)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Vendor: {vendorDisplayName(vendor)} · Truck {String(e.truckNumber)} · Dispatch {dispatch?.dispatchNumber || "—"}
+                    </p>
+                    <Badge variant="secondary" className="mt-1">{String(e.status ?? "ARRIVED")}</Badge>
+                  </div>
+                  <StockPrintButton
+                    getPrintOptions={() => ({
+                      title: "Gate Entry",
+                      documentNo: String(e.gateEntryNo),
+                      vendor,
+                      meta: [
+                        { label: "Truck", value: String(e.truckNumber) },
+                        { label: "Dispatch", value: dispatch?.dispatchNumber || "—" },
+                        { label: "Arrival", value: e.arrivalDatetime ? new Date(String(e.arrivalDatetime)).toLocaleString() : "—" },
+                      ],
+                      bodyHtml: `<p>Gate entry recorded for vendor ${vendorDisplayName(vendor)} shipment.</p>`,
+                    })}
+                  />
                 </div>
                 {canDelete ? (
                   <PipelineDeleteButton
@@ -76,7 +98,8 @@ export default function AdminGateEntry() {
                   />
                 ) : null}
               </Card>
-            ))}
+              );
+            })}
           </div>
         </>
       )}
