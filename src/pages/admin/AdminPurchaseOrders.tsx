@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
-import { exteriorColoursForModel } from "@/data/stockColourOptions";
+import { exteriorColoursFor } from "@/data/stockColourOptions";
 import {
   approvePurchaseOrder,
   createPipelinePurchaseOrder,
@@ -41,17 +41,33 @@ export default function AdminPurchaseOrders() {
 
   const variantOptions = useMemo(() => trimsFor(model), [trimsFor, model]);
   const colourOptions = useMemo(() => {
-    const base = exteriorColoursForModel(model);
+    const base = exteriorColoursFor(model, variant);
     if (colour && !base.includes(colour)) return [colour, ...base];
     return base;
-  }, [model, colour]);
+  }, [model, variant, colour]);
+
+  const applyModelChange = (m: string) => {
+    const nextVariant = trimsFor(m)[0] ?? "";
+    setModel(m);
+    setVariant(nextVariant);
+    setColour(exteriorColoursFor(m, nextVariant)[0] ?? "");
+  };
+
+  const applyVariantChange = (v: string) => {
+    setVariant(v);
+    const nextColours = exteriorColoursFor(model, v);
+    if (!colour || !nextColours.includes(colour)) {
+      setColour(nextColours[0] ?? "");
+    }
+  };
 
   useEffect(() => {
     if (!model && catalogModels.length) {
       const m = catalogModels[0];
+      const nextVariant = trimsFor(m)[0] ?? "";
       setModel(m);
-      setVariant(trimsFor(m)[0] ?? "");
-      setColour(exteriorColoursForModel(m)[0] ?? "");
+      setVariant(nextVariant);
+      setColour(exteriorColoursFor(m, nextVariant)[0] ?? "");
     }
   }, [catalogModels, model, trimsFor]);
 
@@ -161,12 +177,34 @@ export default function AdminPurchaseOrders() {
                 </Select></div>
             </div>
             <div><Label>Model</Label>
-              <Select value={model || undefined} onValueChange={(m) => { setModel(m); setVariant(trimsFor(m)[0] ?? ""); setColour(exteriorColoursForModel(m)[0] ?? ""); }}>
-                <SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{catalogModels.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
+              <Select value={model || undefined} onValueChange={applyModelChange}>
+                <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger><SelectContent>{catalogModels.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
               </Select></div>
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Variant</Label><Input value={variant} onChange={(e) => setVariant(e.target.value)} /></div>
-              <div><Label>Colour</Label><Input value={colour} onChange={(e) => setColour(e.target.value)} /></div>
+              <div><Label>Variant</Label>
+                {variantOptions.length === 0 ? (
+                  <Input value="Standard lineup" disabled className="bg-secondary/50" />
+                ) : (
+                  <Select value={variant || undefined} onValueChange={applyVariantChange}>
+                    <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select variant" /></SelectTrigger>
+                    <SelectContent>
+                      {variantOptions.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                )}
+              </div>
+              <div><Label>Colour</Label>
+                <Select
+                  value={colour || undefined}
+                  onValueChange={setColour}
+                  disabled={colourOptions.length === 0}
+                >
+                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select colour" /></SelectTrigger>
+                  <SelectContent>
+                    {colourOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div><Label>Qty</Label><Input type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} /></div>

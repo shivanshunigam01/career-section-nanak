@@ -9,7 +9,7 @@ import { getAdminUser, canPerformManagerAction, canPerformAction } from "@/lib/a
 import { submitYardPdi } from "@/lib/stockDeliveryApi";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import {
-  exteriorColoursForModel,
+  exteriorColoursFor,
   interiorColoursFor,
   needsDualMotorNumbers,
 } from "@/data/stockColourOptions";
@@ -106,10 +106,10 @@ export default function AdminVehicleStock() {
   const [demoBusyId, setDemoBusyId] = useState<string | null>(null);
 
   const exteriorOptions = useMemo(() => {
-    const base = exteriorColoursForModel(form.model);
+    const base = exteriorColoursFor(form.model, form.variant);
     if (form.colour && !base.includes(form.colour)) return [form.colour, ...base];
     return base;
-  }, [form.model, form.colour]);
+  }, [form.model, form.variant, form.colour]);
   const interiorOptions = useMemo(() => {
     const base = interiorColoursFor(form.model, form.variant);
     if (form.interiorColour && !base.includes(form.interiorColour)) return [form.interiorColour, ...base];
@@ -119,22 +119,25 @@ export default function AdminVehicleStock() {
 
   const applyModelChange = (model: string) => {
     const nextVariant = trimsFor(model)[0] ?? "";
+    const nextExterior = exteriorColoursFor(model, nextVariant)[0] ?? "";
     const nextInterior = interiorColoursFor(model, nextVariant)[0] ?? "";
     setForm((f) => ({
       ...f,
       model,
       variant: nextVariant,
-      colour: "",
+      colour: nextExterior,
       interiorColour: nextInterior,
       motorNo2: needsDualMotorNumbers(model, nextVariant) ? f.motorNo2 : "",
     }));
   };
 
   const applyVariantChange = (variant: string) => {
+    const nextExteriorOptions = exteriorColoursFor(form.model, variant);
     const nextInteriorOptions = interiorColoursFor(form.model, variant);
     setForm((f) => ({
       ...f,
       variant,
+      colour: nextExteriorOptions.includes(f.colour) ? f.colour : (nextExteriorOptions[0] ?? ""),
       interiorColour: nextInteriorOptions.includes(f.interiorColour)
         ? f.interiorColour
         : (nextInteriorOptions[0] ?? ""),
@@ -173,6 +176,7 @@ export default function AdminVehicleStock() {
       ...emptyForm(),
       model,
       variant,
+      colour: exteriorColoursFor(model, variant)[0] ?? "",
       interiorColour: interiorColoursFor(model, variant)[0] ?? "",
     });
     setShowForm(true);
