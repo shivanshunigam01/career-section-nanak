@@ -1,11 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Loader2, RefreshCw, Wrench } from "lucide-react";
+import { AlertTriangle, Loader2, RefreshCw, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
@@ -19,6 +23,19 @@ import {
   type StockUnit,
 } from "@/lib/stockPipelineApi";
 
+type HoldDialogState = {
+  unit: StockUnit;
+  result: "FAIL" | "TECHNICAL_HOLD" | "OEM_HOLD";
+};
+
+const HOLD_REASONS = [
+  { value: "TECHNICAL", label: "Technical issue" },
+  { value: "DAMAGE", label: "Physical damage" },
+  { value: "BATTERY", label: "Battery / HV" },
+  { value: "OEM_CAMPAIGN", label: "OEM campaign" },
+  { value: "OTHER", label: "Other" },
+];
+
 export default function AdminPreStockPdi() {
   const admin = getAdminUser();
   const canDelete =
@@ -29,6 +46,10 @@ export default function AdminPreStockPdi() {
   const [completed, setCompleted] = useState<StockPdiRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [soc, setSoc] = useState("80");
+  const [holdDialog, setHoldDialog] = useState<HoldDialogState | null>(null);
+  const [holdFeedback, setHoldFeedback] = useState("");
+  const [holdReason, setHoldReason] = useState("TECHNICAL");
+  const [submitting, setSubmitting] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -47,22 +68,62 @@ export default function AdminPreStockPdi() {
     void load();
   }, [load]);
 
-  const submit = async (unit: StockUnit, result: string) => {
+  const submitPass = async (unit: StockUnit) => {
     try {
       await submitPreStockPdi(unit._id, {
-        result,
+        result: "PASS",
         socPercent: Number(soc),
         hvBatteryStatus: "OK",
         batteryWarning: false,
         diagnosticScan: true,
         dtcPresent: false,
         checklist: [],
-        notes: result === "PASS" ? "Pre-stock PDI passed" : "Issue found",
+        notes: "Pre-stock PDI passed",
       });
-      toast.success(`PDI ${result} — ${unit.vinNo}`);
+      toast.success(`PDI PASS — ${unit.vinNo}`);
       void load();
     } catch (e) {
       toast.error(formatApiErrors(e));
+    }
+  };
+
+  const openHoldDialog = (unit: StockUnit, result: HoldDialogState["result"]) => {
+    setHoldDialog({ unit, result });
+    setHoldFeedback("");
+    setHoldReason(
+      result === "OEM_HOLD" ? "OEM_CAMPAIGN" : result === "FAIL" ? "TECHNICAL" : "TECHNICAL",
+    );
+  };
+
+  const submitHold = async () => {
+    if (!holdDialog) return;
+    if (!holdFeedback.trim()) {
+      toast.error("Enter hold feedback — describe the issue for replacement tracking");
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await submitPreStockPdi(holdDialog.unit._id, {
+        result: holdDialog.result,
+        holdReason,
+        socPercent: Number(soc),
+        hvBatteryStatus: "OK",
+        batteryWarning: false,
+        diagnosticScan: true,
+        dtcPresent: false,
+        checklist: [],
+        notes: holdFeedback.trim(),
+        holdFeedback: holdFeedback.trim(),
+      });
+      toast.success(
+        `${holdDialog.result.replace(/_/g, " ")} — ${holdDialog.unit.vinNo}. Visible in Vehicle Stock as hold.`,
+      );
+      setHoldDialog(null);
+      void load();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -74,7 +135,7 @@ export default function AdminPreStockPdi() {
             <Wrench className="h-6 w-6" /> Pre-Stock PDI
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Vehicles appear here after Receipt Verification (status PDI_PENDING). PASS → AVAILABLE stock.
+            PASS → available stock. FAIL / HOLD → flagged in Vehicle Stock with feedback for future replacement.
           </p>
         </div>
         <div className="flex gap-2 items-center">
@@ -103,7 +164,6 @@ export default function AdminPreStockPdi() {
                 <p className="font-medium text-foreground">No vehicles waiting for pre-stock PDI</p>
                 <p className="text-sm text-muted-foreground max-w-md mx-auto">
                   Complete <strong>Receipt Verification</strong> on vehicles in RECEIVED status first.
-                  Demo VIN <span className="font-mono">DEMOVF700005</span> is seeded at this stage.
                 </p>
                 <Button asChild variant="outline" size="sm">
                   <Link to="/admin/stock/receipt">Go to Receipt Verification</Link>
@@ -120,9 +180,14 @@ export default function AdminPreStockPdi() {
                     <Badge variant="outline" className="mt-1 text-[10px]">{u.vehicleStatus ?? u.status}</Badge>
                   </div>
                   <div className="flex flex-wrap gap-2 shrink-0">
-                    <Button size="sm" onClick={() => void submit(u, "PASS")}>PASS</Button>
-                    <Button size="sm" variant="destructive" onClick={() => void submit(u, "FAIL")}>FAIL</Button>
-                    <Button size="sm" variant="outline" onClick={() => void submit(u, "TECHNICAL_HOLD")}>HOLD</Button>
+                    <Button size="sm" onClick={() => void submitPass(u)}>PASS</Button>
+                    <Button size="sm" variant="destructive" onClick={() => openHoldDialog(u, "FAIL")}>FAIL</Button>
+                    <Button size="sm" variant="outline" onClick={() => openHoldDialog(u, "TECHNICAL_HOLD")}>
+                      Technical hold
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => openHoldDialog(u, "OEM_HOLD")}>
+                      OEM hold
+                    </Button>
                   </div>
                 </Card>
               ))
@@ -137,9 +202,12 @@ export default function AdminPreStockPdi() {
                   <Card key={p._id} className="p-3 text-sm space-y-2">
                     <p className="font-mono font-medium truncate">{p.vin || p.pdiNumber}</p>
                     <p className="text-muted-foreground text-xs">
-                      {p.pdiNumber} · {p.result} · Vendor: VinFast
+                      {p.pdiNumber} · {p.result}
                       {p.performedAt ? ` · ${new Date(p.performedAt).toLocaleDateString()}` : ""}
                     </p>
+                    {p.notes && !["Pre-stock PDI passed", "Issue found"].includes(p.notes) ? (
+                      <p className="text-xs text-amber-700 dark:text-amber-400 line-clamp-3">{p.notes}</p>
+                    ) : null}
                     <div className="flex flex-wrap gap-2">
                       <StockPrintButton
                         getPrintOptions={() => ({
@@ -149,8 +217,9 @@ export default function AdminPreStockPdi() {
                           meta: [
                             { label: "VIN", value: p.vin || "—" },
                             { label: "Result", value: p.result || "—" },
+                            { label: "Notes", value: p.notes || "—" },
                           ],
-                          bodyHtml: `<p>Pre-stock PDI ${p.result || ""} for VIN ${p.vin || "—"}.</p>`,
+                          bodyHtml: `<p>Pre-stock PDI ${p.result || ""} for VIN ${p.vin || "—"}.</p>${p.notes ? `<p><strong>Feedback:</strong> ${p.notes}</p>` : ""}`,
                         })}
                       />
                       {canDelete ? (
@@ -178,6 +247,48 @@ export default function AdminPreStockPdi() {
           ) : null}
         </>
       )}
+
+      <Dialog open={Boolean(holdDialog)} onOpenChange={(open) => !open && setHoldDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              {holdDialog?.result.replace(/_/g, " ")} — {holdDialog?.unit.vinNo}
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            This vehicle will appear in <strong>Vehicle Stock</strong> as hold stock with your feedback, so it can be tracked for replacement.
+          </p>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>Hold category</Label>
+              <Select value={holdReason} onValueChange={setHoldReason}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {HOLD_REASONS.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label>Issue feedback *</Label>
+              <Textarea
+                value={holdFeedback}
+                onChange={(e) => setHoldFeedback(e.target.value)}
+                placeholder="Describe defect, DTC, damage, or OEM instruction — needed for replacement / claim"
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setHoldDialog(null)}>Cancel</Button>
+            <Button variant="destructive" onClick={() => void submitHold()} disabled={submitting}>
+              {submitting ? "Saving…" : "Confirm hold"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

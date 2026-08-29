@@ -18,10 +18,12 @@ import { vendorDisplayName, vendorFromPo } from "@/lib/stockVendorsApi";
 import {
   createDispatch,
   deleteDispatch,
+  emptyLineTransport,
   fetchDispatches,
   fetchPipelinePurchaseOrders,
   updateDispatch,
   type DispatchRecord,
+  type LineTransport,
   type PoLine,
   type PurchaseOrder,
 } from "@/lib/stockPipelineApi";
@@ -46,15 +48,7 @@ export default function AdminDispatches() {
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [poId, setPoId] = useState("");
-  const [transport, setTransport] = useState({
-    oemInvoiceNumber: "",
-    oemInvoiceDate: new Date().toISOString().slice(0, 10),
-    transporter: "VinFast Logistics",
-    lrNumber: "",
-    truckNumber: "",
-    driverName: "",
-    driverMobile: "",
-  });
+  const [lineTransport, setLineTransport] = useState<Record<string, LineTransport>>({});
   const [vinEntries, setVinEntries] = useState<VinEntry[]>([]);
   const [saving, setSaving] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
@@ -97,10 +91,25 @@ export default function AdminDispatches() {
   useEffect(() => {
     if (!selectedPo) {
       setVinEntries([]);
+      setLineTransport({});
       return;
     }
     setVinEntries([]);
+    setLineTransport((prev) => {
+      const next: Record<string, LineTransport> = {};
+      for (const line of selectedPo.lines) {
+        if (line._id) next[line._id] = prev[line._id] ?? emptyLineTransport();
+      }
+      return next;
+    });
   }, [selectedPo?._id]);
+
+  const updateLineTransport = (poLineId: string, patch: Partial<LineTransport>) => {
+    setLineTransport((prev) => ({
+      ...prev,
+      [poLineId]: { ...(prev[poLineId] ?? emptyLineTransport()), ...patch },
+    }));
+  };
 
   const addVinRow = (line: PoLine) => {
     if (!line._id) return;
@@ -118,43 +127,59 @@ export default function AdminDispatches() {
 
   const submit = async () => {
     if (!poId || !selectedPo) return toast.error("Select a released PO");
-    if (!transport.oemInvoiceNumber || !transport.lrNumber || !transport.truckNumber) {
-      return toast.error("Invoice number, LR number and truck number are required");
-    }
-    const items = vinEntries
-      .filter((v) => v.vin.trim())
-      .map((v) => {
-        const line = selectedPo.lines.find((l) => l._id === v.poLineId);
-        if (!line) return null;
+
+    const lineShipments = selectedPo.lines
+      .map((line) => {
+        if (!line._id) return null;
+        const lineVins = vinEntries.filter((v) => v.poLineId === line._id && v.vin.trim());
+        if (!lineVins.length) return null;
+
+        const transport = lineTransport[line._id] ?? emptyLineTransport();
+        if (!transport.oemInvoiceNumber || !transport.lrNumber || !transport.truckNumber || !transport.transporter) {
+          toast.error(`Line ${formatPoLineLabel(line)}: invoice, transporter, LR and truck are required`);
+          return "invalid" as const;
+        }
+
         return {
-          poLineId: v.poLineId,
-          vin: v.vin.trim().toUpperCase(),
-          model: line.model,
-          variant: line.variant,
-          colour: line.colour,
-          motorNo: v.motorNo.trim() || undefined,
+          poLineId: line._id,
+          oemInvoiceNumber: transport.oemInvoiceNumber,
+          oemInvoiceDate: transport.oemInvoiceDate,
+          transporter: transport.transporter,
+          lrNumber: transport.lrNumber,
+          truckNumber: transport.truckNumber,
+          driverName: transport.driverName || undefined,
+          driverMobile: transport.driverMobile || undefined,
+          items: lineVins.map((v) => ({
+            poLineId: line._id!,
+            vin: v.vin.trim().toUpperCase(),
+            model: line.model,
+            variant: line.variant,
+            colour: line.colour,
+            motorNo: v.motorNo.trim() || undefined,
+          })),
         };
-      })
-      .filter(Boolean);
-    if (!items.length) return toast.error("Enter at least one VIN against a PO line");
+      });
+
+    if (lineShipments.some((s) => s === "invalid")) return;
+    const shipments = lineShipments.filter((s): s is NonNullable<typeof s> => Boolean(s && s !== "invalid"));
+    if (!shipments.length) return toast.error("Enter at least one VIN against a PO line");
 
     setSaving(true);
     try {
-      await createDispatch({
+      const result = await createDispatch({
         purchaseOrderId: poId,
-        oemInvoiceNumber: transport.oemInvoiceNumber,
-        oemInvoiceDate: transport.oemInvoiceDate,
-        dispatchDate: new Date().toISOString(),
-        transporter: transport.transporter,
-        lrNumber: transport.lrNumber,
-        truckNumber: transport.truckNumber,
-        driverName: transport.driverName || undefined,
-        driverMobile: transport.driverMobile || undefined,
-        items,
-      });
-      toast.success(`Dispatch created with ${items.length} VIN(s)`);
+        lineShipments: shipments,
+      }) as { data?: { dispatches?: DispatchRecord[]; dispatch?: DispatchRecord; stock?: unknown[] } };
+      const count = result?.data?.dispatches?.length ?? (result?.data?.dispatch ? 1 : shipments.length);
+      const vinCount = shipments.reduce((n, s) => n + s.items.length, 0);
+      toast.success(
+        count > 1
+          ? `${count} line dispatch(es) created with ${vinCount} VIN(s)`
+          : `Dispatch created with ${vinCount} VIN(s)`,
+      );
       setOpen(false);
       setVinEntries([]);
+      setLineTransport({});
       void load();
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -199,7 +224,7 @@ export default function AdminDispatches() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2"><Truck className="h-6 w-6" /> Dispatch & Transit</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Dispatch VINs against each PO line — model, variant and colour come from the PO
+            Dispatch VINs per PO line — each line can have its own truck, driver and OEM invoice
           </p>
         </div>
         <div className="flex gap-2">
@@ -298,8 +323,13 @@ export default function AdminDispatches() {
       )}
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Create dispatch from PO lines</DialogTitle></DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create dispatch from PO lines</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground -mt-2">
+            Each PO line gets its own truck, driver and invoice — add VINs and transport details per line.
+          </p>
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label>Purchase order *</Label>
@@ -317,12 +347,13 @@ export default function AdminDispatches() {
 
             {selectedPo ? (
               <div className="space-y-3 rounded-lg border border-border/50 p-3 bg-secondary/10">
-                <p className="text-xs font-semibold text-muted-foreground uppercase">PO lines — add VIN per line</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase">PO lines — VIN + transport per line</p>
                 {selectedPo.lines.map((line, index) => {
                   const pending = pendingQty(line);
                   const lineVins = vinEntries.filter((v) => v.poLineId === line._id);
+                  const transport = line._id ? (lineTransport[line._id] ?? emptyLineTransport()) : emptyLineTransport();
                   return (
-                    <div key={line._id || index} className="rounded-md border border-border/40 bg-background/80 p-3 space-y-2">
+                    <div key={line._id || index} className="rounded-md border border-border/40 bg-background/80 p-3 space-y-3">
                       <div className="flex flex-wrap items-center justify-between gap-2">
                         <div>
                           <p className="text-sm font-medium">Line {index + 1}: {formatPoLineLabel(line)}</p>
@@ -340,6 +371,37 @@ export default function AdminDispatches() {
                           <Plus className="h-3.5 w-3.5 mr-1" /> Add VIN
                         </Button>
                       </div>
+
+                      {line._id && (pending > 0 || lineVins.length > 0) ? (
+                        <div className="rounded border border-dashed border-border/50 p-3 space-y-2 bg-secondary/5">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase">
+                            Transport for this line (truck / driver / invoice)
+                          </p>
+                          <div className="grid sm:grid-cols-2 gap-2">
+                            {(
+                              [
+                                ["oemInvoiceNumber", "OEM Invoice No. *"],
+                                ["oemInvoiceDate", "OEM Invoice Date *"],
+                                ["transporter", "Transporter *"],
+                                ["lrNumber", "LR Number *"],
+                                ["truckNumber", "Truck Number *"],
+                                ["driverName", "Driver Name"],
+                                ["driverMobile", "Driver Mobile"],
+                              ] as const
+                            ).map(([key, label]) => (
+                              <div key={key}>
+                                <Label className="text-xs">{label}</Label>
+                                <Input
+                                  type={key === "oemInvoiceDate" ? "date" : "text"}
+                                  value={transport[key]}
+                                  onChange={(e) => updateLineTransport(line._id!, { [key]: e.target.value })}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null}
+
                       {lineVins.map((entry) => (
                         <div key={entry.key} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-end">
                           <div>
@@ -383,34 +445,21 @@ export default function AdminDispatches() {
                 })}
               </div>
             ) : null}
-
-            <div className="grid sm:grid-cols-2 gap-3">
-              {(
-                [
-                  ["oemInvoiceNumber", "OEM Invoice No. *"],
-                  ["oemInvoiceDate", "OEM Invoice Date *"],
-                  ["transporter", "Transporter *"],
-                  ["lrNumber", "LR Number *"],
-                  ["truckNumber", "Truck Number *"],
-                  ["driverName", "Driver Name"],
-                  ["driverMobile", "Driver Mobile"],
-                ] as const
-              ).map(([key, label]) => (
-                <div key={key}>
-                  <Label className="text-xs">{label}</Label>
-                  <Input
-                    type={key === "oemInvoiceDate" ? "date" : "text"}
-                    value={transport[key]}
-                    onChange={(e) => setTransport({ ...transport, [key]: e.target.value })}
-                  />
-                </div>
-              ))}
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={() => void submit()} disabled={saving}>
-              {saving ? "Creating…" : `Create dispatch (${vinEntries.filter((v) => v.vin.trim()).length} VINs)`}
+              {saving
+                ? "Creating…"
+                : (() => {
+                    const vinCount = vinEntries.filter((v) => v.vin.trim()).length;
+                    const lineCount = new Set(
+                      vinEntries.filter((v) => v.vin.trim()).map((v) => v.poLineId),
+                    ).size;
+                    return lineCount > 1
+                      ? `Create ${lineCount} dispatches (${vinCount} VINs)`
+                      : `Create dispatch (${vinCount} VINs)`;
+                  })()}
             </Button>
           </DialogFooter>
         </DialogContent>

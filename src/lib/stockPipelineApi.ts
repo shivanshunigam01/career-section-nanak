@@ -44,15 +44,52 @@ export type DispatchRecord = {
   dispatchNumber: string;
   purchaseOrderId: string | PurchaseOrder;
   poNumber?: string;
+  poLineId?: string;
   oemInvoiceNumber: string;
   oemInvoiceDate: string;
   dispatchDate: string;
   transporter: string;
   lrNumber: string;
   truckNumber: string;
+  driverName?: string;
+  driverMobile?: string;
   status: string;
   items: Array<{ vin: string; model: string; variant?: string; colour?: string; configMatch?: string; poLineId?: string }>;
 };
+
+export type LineTransport = {
+  oemInvoiceNumber: string;
+  oemInvoiceDate: string;
+  transporter: string;
+  lrNumber: string;
+  truckNumber: string;
+  driverName: string;
+  driverMobile: string;
+};
+
+export type LineShipmentPayload = LineTransport & {
+  poLineId: string;
+  items: Array<{
+    poLineId: string;
+    vin: string;
+    model: string;
+    variant?: string;
+    colour?: string;
+    motorNo?: string;
+  }>;
+};
+
+export function emptyLineTransport(): LineTransport {
+  return {
+    oemInvoiceNumber: "",
+    oemInvoiceDate: new Date().toISOString().slice(0, 10),
+    transporter: "VinFast Logistics",
+    lrNumber: "",
+    truckNumber: "",
+    driverName: "",
+    driverMobile: "",
+  };
+}
 
 export type StockUnit = {
   _id: string;
@@ -67,6 +104,9 @@ export type StockUnit = {
   ageingBucket?: string;
   lastSoc?: number;
   holdStatus?: boolean;
+  holdReason?: string;
+  holdFeedback?: string;
+  lastPdiResult?: string;
   location?: string;
 };
 
