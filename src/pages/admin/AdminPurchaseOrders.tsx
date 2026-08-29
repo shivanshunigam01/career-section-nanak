@@ -16,6 +16,7 @@ import {
   approvePurchaseOrder,
   createPipelinePurchaseOrder,
   fetchPipelinePurchaseOrders,
+  rejectPurchaseOrder,
   releasePurchaseOrder,
   submitPurchaseOrder,
   type PurchaseOrder,
@@ -23,8 +24,17 @@ import {
 
 export default function AdminPurchaseOrders() {
   const admin = getAdminUser();
-  const canCreate = canPerformAction(admin, "stock_delivery", "create");
-  const canUpdate = canPerformAction(admin, "stock_delivery", "update");
+  const canCreatePo =
+    canPerformAction(admin, "stock_po", "create") ||
+    canPerformAction(admin, "stock_delivery", "create");
+  const canSubmitPo =
+    canPerformAction(admin, "stock_po", "update") ||
+    canPerformAction(admin, "stock_delivery", "update");
+  const canApprovePo = canPerformAction(admin, "stock_po", "approve");
+  const canReleasePo =
+    canPerformAction(admin, "stock_po", "update") ||
+    canPerformAction(admin, "stock_delivery", "update");
+
   const { models: catalogModels, trimsFor } = useVehicleCatalog();
 
   const [rows, setRows] = useState<PurchaseOrder[]>([]);
@@ -82,7 +92,9 @@ export default function AdminPurchaseOrders() {
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   const onCreate = async () => {
     if (!model.trim()) return toast.error("Select a vehicle model");
@@ -102,7 +114,7 @@ export default function AdminPurchaseOrders() {
           modelYear: new Date().getFullYear(),
         }],
       });
-      toast.success("Purchase order created");
+      toast.success("Purchase order created (Draft)");
       setCreateOpen(false);
       void load();
     } catch (e) {
@@ -112,21 +124,41 @@ export default function AdminPurchaseOrders() {
     }
   };
 
+  const pendingApproval = rows.filter((po) => po.status === "SUBMITTED").length;
+
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2"><ClipboardList className="h-6 w-6" /> Purchase Orders</h1>
-          <p className="text-sm text-muted-foreground mt-1">Draft → Submit → Approve → Release → Dispatch → Gate → GRN → Receipt → PDI</p>
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <ClipboardList className="h-6 w-6" /> Purchase Orders
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Stock Manager creates & submits → GM / MD / CEO / Sales Head approves → Procurement releases
+          </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => void load()}><RefreshCw className="h-4 w-4 mr-1" /> Refresh</Button>
-          {canCreate ? <Button size="sm" onClick={() => setCreateOpen(true)}><Plus className="h-4 w-4 mr-1" /> New PO</Button> : null}
+          <Button variant="outline" size="sm" onClick={() => void load()}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Refresh
+          </Button>
+          {canCreatePo ? (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-4 w-4 mr-1" /> New PO
+            </Button>
+          ) : null}
         </div>
       </div>
 
+      {canApprovePo && pendingApproval > 0 ? (
+        <Card className="p-3 border-amber-500/40 bg-amber-500/5 text-sm">
+          <strong>{pendingApproval}</strong> PO(s) awaiting your approval (SUBMITTED).
+        </Card>
+      ) : null}
+
       {loading ? (
         <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin" /></div>
+      ) : rows.length === 0 ? (
+        <Card className="p-10 text-center text-muted-foreground border-dashed">No purchase orders yet.</Card>
       ) : (
         <div className="space-y-3">
           {rows.map((po) => (
@@ -136,7 +168,7 @@ export default function AdminPurchaseOrders() {
                   <p className="font-mono font-semibold">{po.poNumber}</p>
                   <p className="text-xs text-muted-foreground">{po.poType || "Regular"} · {po.paymentTerms || "Advance"}</p>
                 </div>
-                <Badge variant="secondary">{po.status}</Badge>
+                <Badge variant={po.status === "SUBMITTED" ? "default" : "secondary"}>{po.status}</Badge>
               </div>
               <ul className="text-sm space-y-1">
                 {po.lines.map((l, i) => (
@@ -146,15 +178,83 @@ export default function AdminPurchaseOrders() {
                   </li>
                 ))}
               </ul>
-              <div className="flex flex-wrap gap-2">
-                {canUpdate && po.status === "DRAFT" ? (
-                  <Button size="sm" variant="outline" onClick={async () => { try { await submitPurchaseOrder(po._id); toast.success("Submitted"); load(); } catch (e) { toast.error(formatApiErrors(e)); } }}>Submit</Button>
+              {po.approvalHistory?.length ? (
+                <ul className="text-xs text-muted-foreground border-t border-border/40 pt-2 space-y-0.5">
+                  {po.approvalHistory.map((h, i) => (
+                    <li key={i}>
+                      {h.action} → {h.status}
+                      {h.byName ? ` by ${h.byName}` : ""}
+                      {h.at ? ` · ${new Date(h.at).toLocaleString()}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+              <div className="flex flex-wrap gap-2 pt-1">
+                {canSubmitPo && po.status === "DRAFT" ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        await submitPurchaseOrder(po._id);
+                        toast.success("Submitted for GM / leadership approval");
+                        void load();
+                      } catch (e) {
+                        toast.error(formatApiErrors(e));
+                      }
+                    }}
+                  >
+                    Submit for approval
+                  </Button>
                 ) : null}
-                {canUpdate && po.status === "SUBMITTED" ? (
-                  <Button size="sm" variant="outline" onClick={async () => { try { await approvePurchaseOrder(po._id); toast.success("Approved"); load(); } catch (e) { toast.error(formatApiErrors(e)); } }}>Approve</Button>
+                {canApprovePo && po.status === "SUBMITTED" ? (
+                  <>
+                    <Button
+                      size="sm"
+                      onClick={async () => {
+                        try {
+                          await approvePurchaseOrder(po._id);
+                          toast.success("PO approved");
+                          void load();
+                        } catch (e) {
+                          toast.error(formatApiErrors(e));
+                        }
+                      }}
+                    >
+                      Approve
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={async () => {
+                        try {
+                          await rejectPurchaseOrder(po._id);
+                          toast.success("PO rejected");
+                          void load();
+                        } catch (e) {
+                          toast.error(formatApiErrors(e));
+                        }
+                      }}
+                    >
+                      Reject
+                    </Button>
+                  </>
                 ) : null}
-                {canUpdate && po.status === "APPROVED" ? (
-                  <Button size="sm" onClick={async () => { try { await releasePurchaseOrder(po._id); toast.success("Released"); load(); } catch (e) { toast.error(formatApiErrors(e)); } }}>Release PO</Button>
+                {canReleasePo && po.status === "APPROVED" ? (
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        await releasePurchaseOrder(po._id);
+                        toast.success("PO released — ready for dispatch");
+                        void load();
+                      } catch (e) {
+                        toast.error(formatApiErrors(e));
+                      }
+                    }}
+                  >
+                    Release PO
+                  </Button>
                 ) : null}
               </div>
             </Card>
