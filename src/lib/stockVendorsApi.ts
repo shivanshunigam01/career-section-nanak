@@ -52,6 +52,10 @@ export function vendorDisplayName(v?: Partial<Vendor> | string | null, fallback 
   return v.name || fallback;
 }
 
+export function pickDefaultVendor(vendors: Vendor[]) {
+  return vendors.find((v) => v.code === "vinfast" || v.name === "VinFast") ?? vendors[0];
+}
+
 export function vendorFromPo(po?: {
   supplier?: string;
   supplierId?: Vendor | string | null;

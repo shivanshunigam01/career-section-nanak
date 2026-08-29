@@ -14,8 +14,8 @@ import { exteriorColoursFor } from "@/data/stockColourOptions";
 import PoLineEditorRow, { emptyPoLineDraft, formatPoLineLabel, type PoLineDraft } from "@/components/admin/PoLineEditorRow";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
 import StockPrintButton from "@/components/admin/StockPrintButton";
-import { dataTable } from "@/lib/stockPrint";
-import { fetchVendors, vendorDisplayName, vendorFromPo, type Vendor } from "@/lib/stockVendorsApi";
+import { dataTable, escapeHtml } from "@/lib/stockPrint";
+import { fetchVendors, pickDefaultVendor, vendorDisplayName, vendorFromPo, type Vendor } from "@/lib/stockVendorsApi";
 import {
   approvePurchaseOrder,
   cancelPurchaseOrder,
@@ -44,6 +44,50 @@ function openCreateLines(catalogModels: string[], trimsFor: (m: string) => strin
   const model = catalogModels[0] ?? "";
   const variant = trimsFor(model)[0] ?? "";
   return [emptyPoLineDraft(model, variant, exteriorColoursFor(model, variant)[0] ?? "")];
+}
+
+function PoVendorBanner({
+  vendor,
+}: {
+  vendor: { name?: string; legalName?: string; gstin?: string };
+}) {
+  const display = vendor.legalName || vendor.name || "VinFast";
+  return (
+    <div className="rounded-lg border border-primary/25 bg-primary/5 px-4 py-3">
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        Procurement vendor (from Vendor Master)
+      </p>
+      <p className="text-base font-semibold mt-0.5">{display}</p>
+      {vendor.name && vendor.legalName && vendor.legalName !== vendor.name ? (
+        <p className="text-xs text-muted-foreground">{vendor.name}</p>
+      ) : null}
+      {vendor.gstin ? (
+        <p className="text-xs text-muted-foreground mt-1">GSTIN: {vendor.gstin}</p>
+      ) : null}
+    </div>
+  );
+}
+
+function poPrintBodyHtml(po: PurchaseOrder) {
+  const vendor = vendorFromPo(po);
+  const vendorLabel = vendor.legalName || vendor.name || "VinFast";
+  return `
+    <p style="margin:0 0 14px;font-size:13px;line-height:1.5;">
+      This purchase order is raised to <strong>${escapeHtml(vendorLabel)}</strong>
+      for procurement of the following vehicle line(s):
+    </p>
+    ${dataTable(
+      ["#", "Model line", "Qty", "Dispatched", "Received", "Basic price"],
+      po.lines.map((l, i) => [
+        String(i + 1),
+        formatPoLineLabel(l),
+        String(l.qty),
+        String(l.dispatchedQty ?? 0),
+        String(l.receivedQty ?? 0),
+        l.basicPrice ? `₹${l.basicPrice.toLocaleString()}` : "—",
+      ]),
+    )}
+  `;
 }
 
 export default function AdminPurchaseOrders() {
@@ -86,7 +130,8 @@ export default function AdminPurchaseOrders() {
     try {
       const list = await fetchVendors();
       setVendors(list);
-      if (!supplierId && list[0]) setSupplierId(list[0]._id);
+      const defaultVendor = pickDefaultVendor(list);
+      if (defaultVendor && !supplierId) setSupplierId(defaultVendor._id);
     } catch (e) {
       toast.error(formatApiErrors(e));
     }
@@ -111,8 +156,9 @@ export default function AdminPurchaseOrders() {
   const openCreateDialog = () => {
     setEditingPo(null);
     setPoType("Regular");
-    setPaymentTerms(selectedVendor?.paymentTermsDefault || "Advance");
-    setSupplierId(selectedVendor?._id || vendors[0]?._id || "");
+    const defaultVendor = pickDefaultVendor(vendors);
+    setPaymentTerms(defaultVendor?.paymentTermsDefault || "Advance");
+    setSupplierId(defaultVendor?._id || vendors[0]?._id || "");
     setLines(openCreateLines(catalogModels, trimsFor));
     setFormOpen(true);
   };
@@ -262,6 +308,7 @@ export default function AdminPurchaseOrders() {
                 </div>
                 <Badge variant={po.status === "SUBMITTED" ? "default" : "secondary"}>{po.status}</Badge>
               </div>
+              <PoVendorBanner vendor={vendorFromPo(po)} />
               <div className="overflow-x-auto rounded-md border border-border/40">
                 <table className="w-full text-sm">
                   <thead>
@@ -309,22 +356,16 @@ export default function AdminPurchaseOrders() {
                     documentNo: po.poNumber,
                     vendor: vendorFromPo(po),
                     meta: [
+                      {
+                        label: "Vendor / OEM",
+                        value: vendorFromPo(po).legalName || vendorFromPo(po).name || "VinFast",
+                      },
                       { label: "Status", value: po.status },
                       { label: "PO Type", value: po.poType || "Regular" },
                       { label: "Payment Terms", value: po.paymentTerms || "Advance" },
                       { label: "Lines", value: String(po.lines.length) },
                     ],
-                    bodyHtml: dataTable(
-                      ["#", "Model line", "Qty", "Dispatched", "Received", "Basic price"],
-                      po.lines.map((l, i) => [
-                        String(i + 1),
-                        formatPoLineLabel(l),
-                        String(l.qty),
-                        String(l.dispatchedQty ?? 0),
-                        String(l.receivedQty ?? 0),
-                        l.basicPrice ? `₹${l.basicPrice.toLocaleString()}` : "—",
-                      ]),
-                    ),
+                    bodyHtml: poPrintBodyHtml(po),
                   })}
                 />
                 {canEditPo && editablePoStatuses.has(po.status) ? (
@@ -473,8 +514,19 @@ export default function AdminPurchaseOrders() {
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">
-                Procurement vendor from Vendor Master (default: VinFast)
+                Select OEM vendor — VinFast is default from Vendor Master
               </p>
+              {selectedVendor ? (
+                <div className="mt-3">
+                  <PoVendorBanner
+                    vendor={{
+                      name: selectedVendor.name,
+                      legalName: selectedVendor.legalName,
+                      gstin: selectedVendor.gstin,
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
