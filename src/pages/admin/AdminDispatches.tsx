@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, RefreshCw, Trash2, Truck } from "lucide-react";
+import { Loader2, Pencil, Plus, RefreshCw, Trash2, Truck } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -9,11 +9,15 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatApiErrors } from "@/lib/api";
+import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import { formatPoLineLabel } from "@/components/admin/PoLineEditorRow";
+import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
 import {
   createDispatch,
+  deleteDispatch,
   fetchDispatches,
   fetchPipelinePurchaseOrders,
+  updateDispatch,
   type DispatchRecord,
   type PoLine,
   type PurchaseOrder,
@@ -26,6 +30,14 @@ function pendingQty(line: PoLine) {
 }
 
 export default function AdminDispatches() {
+  const admin = getAdminUser();
+  const canUpdate =
+    canPerformAction(admin, "stock_dispatch", "update") ||
+    canPerformAction(admin, "stock_delivery", "update");
+  const canDelete =
+    canPerformAction(admin, "stock_dispatch", "delete") ||
+    canPerformAction(admin, "stock_delivery", "delete");
+
   const [rows, setRows] = useState<DispatchRecord[]>([]);
   const [pos, setPos] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,6 +54,17 @@ export default function AdminDispatches() {
   });
   const [vinEntries, setVinEntries] = useState<VinEntry[]>([]);
   const [saving, setSaving] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editing, setEditing] = useState<DispatchRecord | null>(null);
+  const [editTransport, setEditTransport] = useState({
+    oemInvoiceNumber: "",
+    oemInvoiceDate: "",
+    transporter: "",
+    lrNumber: "",
+    truckNumber: "",
+    driverName: "",
+    driverMobile: "",
+  });
 
   const selectedPo = useMemo(() => pos.find((p) => p._id === poId), [pos, poId]);
 
@@ -137,6 +160,36 @@ export default function AdminDispatches() {
     }
   };
 
+  const openEdit = (row: DispatchRecord) => {
+    setEditing(row);
+    setEditTransport({
+      oemInvoiceNumber: row.oemInvoiceNumber,
+      oemInvoiceDate: row.oemInvoiceDate?.slice(0, 10) ?? "",
+      transporter: row.transporter,
+      lrNumber: row.lrNumber,
+      truckNumber: row.truckNumber,
+      driverName: (row as DispatchRecord & { driverName?: string }).driverName ?? "",
+      driverMobile: (row as DispatchRecord & { driverMobile?: string }).driverMobile ?? "",
+    });
+    setEditOpen(true);
+  };
+
+  const saveEdit = async () => {
+    if (!editing) return;
+    setSaving(true);
+    try {
+      await updateDispatch(editing._id, editTransport);
+      toast.success(`Dispatch ${editing.dispatchNumber} updated`);
+      setEditOpen(false);
+      setEditing(null);
+      void load();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4 p-4 md:p-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -168,6 +221,30 @@ export default function AdminDispatches() {
                   </p>
                 </div>
                 <Badge>{r.status}</Badge>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {canUpdate && r.status === "IN_TRANSIT" ? (
+                  <Button size="sm" variant="outline" onClick={() => openEdit(r)}>
+                    <Pencil className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                ) : null}
+                {canDelete ? (
+                  <PipelineDeleteButton
+                    label="Delete"
+                    title={`Delete ${r.dispatchNumber}?`}
+                    description="Removes dispatch and in-transit VINs. Blocked if gate entry exists."
+                    onConfirm={async () => {
+                      try {
+                        await deleteDispatch(r._id);
+                        toast.success(`Dispatch ${r.dispatchNumber} deleted`);
+                        void load();
+                      } catch (e) {
+                        toast.error(formatApiErrors(e));
+                        throw e;
+                      }
+                    }}
+                  />
+                ) : null}
               </div>
               {r.items?.length ? (
                 <div className="overflow-x-auto rounded border border-border/40">
@@ -312,6 +389,42 @@ export default function AdminDispatches() {
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button onClick={() => void submit()} disabled={saving}>
               {saving ? "Creating…" : `Create dispatch (${vinEntries.filter((v) => v.vin.trim()).length} VINs)`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit dispatch {editing?.dispatchNumber}</DialogTitle>
+          </DialogHeader>
+          <div className="grid sm:grid-cols-2 gap-3">
+            {(
+              [
+                ["oemInvoiceNumber", "OEM Invoice No."],
+                ["oemInvoiceDate", "OEM Invoice Date"],
+                ["transporter", "Transporter"],
+                ["lrNumber", "LR Number"],
+                ["truckNumber", "Truck Number"],
+                ["driverName", "Driver Name"],
+                ["driverMobile", "Driver Mobile"],
+              ] as const
+            ).map(([key, label]) => (
+              <div key={key}>
+                <Label className="text-xs">{label}</Label>
+                <Input
+                  type={key === "oemInvoiceDate" ? "date" : "text"}
+                  value={editTransport[key]}
+                  onChange={(e) => setEditTransport({ ...editTransport, [key]: e.target.value })}
+                />
+              </div>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditOpen(false)}>Cancel</Button>
+            <Button onClick={() => void saveEdit()} disabled={saving}>
+              {saving ? "Saving…" : "Save changes"}
             </Button>
           </DialogFooter>
         </DialogContent>

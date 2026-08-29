@@ -1,4 +1,4 @@
-import { adminGet, adminPostJson, adminPutJson, adminPatchJson } from "@/lib/api";
+import { adminGet, adminPostJson, adminPutJson, adminPatchJson, adminDeleteJson } from "@/lib/api";
 
 const BASE = "/admin/stock/pipeline";
 
@@ -121,6 +121,10 @@ export async function cancelPurchaseOrder(id: string, remarks?: string) {
   return adminPostJson<PurchaseOrder>(`${BASE}/purchase-orders/${id}/cancel`, { remarks });
 }
 
+export async function deletePurchaseOrder(id: string) {
+  return adminDeleteJson(`${BASE}/purchase-orders/${id}`);
+}
+
 export async function fetchDispatches(limit = 50) {
   const { data } = await adminGet<DispatchRecord[]>(`${BASE}/dispatches?limit=${limit}`);
   return data ?? [];
@@ -130,14 +134,30 @@ export async function createDispatch(body: Record<string, unknown>) {
   return adminPostJson(`${BASE}/dispatches`, body);
 }
 
+export async function updateDispatch(id: string, body: Record<string, unknown>) {
+  return adminPutJson<DispatchRecord>(`${BASE}/dispatches/${id}`, body);
+}
+
+export async function deleteDispatch(id: string) {
+  return adminDeleteJson(`${BASE}/dispatches/${id}`);
+}
+
 export async function fetchGateEntries(limit = 50) {
   const { data } = await adminGet(`${BASE}/gate-entries?limit=${limit}`);
   return data ?? [];
 }
 
+export async function deleteGateEntry(id: string) {
+  return adminDeleteJson(`${BASE}/gate-entries/${id}`);
+}
+
 export async function fetchGrns(limit = 50) {
   const { data } = await adminGet(`${BASE}/grns?limit=${limit}`);
   return data ?? [];
+}
+
+export async function deleteGrn(id: string) {
+  return adminDeleteJson(`${BASE}/grns/${id}`);
 }
 
 export async function fetchReceiptQueue() {
@@ -147,6 +167,24 @@ export async function fetchReceiptQueue() {
 
 export async function createReceipt(body: Record<string, unknown>) {
   return adminPostJson(`${BASE}/receipts`, body);
+}
+
+export type ReceiptRecord = {
+  _id: string;
+  receiptNo?: string;
+  vin?: string;
+  receiptStatus?: string;
+  vehicleStockId?: string;
+  createdAt?: string;
+};
+
+export async function fetchReceipts(limit = 50) {
+  const { data } = await adminGet<ReceiptRecord[]>(`${BASE}/receipts?limit=${limit}`);
+  return data ?? [];
+}
+
+export async function deleteReceipt(id: string) {
+  return adminDeleteJson(`${BASE}/receipts/${id}`);
 }
 
 export async function fetchPdiQueue() {
@@ -174,6 +212,10 @@ export async function submitPreStockPdi(stockId: string, body: Record<string, un
   return adminPostJson(`${BASE}/pdi/${stockId}/pre-stock`, body);
 }
 
+export async function deletePdi(id: string) {
+  return adminDeleteJson(`${BASE}/pdi/${id}`);
+}
+
 export async function fetchRectifications(status?: string) {
   const q = status ? `?status=${status}` : "";
   const { data } = await adminGet(`${BASE}/rectifications${q}`);
@@ -182,6 +224,10 @@ export async function fetchRectifications(status?: string) {
 
 export async function updateRectification(id: string, body: Record<string, unknown>) {
   return adminPatchJson(`${BASE}/rectifications/${id}`, body);
+}
+
+export async function deleteRectification(id: string) {
+  return adminDeleteJson(`${BASE}/rectifications/${id}`);
 }
 
 export async function fetchVehicle360(id: string) {

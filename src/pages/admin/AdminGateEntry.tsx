@@ -3,10 +3,18 @@ import { DoorOpen, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fetchDispatches, fetchGateEntries } from "@/lib/stockPipelineApi";
+import { Badge } from "@/components/ui/badge";
 import { formatApiErrors } from "@/lib/api";
+import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
+import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import { deleteGateEntry, fetchDispatches, fetchGateEntries } from "@/lib/stockPipelineApi";
 
 export default function AdminGateEntry() {
+  const admin = getAdminUser();
+  const canDelete =
+    canPerformAction(admin, "stock_gate", "delete") ||
+    canPerformAction(admin, "stock_delivery", "delete");
+
   const [entries, setEntries] = useState<Array<Record<string, unknown>>>([]);
   const [dispatches, setDispatches] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
@@ -35,12 +43,41 @@ export default function AdminGateEntry() {
       <p className="text-sm text-muted-foreground">Record truck arrival with seal check and mandatory arrival photo via API (multipart).</p>
       {loading ? <Loader2 className="animate-spin mx-auto" /> : (
         <>
-          <Card className="p-4"><p className="font-medium mb-2">Pending dispatches ({dispatches.length})</p>
-            {dispatches.map((d) => <p key={String(d._id)} className="text-sm">{String(d.dispatchNumber)} — {String(d.truckNumber)}</p>)}
+          <Card className="p-4">
+            <p className="font-medium mb-2">Pending dispatches ({dispatches.length})</p>
+            {dispatches.map((d) => (
+              <p key={String(d._id)} className="text-sm">{String(d.dispatchNumber)} — {String(d.truckNumber)}</p>
+            ))}
           </Card>
-          <Card className="p-4"><p className="font-medium mb-2">Recent gate entries</p>
-            {entries.map((e) => <p key={String(e._id)} className="text-sm">{String(e.gateEntryNo)} — {String(e.truckNumber)}</p>)}
-          </Card>
+          <div className="space-y-2">
+            <p className="font-medium">Recent gate entries</p>
+            {entries.map((e) => (
+              <Card key={String(e._id)} className="p-4 flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="font-medium">{String(e.gateEntryNo)}</p>
+                  <p className="text-sm text-muted-foreground">Truck {String(e.truckNumber)}</p>
+                  <Badge variant="secondary" className="mt-1">{String(e.status ?? "ARRIVED")}</Badge>
+                </div>
+                {canDelete ? (
+                  <PipelineDeleteButton
+                    label="Delete"
+                    title={`Delete ${String(e.gateEntryNo)}?`}
+                    description="Reverts dispatch and VINs to IN_TRANSIT. Blocked if GRN exists."
+                    onConfirm={async () => {
+                      try {
+                        await deleteGateEntry(String(e._id));
+                        toast.success("Gate entry deleted");
+                        void load();
+                      } catch (err) {
+                        toast.error(formatApiErrors(err));
+                        throw err;
+                      }
+                    }}
+                  />
+                ) : null}
+              </Card>
+            ))}
+          </div>
         </>
       )}
     </div>

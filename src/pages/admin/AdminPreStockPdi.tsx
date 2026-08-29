@@ -6,16 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { formatApiErrors } from "@/lib/api";
+import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
+import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
 import {
+  deletePdi,
   fetchPdiQueue,
   fetchPdis,
   submitPreStockPdi,
   type StockPdiRecord,
   type StockUnit,
 } from "@/lib/stockPipelineApi";
-import { formatApiErrors } from "@/lib/api";
 
 export default function AdminPreStockPdi() {
+  const admin = getAdminUser();
+  const canDelete =
+    canPerformAction(admin, "stock_pdi", "delete") ||
+    canPerformAction(admin, "stock_delivery", "delete");
+
   const [queue, setQueue] = useState<StockUnit[]>([]);
   const [completed, setCompleted] = useState<StockPdiRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -125,12 +133,29 @@ export default function AdminPreStockPdi() {
               <h2 className="text-sm font-semibold">Recent pre-stock PDI ({completed.length})</h2>
               <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                 {completed.slice(0, 12).map((p) => (
-                  <Card key={p._id} className="p-3 text-sm">
+                  <Card key={p._id} className="p-3 text-sm space-y-2">
                     <p className="font-mono font-medium truncate">{p.vin || p.pdiNumber}</p>
-                    <p className="text-muted-foreground text-xs mt-1">
+                    <p className="text-muted-foreground text-xs">
                       {p.pdiNumber} · {p.result}
                       {p.performedAt ? ` · ${new Date(p.performedAt).toLocaleDateString()}` : ""}
                     </p>
+                    {canDelete ? (
+                      <PipelineDeleteButton
+                        label="Delete"
+                        title={`Delete PDI ${p.pdiNumber}?`}
+                        description="Reverts vehicle to PDI_PENDING. Blocked if vehicle is allocated."
+                        onConfirm={async () => {
+                          try {
+                            await deletePdi(p._id);
+                            toast.success("PDI record deleted");
+                            void load();
+                          } catch (e) {
+                            toast.error(formatApiErrors(e));
+                            throw e;
+                          }
+                        }}
+                      />
+                    ) : null}
                   </Card>
                 ))}
               </div>
