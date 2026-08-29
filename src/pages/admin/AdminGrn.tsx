@@ -3,10 +3,17 @@ import { ClipboardCheck, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { fetchGrns } from "@/lib/stockPipelineApi";
 import { formatApiErrors } from "@/lib/api";
+import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
+import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import { deleteGrn, fetchGrns } from "@/lib/stockPipelineApi";
 
 export default function AdminGrn() {
+  const admin = getAdminUser();
+  const canDelete =
+    canPerformAction(admin, "stock_grn", "delete") ||
+    canPerformAction(admin, "stock_delivery", "delete");
+
   const [rows, setRows] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,9 +38,28 @@ export default function AdminGrn() {
       </div>
       <p className="text-sm text-muted-foreground">VIN-wise receipt with configuration match, odometer, photos and exception handling.</p>
       {loading ? <Loader2 className="animate-spin mx-auto" /> : rows.map((r) => (
-        <Card key={String(r._id)} className="p-4">
-          <p className="font-medium">{String(r.grnNumber)}</p>
-          <p className="text-sm text-muted-foreground">PO {String(r.poNumber)} · Qty {String(r.receivedQty)}/{String(r.expectedQty)} · {String(r.status)}</p>
+        <Card key={String(r._id)} className="p-4 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-medium">{String(r.grnNumber)}</p>
+            <p className="text-sm text-muted-foreground">PO {String(r.poNumber)} · Qty {String(r.receivedQty)}/{String(r.expectedQty)} · {String(r.status)}</p>
+          </div>
+          {canDelete ? (
+            <PipelineDeleteButton
+              label="Delete"
+              title={`Delete ${String(r.grnNumber)}?`}
+              description="Reverts VINs to ARRIVED. Blocked if receipt verification exists."
+              onConfirm={async () => {
+                try {
+                  await deleteGrn(String(r._id));
+                  toast.success("GRN deleted");
+                  void load();
+                } catch (e) {
+                  toast.error(formatApiErrors(e));
+                  throw e;
+                }
+              }}
+            />
+          ) : null}
         </Card>
       ))}
     </div>

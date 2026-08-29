@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ClipboardList, Loader2, Plus, RefreshCw } from "lucide-react";
+import { ClipboardList, Loader2, Pencil, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,15 +12,30 @@ import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { exteriorColoursFor } from "@/data/stockColourOptions";
 import PoLineEditorRow, { emptyPoLineDraft, formatPoLineLabel, type PoLineDraft } from "@/components/admin/PoLineEditorRow";
+import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
 import {
   approvePurchaseOrder,
+  cancelPurchaseOrder,
+  deletePurchaseOrder,
   createPipelinePurchaseOrder,
   fetchPipelinePurchaseOrders,
   rejectPurchaseOrder,
   releasePurchaseOrder,
   submitPurchaseOrder,
+  updatePipelinePurchaseOrder,
   type PurchaseOrder,
 } from "@/lib/stockPipelineApi";
+
+function poToLineDrafts(po: PurchaseOrder): PoLineDraft[] {
+  return po.lines.map((l) => ({
+    key: l._id || `${l.model}-${l.variant}-${l.colour}-${Math.random().toString(36).slice(2, 6)}`,
+    model: l.model,
+    variant: l.variant ?? "",
+    colour: l.colour ?? "",
+    qty: String(l.qty),
+    basicPrice: l.basicPrice != null ? String(l.basicPrice) : "",
+  }));
+}
 
 function openCreateLines(catalogModels: string[], trimsFor: (m: string) => string[]): PoLineDraft[] {
   const model = catalogModels[0] ?? "";
@@ -40,12 +55,18 @@ export default function AdminPurchaseOrders() {
   const canReleasePo =
     canPerformAction(admin, "stock_po", "update") ||
     canPerformAction(admin, "stock_delivery", "update");
+  const canDeletePo =
+    canPerformAction(admin, "stock_po", "delete") ||
+    canPerformAction(admin, "stock_delivery", "delete");
+
+  const editablePoStatuses = new Set(["DRAFT", "SUBMITTED", "REJECTED"]);
 
   const { models: catalogModels, trimsFor } = useVehicleCatalog();
 
   const [rows, setRows] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [createOpen, setCreateOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingPo, setEditingPo] = useState<PurchaseOrder | null>(null);
   const [lines, setLines] = useState<PoLineDraft[]>([]);
   const [poType, setPoType] = useState("Regular");
   const [paymentTerms, setPaymentTerms] = useState("Advance");
@@ -67,23 +88,32 @@ export default function AdminPurchaseOrders() {
   }, [load]);
 
   const openCreateDialog = () => {
+    setEditingPo(null);
+    setPoType("Regular");
+    setPaymentTerms("Advance");
     setLines(openCreateLines(catalogModels, trimsFor));
-    setCreateOpen(true);
+    setFormOpen(true);
   };
 
-  const updateLine = (key: string, next: PoLineDraft) => {
-    setLines((prev) => prev.map((l) => (l.key === key ? next : l)));
+  const openEditDialog = (po: PurchaseOrder) => {
+    setEditingPo(po);
+    setPoType(po.poType || "Regular");
+    setPaymentTerms(po.paymentTerms || "Advance");
+    const drafts = poToLineDrafts(po);
+    setLines(drafts.length ? drafts : openCreateLines(catalogModels, trimsFor));
+    setFormOpen(true);
   };
 
-  const addLine = () => {
-    const model = catalogModels[0] ?? "";
-    setLines((prev) => [...prev, emptyPoLineDraft(model, trimsFor(model)[0] ?? "", "")]);
+  const closeFormDialog = () => {
+    setFormOpen(false);
+    setEditingPo(null);
   };
 
-  const onCreate = async () => {
-    const payloadLines = lines
+  const buildPayloadLines = () =>
+    lines
       .filter((l) => l.model.trim())
       .map((l) => ({
+        ...( /^[a-f0-9]{24}$/i.test(l.key) ? { _id: l.key } : {}),
         model: l.model.trim(),
         variant: l.variant.trim() || undefined,
         colour: l.colour.trim() || undefined,
@@ -91,6 +121,9 @@ export default function AdminPurchaseOrders() {
         basicPrice: Number(l.basicPrice) || 0,
         modelYear: new Date().getFullYear(),
       }));
+
+  const onCreate = async () => {
+    const payloadLines = buildPayloadLines();
     if (!payloadLines.length) return toast.error("Add at least one PO line with a model");
     setSaving(true);
     try {
@@ -102,7 +135,7 @@ export default function AdminPurchaseOrders() {
         lines: payloadLines,
       });
       toast.success(`Purchase order created with ${payloadLines.length} line(s)`);
-      setCreateOpen(false);
+      closeFormDialog();
       void load();
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -111,11 +144,46 @@ export default function AdminPurchaseOrders() {
     }
   };
 
-  const pendingApproval = rows.filter((po) => po.status === "SUBMITTED").length;
+  const onSaveEdit = async () => {
+    if (!editingPo) return;
+    const payloadLines = buildPayloadLines();
+    if (!payloadLines.length) return toast.error("Add at least one PO line with a model");
+    setSaving(true);
+    try {
+      await updatePipelinePurchaseOrder(editingPo._id, {
+        poType,
+        paymentTerms,
+        supplier: "VinFast",
+        lines: payloadLines,
+      });
+      toast.success(`PO ${editingPo.poNumber} updated`);
+      closeFormDialog();
+      void load();
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const updateLine = (key: string, next: PoLineDraft) => {
+    setLines((prev) => prev.map((l) => (l.key === key ? next : l)));
+  };
+
+  const addLine = () => {
+    const model = catalogModels[0] ?? "";
+    const variant = trimsFor(model)[0] ?? "";
+    setLines((prev) => [...prev, emptyPoLineDraft(model, variant, exteriorColoursFor(model, variant)[0] ?? "")]);
+  };
+
+  const canEditPo = canSubmitPo;
+
   const lineSummary = useMemo(
     () => (po: PurchaseOrder) => po.lines.map((l) => formatPoLineLabel(l)).join(" | "),
     [],
   );
+
+  const pendingApproval = rows.filter((po) => po.status === "SUBMITTED").length;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -204,6 +272,28 @@ export default function AdminPurchaseOrders() {
                 </ul>
               ) : null}
               <div className="flex flex-wrap gap-2 pt-1">
+                {canEditPo && editablePoStatuses.has(po.status) ? (
+                  <Button size="sm" variant="outline" onClick={() => openEditDialog(po)}>
+                    <Pencil className="h-4 w-4 mr-1" /> Edit
+                  </Button>
+                ) : null}
+                {canDeletePo && po.status === "DRAFT" ? (
+                  <PipelineDeleteButton
+                    label="Delete"
+                    title={`Delete ${po.poNumber}?`}
+                    description="Only draft POs with no dispatches can be deleted."
+                    onConfirm={async () => {
+                      try {
+                        await deletePurchaseOrder(po._id);
+                        toast.success(`PO ${po.poNumber} deleted`);
+                        void load();
+                      } catch (e) {
+                        toast.error(formatApiErrors(e));
+                        throw e;
+                      }
+                    }}
+                  />
+                ) : null}
                 {canSubmitPo && po.status === "DRAFT" ? (
                   <Button
                     size="sm"
@@ -270,16 +360,42 @@ export default function AdminPurchaseOrders() {
                     Release PO
                   </Button>
                 ) : null}
+                {canSubmitPo && (po.status === "DRAFT" || po.status === "APPROVED") ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-destructive border-destructive/40"
+                    onClick={async () => {
+                      try {
+                        await cancelPurchaseOrder(po._id);
+                        toast.success("PO cancelled");
+                        void load();
+                      } catch (e) {
+                        toast.error(formatApiErrors(e));
+                      }
+                    }}
+                  >
+                    Cancel PO
+                  </Button>
+                ) : null}
               </div>
             </Card>
           ))}
         </div>
       )}
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={formOpen}
+        onOpenChange={(open) => {
+          if (!open) closeFormDialog();
+          else setFormOpen(true);
+        }}
+      >
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>New purchase order</DialogTitle>
+            <DialogTitle>
+              {editingPo ? `Edit ${editingPo.poNumber}` : "New purchase order"}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
@@ -329,10 +445,22 @@ export default function AdminPurchaseOrders() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button disabled={saving || !lines.some((l) => l.model.trim())} onClick={() => void onCreate()}>
-              Create PO ({lines.filter((l) => l.model.trim()).length} lines)
-            </Button>
+            <Button variant="outline" onClick={closeFormDialog}>Cancel</Button>
+            {editingPo ? (
+              <Button
+                disabled={saving || !lines.some((l) => l.model.trim())}
+                onClick={() => void onSaveEdit()}
+              >
+                Save changes ({lines.filter((l) => l.model.trim()).length} lines)
+              </Button>
+            ) : (
+              <Button
+                disabled={saving || !lines.some((l) => l.model.trim())}
+                onClick={() => void onCreate()}
+              >
+                Create PO ({lines.filter((l) => l.model.trim()).length} lines)
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
