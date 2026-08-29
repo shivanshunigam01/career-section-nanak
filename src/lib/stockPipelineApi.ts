@@ -12,6 +12,7 @@ export type PoLine = {
   modelYear?: number;
   qty: number;
   receivedQty?: number;
+  dispatchedQty?: number;
   basicPrice?: number;
   gstAmount?: number;
   freight?: number;
@@ -49,7 +50,7 @@ export type DispatchRecord = {
   lrNumber: string;
   truckNumber: string;
   status: string;
-  items: Array<{ vin: string; model: string; variant?: string; colour?: string; configMatch?: string }>;
+  items: Array<{ vin: string; model: string; variant?: string; colour?: string; configMatch?: string; poLineId?: string }>;
 };
 
 export type StockUnit = {

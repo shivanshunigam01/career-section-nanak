@@ -3,7 +3,6 @@ import { ClipboardList, Loader2, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -12,6 +11,7 @@ import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { exteriorColoursFor } from "@/data/stockColourOptions";
+import PoLineEditorRow, { emptyPoLineDraft, formatPoLineLabel, type PoLineDraft } from "@/components/admin/PoLineEditorRow";
 import {
   approvePurchaseOrder,
   createPipelinePurchaseOrder,
@@ -21,6 +21,12 @@ import {
   submitPurchaseOrder,
   type PurchaseOrder,
 } from "@/lib/stockPipelineApi";
+
+function openCreateLines(catalogModels: string[], trimsFor: (m: string) => string[]): PoLineDraft[] {
+  const model = catalogModels[0] ?? "";
+  const variant = trimsFor(model)[0] ?? "";
+  return [emptyPoLineDraft(model, variant, exteriorColoursFor(model, variant)[0] ?? "")];
+}
 
 export default function AdminPurchaseOrders() {
   const admin = getAdminUser();
@@ -40,46 +46,10 @@ export default function AdminPurchaseOrders() {
   const [rows, setRows] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
-  const [model, setModel] = useState("");
-  const [variant, setVariant] = useState("");
-  const [colour, setColour] = useState("");
-  const [qty, setQty] = useState("1");
+  const [lines, setLines] = useState<PoLineDraft[]>([]);
   const [poType, setPoType] = useState("Regular");
   const [paymentTerms, setPaymentTerms] = useState("Advance");
-  const [basicPrice, setBasicPrice] = useState("");
   const [saving, setSaving] = useState(false);
-
-  const variantOptions = useMemo(() => trimsFor(model), [trimsFor, model]);
-  const colourOptions = useMemo(() => {
-    const base = exteriorColoursFor(model, variant);
-    if (colour && !base.includes(colour)) return [colour, ...base];
-    return base;
-  }, [model, variant, colour]);
-
-  const applyModelChange = (m: string) => {
-    const nextVariant = trimsFor(m)[0] ?? "";
-    setModel(m);
-    setVariant(nextVariant);
-    setColour(exteriorColoursFor(m, nextVariant)[0] ?? "");
-  };
-
-  const applyVariantChange = (v: string) => {
-    setVariant(v);
-    const nextColours = exteriorColoursFor(model, v);
-    if (!colour || !nextColours.includes(colour)) {
-      setColour(nextColours[0] ?? "");
-    }
-  };
-
-  useEffect(() => {
-    if (!model && catalogModels.length) {
-      const m = catalogModels[0];
-      const nextVariant = trimsFor(m)[0] ?? "";
-      setModel(m);
-      setVariant(nextVariant);
-      setColour(exteriorColoursFor(m, nextVariant)[0] ?? "");
-    }
-  }, [catalogModels, model, trimsFor]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -96,8 +66,32 @@ export default function AdminPurchaseOrders() {
     void load();
   }, [load]);
 
+  const openCreateDialog = () => {
+    setLines(openCreateLines(catalogModels, trimsFor));
+    setCreateOpen(true);
+  };
+
+  const updateLine = (key: string, next: PoLineDraft) => {
+    setLines((prev) => prev.map((l) => (l.key === key ? next : l)));
+  };
+
+  const addLine = () => {
+    const model = catalogModels[0] ?? "";
+    setLines((prev) => [...prev, emptyPoLineDraft(model, trimsFor(model)[0] ?? "", "")]);
+  };
+
   const onCreate = async () => {
-    if (!model.trim()) return toast.error("Select a vehicle model");
+    const payloadLines = lines
+      .filter((l) => l.model.trim())
+      .map((l) => ({
+        model: l.model.trim(),
+        variant: l.variant.trim() || undefined,
+        colour: l.colour.trim() || undefined,
+        qty: Math.max(1, Number(l.qty) || 1),
+        basicPrice: Number(l.basicPrice) || 0,
+        modelYear: new Date().getFullYear(),
+      }));
+    if (!payloadLines.length) return toast.error("Add at least one PO line with a model");
     setSaving(true);
     try {
       await createPipelinePurchaseOrder({
@@ -105,16 +99,9 @@ export default function AdminPurchaseOrders() {
         paymentTerms,
         supplier: "VinFast",
         bookingLinked: false,
-        lines: [{
-          model: model.trim(),
-          variant: variant.trim() || undefined,
-          colour: colour.trim() || undefined,
-          qty: Math.max(1, Number(qty) || 1),
-          basicPrice: Number(basicPrice) || 0,
-          modelYear: new Date().getFullYear(),
-        }],
+        lines: payloadLines,
       });
-      toast.success("Purchase order created (Draft)");
+      toast.success(`Purchase order created with ${payloadLines.length} line(s)`);
       setCreateOpen(false);
       void load();
     } catch (e) {
@@ -125,6 +112,10 @@ export default function AdminPurchaseOrders() {
   };
 
   const pendingApproval = rows.filter((po) => po.status === "SUBMITTED").length;
+  const lineSummary = useMemo(
+    () => (po: PurchaseOrder) => po.lines.map((l) => formatPoLineLabel(l)).join(" | "),
+    [],
+  );
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -134,7 +125,7 @@ export default function AdminPurchaseOrders() {
             <ClipboardList className="h-6 w-6" /> Purchase Orders
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Stock Manager creates & submits → GM / MD / CEO / Sales Head approves → Procurement releases
+            One PO can include multiple model lines — each line is model + variant + colour + qty
           </p>
         </div>
         <div className="flex gap-2">
@@ -142,7 +133,7 @@ export default function AdminPurchaseOrders() {
             <RefreshCw className="h-4 w-4 mr-1" /> Refresh
           </Button>
           {canCreatePo ? (
-            <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Button size="sm" onClick={openCreateDialog}>
               <Plus className="h-4 w-4 mr-1" /> New PO
             </Button>
           ) : null}
@@ -166,18 +157,41 @@ export default function AdminPurchaseOrders() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-mono font-semibold">{po.poNumber}</p>
-                  <p className="text-xs text-muted-foreground">{po.poType || "Regular"} · {po.paymentTerms || "Advance"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {po.poType || "Regular"} · {po.paymentTerms || "Advance"} · {po.lines.length} line(s)
+                  </p>
                 </div>
                 <Badge variant={po.status === "SUBMITTED" ? "default" : "secondary"}>{po.status}</Badge>
               </div>
-              <ul className="text-sm space-y-1">
-                {po.lines.map((l, i) => (
-                  <li key={l._id || i}>
-                    {l.model}{l.variant ? ` · ${l.variant}` : ""}{l.colour ? ` · ${l.colour}` : ""} — {l.receivedQty ?? 0}/{l.qty}
-                    {l.netPurchaseValue ? ` · ₹${l.netPurchaseValue.toLocaleString()}` : ""}
-                  </li>
-                ))}
-              </ul>
+              <div className="overflow-x-auto rounded-md border border-border/40">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-xs text-muted-foreground bg-secondary/30">
+                      <th className="p-2 font-medium">#</th>
+                      <th className="p-2 font-medium">Model line</th>
+                      <th className="p-2 font-medium">Qty</th>
+                      <th className="p-2 font-medium">Dispatched</th>
+                      <th className="p-2 font-medium">Received</th>
+                      <th className="p-2 font-medium">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {po.lines.map((l, i) => (
+                      <tr key={l._id || i} className="border-t border-border/30">
+                        <td className="p-2 text-muted-foreground">{i + 1}</td>
+                        <td className="p-2 font-medium">{formatPoLineLabel(l)}</td>
+                        <td className="p-2">{l.qty}</td>
+                        <td className="p-2">{l.dispatchedQty ?? 0} / {l.qty}</td>
+                        <td className="p-2">{l.receivedQty ?? 0} / {l.qty}</td>
+                        <td className="p-2">{l.netPurchaseValue ? `₹${l.netPurchaseValue.toLocaleString()}` : "—"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-xs text-muted-foreground truncate" title={lineSummary(po)}>
+                {lineSummary(po)}
+              </p>
               {po.approvalHistory?.length ? (
                 <ul className="text-xs text-muted-foreground border-t border-border/40 pt-2 space-y-0.5">
                   {po.approvalHistory.map((h, i) => (
@@ -263,57 +277,62 @@ export default function AdminPurchaseOrders() {
       )}
 
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader><DialogTitle>New purchase order</DialogTitle></DialogHeader>
-          <div className="grid gap-3">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>New purchase order</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>PO Type</Label>
-                <Select value={poType} onValueChange={setPoType}><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{["Regular", "Additional", "Demo", "Test Drive", "Replacement"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select></div>
-              <div><Label>Payment Terms</Label>
-                <Select value={paymentTerms} onValueChange={setPaymentTerms}><SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>{["Advance", "Credit", "Inventory Funding", "Other"].map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}</SelectContent>
-                </Select></div>
-            </div>
-            <div><Label>Model</Label>
-              <Select value={model || undefined} onValueChange={applyModelChange}>
-                <SelectTrigger><SelectValue placeholder="Select model" /></SelectTrigger><SelectContent>{catalogModels.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}</SelectContent>
-              </Select></div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Variant</Label>
-                {variantOptions.length === 0 ? (
-                  <Input value="Standard lineup" disabled className="bg-secondary/50" />
-                ) : (
-                  <Select value={variant || undefined} onValueChange={applyVariantChange}>
-                    <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select variant" /></SelectTrigger>
-                    <SelectContent>
-                      {variantOptions.map((v) => <SelectItem key={v} value={v}>{v}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-              <div><Label>Colour</Label>
-                <Select
-                  value={colour || undefined}
-                  onValueChange={setColour}
-                  disabled={colourOptions.length === 0}
-                >
-                  <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select colour" /></SelectTrigger>
+              <div>
+                <Label>PO Type</Label>
+                <Select value={poType} onValueChange={setPoType}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {colourOptions.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                    {["Regular", "Additional", "Demo", "Test Drive", "Replacement"].map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Payment Terms</Label>
+                <Select value={paymentTerms} onValueChange={setPaymentTerms}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {["Advance", "Credit", "Inventory Funding", "Other"].map((t) => (
+                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div><Label>Qty</Label><Input type="number" min={1} value={qty} onChange={(e) => setQty(e.target.value)} /></div>
-              <div><Label>Basic Price</Label><Input type="number" value={basicPrice} onChange={(e) => setBasicPrice(e.target.value)} /></div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold">PO lines (model-wise)</Label>
+                <Button type="button" variant="outline" size="sm" onClick={addLine}>
+                  <Plus className="h-4 w-4 mr-1" /> Add line
+                </Button>
+              </div>
+              {lines.map((line, index) => (
+                <PoLineEditorRow
+                  key={line.key}
+                  index={index}
+                  line={line}
+                  catalogModels={catalogModels}
+                  trimsFor={trimsFor}
+                  onChange={(next) => updateLine(line.key, next)}
+                  onRemove={() => setLines((prev) => prev.filter((l) => l.key !== line.key))}
+                  removable={lines.length > 1}
+                />
+              ))}
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)}>Cancel</Button>
-            <Button disabled={saving || !model} onClick={() => void onCreate()}>Create</Button>
+            <Button disabled={saving || !lines.some((l) => l.model.trim())} onClick={() => void onCreate()}>
+              Create PO ({lines.filter((l) => l.model.trim()).length} lines)
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
