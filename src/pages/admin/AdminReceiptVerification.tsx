@@ -7,6 +7,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import StockPrintButton from "@/components/admin/StockPrintButton";
+import { dataTable } from "@/lib/stockPrint";
 import {
   createReceipt,
   deleteReceipt,
@@ -99,8 +101,21 @@ export default function AdminReceiptVerification() {
                 <Card key={r._id} className="p-4 flex flex-wrap justify-between items-center gap-3">
                   <div>
                     <p className="font-medium font-mono">{r.vin || r.receiptNo}</p>
-                    <p className="text-sm text-muted-foreground">{r.receiptNo} · {r.receiptStatus}</p>
+                    <p className="text-sm text-muted-foreground">{r.receiptNo} · {r.receiptStatus} · Vendor: VinFast</p>
                   </div>
+                  <div className="flex gap-2">
+                    <StockPrintButton
+                      getPrintOptions={() => ({
+                        title: "Receipt Verification",
+                        documentNo: r.receiptNo || r.vin || r._id,
+                        vendor: { name: "VinFast" },
+                        meta: [
+                          { label: "VIN", value: r.vin || "—" },
+                          { label: "Status", value: r.receiptStatus || "—" },
+                        ],
+                        bodyHtml: `<p>Receipt verification for VIN ${r.vin || "—"}.</p>`,
+                      })}
+                    />
                   {canDelete ? (
                     <PipelineDeleteButton
                       label="Delete"
@@ -117,7 +132,8 @@ export default function AdminReceiptVerification() {
                         }
                       }}
                     />
-                  ) : null}
+                    ) : null}
+                  </div>
                 </Card>
               ))}
             </div>

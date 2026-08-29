@@ -12,6 +12,9 @@ import { formatApiErrors } from "@/lib/api";
 import { getAdminUser, canPerformAction } from "@/lib/adminAuth";
 import { formatPoLineLabel } from "@/components/admin/PoLineEditorRow";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import StockPrintButton from "@/components/admin/StockPrintButton";
+import { dataTable } from "@/lib/stockPrint";
+import { vendorDisplayName, vendorFromPo } from "@/lib/stockVendorsApi";
 import {
   createDispatch,
   deleteDispatch,
@@ -217,12 +220,31 @@ export default function AdminDispatches() {
                 <div>
                   <p className="font-medium">{r.dispatchNumber}</p>
                   <p className="text-sm text-muted-foreground">
-                    PO: {r.poNumber} · Invoice: {r.oemInvoiceNumber} · Truck: {r.truckNumber}
+                    Vendor: {typeof r.purchaseOrderId === "object" ? vendorDisplayName(vendorFromPo(r.purchaseOrderId)) : "VinFast"} · PO: {r.poNumber} · Invoice: {r.oemInvoiceNumber} · Truck: {r.truckNumber}
                   </p>
                 </div>
                 <Badge>{r.status}</Badge>
               </div>
               <div className="flex flex-wrap gap-2">
+                <StockPrintButton
+                  getPrintOptions={() => ({
+                    title: "Dispatch & Transit",
+                    documentNo: r.dispatchNumber,
+                    vendor: typeof r.purchaseOrderId === "object" ? vendorFromPo(r.purchaseOrderId) : { name: "VinFast" },
+                    meta: [
+                      { label: "PO", value: r.poNumber || "—" },
+                      { label: "Status", value: r.status },
+                      { label: "OEM Invoice", value: r.oemInvoiceNumber },
+                      { label: "Transporter", value: r.transporter },
+                      { label: "LR Number", value: r.lrNumber },
+                      { label: "Truck", value: r.truckNumber },
+                    ],
+                    bodyHtml: dataTable(
+                      ["VIN", "PO line", "Match"],
+                      (r.items ?? []).map((item) => [item.vin, formatPoLineLabel(item), item.configMatch ?? "—"]),
+                    ),
+                  })}
+                />
                 {canUpdate && r.status === "IN_TRANSIT" ? (
                   <Button size="sm" variant="outline" onClick={() => openEdit(r)}>
                     <Pencil className="h-4 w-4 mr-1" /> Edit

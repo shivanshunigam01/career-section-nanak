@@ -13,6 +13,9 @@ import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { exteriorColoursFor } from "@/data/stockColourOptions";
 import PoLineEditorRow, { emptyPoLineDraft, formatPoLineLabel, type PoLineDraft } from "@/components/admin/PoLineEditorRow";
 import PipelineDeleteButton from "@/components/admin/PipelineDeleteButton";
+import StockPrintButton from "@/components/admin/StockPrintButton";
+import { dataTable } from "@/lib/stockPrint";
+import { fetchVendors, vendorDisplayName, vendorFromPo, type Vendor } from "@/lib/stockVendorsApi";
 import {
   approvePurchaseOrder,
   cancelPurchaseOrder,
@@ -70,7 +73,24 @@ export default function AdminPurchaseOrders() {
   const [lines, setLines] = useState<PoLineDraft[]>([]);
   const [poType, setPoType] = useState("Regular");
   const [paymentTerms, setPaymentTerms] = useState("Advance");
+  const [supplierId, setSupplierId] = useState("");
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const selectedVendor = useMemo(
+    () => vendors.find((v) => v._id === supplierId) ?? vendors[0],
+    [vendors, supplierId],
+  );
+
+  const loadVendors = useCallback(async () => {
+    try {
+      const list = await fetchVendors();
+      setVendors(list);
+      if (!supplierId && list[0]) setSupplierId(list[0]._id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    }
+  }, [supplierId]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -85,12 +105,14 @@ export default function AdminPurchaseOrders() {
 
   useEffect(() => {
     void load();
-  }, [load]);
+    void loadVendors();
+  }, [load, loadVendors]);
 
   const openCreateDialog = () => {
     setEditingPo(null);
     setPoType("Regular");
-    setPaymentTerms("Advance");
+    setPaymentTerms(selectedVendor?.paymentTermsDefault || "Advance");
+    setSupplierId(selectedVendor?._id || vendors[0]?._id || "");
     setLines(openCreateLines(catalogModels, trimsFor));
     setFormOpen(true);
   };
@@ -99,6 +121,13 @@ export default function AdminPurchaseOrders() {
     setEditingPo(po);
     setPoType(po.poType || "Regular");
     setPaymentTerms(po.paymentTerms || "Advance");
+    const vendorId =
+      typeof po.supplierId === "object" && po.supplierId?._id
+        ? po.supplierId._id
+        : typeof po.supplierId === "string"
+          ? po.supplierId
+          : vendors.find((v) => v.name === po.supplier)?._id || vendors[0]?._id || "";
+    setSupplierId(vendorId);
     const drafts = poToLineDrafts(po);
     setLines(drafts.length ? drafts : openCreateLines(catalogModels, trimsFor));
     setFormOpen(true);
@@ -130,7 +159,8 @@ export default function AdminPurchaseOrders() {
       await createPipelinePurchaseOrder({
         poType,
         paymentTerms,
-        supplier: "VinFast",
+        supplierId: supplierId || undefined,
+        supplier: selectedVendor?.name,
         bookingLinked: false,
         lines: payloadLines,
       });
@@ -153,7 +183,8 @@ export default function AdminPurchaseOrders() {
       await updatePipelinePurchaseOrder(editingPo._id, {
         poType,
         paymentTerms,
-        supplier: "VinFast",
+        supplierId: supplierId || undefined,
+        supplier: selectedVendor?.name,
         lines: payloadLines,
       });
       toast.success(`PO ${editingPo.poNumber} updated`);
@@ -226,7 +257,7 @@ export default function AdminPurchaseOrders() {
                 <div>
                   <p className="font-mono font-semibold">{po.poNumber}</p>
                   <p className="text-xs text-muted-foreground">
-                    {po.poType || "Regular"} · {po.paymentTerms || "Advance"} · {po.lines.length} line(s)
+                    Vendor: {vendorDisplayName(typeof po.supplierId === "object" ? po.supplierId : po.supplier)} · {po.poType || "Regular"} · {po.paymentTerms || "Advance"} · {po.lines.length} line(s)
                   </p>
                 </div>
                 <Badge variant={po.status === "SUBMITTED" ? "default" : "secondary"}>{po.status}</Badge>
@@ -272,6 +303,30 @@ export default function AdminPurchaseOrders() {
                 </ul>
               ) : null}
               <div className="flex flex-wrap gap-2 pt-1">
+                <StockPrintButton
+                  getPrintOptions={() => ({
+                    title: "Purchase Order",
+                    documentNo: po.poNumber,
+                    vendor: vendorFromPo(po),
+                    meta: [
+                      { label: "Status", value: po.status },
+                      { label: "PO Type", value: po.poType || "Regular" },
+                      { label: "Payment Terms", value: po.paymentTerms || "Advance" },
+                      { label: "Lines", value: String(po.lines.length) },
+                    ],
+                    bodyHtml: dataTable(
+                      ["#", "Model line", "Qty", "Dispatched", "Received", "Basic price"],
+                      po.lines.map((l, i) => [
+                        String(i + 1),
+                        formatPoLineLabel(l),
+                        String(l.qty),
+                        String(l.dispatchedQty ?? 0),
+                        String(l.receivedQty ?? 0),
+                        l.basicPrice ? `₹${l.basicPrice.toLocaleString()}` : "—",
+                      ]),
+                    ),
+                  })}
+                />
                 {canEditPo && editablePoStatuses.has(po.status) ? (
                   <Button size="sm" variant="outline" onClick={() => openEditDialog(po)}>
                     <Pencil className="h-4 w-4 mr-1" /> Edit
@@ -398,6 +453,29 @@ export default function AdminPurchaseOrders() {
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4">
+            <div>
+              <Label>Vendor / Company (OEM)</Label>
+              <Select
+                value={supplierId}
+                onValueChange={(id) => {
+                  setSupplierId(id);
+                  const v = vendors.find((x) => x._id === id);
+                  if (v?.paymentTermsDefault) setPaymentTerms(v.paymentTermsDefault);
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Select vendor" /></SelectTrigger>
+                <SelectContent>
+                  {vendors.map((v) => (
+                    <SelectItem key={v._id} value={v._id}>
+                      {v.name}{v.legalName ? ` — ${v.legalName}` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Procurement vendor from Vendor Master (default: VinFast)
+              </p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label>PO Type</Label>
