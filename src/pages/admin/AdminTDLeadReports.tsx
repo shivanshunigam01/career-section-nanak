@@ -17,7 +17,7 @@ import { formatApiErrors } from "@/lib/api";
 import { fetchAssignableStaffUsers, type AssignableStaffUser } from "@/lib/leadCrmApi";
 import ReportPeriodPresets, { type ReportPeriod } from "@/components/admin/ReportPeriodPresets";
 import ReportStageSourceFilters from "@/components/admin/ReportStageSourceFilters";
-import { resolvePeriodRange } from "@/lib/reportPeriod";
+import { isLocalToday, localDateKey, resolvePeriodRange } from "@/lib/reportPeriod";
 import { fetchLeadAdminReport,
   type LeadAdminReport,
   type LeadActivityRow,
@@ -90,30 +90,48 @@ function isWalkInSource(source?: string) {
   return /^walk[\s-]?in$/i.test(s);
 }
 
-function kpiLeadRows(key: string, rows: LeadDetailReportRow[]): LeadDetailReportRow[] {
+function kpiTodayMatch(key: string, row: LeadDetailReportRow, today: string): boolean {
+  const inToday = (d?: string | null) => isLocalToday(d, today);
+  if (key === "overdueFollowUps") return true;
+  if (key === "followUpDue") return inToday(row.nextFollowUp);
+  if (key === "tdBooked") return row.testDriveBooked && (inToday(row.createdAt) || inToday(row.updatedAt));
+  if (key === "tdCompleted" || key === "negotiation" || key === "bookings" || key === "deliveries" || key === "lost") {
+    return inToday(row.updatedAt) || inToday(row.createdAt);
+  }
+  return inToday(row.createdAt);
+}
+
+function kpiLeadRows(
+  key: string,
+  rows: LeadDetailReportRow[],
+  scope: "today" | "mtd" = "today",
+): LeadDetailReportRow[] {
+  const today = localDateKey(new Date());
+  const scoped = scope === "today" ? rows.filter((r) => kpiTodayMatch(key, r, today)) : rows;
+
   switch (key) {
     case "walkIn":
-      return rows.filter((r) => isWalkInSource(r.source));
+      return scoped.filter((r) => isWalkInSource(r.source));
     case "digital":
-      return rows.filter((r) => !isWalkInSource(r.source));
+      return scoped.filter((r) => !isWalkInSource(r.source));
     case "negotiation":
-      return rows.filter((r) => r.status === "Negotiation");
+      return scoped.filter((r) => r.status === "Negotiation");
     case "bookings":
-      return rows.filter((r) => r.status === "Booking" || r.status === "Delivered");
+      return scoped.filter((r) => r.status === "Booking" || r.status === "Delivered");
     case "deliveries":
-      return rows.filter((r) => r.status === "Delivered");
+      return scoped.filter((r) => r.status === "Delivered");
     case "lost":
-      return rows.filter((r) => r.status === "Lost");
+      return scoped.filter((r) => r.status === "Lost");
     case "tdBooked":
-      return rows.filter((r) => r.testDriveBooked);
+      return scoped.filter((r) => r.testDriveBooked);
     case "tdCompleted":
-      return rows.filter((r) => r.testDriveDone);
+      return scoped.filter((r) => r.testDriveDone);
     case "followUpDue":
-      return rows.filter((r) => r.nextFollowUp);
+      return scoped.filter((r) => r.nextFollowUp);
     case "overdueFollowUps":
-      return rows.filter((r) => r.delayStatus === "Overdue" || r.followUpsPending > 0);
+      return scoped.filter((r) => r.delayStatus === "Overdue" || r.followUpsPending > 0);
     default:
-      return rows;
+      return scoped;
   }
 }
 
@@ -442,10 +460,28 @@ export default function AdminTDLeadReports() {
                 className="p-3 border-border/50 cursor-pointer hover:bg-secondary/20 transition-colors print:cursor-default"
                 role="button"
                 tabIndex={0}
-                onClick={() => openLeadPopup(`KPI · ${k.replace(/([A-Z])/g, " $1")}`, kpiLeadRows(k, leadDetailRows))}
+                onClick={() => {
+                  const label = k.replace(/([A-Z])/g, " $1");
+                  if (k === "followUpDue") {
+                    openFollowUpPopup(
+                      `KPI · ${label} · Today`,
+                      followUpRows.filter((f) => f.status === "pending" && isLocalToday(f.scheduledAt)),
+                    );
+                    return;
+                  }
+                  openLeadPopup(`KPI · ${label} · Today`, kpiLeadRows(k, leadDetailRows, "today"));
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
-                    openLeadPopup(`KPI · ${k.replace(/([A-Z])/g, " $1")}`, kpiLeadRows(k, leadDetailRows));
+                    const label = k.replace(/([A-Z])/g, " $1");
+                    if (k === "followUpDue") {
+                      openFollowUpPopup(
+                        `KPI · ${label} · Today`,
+                        followUpRows.filter((f) => f.status === "pending" && isLocalToday(f.scheduledAt)),
+                      );
+                      return;
+                    }
+                    openLeadPopup(`KPI · ${label} · Today`, kpiLeadRows(k, leadDetailRows, "today"));
                   }
                 }}
               >
