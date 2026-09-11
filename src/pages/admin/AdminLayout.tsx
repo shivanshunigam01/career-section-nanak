@@ -32,6 +32,7 @@ import {
   isPathAllowed,
   getAdminLoginRedirect,
   getPortalLoginPath,
+  updateStoredAdminUser,
 } from "@/lib/adminAuth";
 import { MODULE_BY_PATH } from "@/lib/adminModules";
 import {
@@ -41,6 +42,7 @@ import {
   type StaffInboxItem,
 } from "@/lib/crmNotificationsApi";
 import { toast } from "sonner";
+import { adminMe } from "@/lib/api";
 
 const ADMIN_SESSION_EXPIRED_TOAST =
   "Your session has expired. Please sign in again — your access token is no longer valid after one hour.";
@@ -193,6 +195,31 @@ const AdminLayout = () => {
     const syncUser = () => setAdminUser(getAdminUser());
     window.addEventListener("vf-admin-user-updated", syncUser);
     return () => window.removeEventListener("vf-admin-user-updated", syncUser);
+  }, []);
+
+  useEffect(() => {
+    if (!hasApi() || !getAdminToken()) return;
+    let cancelled = false;
+    void adminMe()
+      .then((data) => {
+        if (cancelled || !data || typeof data !== "object") return;
+        const me = data as Record<string, unknown>;
+        updateStoredAdminUser({
+          name: typeof me.name === "string" ? me.name : undefined,
+          role: typeof me.role === "string" ? me.role : undefined,
+          designation: typeof me.designation === "string" ? me.designation : undefined,
+          designationLabel: typeof me.designationLabel === "string" ? me.designationLabel : undefined,
+          allowedModules: Array.isArray(me.allowedModules) ? (me.allowedModules as string[]) : undefined,
+          allowedActions: Array.isArray(me.allowedActions) ? (me.allowedActions as string[]) : undefined,
+        });
+        setAdminUser(getAdminUser());
+      })
+      .catch(() => {
+        /* keep the stored session if /me is briefly unavailable */
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
