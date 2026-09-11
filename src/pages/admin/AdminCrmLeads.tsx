@@ -59,6 +59,7 @@ import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog"
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { useCrmLeadStages } from "@/hooks/useCrmLeadStages";
 import { cn } from "@/lib/utils";
+import { toDateKey } from "@/lib/reportPeriod";
 import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
 import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 import { LeadFollowUpTimeline } from "@/components/admin/LeadFollowUpTimeline";
@@ -1187,6 +1188,19 @@ export default function AdminCrmLeads() {
               Clear dates
             </Button>
           ) : null}
+          <Button
+            variant={filterDateFrom === toDateKey(new Date()) && filterDateTo === toDateKey(new Date()) ? "default" : "outline"}
+            size="sm"
+            className="shrink-0 h-10"
+            onClick={() => {
+              const today = toDateKey(new Date());
+              setPage(1);
+              setFilterDateFrom(today);
+              setFilterDateTo(today);
+            }}
+          >
+            Today
+          </Button>
         </div>
       </Card>
 
