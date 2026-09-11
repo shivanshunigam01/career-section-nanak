@@ -147,7 +147,7 @@ function pathWithoutQuery(path: string) {
 }
 
 const reportsNavItems = [
-  { label: "Lead Reports", icon: BarChart3, path: "/admin/td/leads/reports", staff: false },
+  { label: "Lead Reports", icon: BarChart3, path: "/admin/td/leads/reports", staff: true },
   { label: "TD Reports", icon: BarChart3, path: "/admin/td/reports", staff: false },
   { label: "Booking Report", icon: CalendarCheck, path: "/admin/reports/bookings", staff: false },
   { label: "Delivery Reports", icon: PackageCheck, path: "/admin/reports/deliveries", staff: false },

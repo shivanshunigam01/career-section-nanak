@@ -3,7 +3,9 @@ import { Link } from "react-router-dom";
 import {
   BarChart3, RefreshCw, Loader2, Users, Target, MessageSquare,
   CalendarClock, Star, UserCheck, ArrowLeft, AlertTriangle, CheckCircle2, Activity, Timer, Pencil,
+  Download,
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Card } from "@/components/ui/card";
@@ -26,6 +28,7 @@ import { fetchLeadAdminReport,
   type LeadFeedbackReportRow,
 } from "@/lib/leadReportApi";
 import { CRM_IMPORT_MODEL_OPTIONS } from "@/lib/pvLeadCrmApi";
+import { canPerformAction, getAdminUser, isCreOrCrmDeskUser } from "@/lib/adminAuth";
 import { fetchBuyerTypes, type BuyerTypeDoc } from "@/lib/buyerTypesApi";
 import { STAGE_COLORS, normalizeCrmStage } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
@@ -77,6 +80,85 @@ function fmtDate(iso?: string | null) {
 function fmtDateTime(iso?: string) {
   if (!iso) return "—";
   return new Date(iso).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+}
+
+function downloadLeadReportExcel(report: LeadAdminReport, from: string, to: string) {
+  const wb = XLSX.utils.book_new();
+  const overview = report.overview;
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet([
+      { Metric: "Total leads", Value: overview.totalLeads },
+      { Metric: "Active leads", Value: overview.activeLeads },
+      { Metric: "Unassigned", Value: overview.unassigned },
+      { Metric: "Converted", Value: overview.convertedCount },
+      { Metric: "Conversion %", Value: overview.conversionRate },
+      { Metric: "Follow-ups pending", Value: overview.followUpsPending },
+      { Metric: "Follow-ups overdue", Value: overview.followUpsOverdue },
+      { Metric: "Test drives booked", Value: overview.testDrivesBooked },
+      { Metric: "Test drives done", Value: overview.testDrivesDone },
+      { Metric: "From", Value: from },
+      { Metric: "To", Value: to },
+    ]),
+    "Overview",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(
+      Object.entries(report.pipeline || {}).map(([stage, count]) => ({ Stage: stage, Count: count })),
+    ),
+    "Pipeline",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(
+      (report.executivePerformance || []).map((row) => ({
+        Executive: row.name,
+        Assigned: row.leadsAssigned,
+        Converted: row.leadsConverted,
+        "Conversion %": row.conversionRate,
+        "Follow-ups logged": row.followUpsLogged,
+        "Follow-ups pending": row.followUpsPending,
+        "Test drives done": row.testDrivesCompleted,
+      })),
+    ),
+    "Executives",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(
+      (report.leadDetailRows || []).map((row) => ({
+        LeadId: row.leadId,
+        Name: row.name,
+        Mobile: row.mobile,
+        Model: row.model,
+        Status: row.status,
+        Source: row.source,
+        AssignedTo: row.assignedTo,
+        Converted: row.converted ? "Yes" : "No",
+        Delay: row.delayStatus,
+        CreatedAt: row.createdAt || "",
+      })),
+    ),
+    "Leads",
+  );
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(
+      (report.followUpRows || []).map((row) => ({
+        Lead: row.leadName,
+        Mobile: row.leadMobile,
+        Executive: row.executiveName,
+        Note: row.note,
+        Status: row.status,
+        Outcome: row.outcome,
+        ScheduledAt: row.scheduledAt || "",
+        CompletedAt: row.completedAt || "",
+      })),
+    ),
+    "FollowUps",
+  );
+  XLSX.writeFile(wb, `lead-crm-report-${from || "from"}-${to || "to"}.xlsx`);
 }
 
 const WALK_IN_SOURCES = new Set([
@@ -146,6 +228,11 @@ function activityIcon(type: LeadActivityRow["type"]) {
 }
 
 export default function AdminTDLeadReports() {
+  const adminUser = getAdminUser();
+  const canDownloadReport =
+    isCreOrCrmDeskUser(adminUser) ||
+    canPerformAction(adminUser, "td_lead_reports", "export") ||
+    canPerformAction(adminUser, "crm_leads", "export");
   const [data, setData] = useState<LeadAdminReport | null>(null);
   const [staff, setStaff] = useState<AssignableStaffUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -273,7 +360,7 @@ export default function AdminTDLeadReports() {
       <div className="space-y-4 py-12 text-center max-w-lg mx-auto">
         <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto" />
         <h2 className="font-semibold text-lg">Lead reports unavailable</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-fore ground">
           {loadError ?? "Could not load report data from the API."}
         </p>
         <p className="text-xs text-muted-foreground">
@@ -332,6 +419,22 @@ export default function AdminTDLeadReports() {
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <RefreshCw className="w-4 h-4 mr-2" />}
             Refresh
           </Button>
+          {canDownloadReport ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                try {
+                  downloadLeadReportExcel(data, from, to);
+                  toast.success("Excel download started");
+                } catch (e) {
+                  toast.error(formatApiErrors(e) || "Could not download report");
+                }
+              }}
+            >
+              <Download className="w-4 h-4 mr-2" /> Excel
+            </Button>
+          ) : null}
           <Button variant="outline" size="sm" onClick={() => window.print()}>
             Print / PDF
           </Button>
