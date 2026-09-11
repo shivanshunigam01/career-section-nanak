@@ -30,9 +30,10 @@ import NotFound from "./pages/NotFound";
 import SeoMarketingPage from "./pages/seo/SeoMarketingPage";
 import BiharDistrictsPage from "./pages/seo/BiharDistrictsPage";
 import DistrictLandingPage from "./pages/seo/DistrictLandingPage";
+import DistrictHubPage from "./pages/seo/DistrictHubPage";
 import GlobalSeoBootstrap from "./components/GlobalSeoBootstrap";
 import ScrollToTop from "./components/ScrollToTop";
-import { COMPARE_SEO_PAGES, SEO_ARTICLES } from "./pages/seo/seoPageContent";
+import { BLOG_REDIRECTS, COMPARE_SEO_PAGES, SEO_ARTICLES } from "./pages/seo/seoPageContent";
 import AdminLogin from "./pages/admin/AdminLogin";
 import StaffLogin from "./pages/staff/StaffLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
@@ -64,6 +65,8 @@ import AdminRectifications from "./pages/admin/AdminRectifications";
 import AdminVehicle360 from "./pages/admin/AdminVehicle360";
 import AdminStockConfig from "./pages/admin/AdminStockConfig";
 import AdminVendorMaster from "./pages/admin/AdminVendorMaster";
+import AdminStockRequisitions from "./pages/admin/AdminStockRequisitions";
+import AdminStockTransfer from "./pages/admin/AdminStockTransfer";
 import AdminStockFinalPdi from "./pages/admin/AdminStockFinalPdi";
 import AdminStockRetail from "./pages/admin/AdminStockRetail";
 import AdminStockDeliveryHandover from "./pages/admin/AdminStockDeliveryHandover";
@@ -77,6 +80,8 @@ import AdminLeadStages from "./pages/admin/AdminLeadStages";
 import AdminBuyerTypes from "./pages/admin/AdminBuyerTypes";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminDeliveryReports from "./pages/admin/AdminDeliveryReports";
+import AdminBookingReports from "./pages/admin/AdminBookingReports";
+import AdminComplaints from "./pages/admin/AdminComplaints";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import AdminTDMyBookings from "./pages/admin/AdminTDMyBookings";
 import AdminTDLeads from "./pages/admin/AdminTDLeads";
@@ -143,6 +148,9 @@ const App = () => {
           {COMPARE_SEO_PAGES.map((article) => (
             <Route key={article.path} path={article.path} element={<SeoMarketingPage path={article.path} />} />
           ))}
+          {BLOG_REDIRECTS.map(({ from, to }) => (
+            <Route key={from} path={from} element={<Navigate to={to} replace />} />
+          ))}
           {/* URL-only pages (QR code) — intentionally not linked from any menu or footer */}
           <Route path="/post-delivery-feedback" element={<PostDeliveryFeedback />} />
           <Route path="/test-drive-feedback" element={<TestDriveFeedback />} />
@@ -180,6 +188,9 @@ const App = () => {
             <Route path="crm/buyer-types" element={<AdminBuyerTypes />} />
             <Route path="pricing" element={<AdminPricing />} />
             <Route path="reports/deliveries" element={<AdminDeliveryReports />} />
+            <Route path="reports/bookings" element={<AdminBookingReports />} />
+            <Route path="complaints/inbound" element={<AdminComplaints direction="INBOUND" />} />
+            <Route path="complaints/outbound" element={<AdminComplaints direction="OUTBOUND" />} />
 
             {/* Customer feedback form submissions (QR pages) */}
             <Route path="feedback/test-drive" element={<AdminFeedbackSubmissions kind="testDrive" />} />
@@ -207,6 +218,8 @@ const App = () => {
             <Route path="stock/vehicles/:id/360" element={<AdminVehicle360 />} />
             <Route path="stock/config" element={<AdminStockConfig />} />
             <Route path="stock/vendors" element={<AdminVendorMaster />} />
+            <Route path="stock/requisitions" element={<AdminStockRequisitions />} />
+            <Route path="stock/transfer" element={<AdminStockTransfer />} />
             <Route path="stock/orders" element={<AdminVehicleOrders />} />
             <Route path="stock/final-pdi" element={<AdminStockFinalPdi />} />
             <Route path="stock/retail" element={<AdminStockRetail />} />
@@ -218,8 +231,9 @@ const App = () => {
             <Route path="td/roles" element={<AdminTDRoles />} />
           </Route>
 
-          {/* Hyperlocal SEO: /{district}/{model} e.g. /patna/vinfast-vf6 */}
+          {/* Hyperlocal SEO: /{district} hubs, then selective A- model pages */}
           <Route path="/:districtSlug/:modelSlug" element={<DistrictLandingPage />} />
+          <Route path="/:districtSlug" element={<DistrictHubPage />} />
           <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>

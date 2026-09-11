@@ -13,6 +13,7 @@ export type AdminModuleKey =
   | "crm_buyer_types"
   | "pricing"
   | "delivery_reports"
+  | "booking_reports"
   | "products"
   | "offers"
   | "content"
@@ -22,6 +23,8 @@ export type AdminModuleKey =
   | "td_my_bookings"
   | "feedback_test_drive"
   | "feedback_post_delivery"
+  | "complaint_inbound"
+  | "complaint_outbound"
   | "td_lead_reports"
   | "td_bookings"
   | "td_users"
@@ -43,6 +46,7 @@ export type AdminModuleKey =
   | "stock_reports"
   | "stock_config"
   | "stock_vendors"
+  | "stock_requisition"
   | "td_reports"
   | "td_config"
   | "calendar"
@@ -128,9 +132,12 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "td_my_bookings", label: "My Test Drives", path: "/admin/td/my-bookings", group: "Employee portal", actions: ["view", "update", "verify_dl", "start_drive", "reschedule", "cancel", "complete"] },
   { key: "feedback_test_drive", label: "TD Feedback Forms", path: "/admin/feedback/test-drive", group: "Feedback", actions: ["view", "delete"] },
   { key: "feedback_post_delivery", label: "Delivery Feedback Forms", path: "/admin/feedback/post-delivery", group: "Feedback", actions: ["view", "delete"] },
+  { key: "complaint_inbound", label: "Complaint Inbound", path: "/admin/complaints/inbound", group: "Feedback", actions: ["view", "create", "update", "delete"] },
+  { key: "complaint_outbound", label: "Complaint Outbound", path: "/admin/complaints/outbound", group: "Feedback", actions: ["view", "create", "update", "delete"] },
   { key: "td_lead_reports", label: "Lead Reports", path: "/admin/td/leads/reports", group: "Reports", actions: ["view", "export"] },
   { key: "td_reports", label: "TD Reports", path: "/admin/td/reports", group: "Reports", actions: ["view", "export"] },
   { key: "delivery_reports", label: "Delivery Reports", path: "/admin/reports/deliveries", group: "Reports", actions: ["view", "export"] },
+  { key: "booking_reports", label: "Booking Report", path: "/admin/reports/bookings", group: "Reports", actions: ["view", "export"] },
   { key: "td_bookings", label: "TD Bookings", path: "/admin/td/bookings", group: "TD Management", actions: ["view", "create", "update", "assign", "reschedule_approve", "verify_dl", "start_drive", "cancel"] },
   { key: "td_reschedule_history", label: "Reschedule History", path: "/admin/td/reschedule-history", group: "TD Management", actions: ["view", "approve"] },
   { key: "td_fleet_health", label: "Fleet Charging & Health", path: "/admin/td/fleet-health", group: "TD Management", actions: ["view", "schedule_charge", "log_maintenance"] },
@@ -141,8 +148,8 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "stock_delivery", label: "Vehicle Orders", path: "/admin/stock/orders", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "delete", "receive", "allocate", "pdi", "deliver"] },
   { key: "stock_po", label: "Purchase Orders", path: "/admin/stock/purchase-orders", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "delete", "approve"] },
   { key: "stock_dispatch", label: "Dispatch & Transit", path: "/admin/stock/dispatches", group: "Stock / Vehicle Management", actions: ["view", "create", "update"] },
-  { key: "stock_gate", label: "Gate Entry", path: "/admin/stock/gate-entry", group: "Stock / Vehicle Management", actions: ["view", "create"] },
-  { key: "stock_grn", label: "GRN", path: "/admin/stock/grn", group: "Stock / Vehicle Management", actions: ["view", "create", "update"] },
+  { key: "stock_gate", label: "Gate Entry", path: "/admin/stock/gate-entry", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "delete"] },
+  { key: "stock_grn", label: "GRN", path: "/admin/stock/grn", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "delete"] },
   { key: "stock_receipt", label: "Receipt Verification", path: "/admin/stock/receipt", group: "Stock / Vehicle Management", actions: ["view", "create", "update"] },
   { key: "stock_pdi", label: "Pre-Stock PDI", path: "/admin/stock/pre-stock-pdi", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "approve"] },
   { key: "stock_rectification", label: "Rectifications", path: "/admin/stock/rectifications", group: "Stock / Vehicle Management", actions: ["view", "create", "update"] },
@@ -152,6 +159,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "stock_retail", label: "Retail & Invoice", path: "/admin/stock/retail", group: "Stock / Vehicle Management", actions: ["view", "deliver"] },
   { key: "stock_config", label: "Stock Config", path: "/admin/stock/config", group: "Stock / Vehicle Management", actions: ["view", "update"] },
   { key: "stock_vendors", label: "Vendor Master", path: "/admin/stock/vendors", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "delete"] },
+  { key: "stock_requisition", label: "Stock Requisitions", path: "/admin/stock/requisitions", group: "Stock / Vehicle Management", actions: ["view", "create", "update", "delete", "approve"] },
   { key: "td_config", label: "Slot Config", path: "/admin/td/config", group: "TD Management", actions: ["view", "update"] },
 ];
 
@@ -179,6 +187,9 @@ MODULE_BY_PATH["/admin/stock/pre-stock-pdi"] = "stock_pdi";
 MODULE_BY_PATH["/admin/stock/rectifications"] = "stock_rectification";
 MODULE_BY_PATH["/admin/stock/config"] = "stock_config";
 MODULE_BY_PATH["/admin/stock/vendors"] = "stock_vendors";
+MODULE_BY_PATH["/admin/stock/requisitions"] = "stock_requisition";
+MODULE_BY_PATH["/admin/stock/pipeline/requisitions"] = "stock_requisition";
+MODULE_BY_PATH["/admin/stock/transfer"] = "stock_inventory";
 
 export const MODULE_GROUPS = [
   "Core",
@@ -244,4 +255,7 @@ export const MANAGER_DEFAULT_MODULES: AdminModuleKey[] = [
   "td_lead_reports",
   "td_reports",
   "delivery_reports",
+  "booking_reports",
+  "complaint_inbound",
+  "complaint_outbound",
 ];
