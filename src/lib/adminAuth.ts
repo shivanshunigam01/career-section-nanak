@@ -21,7 +21,7 @@ export type AdminUser = {
 };
 
 /** Same modules/actions as CRE 1 / CRE 2. */
-export const CRE_MODULES: AdminModuleKey[] = ["my_dashboard", "crm_leads"];
+export const CRE_MODULES: AdminModuleKey[] = ["my_dashboard", "crm_leads", "td_lead_reports"];
 export const CRE_ACTIONS = [
   "my_dashboard:view",
   "crm_leads:view",
@@ -30,6 +30,8 @@ export const CRE_ACTIONS = [
   "crm_leads:delete",
   "crm_leads:assign",
   "crm_leads:export",
+  "td_lead_reports:view",
+  "td_lead_reports:export",
 ] as const;
 
 export function isCreUser(user: AdminUser | null | undefined): boolean {
@@ -42,6 +44,24 @@ export function isCreUser(user: AdminUser | null | undefined): boolean {
   if (d === "cre" || /^cre\s*\d+$/.test(d)) return true;
   if (d === "customer relationship executive" || d === "customer relationship") return true;
   return false;
+}
+
+/** Priya Ma'am's CRM desk and any CRM staff — same Lead CRM rights as CRE 1 / CRE 2. */
+export function isCrmDeskUser(user: AdminUser | null | undefined): boolean {
+  const d = String(user?.designation || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+  if (!d) return false;
+  if (isCreUser(user)) return false;
+  if (d === "crm" || /^crm\s*\d+$/.test(d)) return true;
+  if (d === "crm user" || d === "crm executive" || d === "crm manager") return true;
+  return false;
+}
+
+export function isCreOrCrmDeskUser(user: AdminUser | null | undefined): boolean {
+  return isCreUser(user) || isCrmDeskUser(user);
 }
 
 const TOKEN_KEY = "vf_admin_token";
@@ -183,7 +203,8 @@ export function isFieldStaffUser(user: AdminUser | null | undefined): boolean {
     ["sales_manager", "sales_head", "branch_manager", "gm", "ceo", "md"].includes(
       designation,
     ) ||
-    isCreUser(user)
+    isCreUser(user) ||
+    isCrmDeskUser(user)
   ) {
     return false;
   }

@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatApiErrors } from "@/lib/api";
-import { getAdminUser, isFieldStaffUser, canPerformAction, canPerformManagerAction, isCreUser } from "@/lib/adminAuth";
+import { getAdminUser, isFieldStaffUser, canPerformAction, canPerformManagerAction, isCreUser, isCrmDeskUser } from "@/lib/adminAuth";
 import { createVehicleOrder } from "@/lib/stockDeliveryApi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -98,23 +98,26 @@ export default function AdminCrmLeads() {
   const canCreateVehicleOrder = canPerformAction(adminUser, "stock_delivery", "create");
   const isExecutive = isFieldStaffUser(adminUser);
   const isCre = isCreUser(adminUser);
+  const isCrmDesk = isCrmDeskUser(adminUser);
+  const seesAllLeads = isCre || isCrmDesk;
   const isAdminPortal =
     adminUser?.userType === "admin" || adminUser?.role === "superadmin";
   const canCreate = canPerformAction(adminUser, "crm_leads", "create");
   const canUpdate = canPerformAction(adminUser, "crm_leads", "update");
   const canAssignLeads =
-    isCre || canPerformManagerAction(adminUser, "crm_leads", "assign");
+    isCre || isCrmDesk || canPerformManagerAction(adminUser, "crm_leads", "assign");
   const canEditDetails = canPerformManagerAction(adminUser, "crm_leads", "update");
   const canDelete =
-    isCre || canPerformManagerAction(adminUser, "crm_leads", "delete");
+    isCre || isCrmDesk || canPerformManagerAction(adminUser, "crm_leads", "delete");
   /** Bulk Excel download/upload — Admin + CRE (and managers with export/create). */
   const canExportExcel =
     isAdminPortal ||
     isCre ||
+    isCrmDesk ||
     canPerformAction(adminUser, "crm_leads", "export") ||
     canAssignLeads;
   const canImportExcel =
-    canCreate && (isAdminPortal || isCre || adminUser?.role === "manager" || canAssignLeads);
+    canCreate && (isAdminPortal || isCre || isCrmDesk || adminUser?.role === "manager" || canAssignLeads);
 
   const { stages: crmStages } = useCrmLeadStages();
   const stageList = crmStages.length ? crmStages : [...CRM_LEAD_STAGES];
@@ -908,7 +911,7 @@ export default function AdminCrmLeads() {
             <Users className="w-6 h-6 text-primary" /> Lead CRM
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            {isCre
+            {seesAllLeads
               ? "Full lead pipeline — view all leads, assign executives, and track calling / follow-ups."
               : isExecutive
                 ? "Your assigned leads from website, Meta Ads, test drives, and enquiries."
@@ -1098,7 +1101,7 @@ export default function AdminCrmLeads() {
               <SelectValue placeholder="Staff" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">{isCre ? "All leads" : "All (my team)"}</SelectItem>
+              <SelectItem value="all">{seesAllLeads ? "All leads" : "All (my team)"}</SelectItem>
               <SelectItem value="unassigned">Unassigned</SelectItem>
               {staffUsers.map((e) => (
                 <SelectItem key={e._id} value={e._id}>
