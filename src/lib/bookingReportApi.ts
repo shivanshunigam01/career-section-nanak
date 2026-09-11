@@ -1,63 +1,69 @@
 import { adminGet } from "@/lib/api";
 import type { ReportPeriod } from "@/components/admin/ReportPeriodPresets";
 
-export type DeliveryReportExecutiveRow = {
+export type BookingReportExecutiveRow = {
   executiveId: string | null;
   name: string;
   count: number;
 };
 
-export type DeliveryReportCountRow = {
+export type BookingReportCountRow = {
   model?: string;
   source?: string;
   count: number;
 };
 
-export type DeliveryReportPeriodRow = {
+export type BookingReportPeriodRow = {
   bucket: string;
   count: number;
 };
 
-export type DeliveryReportLeadRow = {
+export type BookingReportLeadRow = {
   leadId: string;
+  opportunityId?: string;
+  orderNumber?: string;
+  bookingNo?: string;
   _id: string;
+  customerName: string;
   name: string;
   mobile: string;
+  carModel: string;
+  carVariant: string;
+  colour: string;
   model: string;
-  carModel?: string;
-  carVariant?: string;
-  colour?: string;
+  variant: string;
   source: string;
   executiveName: string;
   executiveId: string | null;
-  deliveryDate: string;
+  bookingDate: string;
+  stage?: string;
 };
 
-export type DeliveryReport = {
+export type BookingReport = {
   period: ReportPeriod | string;
   from: string;
   to: string;
   bucketUnit: "day" | "week" | "month" | string;
-  totalDeliveries: number;
-  byExecutive: DeliveryReportExecutiveRow[];
-  byModel: DeliveryReportCountRow[];
-  bySource: DeliveryReportCountRow[];
-  byPeriod: DeliveryReportPeriodRow[];
-  rows: DeliveryReportLeadRow[];
+  totalBookings: number;
+  byExecutive: BookingReportExecutiveRow[];
+  byModel: BookingReportCountRow[];
+  bySource: BookingReportCountRow[];
+  byPeriod: BookingReportPeriodRow[];
+  rows: BookingReportLeadRow[];
 };
 
-export async function fetchDeliveryReport(params: {
+export async function fetchBookingReport(params: {
   period?: ReportPeriod;
   from?: string;
   to?: string;
   source?: string;
-} = {}): Promise<DeliveryReport> {
+} = {}): Promise<BookingReport> {
   const q = new URLSearchParams();
   if (params.period) q.set("period", params.period);
   if (params.from) q.set("from", params.from);
   if (params.to) q.set("to", params.to);
   if (params.source && params.source !== "all") q.set("source", params.source);
-  const { data } = await adminGet<DeliveryReport>(`/admin/reports/deliveries?${q}`);
-  if (!data) throw new Error("Delivery report response was empty");
+  const { data } = await adminGet<BookingReport>(`/admin/reports/bookings?${q}`);
+  if (!data) throw new Error("Booking report response was empty");
   return data;
 }
