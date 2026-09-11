@@ -29,7 +29,7 @@ import {
   designationLabel,
 } from "@/lib/staffRoles";
 import { MODULE_GROUPS, modulesForGroup, actionToken, ACTION_LABELS, allActionTokensForModules, type AdminModuleKey, type AdminModuleAction } from "@/lib/adminModules";
-import { getAdminUser, canPerformManagerAction } from "@/lib/adminAuth";
+import { getAdminUser, canPerformManagerAction, CRE_MODULES, CRE_ACTIONS } from "@/lib/adminAuth";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type StaffUser = {
@@ -651,7 +651,22 @@ export default function AdminTDUsers() {
             </div>
             <div className="space-y-2">
               <Label>Role / designation</Label>
-              <Select value={form.designation} onValueChange={(v) => setForm({ ...form, designation: v })}>
+              <Select
+                value={form.designation}
+                onValueChange={(v) => {
+                  if (v === "cre") {
+                    setForm({
+                      ...form,
+                      designation: v,
+                      accessLevel: "executive",
+                      allowedModules: [...CRE_MODULES],
+                      allowedActions: [...CRE_ACTIONS],
+                    });
+                    return;
+                  }
+                  setForm({ ...form, designation: v });
+                }}
+              >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   {STAFF_DESIGNATIONS.map((d) => (

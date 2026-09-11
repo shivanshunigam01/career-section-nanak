@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatApiErrors } from "@/lib/api";
-import { getAdminUser, isFieldStaffUser, canPerformAction, canPerformManagerAction } from "@/lib/adminAuth";
+import { getAdminUser, isFieldStaffUser, canPerformAction, canPerformManagerAction, isCreUser } from "@/lib/adminAuth";
 import { createVehicleOrder } from "@/lib/stockDeliveryApi";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
@@ -97,7 +97,7 @@ export default function AdminCrmLeads() {
   const [searchParams, setSearchParams] = useSearchParams();
   const canCreateVehicleOrder = canPerformAction(adminUser, "stock_delivery", "create");
   const isExecutive = isFieldStaffUser(adminUser);
-  const isCre = String(adminUser?.designation || "").toLowerCase() === "cre";
+  const isCre = isCreUser(adminUser);
   const isAdminPortal =
     adminUser?.userType === "admin" || adminUser?.role === "superadmin";
   const canCreate = canPerformAction(adminUser, "crm_leads", "create");

@@ -20,6 +20,30 @@ export type AdminUser = {
   userType?: "admin" | "tdstaff";
 };
 
+/** Same modules/actions as CRE 1 / CRE 2. */
+export const CRE_MODULES: AdminModuleKey[] = ["my_dashboard", "crm_leads"];
+export const CRE_ACTIONS = [
+  "my_dashboard:view",
+  "crm_leads:view",
+  "crm_leads:create",
+  "crm_leads:update",
+  "crm_leads:delete",
+  "crm_leads:assign",
+  "crm_leads:export",
+] as const;
+
+export function isCreUser(user: AdminUser | null | undefined): boolean {
+  const d = String(user?.designation || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
+  if (!d) return false;
+  if (d === "cre" || /^cre\s*\d+$/.test(d)) return true;
+  if (d === "customer relationship executive" || d === "customer relationship") return true;
+  return false;
+}
+
 const TOKEN_KEY = "vf_admin_token";
 const USER_KEY = "vf_admin_user";
 const SESSION_START_KEY = "vf_admin_session_started_at";
@@ -156,9 +180,10 @@ export function isFieldStaffUser(user: AdminUser | null | undefined): boolean {
   const designation = String(user.designation || "").toLowerCase();
   // Managers / heads / CRE use the full staff portal, not the SE-only leaf view.
   if (
-    ["sales_manager", "sales_head", "branch_manager", "gm", "ceo", "md", "cre"].includes(
+    ["sales_manager", "sales_head", "branch_manager", "gm", "ceo", "md"].includes(
       designation,
-    )
+    ) ||
+    isCreUser(user)
   ) {
     return false;
   }
