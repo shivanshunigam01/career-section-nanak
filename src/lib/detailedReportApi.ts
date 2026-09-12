@@ -93,7 +93,6 @@ export type DetailedReport = {
   leadTypesTotal: number;
   monthlyTestDrives: DetailedReportMonthlyTd[];
   monthlyTestDrivesTotal: number;
-  teamMatrix: DetailedReportTeamMatrix;
 };
 
 export async function fetchDetailedReport(): Promise<DetailedReport> {
