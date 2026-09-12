@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { BarChart3, RefreshCw, Loader2, Download, AlertTriangle } from "lucide-react";
+import { BarChart3, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -63,38 +63,6 @@ function tripletMetrics(prefix: string, block: DetailedReportSummaryBlock) {
   ];
 }
 
-function downloadTeamMatrixCsv(report: DetailedReport) {
-  const { teamMatrix } = report;
-  const header = [
-    "Lead Source",
-    ...teamMatrix.columns.map((c) => `${c.name} (${c.abbr})`),
-    "Source Wise Total",
-  ];
-  const lines = [header.join(",")];
-  for (const row of teamMatrix.rows) {
-    const cells = [
-      row.source,
-      ...teamMatrix.columns.map((c) => String(row.cells[c.staffId] ?? 0)),
-      String(row.rowTotal),
-    ].map((v) => `"${String(v).replace(/"/g, '""')}"`);
-    lines.push(cells.join(","));
-  }
-  const totals = [
-    "TOTAL",
-    ...teamMatrix.columns.map((c) => String(teamMatrix.columnTotals[c.staffId] ?? 0)),
-    String(teamMatrix.grandTotal),
-  ].map((v) => `"${String(v).replace(/"/g, '""')}"`);
-  lines.push(totals.join(","));
-
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `team-wise-assigned-leads-${report.period.today}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
 export default function AdminDetailedReport() {
   const [data, setData] = useState<DetailedReport | null>(null);
   const [loading, setLoading] = useState(true);
@@ -139,7 +107,7 @@ export default function AdminDetailedReport() {
     );
   }
 
-  const { summary, teamMatrix } = data;
+  const { summary } = data;
   const mgrTotals = data.salesManagers.reduce(
     (acc, r) => ({
       leads: acc.leads + r.totalLeads,
@@ -178,9 +146,6 @@ export default function AdminDetailedReport() {
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-4 h-4 mr-1" />}
             Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => downloadTeamMatrixCsv(data)}>
-            <Download className="w-4 h-4 mr-1" /> Export team matrix
           </Button>
         </div>
       </div>
@@ -357,76 +322,6 @@ export default function AdminDetailedReport() {
               <tr className={TOTAL_ROW}>
                 <td className={cn(TD_L, "font-bold")}>Total</td>
                 <td className={TD}>{fmt(data.leadTypesTotal)}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Team-wise assigned leads matrix */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h2 className="text-base font-bold uppercase tracking-wide">Team Wise Total Assigned Leads</h2>
-          <span className="text-sm text-muted-foreground">
-            Grand total: <strong className="text-foreground">{fmt(teamMatrix.grandTotal)}</strong>
-          </span>
-        </div>
-        <div className="overflow-x-auto border rounded-lg shadow-sm bg-card">
-          <table className="border-collapse min-w-max w-full text-sm">
-            <thead>
-              <tr>
-                <th rowSpan={3} className={cn(TH, "sticky left-0 z-20 min-w-[160px] text-left align-bottom")}>
-                  Lead Source
-                </th>
-                {teamMatrix.teams.map((team) => (
-                  <th
-                    key={team.teamId}
-                    colSpan={team.members.length}
-                    className={cn("px-2 py-2 border border-slate-300 text-center font-bold text-slate-900", team.colorClass)}
-                  >
-                    {team.managerName} ({team.managerAbbr}) — {fmt(team.teamTotal)}
-                  </th>
-                ))}
-                <th rowSpan={3} className={cn(TH, "align-bottom min-w-[96px] bg-blue-900")}>
-                  <div>Source Wise Total</div>
-                  <div className="text-lg mt-1">{fmt(teamMatrix.grandTotal)}</div>
-                </th>
-              </tr>
-              <tr>
-                {teamMatrix.columns.map((col) => (
-                  <th key={`tot-${col.staffId}`} className="px-1 py-1 border border-slate-300 text-center text-xs font-semibold bg-slate-100 tabular-nums">
-                    {fmt(teamMatrix.columnTotals[col.staffId] ?? 0)}
-                  </th>
-                ))}
-              </tr>
-              <tr>
-                {teamMatrix.columns.map((col) => (
-                  <th key={col.staffId} className="px-1 py-2 border border-slate-700 bg-slate-800 text-white text-[10px] sm:text-xs font-semibold text-center min-w-[72px] whitespace-nowrap">
-                    {col.name}<br />({col.abbr})
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {teamMatrix.rows.map((row, i) => (
-                <tr key={row.source} className={i % 2 ? STRIPE : undefined}>
-                  <td className={cn(TD_L, "sticky left-0 z-10 bg-inherit font-medium")}>{row.source}</td>
-                  {teamMatrix.columns.map((col) => (
-                    <td key={col.staffId} className={TD}>
-                      {row.cells[col.staffId] ? fmt(row.cells[col.staffId]) : "—"}
-                    </td>
-                  ))}
-                  <td className={cn(TD, "font-semibold bg-blue-50")}>{fmt(row.rowTotal)}</td>
-                </tr>
-              ))}
-              <tr className={TOTAL_ROW}>
-                <td className={cn(TD_L, "sticky left-0 z-10 font-bold")}>TOTAL</td>
-                {teamMatrix.columns.map((col) => (
-                  <td key={col.staffId} className={cn(TD, "font-bold")}>
-                    {fmt(teamMatrix.columnTotals[col.staffId] ?? 0)}
-                  </td>
-                ))}
-                <td className={cn(TD, "font-bold bg-blue-100")}>{fmt(teamMatrix.grandTotal)}</td>
               </tr>
             </tbody>
           </table>

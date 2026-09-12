@@ -82,6 +82,7 @@ import AdminPricing from "./pages/admin/AdminPricing";
 import AdminDeliveryReports from "./pages/admin/AdminDeliveryReports";
 import AdminBookingReports from "./pages/admin/AdminBookingReports";
 import AdminDetailedReport from "./pages/admin/AdminDetailedReport";
+import AdminTeamWiseAssignedLeads from "./pages/admin/AdminTeamWiseAssignedLeads";
 import AdminComplaints from "./pages/admin/AdminComplaints";
 import AdminExecutiveDashboard from "./pages/admin/AdminExecutiveDashboard";
 import AdminTDMyBookings from "./pages/admin/AdminTDMyBookings";
@@ -191,6 +192,7 @@ const App = () => {
             <Route path="reports/deliveries" element={<AdminDeliveryReports />} />
             <Route path="reports/bookings" element={<AdminBookingReports />} />
             <Route path="reports/detailed" element={<AdminDetailedReport />} />
+            <Route path="reports/team-assigned-leads" element={<AdminTeamWiseAssignedLeads />} />
             <Route path="complaints/inbound" element={<AdminComplaints direction="INBOUND" />} />
             <Route path="complaints/outbound" element={<AdminComplaints direction="OUTBOUND" />} />
 
