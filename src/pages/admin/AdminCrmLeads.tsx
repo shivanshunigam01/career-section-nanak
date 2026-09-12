@@ -64,8 +64,8 @@ import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
 import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 import { LeadFollowUpTimeline } from "@/components/admin/LeadFollowUpTimeline";
 import { fetchBuyerTypes, type BuyerTypeDoc } from "@/lib/buyerTypesApi";
-import { ModelTrimSelect } from "@/components/ModelTrimSelect";
-import { leadModelLabel, parseStoredModelLine } from "@/data/vinfastModels";
+import { ModelTrimMultiSelect, primaryTrimFromSelection } from "@/components/ModelTrimMultiSelect";
+import { leadProductLines, parseStoredModelLine } from "@/data/vinfastModels";
 import { Checkbox } from "@/components/ui/checkbox";
 
 function stageBadgeClass(stage: string) {
@@ -140,6 +140,7 @@ export default function AdminCrmLeads() {
   const [favouriteOnly, setFavouriteOnly] = useState(false);
   const [filterBuyerType, setFilterBuyerType] = useState("all");
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({});
+  const [statsTotal, setStatsTotal] = useState(0);
   const [favouriteCount, setFavouriteCount] = useState(0);
   const [buyerTypes, setBuyerTypes] = useState<BuyerTypeDoc[]>([]);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -192,8 +193,7 @@ export default function AdminCrmLeads() {
   const [editMobile, setEditMobile] = useState("");
   const [editEmail, setEditEmail] = useState("");
   const [editCity, setEditCity] = useState("");
-  const [editModel, setEditModel] = useState("VF 7");
-  const [editVariant, setEditVariant] = useState("");
+  const [editSelectedTrims, setEditSelectedTrims] = useState<string[]>([]);
   const [editSource, setEditSource] = useState("");
   const [editBuyerType, setEditBuyerType] = useState("");
   const [selectMode, setSelectMode] = useState(false);
@@ -223,10 +223,13 @@ export default function AdminCrmLeads() {
     setEditMobile(lead.mobile ?? "");
     setEditEmail(lead.email ?? "");
     setEditCity(lead.city ?? "");
-    const parsed = parseStoredModelLine(lead.model ?? "");
-    // Ambiguous "Both" cannot be saved — default to a concrete model for the editor.
-    setEditModel(parsed.model === "Both" ? "VF 7" : parsed.model);
-    setEditVariant(parsed.model === "Both" ? "" : parsed.variant);
+    const products = leadProductLines(lead).filter(
+      (p) => p !== "Both" && !p.includes(" / "),
+    );
+    const fallback = parseStoredModelLine(lead.model ?? "").variant;
+    setEditSelectedTrims(
+      products.length ? products : fallback && fallback !== "Both" ? [fallback] : ["VF 7 Earth"],
+    );
     setEditSource(lead.source ?? "");
     setEditBuyerType(lead.buyerType ?? "");
   };
@@ -306,14 +309,34 @@ export default function AdminCrmLeads() {
               : undefined,
           from: filterDateFrom || undefined,
           to: filterDateTo || undefined,
+          dateField: filterDateField,
+          search: search.trim() || undefined,
+          buyerType: filterBuyerType !== "all" ? filterBuyerType : undefined,
+          followUpDue: followUpDueOnly || undefined,
+          customerFollowUps: customerFollowUpsOnly || undefined,
+          favourite: favouriteOnly || undefined,
         });
         setPipelineCounts(stats.pipeline || {});
+        setStatsTotal(stats.total ?? 0);
         setFavouriteCount(stats.favouriteCount || 0);
       } catch {
         setPipelineCounts({});
+        setStatsTotal(0);
       }
     })();
-  }, [filterSource, filterExecutive, filterDateFrom, filterDateTo, canAssignLeads, leads]);
+  }, [
+    filterSource,
+    filterExecutive,
+    filterDateFrom,
+    filterDateTo,
+    filterDateField,
+    search,
+    filterBuyerType,
+    followUpDueOnly,
+    customerFollowUpsOnly,
+    favouriteOnly,
+    canAssignLeads,
+  ]);
 
   useEffect(() => {
     void fetchBuyerTypes().then(setBuyerTypes).catch(() => setBuyerTypes([]));
@@ -342,6 +365,10 @@ export default function AdminCrmLeads() {
     for (const s of stageList) counts[s] = pipelineCounts[s] ?? 0;
     return counts;
   }, [pipelineCounts, stageList]);
+
+  const displayTotal = filterStatus && filterStatus !== "all"
+    ? stageCounts[filterStatus] ?? total
+    : statsTotal;
 
   const safeLeads = Array.isArray(leads) ? leads : [];
   const staffUsers = Array.isArray(executives) ? executives : [];
@@ -401,6 +428,10 @@ export default function AdminCrmLeads() {
       toast.error("City is required");
       return;
     }
+    if (!editSelectedTrims.length) {
+      toast.error("Select at least one product");
+      return;
+    }
     setSaving(true);
     try {
       await updatePvCrmLeadDetails(selected._id, {
@@ -408,7 +439,8 @@ export default function AdminCrmLeads() {
         mobile: mobileDigits,
         email: editEmail.trim(),
         city: editCity.trim(),
-        model: leadModelLabel(editModel, editVariant),
+        model: primaryTrimFromSelection(editSelectedTrims),
+        interestedModels: editSelectedTrims,
         source: editSource || undefined,
         buyerType: editBuyerType || undefined,
       });
@@ -994,6 +1026,14 @@ export default function AdminCrmLeads() {
       </div>
 
       <div className="flex flex-wrap gap-2">
+        <Badge variant="secondary" className="text-xs font-semibold">
+          {isExecutive && !canAssignLeads ? "Your leads" : "Total leads"}: {displayTotal}
+        </Badge>
+        {filterStatus && filterStatus !== "all" ? (
+          <Badge variant="outline" className="text-xs">
+            Filtered: {filterStatus} ({total})
+          </Badge>
+        ) : null}
         {stageList.map((s) => (
           <button
             key={s}
@@ -1300,7 +1340,9 @@ export default function AdminCrmLeads() {
                 </div>
               </div>
               <div className="text-xs text-muted-foreground space-y-1">
-                <p>{lead.model} · {lead.source ?? "Website"}</p>
+                <p>
+                  {leadProductLines(lead).join(", ") || lead.model} · {lead.source ?? "Website"}
+                </p>
                 {(lead.lastActivityAt || lead.updatedAt) ? (
                   <p className="text-[11px]">
                     Updated {formatDateTime(lead.lastActivityAt || lead.updatedAt)}
@@ -1333,7 +1375,13 @@ export default function AdminCrmLeads() {
       {!loading && total > 0 ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-t border-border/50 pt-4">
           <p className="text-sm text-muted-foreground">
-            Showing {rangeStart}–{rangeEnd} of {total} leads · recent activity first
+            Showing {rangeStart}–{rangeEnd} of {total} leads
+            {filterStatus && filterStatus !== "all" && total !== (stageCounts[filterStatus] ?? total)
+              ? ` · ${stageCounts[filterStatus] ?? 0} in ${filterStatus}`
+              : !filterStatus && total !== statsTotal
+                ? ` · ${statsTotal} match filters`
+                : ""}{" "}
+            · recent activity first
           </p>
           <div className="flex items-center gap-2">
             <Button
@@ -1389,12 +1437,11 @@ export default function AdminCrmLeads() {
                 <Badge variant="outline" className={stageBadgeClass(detail.lead.status)}>
                   {normalizeCrmStage(detail.lead.status)}
                 </Badge>
-                <span className="text-xs text-muted-foreground">{detail.lead.model}</span>
-                {detail.lead.interestedModels && detail.lead.interestedModels.length > 1 ? (
-                  <span className="text-[11px] text-muted-foreground">
-                    Also interested: {detail.lead.interestedModels.filter((m) => m !== detail.lead.model).join(", ")}
-                  </span>
-                ) : null}
+                {leadProductLines(detail.lead).map((product) => (
+                  <Badge key={product} variant="outline" className="text-[10px] font-normal">
+                    {product}
+                  </Badge>
+                ))}
                 {detail.lead.convertedAt ? (
                   <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px]">
                     <Trophy className="w-3 h-3 mr-1" /> Converted to sale
@@ -1634,17 +1681,11 @@ export default function AdminCrmLeads() {
                           placeholder="City / district"
                         />
                       </div>
-                      <div className="space-y-1.5">
-                        <Label className="text-xs">Vehicle / model *</Label>
-                        <ModelTrimSelect
+                      <div className="sm:col-span-2">
+                        <ModelTrimMultiSelect
                           id="crm-edit-model"
-                          model={editModel}
-                          variant={editVariant}
-                          onChange={(m, v) => {
-                            setEditModel(m);
-                            setEditVariant(v);
-                          }}
-                          className="w-full h-10 rounded-md border border-input bg-secondary/50 px-3 text-sm"
+                          value={editSelectedTrims}
+                          onChange={setEditSelectedTrims}
                         />
                       </div>
                       <div className="space-y-1.5">
