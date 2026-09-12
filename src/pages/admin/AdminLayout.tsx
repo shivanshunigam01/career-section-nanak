@@ -150,6 +150,7 @@ const reportsNavItems = [
   { label: "Lead Reports", icon: BarChart3, path: "/admin/td/leads/reports", staff: true },
   { label: "TD Reports", icon: BarChart3, path: "/admin/td/reports", staff: false },
   { label: "Booking Report", icon: CalendarCheck, path: "/admin/reports/bookings", staff: false },
+  { label: "Detailed Report", icon: BarChart3, path: "/admin/reports/detailed", staff: false },
   { label: "Delivery Reports", icon: PackageCheck, path: "/admin/reports/deliveries", staff: false },
   { label: "My Dashboard (performance)", icon: LayoutDashboard, path: "/admin/my-dashboard", staff: true },
 ];
