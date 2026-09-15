@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Plus, Edit2, Trash2, ShieldCheck, RefreshCw, Shield } from "lucide-react";
+import { Loader2, Plus, Edit2, Trash2, ShieldCheck, RefreshCw, Shield, Users } from "lucide-react";
 import { toast } from "sonner";
 import {
   MODULE_GROUPS,
@@ -65,6 +65,8 @@ export default function AdminTDRoles() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<typeof emptyForm & { _id?: string }>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
+  const [syncingRoleId, setSyncingRoleId] = useState<string | null>(null);
+  const [syncingAll, setSyncingAll] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StaffRoleTemplate | null>(null);
 
   const fetchRoles = useCallback(async () => {
@@ -178,6 +180,44 @@ export default function AdminTDRoles() {
     }
   };
 
+  const handleSyncRole = async (role: StaffRoleTemplate) => {
+    setSyncingRoleId(role._id);
+    try {
+      const data = await adminPostJson<{ matched: number; modified: number }>(
+        `/admin/td/roles/${role._id}/sync-users`,
+        {},
+      );
+      toast.success(
+        data.modified > 0
+          ? `Synced ${role.name} to ${data.modified} user(s)`
+          : `All users on ${role.name} already up to date`,
+      );
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSyncingRoleId(null);
+    }
+  };
+
+  const handleSyncAllRoles = async () => {
+    setSyncingAll(true);
+    try {
+      const data = await adminPostJson<{ roles: number; matched: number; modified: number }>(
+        "/admin/td/roles/sync-all-users",
+        {},
+      );
+      toast.success(
+        data.modified > 0
+          ? `Updated ${data.modified} user(s) across ${data.roles} role(s)`
+          : "All assigned users already match their roles",
+      );
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSyncingAll(false);
+    }
+  };
+
   const handleDelete = async () => {
     if (!deleteTarget) return;
     setActionLoading(true);
@@ -201,9 +241,9 @@ export default function AdminTDRoles() {
             <Shield className="w-6 h-6 text-primary" /> Roles
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Create permission templates. Assign a role in User Master and those modules/actions are applied
-            automatically to the employee. Editing a role here does not change existing users until you re-assign
-            the role.
+            Create permission templates. New users assigned a role in User Master get that role&apos;s modules
+            automatically. After editing a role, use <strong>Sync users</strong> to push changes to everyone already
+            on that role.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -211,6 +251,21 @@ export default function AdminTDRoles() {
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
+          {canUpdate ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void handleSyncAllRoles()}
+              disabled={syncingAll || loading}
+            >
+              {syncingAll ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Users className="w-4 h-4 mr-2" />
+              )}
+              Sync all roles
+            </Button>
+          ) : null}
           {canCreate ? (
             <Button size="sm" className="bg-primary text-primary-foreground" onClick={openCreate}>
               <Plus className="w-4 h-4 mr-2" /> Create role
@@ -250,6 +305,21 @@ export default function AdminTDRoles() {
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
+                  {canUpdate ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void handleSyncRole(role)}
+                      disabled={syncingRoleId === role._id}
+                    >
+                      {syncingRoleId === role._id ? (
+                        <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                      ) : (
+                        <Users className="w-3.5 h-3.5 mr-1.5" />
+                      )}
+                      Sync users
+                    </Button>
+                  ) : null}
                   {canUpdate ? (
                     <Button variant="outline" size="sm" onClick={() => openEdit(role)}>
                       <Edit2 className="w-3.5 h-3.5 mr-1.5" /> Edit
