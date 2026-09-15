@@ -154,14 +154,23 @@ export default function AdminTDRoles() {
         active: form.active,
       };
       if (form._id) {
-        await adminPutJson(`/admin/td/roles/${form._id}`, payload);
+        const { data } = await adminPutJson<StaffRoleTemplate>(`/admin/td/roles/${form._id}`, payload);
         toast.success("Role updated");
+        if (data) {
+          setRoles((prev) => prev.map((r) => (r._id === data._id ? data : r)));
+        } else {
+          void fetchRoles();
+        }
       } else {
-        await adminPostJson("/admin/td/roles", payload);
+        const { data } = await adminPostJson<StaffRoleTemplate>("/admin/td/roles", payload);
         toast.success("Role created");
+        if (data) {
+          setRoles((prev) => [...prev, data].sort((a, b) => a.name.localeCompare(b.name)));
+        } else {
+          void fetchRoles();
+        }
       }
       setShowForm(false);
-      void fetchRoles();
     } catch (e) {
       toast.error(formatApiErrors(e));
     } finally {
