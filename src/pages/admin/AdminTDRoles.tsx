@@ -59,6 +59,11 @@ export default function AdminTDRoles() {
   const canCreate = canPerformManagerAction(adminUser, "td_users", "create");
   const canUpdate = canPerformManagerAction(adminUser, "td_users", "update");
   const canDelete = canPerformManagerAction(adminUser, "td_users", "delete");
+  /** Super admin / admin portal always get sync — even when ACL tokens omit td_users:update. */
+  const canSyncUsers =
+    canUpdate ||
+    adminUser?.userType === "admin" ||
+    adminUser?.role === "superadmin";
 
   const [roles, setRoles] = useState<StaffRoleTemplate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -251,10 +256,11 @@ export default function AdminTDRoles() {
             <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          {canUpdate ? (
+          {canSyncUsers ? (
             <Button
-              variant="outline"
+              variant="default"
               size="sm"
+              className="bg-primary text-primary-foreground"
               onClick={() => void handleSyncAllRoles()}
               disabled={syncingAll || loading}
             >
@@ -273,6 +279,37 @@ export default function AdminTDRoles() {
           ) : null}
         </div>
       </div>
+
+      {canSyncUsers && !loading && roles.length > 0 ? (
+        <Card className="border-primary/30 bg-primary/5 p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <Users className="h-4 w-4 text-primary" />
+                Push role changes to employees
+              </p>
+              <p className="text-xs text-muted-foreground">
+                After editing modules on a role (e.g. CRE), click <strong>Sync users</strong> on that role — or use{" "}
+                <strong>Sync all roles</strong> above to update everyone at once.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="shrink-0 border-primary/40"
+              onClick={() => void handleSyncAllRoles()}
+              disabled={syncingAll}
+            >
+              {syncingAll ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Users className="w-4 h-4 mr-2" />
+              )}
+              Sync all roles
+            </Button>
+          </div>
+        </Card>
+      ) : null}
 
       {loading ? (
         <div className="flex justify-center py-16">
@@ -305,10 +342,11 @@ export default function AdminTDRoles() {
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
-                  {canUpdate ? (
+                  {canSyncUsers ? (
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
+                      className="bg-primary text-primary-foreground"
                       onClick={() => void handleSyncRole(role)}
                       disabled={syncingRoleId === role._id}
                     >
@@ -443,10 +481,37 @@ export default function AdminTDRoles() {
                 onCheckedChange={(v) => setForm({ ...form, active: v })}
               />
             </div>
-            <Button className="w-full" disabled={actionLoading} onClick={() => void handleSave()}>
-              {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-              {form._id ? "Save role" : "Create role"}
-            </Button>
+            <div className="space-y-2">
+              <Button className="w-full" disabled={actionLoading} onClick={() => void handleSave()}>
+                {actionLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                {form._id ? "Save role" : "Create role"}
+              </Button>
+              {form._id && canSyncUsers ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full border-primary/40"
+                  disabled={syncingRoleId === form._id}
+                  onClick={() =>
+                    void handleSyncRole({
+                      _id: form._id!,
+                      name: form.name,
+                      authRole: form.authRole,
+                      allowedModules: form.allowedModules,
+                      allowedActions: form.allowedActions,
+                      active: form.active,
+                    })
+                  }
+                >
+                  {syncingRoleId === form._id ? (
+                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                  ) : (
+                    <Users className="w-4 h-4 mr-2" />
+                  )}
+                  Sync users on this role
+                </Button>
+              ) : null}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
