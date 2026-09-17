@@ -185,7 +185,11 @@ export function CreLeadSheetPanel({ lead, followUpSlots, canEdit, onSaved }: Pro
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground">
         All columns from the bulk-upload sheet. Source: <strong>{lead.source || "—"}</strong> · Model:{" "}
-        <strong>{lead.model}</strong>
+        <strong>
+          {lead.model === "Both" && Array.isArray(lead.interestedModels) && lead.interestedModels.length
+            ? `Both (${lead.interestedModels.join(", ")})`
+            : lead.model}
+        </strong>
       </p>
 
       <div className="grid sm:grid-cols-2 gap-3">

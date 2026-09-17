@@ -186,6 +186,7 @@ export async function fetchPvCrmLeads(params?: {
   to?: string;
   dateField?: PvCrmLeadDateField;
   buyerType?: string;
+  model?: string;
   customerId?: string;
   customerFollowUps?: boolean;
   pvCustomerId?: string;
@@ -208,6 +209,7 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.to) q.set("to", params.to);
   if (params?.dateField && params.dateField !== "created") q.set("dateField", params.dateField);
   if (params?.buyerType && params.buyerType !== "all") q.set("buyerType", params.buyerType);
+  if (params?.model && params.model !== "all") q.set("model", params.model);
   if (params?.customerId) q.set("customerId", params.customerId);
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.pvCustomerId) q.set("pvCustomerId", params.pvCustomerId);

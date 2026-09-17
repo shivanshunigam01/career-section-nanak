@@ -161,6 +161,7 @@ export default function AdminCrmLeads() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [filterSource, setFilterSource] = useState("all");
+  const [filterModel, setFilterModel] = useState("all");
   const [executives, setExecutives] = useState<AssignableStaffUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -288,6 +289,7 @@ export default function AdminCrmLeads() {
         search: search.trim() || undefined,
         status: filterStatus,
         source: filterSource,
+        model: filterModel !== "all" ? filterModel : undefined,
         followUpDue: followUpDueOnly,
         customerFollowUps: customerFollowUpsOnly,
         favourite: favouriteOnly,
@@ -313,7 +315,7 @@ export default function AdminCrmLeads() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page]);
+  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page]);
 
   const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
 
@@ -321,7 +323,7 @@ export default function AdminCrmLeads() {
     setPage(1);
     setFilterDateFrom("");
     setFilterDateTo("");
-    setFilterDateField("created");
+    setFilterDateField("enquiry");
   };
 
   useEffect(() => {
@@ -1145,6 +1147,25 @@ export default function AdminCrmLeads() {
           </SelectContent>
         </Select>
         <Select
+          value={filterModel}
+          onValueChange={(v) => {
+            setPage(1);
+            setFilterModel(v);
+          }}
+        >
+          <SelectTrigger className="bg-secondary/50">
+            <SelectValue placeholder="Model" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All models</SelectItem>
+            <SelectItem value="Both">Both (needs pick)</SelectItem>
+            <SelectItem value="VF 6">VF 6</SelectItem>
+            <SelectItem value="VF 7">VF 7</SelectItem>
+            <SelectItem value="VF MPV 7">VF MPV 7</SelectItem>
+            <SelectItem value="Limo Green">Limo Green</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
           value={filterBuyerType}
           onValueChange={(v) => {
             setPage(1);
@@ -1578,6 +1599,12 @@ export default function AdminCrmLeads() {
                 <p><span className="text-muted-foreground">Email</span><br />{detail.lead.email || "—"}</p>
                 <p><span className="text-muted-foreground">City</span><br />{detail.lead.city || "—"}</p>
                 <p><span className="text-muted-foreground">Source</span><br />{detail.lead.source || "—"}</p>
+                <p><span className="text-muted-foreground">Model</span><br />{leadProductLines(detail.lead).join(", ") || detail.lead.model || "—"}</p>
+                {detail.lead.model === "Both" ? (
+                  <p className="sm:col-span-2 text-amber-600 dark:text-amber-400">
+                    Multi-model lead — user can pick final model in CRE sheet or edit details.
+                  </p>
+                ) : null}
                 <p><span className="text-muted-foreground">Buyer type</span><br />{detail.lead.buyerType || "—"}</p>
                 <p><span className="text-muted-foreground">Assigned to</span><br />{detail.lead.assignedTo?.name || "—"}</p>
                 <p><span className="text-muted-foreground">Enquiry date</span><br />{formatDateOnly(detail.lead.enquiryDate || detail.lead.createdAt)}</p>
