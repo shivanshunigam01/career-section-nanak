@@ -373,6 +373,8 @@ export type CrmLeadStats = {
 
 export async function fetchPvCrmLeadStats(params?: {
   source?: string;
+  status?: string;
+  model?: string;
   assignedTo?: string;
   from?: string;
   to?: string;
@@ -385,6 +387,8 @@ export async function fetchPvCrmLeadStats(params?: {
 }): Promise<CrmLeadStats> {
   const q = new URLSearchParams();
   if (params?.source && params.source !== "all") q.set("source", params.source);
+  if (params?.status && params.status !== "all") q.set("status", params.status);
+  if (params?.model && params.model !== "all") q.set("model", params.model);
   if (params?.assignedTo) q.set("assignedTo", params.assignedTo);
   if (params?.from) q.set("from", params.from);
   if (params?.to) q.set("to", params.to);

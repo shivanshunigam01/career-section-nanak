@@ -335,6 +335,8 @@ export default function AdminCrmLeads() {
       try {
         const stats = await fetchPvCrmLeadStats({
           source: filterSource,
+          status: filterStatus !== "all" ? filterStatus : undefined,
+          model: filterModel !== "all" ? filterModel : undefined,
           assignedTo:
             canAssignLeads && filterExecutive !== "all"
               ? filterExecutive === "unassigned"
@@ -360,6 +362,8 @@ export default function AdminCrmLeads() {
     })();
   }, [
     filterSource,
+    filterStatus,
+    filterModel,
     filterExecutive,
     filterDateFrom,
     filterDateTo,
