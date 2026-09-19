@@ -156,6 +156,12 @@ export type CreatePvCrmLeadPayload = {
   /** Create a separate opportunity when customer already has an open lead. */
   forceNewOpportunity?: boolean;
   allowMultiOpportunity?: boolean;
+  /** CRE Current Format sheet dates and columns (optional at create). */
+  creSheet?: Record<string, unknown>;
+  followUpSlots?: CreSheetFollowUpSlot[];
+  salesConsultant?: string;
+  enquiryDate?: string;
+  callDate?: string;
 };
 
 export async function createPvCrmLead(payload: CreatePvCrmLeadPayload): Promise<PvCrmLead> {

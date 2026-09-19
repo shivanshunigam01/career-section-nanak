@@ -190,6 +190,7 @@ export function CreLeadSheetPanel({ lead, followUpSlots, canEdit, onSaved }: Pro
             ? `Both (${lead.interestedModels.join(", ")})`
             : lead.model}
         </strong>
+        {" "}· Dates can be set to any past day.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-3">
