@@ -18,6 +18,7 @@ import {
   calendarEventToFc,
   fetchCalendarEvents,
   patchCalendarEvent,
+  resolveCalendarEventHref,
   type CalendarEvent,
 } from "@/lib/calendarApi";
 import {
@@ -30,6 +31,7 @@ import { CalendarDayEventsDialog } from "@/components/admin/calendar/CalendarDay
 import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
 import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 const MODEL_OPTIONS = ["VF 7", "VF 6", "VF MPV 7", "Limo Green", "Both"];
 
@@ -41,7 +43,9 @@ function localDateKey(d: Date) {
 }
 
 export default function AdminCalendar() {
+  const navigate = useNavigate();
   const adminUser = getAdminUser();
+  const todayKey = localDateKey(new Date());
   const isExecutive = isFieldStaffUser(adminUser);
   const canCreateLead = canPerformAction(adminUser, "crm_leads", "create");
   const canCreateTd = canPerformAction(adminUser, "td_bookings", "create") || canPerformAction(adminUser, "td_my_bookings", "update");
@@ -57,7 +61,7 @@ export default function AdminCalendar() {
   const didAutoOpenToday = useRef(false);
   const [view, setView] = useState<CalView>("dayGridMonth");
   const [title, setTitle] = useState("");
-  const [selectedDate, setSelectedDate] = useState(() => localDateKey(new Date()));
+  const [selectedDate, setSelectedDate] = useState(() => todayKey);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
   const [dayDialogDate, setDayDialogDate] = useState<string | null>(null);
   const [range, setRange] = useState(() => {
@@ -148,7 +152,7 @@ export default function AdminCalendar() {
 
   const goToday = () => {
     api()?.today();
-    openDayDialog(localDateKey(new Date()));
+    openDayDialog(todayKey);
   };
   const goPrev = () => api()?.prev();
   const goNext = () => api()?.next();
@@ -158,10 +162,9 @@ export default function AdminCalendar() {
     const t = window.setTimeout(() => {
       if (didAutoOpenToday.current) return;
       didAutoOpenToday.current = true;
-      const today = localDateKey(new Date());
       calendarRef.current?.getApi()?.today();
-      setSelectedDate(today);
-      setDayDialogDate(today);
+      setSelectedDate(todayKey);
+      setDayDialogDate(todayKey);
       setDayDialogOpen(true);
     }, 150);
     return () => window.clearTimeout(t);
@@ -189,6 +192,11 @@ export default function AdminCalendar() {
       title: arg.event.title,
       href: ev.href,
     };
+    const href = resolveCalendarEventHref(full);
+    if (href) {
+      navigate(href);
+      return;
+    }
     openEventDetail(full);
   };
 
@@ -226,7 +234,7 @@ export default function AdminCalendar() {
             Calendar
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Today is highlighted — click any date (or +N more) to see all events; click an event for full details.
+            Today is selected on open — click any date (or +N more) for schedules; tap a row to open that lead in CRM.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -257,7 +265,13 @@ export default function AdminCalendar() {
       <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border/50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between bg-muted/20">
           <div className="flex items-center gap-1.5">
-            <Button type="button" size="sm" variant="outline" className="h-8" onClick={goToday}>
+            <Button
+              type="button"
+              size="sm"
+              variant={selectedDate === todayKey ? "default" : "outline"}
+              className="h-8"
+              onClick={goToday}
+            >
               Today
             </Button>
             <Button type="button" size="icon" variant="ghost" className="h-8 w-8" onClick={goPrev}>
@@ -287,10 +301,12 @@ export default function AdminCalendar() {
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
             initialView={view}
+            initialDate={new Date()}
             headerToolbar={false}
             height="100%"
             stickyHeaderDates
             nowIndicator
+            scrollTime="08:00:00"
             editable={canEdit}
             eventStartEditable={canEdit}
             eventDurationEditable={false}
@@ -306,10 +322,10 @@ export default function AdminCalendar() {
             dateClick={onDateClick}
             dayCellClassNames={(arg) => {
               const key = localDateKey(arg.date);
-              const today = localDateKey(new Date());
               const classes: string[] = [];
-              if (key === today) classes.push("fc-day-focus-today");
+              if (key === todayKey) classes.push("fc-day-focus-today");
               if (key === selectedDate) classes.push("fc-day-selected");
+              if (key === todayKey && key === selectedDate) classes.push("fc-day-today-selected");
               return classes;
             }}
             eventClick={onEventClick}
@@ -435,8 +451,14 @@ export default function AdminCalendar() {
         .calendar-fc .fc-daygrid-day.fc-day-focus-today:not(.fc-day-selected) .fc-daygrid-day-frame {
           box-shadow: inset 0 0 0 1px hsl(var(--primary) / 0.35);
         }
-        .calendar-fc .fc-daygrid-day.fc-day-focus-today.fc-day-selected .fc-daygrid-day-frame {
-          background: hsl(var(--primary) / 0.14);
+        .calendar-fc .fc-daygrid-day.fc-day-focus-today.fc-day-selected .fc-daygrid-day-frame,
+        .calendar-fc .fc-daygrid-day.fc-day-today-selected .fc-daygrid-day-frame {
+          background: hsl(var(--primary) / 0.16);
+          outline: 2px solid hsl(var(--primary));
+          outline-offset: -2px;
+        }
+        .calendar-fc .fc .fc-daygrid-day.fc-day-today {
+          background: hsl(var(--primary) / 0.06);
         }
         .calendar-fc .fc-event {
           border-radius: 4px;

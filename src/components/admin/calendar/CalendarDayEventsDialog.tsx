@@ -1,4 +1,5 @@
-import { CalendarClock, Car, Phone, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { CalendarClock, Car, ExternalLink, Phone, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -9,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { calendarEventDateKey, type CalendarEvent } from "@/lib/calendarApi";
+import { calendarEventDateKey, resolveCalendarEventHref, type CalendarEvent } from "@/lib/calendarApi";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABELS: Record<string, string> = {
@@ -61,7 +62,7 @@ type Props = {
   dateKey: string | null;
   events: CalendarEvent[];
   onOpenChange: (open: boolean) => void;
-  onSelectEvent: (event: CalendarEvent) => void;
+  onSelectEvent?: (event: CalendarEvent) => void;
 };
 
 export function CalendarDayEventsDialog({
@@ -71,7 +72,19 @@ export function CalendarDayEventsDialog({
   onOpenChange,
   onSelectEvent,
 }: Props) {
+  const navigate = useNavigate();
   const dayEvents = dateKey ? filterEventsForDate(events, dateKey) : [];
+
+  const openEvent = (ev: CalendarEvent) => {
+    const href = resolveCalendarEventHref(ev);
+    if (href) {
+      onOpenChange(false);
+      navigate(href);
+      return;
+    }
+    onSelectEvent?.(ev);
+    onOpenChange(false);
+  };
   const todayKey = (() => {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, "0");
@@ -94,7 +107,7 @@ export function CalendarDayEventsDialog({
           </DialogTitle>
           <DialogDescription>
             {dayEvents.length
-              ? `${dayEvents.length} event${dayEvents.length === 1 ? "" : "s"} — tap one for full details`
+              ? `${dayEvents.length} schedule${dayEvents.length === 1 ? "" : "s"} — tap to open the lead in CRM`
               : "No events on this date"}
           </DialogDescription>
         </DialogHeader>
@@ -112,13 +125,10 @@ export function CalendarDayEventsDialog({
                   <button
                     key={ev.id}
                     type="button"
-                    onClick={() => {
-                      onSelectEvent(ev);
-                      onOpenChange(false);
-                    }}
+                    onClick={() => openEvent(ev)}
                     className={cn(
                       "w-full text-left rounded-lg border border-border/60 bg-card p-3",
-                      "hover:border-primary/40 hover:bg-primary/5 transition-colors",
+                      "hover:border-primary/40 hover:bg-primary/5 transition-colors group",
                     )}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -126,13 +136,20 @@ export function CalendarDayEventsDialog({
                         <p className="font-medium text-sm truncate">{ev.customerName || ev.title}</p>
                         <p className="text-xs text-muted-foreground truncate">{ev.title}</p>
                       </div>
-                      <Badge
-                        variant="outline"
-                        className="shrink-0 text-[10px]"
-                        style={{ borderColor: ev.color, color: ev.color }}
-                      >
-                        {typeLabel}
-                      </Badge>
+                      <div className="flex flex-col items-end gap-1 shrink-0">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px]"
+                          style={{ borderColor: ev.color, color: ev.color }}
+                        >
+                          {typeLabel}
+                        </Badge>
+                        {resolveCalendarEventHref(ev) ? (
+                          <span className="inline-flex items-center gap-0.5 text-[10px] text-primary opacity-80 group-hover:opacity-100">
+                            Open lead <ExternalLink className="w-3 h-3" />
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       <span className="inline-flex items-center gap-1">

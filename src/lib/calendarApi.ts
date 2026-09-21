@@ -89,6 +89,18 @@ export function calendarEventDateKey(ev: CalendarEvent): string {
   return "";
 }
 
+/** Prefer CRM lead detail; fall back to event href or TD booking. */
+export function resolveCalendarEventHref(ev: CalendarEvent): string | null {
+  if (ev.leadId) return `/admin/crm/leads?lead=${encodeURIComponent(ev.leadId)}`;
+  if (ev.href?.includes("leadId=")) {
+    const id = ev.href.split("leadId=")[1]?.split("&")[0];
+    if (id) return `/admin/crm/leads?lead=${encodeURIComponent(id)}`;
+  }
+  if (ev.href) return ev.href;
+  if (ev.bookingId) return `/admin/td/bookings?highlight=${encodeURIComponent(ev.bookingId)}`;
+  return null;
+}
+
 export function calendarEventToFc(ev: CalendarEvent) {
   const allDay = Boolean(ev.allDay);
   // Date-only strings avoid timezone drift that can make all-day events
