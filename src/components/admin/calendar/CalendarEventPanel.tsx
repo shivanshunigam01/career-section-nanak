@@ -23,7 +23,7 @@ import {
   type AssignableStaffUser,
 } from "@/lib/pvLeadCrmApi";
 import { CRM_LEAD_STAGES } from "@/lib/leadStages";
-import { patchCalendarEvent, type CalendarEvent } from "@/lib/calendarApi";
+import { patchCalendarEvent, resolveCalendarEventHref, type CalendarEvent } from "@/lib/calendarApi";
 
 type Props = {
   open: boolean;
@@ -60,10 +60,7 @@ function toLocalInputValue(iso?: string, allDay?: boolean) {
 }
 
 function resolveOpenHref(event: CalendarEvent): string | null {
-  if (event.href) return event.href;
-  if (event.leadId) return `/admin/crm/leads?leadId=${event.leadId}`;
-  if (event.bookingId) return `/admin/td/bookings?highlight=${event.bookingId}`;
-  return null;
+  return resolveCalendarEventHref(event);
 }
 
 export function CalendarEventPanel({

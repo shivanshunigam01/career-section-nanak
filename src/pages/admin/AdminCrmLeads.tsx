@@ -381,7 +381,7 @@ export default function AdminCrmLeads() {
   }, []);
 
   useEffect(() => {
-    const id = searchParams.get("lead");
+    const id = searchParams.get("lead") || searchParams.get("leadId");
     if (!id) return;
     void (async () => {
       try {

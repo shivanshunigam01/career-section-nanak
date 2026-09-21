@@ -1,4 +1,4 @@
-import { useEffect, useId, useState, type ChangeEvent } from "react";
+import { useEffect, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,10 +16,11 @@ import {
   useFeedbackVariantChoices,
   type RatingKey,
 } from "@/components/admin/TDFeedbackForm";
+import { ImageCaptureField, type ImagePick } from "@/components/admin/ImageCaptureField";
 
 type GeoFix = { lat: number; lng: number; accuracy?: number };
 
-type PhotoPick = { file: File | null; preview: string | null };
+type PhotoPick = ImagePick;
 
 /** Parse lat/lng from Google Maps share/pin URLs or plain "lat,lng" text. */
 export function parseGoogleMapsLocation(raw: string): GeoFix | null {
@@ -74,81 +75,6 @@ type Props = {
   /** Called after the drive is completed (feedback may still have failed — shown via toast). */
   onCompleted: () => void | Promise<void>;
 };
-
-function PhotoField({
-  id,
-  label,
-  required,
-  photo,
-  onPick,
-  disabled,
-}: {
-  id: string;
-  label: string;
-  required?: boolean;
-  photo: PhotoPick;
-  onPick: (p: PhotoPick) => void;
-  disabled?: boolean;
-}) {
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const picked = e.target.files?.[0];
-    e.target.value = "";
-    if (!picked) return;
-    if (!picked.type.startsWith("image/")) {
-      toast.error("Please choose an image file.");
-      return;
-    }
-    onPick({ file: picked, preview: URL.createObjectURL(picked) });
-  };
-
-  return (
-    <div className="space-y-1.5">
-      <Label className="text-xs">
-        {label} {required ? "*" : <span className="text-muted-foreground font-normal">(optional)</span>}
-      </Label>
-      {photo.preview ? (
-        <div className="rounded-lg border border-border/50 overflow-hidden bg-muted/20">
-          <img src={photo.preview} alt={label} className="w-full max-h-32 object-contain" />
-        </div>
-      ) : (
-        <label
-          htmlFor={id}
-          className="flex flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed border-border/50 bg-secondary/20 py-5 px-3 cursor-pointer hover:bg-secondary/30 transition-colors"
-        >
-          <Camera className="w-4 h-4 text-muted-foreground" />
-          <span className="text-[11px] text-muted-foreground text-center">Take / choose photo</span>
-        </label>
-      )}
-      <div className="flex gap-2">
-        <label
-          htmlFor={id}
-          className="inline-flex items-center justify-center rounded-md border border-input bg-background px-2.5 py-1 text-[11px] font-medium cursor-pointer hover:bg-accent"
-        >
-          {photo.file ? "Change photo" : "Select photo"}
-        </label>
-        {photo.file ? (
-          <button
-            type="button"
-            className="text-[11px] text-muted-foreground hover:text-destructive"
-            onClick={() => onPick({ file: null, preview: null })}
-            disabled={disabled}
-          >
-            Remove
-          </button>
-        ) : null}
-      </div>
-      <input
-        id={id}
-        type="file"
-        accept="image/*"
-        capture="environment"
-        className="sr-only"
-        disabled={disabled}
-        onChange={handleChange}
-      />
-    </div>
-  );
-}
 
 /** Read-only card showing everything captured at completion (photos, GPS, remarks, timestamp). */
 export function TestDriveCompletionSummary({ log }: { log: TDLogRecord }) {
@@ -451,7 +377,7 @@ export function CompleteTestDriveDialog({
 
           {/* Photos */}
           <div className="grid sm:grid-cols-2 gap-3">
-            <PhotoField
+            <ImageCaptureField
               id={`${idBase}-customer-photo`}
               label="Customer photo"
               required
@@ -459,7 +385,7 @@ export function CompleteTestDriveDialog({
               onPick={setCustomerPhoto}
               disabled={saving}
             />
-            <PhotoField
+            <ImageCaptureField
               id={`${idBase}-vehicle-photo`}
               label="Vehicle photo"
               photo={vehiclePhoto}
@@ -687,7 +613,7 @@ export function UpdateCompletionMediaDialog({ open, onOpenChange, log, onSaved }
             Add or replace the customer photo and the Google-pinned location where the test drive was conducted.
           </p>
 
-          <PhotoField
+          <ImageCaptureField
             id={`${idBase}-upd-customer`}
             label="Customer photo"
             required={!hasExistingPhoto}
@@ -695,7 +621,7 @@ export function UpdateCompletionMediaDialog({ open, onOpenChange, log, onSaved }
             onPick={setCustomerPhoto}
             disabled={saving}
           />
-          <PhotoField
+          <ImageCaptureField
             id={`${idBase}-upd-vehicle`}
             label="Vehicle photo"
             photo={vehiclePhoto}
