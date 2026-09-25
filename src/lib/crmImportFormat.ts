@@ -44,6 +44,8 @@ export const CRM_CURRENT_FORMAT_HEADERS = [
   "RETAIL DONE\nYES / NO",
   "RETAIL DATE",
   "DELIVERY DATE",
+  "Month Year",
+  "Month Year TD",
 ] as const;
 
 /** Sample row for blank Excel template download. */

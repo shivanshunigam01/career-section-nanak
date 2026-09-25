@@ -9,6 +9,8 @@ export type AdminModuleKey =
   | "dashboard"
   | "homepage"
   | "crm_leads"
+  | "crm_booking_leads"
+  | "crm_import_review"
   | "crm_lead_stages"
   | "crm_buyer_types"
   | "pricing"
@@ -122,6 +124,8 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "calendar", label: "Calendar", path: "/admin/calendar", group: "Core", actions: ["view", "update"] },
   { key: "homepage", label: "Homepage", path: "/admin/homepage", group: "Core", actions: ["view", "create", "update", "delete"] },
   { key: "crm_leads", label: "Lead CRM", path: "/admin/crm/leads", group: "Core", actions: ["view", "create", "update", "delete", "assign", "export"] },
+  { key: "crm_booking_leads", label: "Booking CRM", path: "/admin/crm/bookings", group: "Core", actions: ["view", "update", "assign", "export"] },
+  { key: "crm_import_review", label: "Import Error Log", path: "/admin/crm/import-review", group: "Core", actions: ["view", "create", "update"] },
   { key: "crm_lead_stages", label: "Lead Stages", path: "/admin/crm/lead-stages", group: "Core", actions: ["view", "create", "update", "delete"] },
   { key: "crm_buyer_types", label: "Buyer Types", path: "/admin/crm/buyer-types", group: "Core", actions: ["view", "create", "update", "delete"] },
   { key: "pricing", label: "Pricing", path: "/admin/pricing", group: "Core", actions: ["view", "update"] },
@@ -194,6 +198,7 @@ MODULE_BY_PATH["/admin/stock/vendors"] = "stock_vendors";
 MODULE_BY_PATH["/admin/stock/requisitions"] = "stock_requisition";
 MODULE_BY_PATH["/admin/stock/pipeline/requisitions"] = "stock_requisition";
 MODULE_BY_PATH["/admin/stock/transfer"] = "stock_inventory";
+MODULE_BY_PATH["/admin/crm/import-review"] = "crm_import_review";
 
 export const MODULE_GROUPS = [
   "Core",

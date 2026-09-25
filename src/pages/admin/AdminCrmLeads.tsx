@@ -27,6 +27,7 @@ import {
   fetchPvCrmLeadDetail,
   fetchPvCrmLeads,
   fetchPvCrmLeadStats,
+  CRM_LEADS_BASE,
   togglePvCrmFavourite,
   displayCrmLeadName,
   PV_CRM_SOURCES,
@@ -38,6 +39,7 @@ import {
   bulkDeletePvCrmLeads,
   exportPvCrmLeadsExcel,
   importPvCrmLeadsFile,
+  previewCrmImportBatch,
   downloadPvCrmLeadImportTemplate,
   downloadCrmImportErrors,
   fetchOpportunityDuplicates,
@@ -116,6 +118,25 @@ function formatDateTime(iso?: string) {
 
 const PAGE_SIZE = 20;
 
+export type CrmLeadsPageConfig = {
+  title: string;
+  description: string;
+  moduleKey: "crm_leads" | "crm_booking_leads";
+  apiBase: string;
+  showAddLead?: boolean;
+  showImport?: boolean;
+};
+
+const DEFAULT_CRM_PAGE_CONFIG: CrmLeadsPageConfig = {
+  title: "Lead CRM",
+  description:
+    "Unified lead pipeline — assign executives, track stages, notes, and follow-ups. Shows leads where TD is not done.",
+  moduleKey: "crm_leads",
+  apiBase: CRM_LEADS_BASE,
+  showAddLead: true,
+  showImport: true,
+};
+
 function followUpColor(highlight?: string) {
   if (highlight === "overdue") return "text-red-600 dark:text-red-400";
   if (highlight === "today") return "text-orange-600 dark:text-orange-400";
@@ -123,7 +144,7 @@ function followUpColor(highlight?: string) {
   return "text-muted-foreground";
 }
 
-export default function AdminCrmLeads() {
+export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: { pageConfig?: CrmLeadsPageConfig }) {
   const adminUser = getAdminUser();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -134,22 +155,25 @@ export default function AdminCrmLeads() {
   const seesAllLeads = isCre || isCrmDesk;
   const isAdminPortal =
     adminUser?.userType === "admin" || adminUser?.role === "superadmin";
-  const canCreate = canPerformAction(adminUser, "crm_leads", "create");
-  const canUpdate = canPerformAction(adminUser, "crm_leads", "update");
+  const moduleKey = pageConfig.moduleKey;
+  const canCreate = canPerformAction(adminUser, moduleKey, "create");
+  const canUpdate = canPerformAction(adminUser, moduleKey, "update");
   const canAssignLeads =
-    isCre || isCrmDesk || canPerformManagerAction(adminUser, "crm_leads", "assign");
-  const canEditDetails = canPerformManagerAction(adminUser, "crm_leads", "update");
+    isCre || isCrmDesk || canPerformManagerAction(adminUser, moduleKey, "assign");
+  const canEditDetails = canPerformManagerAction(adminUser, moduleKey, "update");
   const canDelete =
-    isCre || isCrmDesk || canPerformManagerAction(adminUser, "crm_leads", "delete");
+    isCre || isCrmDesk || canPerformManagerAction(adminUser, moduleKey, "delete");
   /** Bulk Excel download/upload — Admin + CRE (and managers with export/create). */
   const canExportExcel =
     isAdminPortal ||
     isCre ||
     isCrmDesk ||
-    canPerformAction(adminUser, "crm_leads", "export") ||
+    canPerformAction(adminUser, moduleKey, "export") ||
     canAssignLeads;
   const canImportExcel =
-    canCreate && (isAdminPortal || isCre || isCrmDesk || adminUser?.role === "manager" || canAssignLeads);
+    pageConfig.showImport !== false &&
+    canCreate &&
+    (isAdminPortal || isCre || isCrmDesk || adminUser?.role === "manager" || canAssignLeads);
 
   const { stages: crmStages } = useCrmLeadStages();
   const stageList = crmStages.length ? crmStages : [...CRM_LEAD_STAGES];
@@ -286,6 +310,7 @@ export default function AdminCrmLeads() {
     setLoading(true);
     try {
       const res = await fetchPvCrmLeads({
+        apiBase: pageConfig.apiBase,
         search: search.trim() || undefined,
         status: filterStatus,
         source: filterSource,
@@ -315,7 +340,7 @@ export default function AdminCrmLeads() {
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page]);
+  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase]);
 
   const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
 
@@ -334,6 +359,7 @@ export default function AdminCrmLeads() {
     void (async () => {
       try {
         const stats = await fetchPvCrmLeadStats({
+          apiBase: pageConfig.apiBase,
           source: filterSource,
           status: filterStatus !== "all" ? filterStatus : undefined,
           model: filterModel !== "all" ? filterModel : undefined,
@@ -888,6 +914,21 @@ export default function AdminCrmLeads() {
     if (!canImportExcel) return;
     setImporting(true);
     try {
+      const batchPreview = await previewCrmImportBatch(file);
+      const errorRows = batchPreview.rows.filter((r) => r.status === "error");
+      if (errorRows.length > 0) {
+        navigate(`/admin/crm/import-review/${batchPreview.batch._id}`);
+        toast.info(
+          `${errorRows.length} row(s) need correction before upload. Review errors and press Final Upload.`,
+        );
+        return;
+      }
+      if (batchPreview.rows.some((r) => r.status === "valid" || r.status === "corrected")) {
+        navigate(`/admin/crm/import-review/${batchPreview.batch._id}`);
+        toast.info("Review validated rows and press Final Upload to commit.");
+        return;
+      }
+
       const preview = await importPvCrmLeadsFile(file, { dryRun: true });
       const rows = Array.isArray(preview.rows) ? preview.rows : [];
       const needsModelRows = rows.filter((r) => r.status === "needs_model");
@@ -978,18 +1019,12 @@ export default function AdminCrmLeads() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
-            <Users className="w-6 h-6 text-primary" /> Lead CRM
+            <Users className="w-6 h-6 text-primary" /> {pageConfig.title}
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {seesAllLeads
-              ? "Full lead pipeline — view all leads, assign executives, and track calling / follow-ups."
-              : isExecutive
-                ? "Your assigned leads from website, Meta Ads, test drives, and enquiries."
-                : "Unified lead pipeline — assign executives, track stages, notes, and follow-ups."}
-          </p>
+          <p className="text-muted-foreground text-sm mt-1">{pageConfig.description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {canCreate ? (
+          {canCreate && pageConfig.showAddLead !== false ? (
             <Button size="sm" className="bg-primary text-primary-foreground" onClick={() => setShowAddLead(true)}>
               <Plus className="w-4 h-4 mr-2" /> Add Lead
             </Button>
