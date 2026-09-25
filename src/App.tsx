@@ -76,6 +76,8 @@ import AdminTDUsers from "./pages/admin/AdminTDUsers";
 import AdminTDRoles from "./pages/admin/AdminTDRoles";
 import AdminFeedbackSubmissions from "./pages/admin/AdminFeedbackSubmissions";
 import AdminCrmLeads from "./pages/admin/AdminCrmLeads";
+import AdminBookingLeads from "./pages/admin/AdminBookingLeads";
+import AdminImportReview from "./pages/admin/AdminImportReview";
 import AdminLeadStages from "./pages/admin/AdminLeadStages";
 import AdminBuyerTypes from "./pages/admin/AdminBuyerTypes";
 import AdminPricing from "./pages/admin/AdminPricing";
@@ -186,6 +188,8 @@ const App = () => {
             {/* Lead CRM module */}
             <Route path="my-dashboard" element={<AdminExecutiveDashboard />} />
             <Route path="crm/leads" element={<AdminCrmLeads />} />
+            <Route path="crm/bookings" element={<AdminBookingLeads />} />
+            <Route path="crm/import-review/:batchId" element={<AdminImportReview />} />
             <Route path="crm/lead-stages" element={<AdminLeadStages />} />
             <Route path="crm/buyer-types" element={<AdminBuyerTypes />} />
             <Route path="pricing" element={<AdminPricing />} />

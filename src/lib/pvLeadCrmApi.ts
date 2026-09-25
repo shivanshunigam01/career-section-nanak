@@ -4,7 +4,9 @@ import { LEAD_SOURCE_OPTIONS } from "@/data/leadSources";
 import { CRM_CURRENT_FORMAT_HEADERS, buildCrmImportTemplateRow } from "@/lib/crmImportFormat";
 import * as XLSX from "xlsx";
 
-const CRM_BASE = "/admin/crm/leads";
+export const CRM_LEADS_BASE = "/admin/crm/leads";
+export const BOOKING_LEADS_BASE = "/admin/crm/booking-leads";
+const CRM_BASE = CRM_LEADS_BASE;
 
 function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? value : [];
@@ -198,6 +200,7 @@ export async function fetchPvCrmLeads(params?: {
   pvCustomerId?: string;
   page?: number;
   limit?: number;
+  apiBase?: string;
 }): Promise<{ leads: PvCrmLead[]; total: number; page: number; limit: number; stages: CrmLeadStage[] }> {
   const page = Math.max(params?.page ?? 1, 1);
   const limit = Math.max(params?.limit ?? 20, 1);
@@ -220,7 +223,8 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.pvCustomerId) q.set("pvCustomerId", params.pvCustomerId);
 
-  const res = await adminGet<PvCrmLead[]>(`${CRM_BASE}?${q}`);
+  const base = params?.apiBase || CRM_BASE;
+  const res = await adminGet<PvCrmLead[]>(`${base}?${q}`);
   const list = asArray<PvCrmLead>(res.data);
   return {
     leads: list,
@@ -390,6 +394,7 @@ export async function fetchPvCrmLeadStats(params?: {
   followUpDue?: boolean;
   customerFollowUps?: boolean;
   favourite?: boolean;
+  apiBase?: string;
 }): Promise<CrmLeadStats> {
   const q = new URLSearchParams();
   if (params?.source && params.source !== "all") q.set("source", params.source);
@@ -405,7 +410,8 @@ export async function fetchPvCrmLeadStats(params?: {
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.favourite) q.set("favourite", "true");
   const qs = q.toString();
-  const { data } = await adminGet<CrmLeadStats>(`${CRM_BASE}/stats${qs ? `?${qs}` : ""}`);
+  const base = params?.apiBase || CRM_BASE;
+  const { data } = await adminGet<CrmLeadStats>(`${base}/stats${qs ? `?${qs}` : ""}`);
   return data;
 }
 
@@ -623,3 +629,78 @@ export async function fetchOpportunityDuplicates(): Promise<OpportunityDuplicate
 }
 
 export const PV_CRM_SOURCES = LEAD_SOURCE_OPTIONS;
+
+export type ImportBatchError = {
+  code?: string;
+  field?: string;
+  message?: string;
+};
+
+export type ImportBatchRow = {
+  _id: string;
+  batchId: string;
+  rowNumber: number;
+  rawData: Record<string, unknown>;
+  parsedData?: Record<string, unknown>;
+  status: "valid" | "error" | "corrected" | "committed" | "skipped";
+  issues?: ImportBatchError[];
+  corrections?: Record<string, string>;
+  message?: string;
+};
+
+export type ImportBatch = {
+  _id: string;
+  fileName?: string;
+  status: "review" | "committed" | "cancelled";
+  summary?: {
+    total?: number;
+    valid?: number;
+    errors?: number;
+    corrected?: number;
+    committed?: number;
+    created?: number;
+    updated?: number;
+    failed?: number;
+  };
+  createdAt?: string;
+};
+
+export async function previewCrmImportBatch(file: File): Promise<{ batch: ImportBatch; rows: ImportBatchRow[] }> {
+  const form = new FormData();
+  form.append("file", file);
+  const { data } = await adminPostFormData<{ batch: ImportBatch; rows: ImportBatchRow[] }>(
+    `${CRM_BASE}/import/preview`,
+    form,
+  );
+  return data;
+}
+
+export async function fetchImportBatch(id: string): Promise<{ batch: ImportBatch; rows: ImportBatchRow[] }> {
+  const { data } = await adminGet<{ batch: ImportBatch; rows: ImportBatchRow[] }>(`${CRM_BASE}/import/batches/${id}`);
+  return data;
+}
+
+export async function listImportBatches(): Promise<ImportBatch[]> {
+  const { data } = await adminGet<ImportBatch[]>(`${CRM_BASE}/import/batches`);
+  return asArray(data);
+}
+
+export async function updateImportBatchRow(
+  batchId: string,
+  rowNumber: number,
+  corrections: Record<string, string>,
+): Promise<ImportBatchRow> {
+  const { data } = await adminPatchJson<ImportBatchRow>(
+    `${CRM_BASE}/import/batches/${batchId}/rows/${rowNumber}`,
+    { corrections },
+  );
+  return data;
+}
+
+export async function commitImportBatch(id: string): Promise<{ batch: ImportBatch; results: CrmLeadImportResult }> {
+  const { data } = await adminPostJson<{ batch: ImportBatch; results: CrmLeadImportResult }>(
+    `${CRM_BASE}/import/batches/${id}/commit`,
+    {},
+  );
+  return data;
+}
