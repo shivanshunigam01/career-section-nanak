@@ -296,3 +296,20 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+@media print {
+  nav,
+  aside,
+  header,
+  .print\:hidden {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+  .detailed-report-dashboard {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+}

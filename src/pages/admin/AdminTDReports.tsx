@@ -15,6 +15,9 @@ import { toast } from "sonner";
 import { formatTime12h } from "@/lib/tdSlotSchedule";
 import ReportPeriodPresets, { type ReportPeriod } from "@/components/admin/ReportPeriodPresets";
 import { resolvePeriodRange } from "@/lib/reportPeriod";
+import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
+import { downloadTdAdminReportExcel } from "@/lib/exports/tdReportsExport";
+import { printReportAsPdf } from "@/lib/reportPdfExport";
 
 type AdminReport = {
   overview: {
@@ -240,12 +243,33 @@ export default function AdminTDReports() {
             <Link to="/admin/td/leads/reports" className="text-primary hover:underline">Lead CRM reports</Link>
           </p>
         </div>
-        <Button onClick={() => void fetchReport()} variant="outline" size="sm">
-          <RefreshCw className="w-4 h-4 mr-2" /> Refresh
-        </Button>
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <ReportExportButtons
+            onExcel={() => {
+              try {
+                downloadTdAdminReportExcel({
+                  from,
+                  to,
+                  overview,
+                  executivePerformance,
+                  customerTestDriveLog,
+                  allFeedback,
+                  vehicleWiseReport,
+                });
+                toast.success("Excel download started");
+              } catch (e) {
+                toast.error(formatApiErrors(e) || "Could not export Excel");
+              }
+            }}
+            onPdf={() => printReportAsPdf(`TD Reports ${from} – ${to}`)}
+          />
+          <Button onClick={() => void fetchReport()} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" /> Refresh
+          </Button>
+        </div>
       </div>
 
-      <Card className="bg-card border-border/50 p-4 space-y-4">
+      <Card className="bg-card border-border/50 p-4 space-y-4 print:hidden">
         <ReportPeriodPresets
           value={period}
           onChange={setPeriod}

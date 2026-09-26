@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  PackageCheck, RefreshCw, Loader2, Download, Users, Car, AlertTriangle,
+  PackageCheck, RefreshCw, Loader2, Users, Car, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -13,48 +13,13 @@ import ReportStageSourceFilters from "@/components/admin/ReportStageSourceFilter
 import { resolvePeriodRange } from "@/lib/reportPeriod";
 import { formatApiErrors } from "@/lib/api";
 import { fetchDeliveryReport, type DeliveryReport } from "@/lib/deliveryReportApi";
+import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
+import { downloadDeliveryReportExcel } from "@/lib/exports/deliveryReportExport";
+import { printReportAsPdf } from "@/lib/reportPdfExport";
 
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function downloadCsv(report: DeliveryReport) {
-  const header = [
-    "Lead ID",
-    "Name",
-    "Mobile",
-    "Model",
-    "Car Model",
-    "Car Variant",
-    "Colour",
-    "Source",
-    "Executive",
-    "Delivery Date",
-  ];
-  const lines = [header.join(",")];
-  for (const row of report.rows) {
-    const cells = [
-      row.leadId,
-      row.name,
-      row.mobile,
-      row.model,
-      row.carModel ?? "",
-      row.carVariant ?? "",
-      row.colour ?? "",
-      row.source,
-      row.executiveName,
-      row.deliveryDate ? row.deliveryDate.slice(0, 10) : "",
-    ].map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`);
-    lines.push(cells.join(","));
-  }
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `delivery-report-${report.from}-${report.to}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function AdminDeliveryReports() {
@@ -123,22 +88,26 @@ export default function AdminDeliveryReports() {
             Delivered leads · {fmtDate(data.from)} – {fmtDate(data.to)}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => downloadCsv(data)}
-            disabled={!data.rows.length}
-          >
-            <Download className="w-4 h-4 mr-1.5" /> Export CSV
-          </Button>
+        <div className="flex items-center gap-2 print:hidden">
+          <ReportExportButtons
+            excelDisabled={!data.rows.length}
+            onExcel={() => {
+              try {
+                downloadDeliveryReportExcel(data);
+                toast.success("Excel download started");
+              } catch (e) {
+                toast.error(formatApiErrors(e) || "Could not export Excel");
+              }
+            }}
+            onPdf={() => printReportAsPdf(`Delivery Report ${data.from} – ${data.to}`)}
+          />
           <Button variant="outline" size="icon" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         </div>
       </div>
 
-      <Card className="bg-card border-border/50 p-4 space-y-4">
+      <Card className="bg-card border-border/50 p-4 space-y-4 print:hidden">
         <ReportPeriodPresets
           value={period}
           onChange={setPeriod}
