@@ -28,6 +28,7 @@ import {
   fetchPvCrmLeads,
   fetchPvCrmLeadStats,
   CRM_LEADS_BASE,
+  type CrmModuleView,
   togglePvCrmFavourite,
   displayCrmLeadName,
   PV_CRM_SOURCES,
@@ -127,10 +128,19 @@ export type CrmLeadsPageConfig = {
   showImport?: boolean;
 };
 
+/** Lead CRM list filter — maps to backend moduleView (all / crm / td). */
+export type CrmTestDriveListFilter = "all" | "pipeline" | "td_done";
+
+function testDriveListFilterToModuleView(filter: CrmTestDriveListFilter): CrmModuleView | undefined {
+  if (filter === "pipeline") return "crm";
+  if (filter === "td_done") return "td";
+  return "all";
+}
+
 const DEFAULT_CRM_PAGE_CONFIG: CrmLeadsPageConfig = {
   title: "Lead CRM",
   description:
-    "Unified lead pipeline — assign executives, track stages, notes, and follow-ups. Shows leads where TD is not done.",
+    "All master-sheet leads (1,260+) — pipeline and test-drive completed. Use the Test drive filter to view pipeline-only or TD-done lists.",
   moduleKey: "crm_leads",
   apiBase: CRM_LEADS_BASE,
   showAddLead: true,
@@ -196,6 +206,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [customerFollowUpsOnly, setCustomerFollowUpsOnly] = useState(false);
   const [favouriteOnly, setFavouriteOnly] = useState(false);
   const [filterBuyerType, setFilterBuyerType] = useState("all");
+  const isLeadCrmModule = pageConfig.moduleKey === "crm_leads";
+  const [filterTestDrive, setFilterTestDrive] = useState<CrmTestDriveListFilter>("all");
+  const moduleViewParam = isLeadCrmModule ? testDriveListFilterToModuleView(filterTestDrive) : undefined;
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({});
   const [statsTotal, setStatsTotal] = useState(0);
   const [favouriteCount, setFavouriteCount] = useState(0);
@@ -330,6 +343,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
               ? "unassigned"
               : filterExecutive
             : undefined,
+        moduleView: moduleViewParam,
       });
       setLeads(Array.isArray(res.leads) ? res.leads : []);
       setTotal(res.total ?? 0);
@@ -340,7 +354,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase]);
+  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase, moduleViewParam]);
 
   const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
 
@@ -377,6 +391,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
           followUpDue: followUpDueOnly || undefined,
           customerFollowUps: customerFollowUpsOnly || undefined,
           favourite: favouriteOnly || undefined,
+          moduleView: moduleViewParam,
         });
         setPipelineCounts(stats.pipeline || {});
         setStatsTotal(stats.total ?? 0);
@@ -400,6 +415,8 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     customerFollowUpsOnly,
     favouriteOnly,
     canAssignLeads,
+    pageConfig.apiBase,
+    moduleViewParam,
   ]);
 
   useEffect(() => {
@@ -855,6 +872,8 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
               ? "unassigned"
               : filterExecutive
             : undefined,
+        apiBase: pageConfig.apiBase,
+        moduleView: moduleViewParam,
       });
       toast.success("Excel download started");
     } catch (e) {
@@ -1102,6 +1121,11 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         <Badge variant="secondary" className="text-xs font-semibold">
           {isExecutive && !canAssignLeads ? "Your leads" : "Total leads"}: {displayTotal}
         </Badge>
+        {isLeadCrmModule && filterTestDrive !== "all" ? (
+          <Badge variant="outline" className="text-xs">
+            {filterTestDrive === "pipeline" ? "Pipeline (TD pending)" : "TD done only"}
+          </Badge>
+        ) : null}
         {filterStatus && filterStatus !== "all" ? (
           <Badge variant="outline" className="text-xs">
             Filtered: {filterStatus} ({total})
@@ -1138,7 +1162,17 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         </button>
       </div>
 
-      <div className={`grid grid-cols-1 gap-3 ${canAssignLeads ? "sm:grid-cols-2 lg:grid-cols-5" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
+      <div
+        className={`grid grid-cols-1 gap-3 ${
+          isLeadCrmModule
+            ? canAssignLeads
+              ? "sm:grid-cols-2 lg:grid-cols-6"
+              : "sm:grid-cols-2 lg:grid-cols-5"
+            : canAssignLeads
+              ? "sm:grid-cols-2 lg:grid-cols-5"
+              : "sm:grid-cols-2 lg:grid-cols-4"
+        }`}
+      >
         <div className="relative sm:col-span-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
@@ -1151,6 +1185,24 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             className="pl-10 bg-secondary/50"
           />
         </div>
+        {isLeadCrmModule ? (
+          <Select
+            value={filterTestDrive}
+            onValueChange={(v) => {
+              setPage(1);
+              setFilterTestDrive(v as CrmTestDriveListFilter);
+            }}
+          >
+            <SelectTrigger className="bg-secondary/50">
+              <SelectValue placeholder="Test drive" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All leads (incl. TD done)</SelectItem>
+              <SelectItem value="pipeline">Pipeline only (TD not done)</SelectItem>
+              <SelectItem value="td_done">Test drive done (TD module)</SelectItem>
+            </SelectContent>
+          </Select>
+        ) : null}
         <Select
           value={filterStatus}
           onValueChange={(v) => {
