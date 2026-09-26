@@ -76,6 +76,12 @@ export type DetailedReportTeamMatrix = {
   columnTotals: Record<string, number>;
 };
 
+export type DetailedReportUnassignedSheet = {
+  totalLeads: number;
+  totalTestDrive: number;
+  totalTestDriveMtd: number;
+};
+
 export type DetailedReport = {
   generatedAt: string;
   period: {
@@ -93,6 +99,8 @@ export type DetailedReport = {
   leadTypesTotal: number;
   monthlyTestDrives: DetailedReportMonthlyTd[];
   monthlyTestDrivesTotal: number;
+  unassignedSheet?: DetailedReportUnassignedSheet;
+  attributionNote?: string;
 };
 
 export async function fetchDetailedReport(): Promise<DetailedReport> {
