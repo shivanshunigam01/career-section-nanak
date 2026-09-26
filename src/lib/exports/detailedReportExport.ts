@@ -20,6 +20,10 @@ export function downloadDetailedReportExcel(report: DetailedReport) {
     { Metric: "Calls Made Today", Value: s.callsMadeToday },
     { Metric: "Lead Sources Total", Value: report.leadSourcesTotal.count },
     { Metric: "Assigned (sheet)", Value: report.leadSourcesTotal.assignedCount },
+    {
+      Metric: "Unassigned (sheet consultant)",
+      Value: report.unassignedSheet?.totalLeads ?? "",
+    },
     { Metric: "Generated At", Value: report.generatedAt },
     { Metric: "Period", Value: report.period.label },
   ];
@@ -33,6 +37,18 @@ export function downloadDetailedReportExcel(report: DetailedReport) {
         Count: r.count,
         Assigned: r.assignedCount,
       })),
+    },
+    {
+      name: "Unassigned",
+      rows: report.unassignedSheet
+        ? [
+            {
+              Leads: report.unassignedSheet.totalLeads,
+              TD: report.unassignedSheet.totalTestDrive,
+              "TD MTD": report.unassignedSheet.totalTestDriveMtd,
+            },
+          ]
+        : [],
     },
     {
       name: "Sales Managers",

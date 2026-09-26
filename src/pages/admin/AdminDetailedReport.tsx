@@ -162,11 +162,12 @@ export default function AdminDetailedReport() {
           <p className="text-sm text-muted-foreground mt-1">
             {data.period.label} · Generated {fmtTime(data.generatedAt)}
           </p>
-          <p className="text-xs text-muted-foreground mt-1 max-w-2xl">
-            MTD = month to date. Manager totals may differ from all leads when some leads are unassigned or held by
-            executives only.{" "}
+          <p className="text-xs text-muted-foreground mt-1 max-w-3xl">
+            Staff lead counts match Excel <strong className="font-medium text-foreground">SALES CONSULTANT</strong> on
+            each lead (same as your per-user sheets). CRM assignee can differ — fix those under Unassigned until the
+            sheet consultant is updated.{" "}
             <Link to="/admin/reports/team-assigned-leads" className="text-primary hover:underline font-medium">
-              Team-wise assigned leads matrix →
+              Team-wise matrix →
             </Link>
           </p>
         </div>
@@ -274,8 +275,18 @@ export default function AdminDetailedReport() {
                     </td>
                   </tr>
                 )}
+                {data.unassignedSheet && data.unassignedSheet.totalLeads > 0 ? (
+                  <tr className="bg-muted/50 text-muted-foreground">
+                    <td className={cn(TD_L, "italic")}>Unassigned (sheet)</td>
+                    <td className={TD}>{fmt(data.unassignedSheet.totalLeads)}</td>
+                    <td className={TD}>{fmt(data.unassignedSheet.totalTestDrive)}</td>
+                    <td className={TD}>{fmt(data.unassignedSheet.totalTestDriveMtd)}</td>
+                    <td className={TD}>—</td>
+                    <td className={TD}>—</td>
+                  </tr>
+                ) : null}
                 <tr className={TOTAL_ROW}>
-                  <td className={cn(TD_L, "font-bold")}>TOTAL</td>
+                  <td className={cn(TD_L, "font-bold")}>TOTAL (managers)</td>
                   <td className={TD}>{fmt(mgrTotals.leads)}</td>
                   <td className={TD}>{fmt(mgrTotals.td)}</td>
                   <td className={TD}>{fmt(mgrTotals.tdMtd)}</td>
@@ -315,7 +326,7 @@ export default function AdminDetailedReport() {
                   </tr>
                 )}
                 <tr className={TOTAL_ROW}>
-                  <td className={cn(TD_L, "font-bold")}>TOTAL</td>
+                  <td className={cn(TD_L, "font-bold")}>TOTAL (executives)</td>
                   <td className={TD}>{fmt(execTotals.leads)}</td>
                   <td className={TD}>{fmt(execTotals.td)}</td>
                   <td className={TD}>{fmt(execTotals.tdMtd)}</td>
@@ -323,6 +334,17 @@ export default function AdminDetailedReport() {
               </tbody>
             </table>
           </ReportTableCard>
+
+          {data.unassignedSheet ? (
+            <p className="text-xs text-muted-foreground px-1">
+              Sheet attribution check: managers {fmt(mgrTotals.leads)} + executives {fmt(execTotals.leads)} + unassigned{" "}
+              {fmt(data.unassignedSheet.totalLeads)} ={" "}
+              <strong className="text-foreground tabular-nums">
+                {fmt(mgrTotals.leads + execTotals.leads + data.unassignedSheet.totalLeads)}
+              </strong>{" "}
+              (all leads {fmt(summary.totalLeads.all)})
+            </p>
+          ) : null}
 
           <ReportTableCard title="Monthly Performance (Test Drives)" className="max-w-xl">
             <table className="w-full border-collapse">
