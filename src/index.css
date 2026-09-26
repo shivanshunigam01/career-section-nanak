@@ -307,9 +307,4 @@ html {
   body {
     background: white !important;
   }
-  .detailed-report-dashboard {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
 }
