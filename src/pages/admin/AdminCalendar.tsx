@@ -58,7 +58,6 @@ export default function AdminCalendar() {
     canPerformManagerAction(adminUser, "crm_leads", "update");
 
   const calendarRef = useRef<FullCalendar | null>(null);
-  const didAutoOpenToday = useRef(false);
   const [view, setView] = useState<CalView>("dayGridMonth");
   const [title, setTitle] = useState("");
   const [selectedDate, setSelectedDate] = useState(() => todayKey);
@@ -152,23 +151,10 @@ export default function AdminCalendar() {
 
   const goToday = () => {
     api()?.today();
-    openDayDialog(todayKey);
+    setSelectedDate(todayKey);
   };
   const goPrev = () => api()?.prev();
   const goNext = () => api()?.next();
-
-  useEffect(() => {
-    if (didAutoOpenToday.current || loading) return;
-    const t = window.setTimeout(() => {
-      if (didAutoOpenToday.current) return;
-      didAutoOpenToday.current = true;
-      calendarRef.current?.getApi()?.today();
-      setSelectedDate(todayKey);
-      setDayDialogDate(todayKey);
-      setDayDialogOpen(true);
-    }, 150);
-    return () => window.clearTimeout(t);
-  }, [loading]);
 
   const onDateClick = (arg: DateClickArg) => {
     openDayDialog(localDateKey(arg.date));
@@ -234,7 +220,7 @@ export default function AdminCalendar() {
             Calendar
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Today is selected on open — click any date (or +N more) for schedules; tap a row to open that lead in CRM.
+            Click a date (or +N more) to see that day&apos;s schedules; tap a row to open the lead in CRM.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
