@@ -33,6 +33,7 @@ import {
 import { fetchPvCrmLeadStats } from "@/lib/pvLeadCrmApi";
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { cn } from "@/lib/utils";
+import { sortFollowUpsLatestFirst } from "@/lib/followUpDisplay";
 import { AddCrmLeadDialog } from "@/components/admin/AddCrmLeadDialog";
 
 function stageBadgeClass(stage: string) {
@@ -158,7 +159,9 @@ export default function AdminTDLeads() {
 
   const safeLeads = Array.isArray(leads) ? leads : [];
   const staffUsers = Array.isArray(executives) ? executives : [];
-  const detailFollowUps = Array.isArray(detail?.followUps) ? detail.followUps : [];
+  const detailFollowUps = sortFollowUpsLatestFirst(
+    Array.isArray(detail?.followUps) ? detail.followUps : [],
+  );
   const detailHistory = Array.isArray(detail?.history) ? detail.history : [];
 
   const openLead = async (lead: CrmLead) => {
