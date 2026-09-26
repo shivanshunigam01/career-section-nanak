@@ -63,6 +63,7 @@ import { CustomerHistoryDialog } from "@/components/admin/CustomerHistoryDialog"
 import { CRM_LEAD_STAGES, normalizeCrmStage, STAGE_COLORS } from "@/lib/leadStages";
 import { useCrmLeadStages } from "@/hooks/useCrmLeadStages";
 import { cn } from "@/lib/utils";
+import { sortFollowUpsLatestFirst, latestFollowUpLabel } from "@/lib/followUpDisplay";
 import { toDateKey } from "@/lib/reportPeriod";
 import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
 import { CreLeadSheetPanel } from "@/components/admin/CreLeadSheetPanel";
@@ -463,7 +464,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
 
   const safeLeads = Array.isArray(leads) ? leads : [];
   const staffUsers = Array.isArray(executives) ? executives : [];
-  const detailFollowUps = Array.isArray(detail?.followUps) ? detail.followUps : [];
+  const detailFollowUps = sortFollowUpsLatestFirst(
+    Array.isArray(detail?.followUps) ? detail.followUps : [],
+  );
   const detailHistory = Array.isArray(detail?.history) ? detail.history : [];
 
   const openLead = async (lead: PvCrmLead) => {
@@ -1759,6 +1762,15 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                 <p><span className="text-muted-foreground">Assigned to</span><br />{detail.lead.assignedTo?.name || "—"}</p>
                 <p><span className="text-muted-foreground">Enquiry date</span><br />{formatDateOnly(detail.lead.enquiryDate || detail.lead.createdAt)}</p>
                 <p><span className="text-muted-foreground">Next follow-up</span><br />{formatDateTime(detail.lead.nextFollowUp)}</p>
+                <p className="sm:col-span-2">
+                  <span className="text-muted-foreground">Latest follow-up (status)</span>
+                  <br />
+                  {detail.latestFollowUp?.displayLabel ||
+                    latestFollowUpLabel(detailFollowUps[0]) ||
+                    detail.lead.leadType ||
+                    detail.lead.creSheet?.followUp ||
+                    "—"}
+                </p>
               </div>
 
               {leadSheetDateRows(detail.lead, detail.followUpSlots).length > 0 ? (

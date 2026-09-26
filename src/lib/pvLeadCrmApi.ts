@@ -117,11 +117,20 @@ export type PvCrmLeadTestDriveState = {
   bookings?: PvCrmLeadTdBooking[];
 };
 
+export type PvCrmLeadLatestFollowUp = {
+  note?: string;
+  outcome?: string;
+  status?: string;
+  at?: string;
+  displayLabel?: string;
+};
+
 export type PvCrmLeadDetail = {
   lead: PvCrmLead;
   history: LeadStageHistoryItem[];
   followUps: LeadFollowUpItem[];
   followUpCount?: number;
+  latestFollowUp?: PvCrmLeadLatestFollowUp | null;
   followUpSlots?: CreSheetFollowUpSlot[];
   siblingLeads?: { leadId?: string; opportunityId?: string; model: string; status: string; source?: string; createdAt?: string }[];
   stages: CrmLeadStage[];

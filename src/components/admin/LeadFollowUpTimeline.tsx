@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { LeadFollowUpItem } from "@/lib/pvLeadCrmApi";
 import { cn } from "@/lib/utils";
+import { sortFollowUpsLatestFirst } from "@/lib/followUpDisplay";
 
 function formatTime(iso?: string) {
   if (!iso) return "";
@@ -32,9 +33,7 @@ type Group = { day: string; items: LeadFollowUpItem[] };
 
 function groupByDay(items: LeadFollowUpItem[]): Group[] {
   const map = new Map<string, LeadFollowUpItem[]>();
-  const sorted = [...items].sort(
-    (a, b) => new Date(entryWhen(a)).getTime() - new Date(entryWhen(b)).getTime(),
-  );
+  const sorted = sortFollowUpsLatestFirst(items);
   for (const fu of sorted) {
     const day = formatDay(entryWhen(fu)) || "—";
     if (!map.has(day)) map.set(day, []);
