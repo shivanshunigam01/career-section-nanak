@@ -21,7 +21,7 @@ export type AdminUser = {
 };
 
 /** Same modules/actions as CRE 1 / CRE 2. */
-export const CRE_MODULES: AdminModuleKey[] = ["my_dashboard", "crm_leads", "td_lead_reports"];
+export const CRE_MODULES: AdminModuleKey[] = ["my_dashboard", "crm_leads", "calendar", "td_lead_reports"];
 export const CRE_ACTIONS = [
   "my_dashboard:view",
   "crm_leads:view",
@@ -30,6 +30,8 @@ export const CRE_ACTIONS = [
   "crm_leads:delete",
   "crm_leads:assign",
   "crm_leads:export",
+  "calendar:view",
+  "calendar:update",
   "td_lead_reports:view",
   "td_lead_reports:export",
 ] as const;
@@ -98,6 +100,7 @@ function getSessionStartedAt(): number | null {
 /** Paths executives can access in the staff portal. */
 export const STAFF_PORTAL_PREFIXES = [
   "/admin/my-dashboard",
+  "/admin/calendar",
   "/admin/td/my-bookings",
   "/admin/crm/leads",
   "/admin/account",
@@ -124,9 +127,22 @@ export function getRestrictedModules(user: AdminUser | null | undefined): AdminM
   return keys.length ? keys : null;
 }
 
+function canOpenCalendarModule(user: AdminUser | null | undefined): boolean {
+  if (!user) return false;
+  if (user.userType === "admin") return true;
+  const restricted = getRestrictedModules(user);
+  if (!restricted) return true;
+  if (restricted.includes("calendar")) return true;
+  return restricted.some((k) =>
+    (["crm_leads", "my_dashboard", "td_my_bookings", "td_bookings", "dashboard"] as AdminModuleKey[]).includes(k),
+  );
+}
+
 export function isModuleAllowed(user: AdminUser | null | undefined, key: AdminModuleKey): boolean {
   const restricted = getRestrictedModules(user);
-  return !restricted || restricted.includes(key);
+  if (!restricted) return true;
+  if (key === "calendar") return canOpenCalendarModule(user);
+  return restricted.includes(key);
 }
 
 /**
@@ -136,7 +152,7 @@ export function isModuleAllowed(user: AdminUser | null | undefined, key: AdminMo
  * - Custom modules + empty actions → all actions on granted modules.
  * - Custom modules + actions → must include `module:action`.
  */
-export function canPerformAction(
+function canPerformActionStrict(
   user: AdminUser | null | undefined,
   moduleKey: AdminModuleKey,
   action: AdminModuleAction,
@@ -149,11 +165,37 @@ export function canPerformAction(
 
   const restricted = getRestrictedModules(user);
   if (!restricted) return true;
-  if (!restricted.includes(moduleKey)) return false;
+  if (!isModuleAllowed(user, moduleKey)) return false;
 
   const actions = user.allowedActions ?? [];
   if (!actions.length) return true;
   return actions.includes(actionToken(moduleKey, action));
+}
+
+export function canPerformAction(
+  user: AdminUser | null | undefined,
+  moduleKey: AdminModuleKey,
+  action: AdminModuleAction,
+): boolean {
+  if (canPerformActionStrict(user, moduleKey, action)) return true;
+  if (moduleKey === "calendar" && (action === "view" || action === "update")) {
+    const related: [AdminModuleKey, AdminModuleAction][] =
+      action === "view"
+        ? [
+            ["crm_leads", "view"],
+            ["my_dashboard", "view"],
+            ["td_my_bookings", "view"],
+            ["td_bookings", "view"],
+            ["dashboard", "view"],
+          ]
+        : [
+            ["crm_leads", "update"],
+            ["td_my_bookings", "update"],
+            ["td_bookings", "update"],
+          ];
+    return related.some(([mod, act]) => canPerformActionStrict(user, mod, act));
+  }
+  return false;
 }
 
 /**
@@ -176,6 +218,12 @@ export function isPathAllowed(user: AdminUser | null | undefined, pathname: stri
   const restricted = getRestrictedModules(user);
   if (!restricted) return true;
   if (pathname.startsWith("/admin/account")) return true;
+  if (
+    (pathname === "/admin/calendar" || pathname.startsWith("/admin/calendar/")) &&
+    canOpenCalendarModule(user)
+  ) {
+    return true;
+  }
   if (ADMIN_MODULES.some(
     (m) => restricted.includes(m.key) && (pathname === m.path || pathname.startsWith(`${m.path}/`)),
   )) {

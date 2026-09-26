@@ -64,6 +64,7 @@ const coreNavItems = [
 
 const crmNavItems = [
   { label: "My Dashboard", icon: LayoutDashboard, path: "/admin/my-dashboard", staff: true },
+  { label: "Calendar", icon: Clock, path: "/admin/calendar", staff: true },
   { label: "Lead CRM", icon: Users, path: "/admin/crm/leads", staff: true },
 ];
 
