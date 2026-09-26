@@ -183,6 +183,9 @@ export async function assignPvCrmLeadExecutive(leadId: string, executiveId: stri
 
 export type PvCrmLeadDateField = "created" | "enquiry" | "activity";
 
+/** Matches backend leadModuleFilters: all | crm (TD pending) | td (TD done) | booking */
+export type CrmModuleView = "all" | "crm" | "td" | "booking";
+
 export async function fetchPvCrmLeads(params?: {
   search?: string;
   status?: string;
@@ -201,6 +204,7 @@ export async function fetchPvCrmLeads(params?: {
   page?: number;
   limit?: number;
   apiBase?: string;
+  moduleView?: CrmModuleView;
 }): Promise<{ leads: PvCrmLead[]; total: number; page: number; limit: number; stages: CrmLeadStage[] }> {
   const page = Math.max(params?.page ?? 1, 1);
   const limit = Math.max(params?.limit ?? 20, 1);
@@ -222,6 +226,7 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.customerId) q.set("customerId", params.customerId);
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.pvCustomerId) q.set("pvCustomerId", params.pvCustomerId);
+  if (params?.moduleView && params.moduleView !== "all") q.set("moduleView", params.moduleView);
 
   const base = params?.apiBase || CRM_BASE;
   const res = await adminGet<PvCrmLead[]>(`${base}?${q}`);
@@ -395,6 +400,7 @@ export async function fetchPvCrmLeadStats(params?: {
   customerFollowUps?: boolean;
   favourite?: boolean;
   apiBase?: string;
+  moduleView?: CrmModuleView;
 }): Promise<CrmLeadStats> {
   const q = new URLSearchParams();
   if (params?.source && params.source !== "all") q.set("source", params.source);
@@ -409,6 +415,7 @@ export async function fetchPvCrmLeadStats(params?: {
   if (params?.followUpDue) q.set("followUpDue", "true");
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.favourite) q.set("favourite", "true");
+  if (params?.moduleView && params.moduleView !== "all") q.set("moduleView", params.moduleView);
   const qs = q.toString();
   const base = params?.apiBase || CRM_BASE;
   const { data } = await adminGet<CrmLeadStats>(`${base}/stats${qs ? `?${qs}` : ""}`);
@@ -514,6 +521,8 @@ export async function exportPvCrmLeadsExcel(params?: {
   to?: string;
   dateField?: PvCrmLeadDateField;
   buyerType?: string;
+  apiBase?: string;
+  moduleView?: CrmModuleView;
 }): Promise<void> {
   const q = new URLSearchParams();
   if (params?.search) q.set("search", params.search);
@@ -524,9 +533,11 @@ export async function exportPvCrmLeadsExcel(params?: {
   if (params?.to) q.set("to", params.to);
   if (params?.dateField && params.dateField !== "created") q.set("dateField", params.dateField);
   if (params?.buyerType && params.buyerType !== "all") q.set("buyerType", params.buyerType);
+  if (params?.moduleView && params.moduleView !== "all") q.set("moduleView", params.moduleView);
   const qs = q.toString();
+  const base = params?.apiBase || CRM_BASE;
   const { blob, filename } = await adminDownloadBlob(
-    `${CRM_BASE}/export${qs ? `?${qs}` : ""}`,
+    `${base}/export${qs ? `?${qs}` : ""}`,
     `crm-leads-export-${new Date().toISOString().slice(0, 10)}.xlsx`,
   );
   const url = URL.createObjectURL(blob);
