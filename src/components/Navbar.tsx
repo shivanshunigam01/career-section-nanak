@@ -125,7 +125,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-gray-200 bg-white shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50 border-b border-border/80 bg-background/90 shadow-lg shadow-black/20 backdrop-blur-md supports-[backdrop-filter]:bg-background/75">
         <div className="mx-auto w-full max-w-[100%] px-3 sm:px-4 lg:px-5">
           <div className="flex h-16 items-center gap-2 sm:h-[4.25rem] sm:gap-3 lg:h-[4.5rem]">
             <Link
@@ -141,7 +141,7 @@ const Navbar = () => {
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
-                className="h-5 w-auto max-w-[5.5rem] shrink-0 object-contain object-left sm:h-6 sm:max-w-[7rem] lg:h-7 lg:max-w-[8.5rem]"
+                className="logo-on-dark h-5 w-auto max-w-[5.5rem] shrink-0 object-contain object-left sm:h-6 sm:max-w-[7rem] lg:h-7 lg:max-w-[8.5rem]"
               />
             </Link>
 

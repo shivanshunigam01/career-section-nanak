@@ -6,7 +6,58 @@
 @tailwind utilities;
 
 @layer base {
+  /*
+   * Public site — deep navy estate with burgundy + forest accents (client brief).
+   * Palette refs: #0A1931 bg, #1A3D63 surfaces, #4A7FA7 steel, #B3CFE5 muted, #F6FAFD text.
+   */
   :root {
+    --background: 218 66% 11%;
+    --foreground: 210 45% 98%;
+
+    --card: 212 54% 17%;
+    --card-foreground: 210 45% 98%;
+
+    --popover: 212 54% 15%;
+    --popover-foreground: 210 45% 98%;
+
+    --primary: 345 42% 34%;
+    --primary-foreground: 210 45% 98%;
+
+    --secondary: 152 32% 24%;
+    --secondary-foreground: 150 30% 92%;
+
+    --muted: 212 40% 14%;
+    --muted-foreground: 207 42% 78%;
+
+    --accent: 207 38% 38%;
+    --accent-foreground: 210 45% 98%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 212 32% 24%;
+    --input: 212 32% 22%;
+    --ring: 345 42% 42%;
+
+    --radius: 0.75rem;
+
+    --surface: 218 62% 8%;
+    --glass: 210 45% 98%;
+    --glass-opacity: 0.04;
+    --glass-border-opacity: 0.12;
+
+    --sidebar-background: 218 66% 11%;
+    --sidebar-foreground: 210 45% 98%;
+    --sidebar-primary: 345 42% 34%;
+    --sidebar-primary-foreground: 210 45% 98%;
+    --sidebar-accent: 212 40% 16%;
+    --sidebar-accent-foreground: 210 45% 98%;
+    --sidebar-border: 212 32% 24%;
+    --sidebar-ring: 345 42% 42%;
+  }
+
+  /* Admin / staff CRM — unchanged light shell */
+  .theme-admin {
     --background: 0 0% 100%;
     --foreground: 220 20% 10%;
 
@@ -34,8 +85,6 @@
     --border: 220 13% 88%;
     --input: 220 13% 88%;
     --ring: 358 79% 44%;
-
-    --radius: 0.75rem;
 
     --surface: 220 14% 96%;
     --glass: 220 20% 10%;
@@ -70,7 +119,6 @@
     letter-spacing: -0.04em;
   }
 
-  /* High-quality raster display: no extra filters; best interpolation when scaling */
   img,
   picture,
   video {
@@ -81,7 +129,6 @@
     image-rendering: auto;
   }
 
-  /* Best photo down/upscaling where supported (Chrome 124+, Safari 17.4+, recent Edge) */
   @supports (image-rendering: high-quality) {
     img,
     picture {
@@ -92,16 +139,26 @@
 
 @layer components {
   .glass-card {
-    background: hsl(0 0% 100%);
+    background: hsl(var(--card) / 0.92);
     border: 1px solid hsl(var(--border));
     border-radius: 1.5rem;
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.35);
+  }
+
+  .theme-admin .glass-card {
+    background: hsl(0 0% 100%);
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   }
 
   .glass-card-sm {
-    background: hsl(0 0% 100%);
+    background: hsl(var(--card) / 0.88);
     border: 1px solid hsl(var(--border));
     border-radius: 1rem;
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
+  }
+
+  .theme-admin .glass-card-sm {
+    background: hsl(0 0% 100%);
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
   }
 
@@ -113,7 +170,7 @@
   }
 
   .text-gradient-red {
-    background: linear-gradient(135deg, hsl(358, 79%, 55%), hsl(358, 79%, 40%));
+    background: linear-gradient(135deg, hsl(345, 42%, 48%), hsl(345, 42%, 32%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -128,16 +185,38 @@
   }
 
   .shadow-luxury {
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  }
+
+  .theme-admin .shadow-luxury {
     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.14);
   }
 
   .shadow-glow-red {
-    box-shadow: 0 0 40px rgba(226, 31, 38, 0.15);
+    box-shadow: 0 0 40px rgba(120, 40, 55, 0.35);
   }
 
-  /**
-   * Hero blocks on photos (homepage + VF 6 / VF 7): light black shadow only (no stroke).
-   */
+  .logo-on-dark {
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+  }
+
+  .model-card-stripe-burgundy {
+    box-shadow: inset 4px 0 0 hsl(345 42% 38%);
+  }
+
+  .model-card-stripe-green {
+    box-shadow: inset 4px 0 0 hsl(152 32% 32%);
+  }
+
+  .model-card-stripe-steel {
+    box-shadow: inset 4px 0 0 hsl(207 38% 48%);
+  }
+
+  .model-card-stripe-fleet {
+    box-shadow: inset 4px 0 0 hsl(42 38% 52%);
+  }
+
   .text-hero-plain {
     color: #fff;
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
@@ -160,9 +239,6 @@
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
   }
 
-  /**
-   * Readable overlay type on busy photos (e.g. About hero): shadow only.
-   */
   .text-on-image {
     color: #fff;
     text-shadow:
@@ -226,10 +302,6 @@
     image-rendering: high-quality;
   }
 
-  /**
-   * Full-bleed hero slider: best-effort sharp scaling + stable compositing
-   * (opacity crossfades) without filters on the photo itself.
-   */
   .hero-slider-image {
     image-rendering: high-quality;
     backface-visibility: hidden;
@@ -237,10 +309,6 @@
     transform: translateZ(0);
   }
 
-  /*
-   * Only on very small landscape phones — never on tablet/desktop widths.
-   * Using object-contain on wider short viewports left a letterbox gap on the sides.
-   */
   @media (max-width: 768px) and (orientation: landscape) and (max-height: 480px) {
     .hero-slider-image {
       object-fit: cover;
@@ -248,9 +316,6 @@
     }
   }
 
-  /**
-   * Hero media wrapper without visual overlay, to keep imagery clear.
-   */
   .hero-media-scrim {
     isolation: isolate;
   }
@@ -260,7 +325,6 @@
   }
 }
 
-/* Smooth scrolling; extra bottom inset on small viewports so content clears fixed mobile CTA bar */
 html {
   scroll-behavior: smooth;
   scroll-padding-bottom: max(6.5rem, env(safe-area-inset-bottom, 0px));
@@ -279,7 +343,6 @@ html {
   }
 }
 
-/* Custom scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
 }
