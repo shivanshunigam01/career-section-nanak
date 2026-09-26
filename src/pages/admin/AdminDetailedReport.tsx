@@ -9,6 +9,9 @@ import {
   type DetailedReportSummaryBlock,
 } from "@/lib/detailedReportApi";
 import { cn } from "@/lib/utils";
+import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
+import { downloadDetailedReportExcel } from "@/lib/exports/detailedReportExport";
+import { printReportAsPdf } from "@/lib/reportPdfExport";
 
 /** Dense MIS table styling — fits dashboard on one screen at xl+. */
 const TH =
@@ -177,10 +180,23 @@ export default function AdminDetailedReport() {
             {data.period.label} · {fmtTime(data.generatedAt)}
           </p>
         </div>
-        <Button variant="outline" size="sm" className="h-8 shrink-0" onClick={() => void load()} disabled={loading}>
-          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-          <span className="ml-1 hidden sm:inline">Refresh</span>
-        </Button>
+        <div className="flex shrink-0 items-center gap-2 print:hidden">
+          <ReportExportButtons
+            onExcel={() => {
+              try {
+                downloadDetailedReportExcel(data);
+                toast.success("Excel download started");
+              } catch (e) {
+                toast.error(formatApiErrors(e) || "Could not export Excel");
+              }
+            }}
+            onPdf={() => printReportAsPdf(`Detailed Report ${data.period.today}`)}
+          />
+          <Button variant="outline" size="sm" className="h-8" onClick={() => void load()} disabled={loading}>
+            {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+            <span className="ml-1 hidden sm:inline">Refresh</span>
+          </Button>
+        </div>
       </div>
 
       <div className="grid shrink-0 grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-1.5">

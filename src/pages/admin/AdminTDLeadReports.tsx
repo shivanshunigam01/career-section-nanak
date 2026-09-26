@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import {
   BarChart3, RefreshCw, Loader2, Users, Target, MessageSquare,
   CalendarClock, Star, UserCheck, ArrowLeft, AlertTriangle, CheckCircle2, Activity, Timer, Pencil,
-  Download,
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -28,6 +27,8 @@ import { fetchLeadAdminReport,
   type LeadFeedbackReportRow,
 } from "@/lib/leadReportApi";
 import { CRM_IMPORT_MODEL_OPTIONS } from "@/lib/pvLeadCrmApi";
+import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
+import { printReportAsPdf } from "@/lib/reportPdfExport";
 import { canPerformAction, getAdminUser, isCreOrCrmDeskUser } from "@/lib/adminAuth";
 import { fetchBuyerTypes, type BuyerTypeDoc } from "@/lib/buyerTypesApi";
 import { STAGE_COLORS, normalizeCrmStage } from "@/lib/leadStages";
@@ -397,12 +398,6 @@ export default function AdminTDLeadReports() {
 
   return (
     <div className="space-y-6">
-      <style>{`
-        @media print {
-          nav, aside, header, .print\\:hidden { display: none !important; }
-          body { background: white !important; }
-        }
-      `}</style>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <Link to="/admin/td/leads" className="text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1 mb-2">
@@ -421,10 +416,8 @@ export default function AdminTDLeadReports() {
             Refresh
           </Button>
           {canDownloadReport ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
+            <ReportExportButtons
+              onExcel={() => {
                 try {
                   downloadLeadReportExcel(data, from, to);
                   toast.success("Excel download started");
@@ -432,13 +425,9 @@ export default function AdminTDLeadReports() {
                   toast.error(formatApiErrors(e) || "Could not download report");
                 }
               }}
-            >
-              <Download className="w-4 h-4 mr-2" /> Excel
-            </Button>
+              onPdf={() => printReportAsPdf(`Lead CRM Report ${from} – ${to}`)}
+            />
           ) : null}
-          <Button variant="outline" size="sm" onClick={() => window.print()}>
-            Print / PDF
-          </Button>
         </div>
       </div>
 

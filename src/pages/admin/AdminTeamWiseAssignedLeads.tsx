@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Grid3x3, RefreshCw, Loader2, Download, AlertTriangle } from "lucide-react";
+import { Grid3x3, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { formatApiErrors } from "@/lib/api";
@@ -8,6 +8,9 @@ import {
   type TeamWiseAssignedLeadsReport,
 } from "@/lib/teamWiseAssignedLeadsApi";
 import { cn } from "@/lib/utils";
+import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
+import { downloadTeamWiseAssignedLeadsExcel } from "@/lib/exports/teamWiseAssignedLeadsExport";
+import { printReportAsPdf } from "@/lib/reportPdfExport";
 
 const TH = "bg-slate-800 text-white text-xs font-bold uppercase tracking-wide px-2 py-2 border border-slate-700 text-center";
 const TD = "px-2 py-1.5 border border-slate-200 text-center text-sm tabular-nums";
@@ -27,38 +30,6 @@ function fmtTime(iso: string) {
     hour: "2-digit",
     minute: "2-digit",
   });
-}
-
-function downloadTeamMatrixCsv(report: TeamWiseAssignedLeadsReport) {
-  const { teamMatrix } = report;
-  const header = [
-    "Lead Source",
-    ...teamMatrix.columns.map((c) => `${c.name} (${c.abbr})`),
-    "Source Wise Total",
-  ];
-  const lines = [header.join(",")];
-  for (const row of teamMatrix.rows) {
-    const cells = [
-      row.source,
-      ...teamMatrix.columns.map((c) => String(row.cells[c.staffId] ?? 0)),
-      String(row.rowTotal),
-    ].map((v) => `"${String(v).replace(/"/g, '""')}"`);
-    lines.push(cells.join(","));
-  }
-  const totals = [
-    "TOTAL",
-    ...teamMatrix.columns.map((c) => String(teamMatrix.columnTotals[c.staffId] ?? 0)),
-    String(teamMatrix.grandTotal),
-  ].map((v) => `"${String(v).replace(/"/g, '""')}"`);
-  lines.push(totals.join(","));
-
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `team-wise-assigned-leads-${report.period.today}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function AdminTeamWiseAssignedLeads() {
@@ -122,13 +93,21 @@ export default function AdminTeamWiseAssignedLeads() {
             Assigned lead counts by source and sales team member. Scroll horizontally to view all staff columns.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <ReportExportButtons
+            onExcel={() => {
+              try {
+                downloadTeamWiseAssignedLeadsExcel(data);
+                toast.success("Excel download started");
+              } catch (e) {
+                toast.error(formatApiErrors(e) || "Could not export Excel");
+              }
+            }}
+            onPdf={() => printReportAsPdf(`Team Wise Assigned Leads ${data.period.today}`)}
+          />
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             {loading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <RefreshCw className="w-4 h-4 mr-1" />}
             Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => downloadTeamMatrixCsv(data)}>
-            <Download className="w-4 h-4 mr-1" /> Export CSV
           </Button>
         </div>
       </div>

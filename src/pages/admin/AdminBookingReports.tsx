@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  CalendarCheck, RefreshCw, Loader2, Download, Users, Car, AlertTriangle,
+  CalendarCheck, RefreshCw, Loader2, Users, Car, AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -12,51 +12,14 @@ import ReportPeriodPresets, { type ReportPeriod } from "@/components/admin/Repor
 import ReportStageSourceFilters from "@/components/admin/ReportStageSourceFilters";
 import { resolvePeriodRange } from "@/lib/reportPeriod";
 import { formatApiErrors } from "@/lib/api";
-import { fetchBookingReport, type BookingReport } from "@/lib/bookingReportApi";
+import { fetchBookingReport } from "@/lib/bookingReportApi";
+import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
+import { downloadBookingReportExcel } from "@/lib/exports/bookingReportExport";
+import { printReportAsPdf } from "@/lib/reportPdfExport";
 
 function fmtDate(iso?: string | null) {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function downloadCsv(report: BookingReport) {
-  const header = [
-    "Customer Name",
-    "Mobile",
-    "Car Model",
-    "Variant",
-    "Colour",
-    "Lead ID",
-    "Order No",
-    "Booking No",
-    "Source",
-    "Executive",
-    "Booking Date",
-  ];
-  const lines = [header.join(",")];
-  for (const row of report.rows) {
-    const cells = [
-      row.customerName || row.name,
-      row.mobile,
-      row.carModel,
-      row.carVariant,
-      row.colour,
-      row.leadId,
-      row.orderNumber ?? "",
-      row.bookingNo ?? "",
-      row.source,
-      row.executiveName,
-      row.bookingDate ? row.bookingDate.slice(0, 10) : "",
-    ].map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`);
-    lines.push(cells.join(","));
-  }
-  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `booking-report-${report.from}-${report.to}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 
 export default function AdminBookingReports() {
@@ -125,38 +88,48 @@ export default function AdminBookingReports() {
             Customer-wise bookings with car model, variant and colour
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 print:hidden">
+          <ReportExportButtons
+            onExcel={() => {
+              try {
+                downloadBookingReportExcel(data);
+                toast.success("Excel download started");
+              } catch (e) {
+                toast.error(formatApiErrors(e) || "Could not export Excel");
+              }
+            }}
+            onPdf={() => printReportAsPdf(`Booking Report ${data.from} – ${data.to}`)}
+          />
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={`w-4 h-4 mr-1 ${loading ? "animate-spin" : ""}`} /> Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => downloadCsv(data)}>
-            <Download className="w-4 h-4 mr-1" /> CSV
           </Button>
         </div>
       </div>
 
-      <ReportPeriodPresets
-        value={period}
-        from={from}
-        to={to}
-        onChange={(p) => {
-          const range = resolvePeriodRange({ period: p });
-          setPeriod(p);
-          setFrom(range.from);
-          setTo(range.to);
-        }}
-        onRangeChange={(range) => {
-          setFrom(range.from);
-          setTo(range.to);
-        }}
-      />
-      <ReportStageSourceFilters
-        status="all"
-        source={source}
-        onStatusChange={() => undefined}
-        onSourceChange={setSource}
-        showStage={false}
-      />
+      <div className="print:hidden space-y-4">
+        <ReportPeriodPresets
+          value={period}
+          from={from}
+          to={to}
+          onChange={(p) => {
+            const range = resolvePeriodRange({ period: p });
+            setPeriod(p);
+            setFrom(range.from);
+            setTo(range.to);
+          }}
+          onRangeChange={(range) => {
+            setFrom(range.from);
+            setTo(range.to);
+          }}
+        />
+        <ReportStageSourceFilters
+          status="all"
+          source={source}
+          onStatusChange={() => undefined}
+          onSourceChange={setSource}
+          showStage={false}
+        />
+      </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-card border-border/50 p-4">
