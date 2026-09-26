@@ -211,6 +211,8 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const moduleViewParam = isLeadCrmModule ? testDriveListFilterToModuleView(filterTestDrive) : undefined;
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({});
   const [statsTotal, setStatsTotal] = useState(0);
+  const [unassignedCount, setUnassignedCount] = useState(0);
+  const [assignedCount, setAssignedCount] = useState(0);
   const [favouriteCount, setFavouriteCount] = useState(0);
   const [buyerTypes, setBuyerTypes] = useState<BuyerTypeDoc[]>([]);
   const [completingId, setCompletingId] = useState<string | null>(null);
@@ -341,7 +343,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
           canAssignLeads && filterExecutive !== "all"
             ? filterExecutive === "unassigned"
               ? "unassigned"
-              : filterExecutive
+              : filterExecutive === "assigned"
+                ? "assigned"
+                : filterExecutive
             : undefined,
         moduleView: moduleViewParam,
       });
@@ -381,7 +385,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             canAssignLeads && filterExecutive !== "all"
               ? filterExecutive === "unassigned"
                 ? "unassigned"
-                : filterExecutive
+                : filterExecutive === "assigned"
+                  ? "assigned"
+                  : filterExecutive
               : undefined,
           from: filterDateFrom || undefined,
           to: filterDateTo || undefined,
@@ -395,10 +401,14 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         });
         setPipelineCounts(stats.pipeline || {});
         setStatsTotal(stats.total ?? 0);
+        setUnassignedCount(stats.unassignedCount ?? 0);
+        setAssignedCount(stats.assignedCount ?? 0);
         setFavouriteCount(stats.favouriteCount || 0);
       } catch {
         setPipelineCounts({});
         setStatsTotal(0);
+        setUnassignedCount(0);
+        setAssignedCount(0);
       }
     })();
   }, [
@@ -870,7 +880,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
           canAssignLeads && filterExecutive !== "all"
             ? filterExecutive === "unassigned"
               ? "unassigned"
-              : filterExecutive
+              : filterExecutive === "assigned"
+                ? "assigned"
+                : filterExecutive
             : undefined,
         apiBase: pageConfig.apiBase,
         moduleView: moduleViewParam,
@@ -1148,6 +1160,48 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             </Badge>
           </button>
         ))}
+        {canAssignLeads ? (
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setPage(1);
+                setFilterExecutive((prev) => (prev === "assigned" ? "all" : "assigned"));
+              }}
+            >
+              <Badge
+                variant={filterExecutive === "assigned" ? "default" : "outline"}
+                className={cn(
+                  "text-xs cursor-pointer",
+                  filterExecutive === "assigned"
+                    ? "bg-emerald-600 hover:bg-emerald-600"
+                    : "border-emerald-200 text-emerald-800 dark:text-emerald-300",
+                )}
+              >
+                Assigned: {assignedCount.toLocaleString("en-IN")}
+              </Badge>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPage(1);
+                setFilterExecutive((prev) => (prev === "unassigned" ? "all" : "unassigned"));
+              }}
+            >
+              <Badge
+                variant={filterExecutive === "unassigned" ? "default" : "outline"}
+                className={cn(
+                  "text-xs cursor-pointer",
+                  filterExecutive === "unassigned"
+                    ? "bg-amber-600 hover:bg-amber-600"
+                    : "border-amber-200 text-amber-900 dark:text-amber-300",
+                )}
+              >
+                Unassigned: {unassignedCount.toLocaleString("en-IN")}
+              </Badge>
+            </button>
+          </>
+        ) : null}
         <button
           type="button"
           onClick={() => {
@@ -1286,7 +1340,12 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">{seesAllLeads ? "All leads" : "All (my team)"}</SelectItem>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
+              <SelectItem value="assigned">
+                Assigned{assignedCount > 0 ? ` (${assignedCount.toLocaleString("en-IN")})` : ""}
+              </SelectItem>
+              <SelectItem value="unassigned">
+                Unassigned{unassignedCount > 0 ? ` (${unassignedCount.toLocaleString("en-IN")})` : ""}
+              </SelectItem>
               {staffUsers.map((e) => (
                 <SelectItem key={e._id} value={e._id}>
                   {e.name}{e.designationLabel ? ` · ${e.designationLabel}` : ""}

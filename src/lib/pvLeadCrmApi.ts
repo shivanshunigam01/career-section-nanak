@@ -377,6 +377,8 @@ export async function togglePvCrmFavourite(leadId: string): Promise<PvCrmLead> {
 
 export type CrmLeadStats = {
   total: number;
+  unassignedCount?: number;
+  assignedCount?: number;
   pipeline: Record<string, number>;
   stages: string[];
   favouriteCount: number;
