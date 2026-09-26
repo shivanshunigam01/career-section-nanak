@@ -197,6 +197,7 @@ type Props = {
   open: boolean;
   dateKey: string | null;
   events: CalendarEvent[];
+  loading?: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectEvent?: (event: CalendarEvent) => void;
 };
@@ -205,6 +206,7 @@ export function CalendarDayEventsDialog({
   open,
   dateKey,
   events,
+  loading = false,
   onOpenChange,
   onSelectEvent,
 }: Props) {
@@ -251,7 +253,9 @@ export function CalendarDayEventsDialog({
         </DialogHeader>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {dayEvents.length === 0 ? (
+          {loading ? (
+            <p className="px-4 py-10 text-center text-sm text-muted-foreground">Loading schedules…</p>
+          ) : dayEvents.length === 0 ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Nothing scheduled for this day. Use filters or add a lead / test drive from the calendar header.
             </p>

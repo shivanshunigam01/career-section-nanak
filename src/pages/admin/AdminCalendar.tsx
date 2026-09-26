@@ -63,6 +63,8 @@ export default function AdminCalendar() {
   const [selectedDate, setSelectedDate] = useState(() => todayKey);
   const [dayDialogOpen, setDayDialogOpen] = useState(false);
   const [dayDialogDate, setDayDialogDate] = useState<string | null>(null);
+  const [dayDialogEvents, setDayDialogEvents] = useState<CalendarEvent[]>([]);
+  const [dayDialogLoading, setDayDialogLoading] = useState(false);
   const [range, setRange] = useState(() => {
     const from = new Date();
     from.setDate(1);
@@ -129,11 +131,26 @@ export default function AdminCalendar() {
 
   const api = () => calendarRef.current?.getApi();
 
-  const openDayDialog = useCallback((dateKey: string) => {
-    setSelectedDate(dateKey);
-    setDayDialogDate(dateKey);
-    setDayDialogOpen(true);
-  }, []);
+  const openDayDialog = useCallback(
+    (dateKey: string) => {
+      setSelectedDate(dateKey);
+      setDayDialogDate(dateKey);
+      setDayDialogOpen(true);
+      setDayDialogLoading(true);
+      void fetchCalendarEvents({
+        from: dateKey,
+        to: dateKey,
+        types: filters.types,
+        status: filters.status,
+        assignedTo: filters.assignedTo,
+        model: filters.model,
+      })
+        .then((data) => setDayDialogEvents(data ?? []))
+        .catch(() => setDayDialogEvents([]))
+        .finally(() => setDayDialogLoading(false));
+    },
+    [filters],
+  );
 
   const onDatesSet = (arg: DatesSetArg) => {
     setTitle(arg.view.title);
@@ -162,7 +179,9 @@ export default function AdminCalendar() {
 
   const onMoreLinkClick = (arg: { date: Date; jsEvent: UIEvent }) => {
     arg.jsEvent.preventDefault();
+    arg.jsEvent.stopPropagation();
     openDayDialog(localDateKey(arg.date));
+    return "none" as const;
   };
 
   const openEventDetail = (ev: CalendarEvent) => {
@@ -361,8 +380,12 @@ export default function AdminCalendar() {
       <CalendarDayEventsDialog
         open={dayDialogOpen}
         dateKey={dayDialogDate}
-        events={events ?? []}
-        onOpenChange={setDayDialogOpen}
+        events={dayDialogOpen ? dayDialogEvents : events ?? []}
+        loading={dayDialogLoading}
+        onOpenChange={(open) => {
+          setDayDialogOpen(open);
+          if (!open) setDayDialogEvents([]);
+        }}
         onSelectEvent={openEventDetail}
       />
 
