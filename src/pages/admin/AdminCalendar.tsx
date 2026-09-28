@@ -71,12 +71,12 @@ export default function AdminCalendar() {
     const to = new Date(from.getFullYear(), from.getMonth() + 1, 0);
     return { from: localDateKey(from), to: localDateKey(to) };
   });
-  const [filters, setFilters] = useState<CalendarFilterState>({
+  const [filters, setFilters] = useState<CalendarFilterState>(() => ({
     types: [...DEFAULT_CALENDAR_TYPES],
     status: "all",
-    assignedTo: "all",
+    assignedTo: isExecutive && !canAssign ? "me" : "all",
     model: "all",
-  });
+  }));
   const [events, setEvents] = useState<CalendarEvent[] | null>([]);
   const [loading, setLoading] = useState(true);
   const [executives, setExecutives] = useState<AssignableStaffUser[]>([]);
