@@ -84,6 +84,20 @@ export default function AdminCalendar() {
   const [panelOpen, setPanelOpen] = useState(false);
   const [showAddLead, setShowAddLead] = useState(false);
   const [showBookTd, setShowBookTd] = useState(false);
+  const [isNarrowViewport, setIsNarrowViewport] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const onChange = () => setIsNarrowViewport(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  /** On phones, grow with content so the admin layout scrolls instead of trapping touch inside FC. */
+  const calendarHeight = isNarrowViewport ? "auto" : "100%";
 
   const loadExecutives = useCallback(async () => {
     try {
@@ -231,7 +245,7 @@ export default function AdminCalendar() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 pb-10 max-md:touch-pan-y">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div>
           <h1 className="font-display text-2xl font-bold text-foreground flex items-center gap-2">
@@ -267,7 +281,7 @@ export default function AdminCalendar() {
         showAssigneeFilter={!isExecutive || canAssign}
       />
 
-      <div className="rounded-xl border border-border/60 bg-card overflow-hidden shadow-sm">
+      <div className="rounded-xl border border-border/60 bg-card overflow-hidden max-md:overflow-visible shadow-sm">
         <div className="flex flex-col gap-3 border-b border-border/50 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between bg-muted/20">
           <div className="flex items-center gap-1.5">
             <Button
@@ -301,14 +315,20 @@ export default function AdminCalendar() {
           </Select>
         </div>
 
-        <div className="p-2 sm:p-3 calendar-fc h-[min(72vh,720px)] min-h-[520px]">
+        <div
+          className={cn(
+            "p-2 sm:p-3 calendar-fc max-md:touch-pan-y",
+            isNarrowViewport ? "h-auto min-h-0" : "h-[min(72vh,720px)] min-h-[520px]",
+          )}
+        >
           <FullCalendar
             ref={calendarRef}
             plugins={[dayGridPlugin, timeGridPlugin, listPlugin, interactionPlugin]}
             initialView={view}
             initialDate={new Date()}
             headerToolbar={false}
-            height="100%"
+            height={calendarHeight}
+            contentHeight={isNarrowViewport ? "auto" : undefined}
             stickyHeaderDates
             nowIndicator
             scrollTime="08:00:00"
@@ -512,6 +532,35 @@ export default function AdminCalendar() {
         }
         .calendar-fc .fc-list-event:hover td {
           background: hsl(var(--muted) / 0.4);
+        }
+        @media (max-width: 767px) {
+          .calendar-fc .fc {
+            height: auto !important;
+          }
+          .calendar-fc .fc-view-harness,
+          .calendar-fc .fc-view-harness-active {
+            height: auto !important;
+          }
+          .calendar-fc .fc-scroller,
+          .calendar-fc .fc-scroller-liquid,
+          .calendar-fc .fc-scroller-liquid-absolute {
+            overflow: visible !important;
+            position: relative !important;
+            height: auto !important;
+          }
+          .calendar-fc .fc-daygrid-day-frame {
+            overflow: visible !important;
+            max-height: none !important;
+            min-height: 4.5rem !important;
+          }
+          .calendar-fc .fc-dayGridMonth-view .fc-daygrid-day-frame {
+            max-height: none !important;
+          }
+          .calendar-fc .fc-timegrid .fc-daygrid-body,
+          .calendar-fc .fc-timegrid .fc-daygrid-day-events {
+            max-height: none !important;
+            overflow: visible !important;
+          }
         }
       `}</style>
     </div>
