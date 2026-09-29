@@ -1,4 +1,5 @@
 import { adminGet, adminPatchJson, adminPostJson, adminDeleteJson, adminDownloadBlob, adminPostFormData } from "@/lib/api";
+import { datetimeLocalToApiIso } from "@/lib/dateTime";
 import { CRM_LEAD_STAGES, type CrmLeadStage } from "@/lib/leadStages";
 import { LEAD_SOURCE_OPTIONS } from "@/data/leadSources";
 import { CRM_CURRENT_FORMAT_HEADERS, buildCrmImportTemplateRow } from "@/lib/crmImportFormat";
@@ -366,7 +367,13 @@ export async function addPvCrmFollowUp(
     interestLevel?: string;
   },
 ): Promise<LeadFollowUpItem> {
-  return adminPostJson<LeadFollowUpItem>(`${CRM_BASE}/${leadId}/follow-ups`, payload);
+  const scheduledAt = datetimeLocalToApiIso(payload.scheduledAt);
+  const nextFollowUpAt = datetimeLocalToApiIso(payload.nextFollowUpAt);
+  return adminPostJson<LeadFollowUpItem>(`${CRM_BASE}/${leadId}/follow-ups`, {
+    ...payload,
+    scheduledAt,
+    nextFollowUpAt,
+  });
 }
 
 export async function completePvCrmFollowUp(
@@ -374,9 +381,11 @@ export async function completePvCrmFollowUp(
   followUpId: string,
   payload?: { outcome?: string; note?: string; nextAction?: string; nextFollowUpAt?: string; interestLevel?: string },
 ): Promise<LeadFollowUpItem> {
+  const nextFollowUpAt = datetimeLocalToApiIso(payload?.nextFollowUpAt);
   return adminPatchJson<LeadFollowUpItem>(`${CRM_BASE}/${leadId}/follow-ups/${followUpId}`, {
     status: "completed",
     ...payload,
+    nextFollowUpAt,
   });
 }
 

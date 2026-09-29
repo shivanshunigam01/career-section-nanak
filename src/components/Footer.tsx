@@ -38,7 +38,7 @@ const Footer = () => {
               <img
                 src={patliputraOutlineLogo}
                 alt="Patliputra Group"
-                className="logo-on-dark h-4 sm:h-5 lg:h-8 w-auto max-h-full object-contain object-left"
+                className="h-4 sm:h-5 lg:h-8 w-auto max-h-full object-contain object-left"
               />
             </Link>
             <p className="text-xs text-primary font-display font-semibold uppercase tracking-[0.15em] mb-3">

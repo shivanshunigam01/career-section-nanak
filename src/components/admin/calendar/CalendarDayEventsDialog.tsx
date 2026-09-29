@@ -44,11 +44,14 @@ function formatDayTitle(dateKey: string) {
 
 function formatEventTime(ev: CalendarEvent) {
   if (ev.allDay) return "All day";
+  if (ev.start) {
+    const d = new Date(ev.start);
+    if (!Number.isNaN(d.getTime())) {
+      return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+    }
+  }
   if (ev.time) return ev.time;
-  if (!ev.start) return "—";
-  const d = new Date(ev.start);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  return "—";
 }
 
 function sortEvents(a: CalendarEvent, b: CalendarEvent) {

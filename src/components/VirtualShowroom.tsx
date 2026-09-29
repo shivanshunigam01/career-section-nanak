@@ -103,7 +103,7 @@ const VirtualShowroom = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/15 to-transparent pointer-events-none" />
                   <div className="absolute bottom-3 left-3 right-3 sm:bottom-4 sm:left-4 sm:right-4 flex items-end justify-between gap-3 pointer-events-none">
                     <p className="text-on-image-lg font-display font-bold text-base sm:text-lg drop-shadow-sm">{m.label}</p>
-                    <span className="shrink-0 rounded-full bg-secondary/90 px-3 py-1.5 text-xs font-semibold text-secondary-foreground shadow-sm group-hover:bg-secondary pointer-events-none">
+                    <span className="shrink-0 rounded-full bg-white/95 px-3 py-1.5 text-xs font-semibold text-gray-900 shadow-sm group-hover:bg-white pointer-events-none">
                       View
                     </span>
                   </div>

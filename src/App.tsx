@@ -33,7 +33,6 @@ import DistrictLandingPage from "./pages/seo/DistrictLandingPage";
 import DistrictHubPage from "./pages/seo/DistrictHubPage";
 import GlobalSeoBootstrap from "./components/GlobalSeoBootstrap";
 import ScrollToTop from "./components/ScrollToTop";
-import PublicThemeManager from "./components/PublicThemeManager";
 import { BLOG_REDIRECTS, COMPARE_SEO_PAGES, SEO_ARTICLES } from "./pages/seo/seoPageContent";
 import AdminLogin from "./pages/admin/AdminLogin";
 import StaffLogin from "./pages/staff/StaffLogin";
@@ -122,7 +121,6 @@ const App = () => {
               <MotionConfig reducedMotion={reduceMotion ? "always" : "user"}>
                 <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                   <ScrollToTop />
-                  <PublicThemeManager />
                   <GlobalSeoBootstrap />
                   <Routes>
           {/* Public routes */}
