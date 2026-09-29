@@ -442,11 +442,20 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         const d = await fetchPvCrmLeadDetail(id);
         setSelected(d.lead);
         setDetail(d);
-      } catch {
-        /* ignore */
+      } catch (e) {
+        toast.error(
+          formatApiErrors(e) ||
+            "This lead is not in your team or you do not have access. Check User Master reporting (reports to Sales Manager).",
+        );
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("lead");
+          next.delete("leadId");
+          return next;
+        });
       }
     })();
-  }, [searchParams]);
+  }, [searchParams, setSearchParams]);
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const rangeStart = total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1;
