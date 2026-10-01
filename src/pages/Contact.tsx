@@ -336,7 +336,7 @@ const ContactPage = () => {
                 </div>
               </div>
 
-              <div className="glass-card p-8 aspect-video rounded-2xl overflow-hidden">
+              <div className="glass-card relative w-full overflow-hidden rounded-2xl p-0 min-h-[280px] sm:min-h-[320px] aspect-video bg-muted/20">
                 <iframe
                   src={embedSrc}
                   width="100%"
@@ -344,10 +344,16 @@ const ContactPage = () => {
                   style={{ border: 0 }}
                   allowFullScreen
                   loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
                   title={`${dealer.dealerName} showroom location`}
-                  className="rounded-xl"
+                  className="absolute inset-0 h-full w-full rounded-2xl"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                <a href={mapLink} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Open showroom location in Google Maps
+                </a>
+              </p>
 
               <div className="flex gap-3">
                 <a

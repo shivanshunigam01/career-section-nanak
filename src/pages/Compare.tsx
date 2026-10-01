@@ -31,6 +31,7 @@ import { hasApi } from "@/lib/apiConfig";
 import { usePublicOffers } from "@/hooks/usePublicOffers";
 import { priceFromSlugMap, usePublicPricing } from "@/hooks/usePublicPricing";
 import { usePageSeo } from "@/hooks/usePageSeo";
+import { CatalogVehicleImage } from "@/components/CatalogVehicleImage";
 
 type Slot = CompareSelection | null;
 
@@ -280,10 +281,10 @@ const ComparePage = () => {
                 const fromPrice = priceFromSlugMap(pricing, key, m.variants[0]?.price ?? "");
                 return (
                   <div key={key} className="flex flex-col items-center justify-center py-4 sm:py-2 px-2 min-w-0">
-                    <img
+                    <CatalogVehicleImage
                       src={m.image}
                       alt={`VinFast ${m.name}`}
-                      className="max-h-20 sm:max-h-24 md:max-h-28 w-full max-w-[min(100%,160px)] object-contain mb-3"
+                      frameClassName="mb-3 max-w-[min(100%,200px)]"
                     />
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">{m.brand}</p>
                     <p className="font-display font-bold text-sm sm:text-base leading-tight text-center">{m.name}</p>
@@ -347,9 +348,11 @@ const ComparePage = () => {
                       </button>
                     )}
                   </div>
-                  <div className="rounded-xl bg-[#ECECEA] dark:bg-muted/50 mb-4 h-32 sm:h-36 flex items-center justify-center overflow-hidden">
-                    <img src={col.model.image} alt="" className="max-h-full w-auto object-contain" />
-                  </div>
+                  <CatalogVehicleImage
+                    src={col.model.image}
+                    alt={`VinFast ${col.model.name}`}
+                    frameClassName="mb-4 h-32 sm:h-36 max-w-none w-full rounded-xl"
+                  />
                   <p className="font-display font-bold text-lg mb-3">
                     {col.model.brand} {col.model.name}
                   </p>

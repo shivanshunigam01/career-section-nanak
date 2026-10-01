@@ -389,6 +389,24 @@ export async function completePvCrmFollowUp(
   });
 }
 
+export async function updatePvCrmFollowUp(
+  leadId: string,
+  followUpId: string,
+  payload: {
+    note?: string;
+    scheduledAt?: string;
+    outcome?: string;
+    nextAction?: string;
+    interestLevel?: string;
+  },
+): Promise<LeadFollowUpItem> {
+  const scheduledAt = datetimeLocalToApiIso(payload.scheduledAt);
+  return adminPatchJson<LeadFollowUpItem>(`${CRM_BASE}/${leadId}/follow-ups/${followUpId}`, {
+    ...payload,
+    scheduledAt,
+  });
+}
+
 export async function togglePvCrmFavourite(leadId: string): Promise<PvCrmLead> {
   return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${leadId}/favourite`, {});
 }

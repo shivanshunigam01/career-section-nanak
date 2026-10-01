@@ -12,7 +12,8 @@ import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
 import vf7CrimsonRed from "@/assets/vf7-crimson-red.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
 import vf7ZenithGrey from "@/assets/vf7-zenith-grey.png";
-import vf7UrbanMint from "@/assets/vf7-urban-mint.png";
+import vf7MoonlitOcean from "@/assets/vf7-moonlit-ocean.jpg";
+import vf7IvyGreen from "@/assets/vf7-ivy-green.jpg";
 import vf7JetBlack from "@/assets/vf7-jet-black.png";
 import vf7GalExteriorA from "@/assets/vf7-gallery/vf7-gallery-exterior-a.jpg";
 import vf7GalExteriorB from "@/assets/vf7-gallery/vf7-gallery-exterior-b.jpg";
@@ -41,7 +42,8 @@ const colors = [
   { name: "Jet Black", hex: "#18191D", image: vf7JetBlack },
   { name: "Desert Silver", hex: "#D8D9D4", image: vf7DesatSilver },
   { name: "Zenith Grey", hex: "#61656B", image: vf7ZenithGrey },
-  { name: "Urban Mint", hex: "#727A67", image: vf7UrbanMint },
+  { name: "Moonlit Ocean", hex: "#1E4A7A", image: vf7MoonlitOcean },
+  { name: "Ivy Green", hex: "#1F3D2E", image: vf7IvyGreen },
 ];
 
 type VariantId = "earth" | "wind" | "windInfinity" | "sky" | "skyInfinity";
@@ -293,7 +295,7 @@ const featureHighlights = [
   "Earth: 438 km MIDC; Wind & Wind Infinity: 532 km MIDC; Sky & Sky Infinity: 510 km MIDC",
   "Sky & Sky Infinity: dual-motor AWD, 500 Nm, 5.8 s 0–100 km/h, 110 kW DC & 28 min 10–70% charge",
   "All variants: 7 airbags, 360° camera, LED lighting signature, dual-zone climate, HUD, 537 L boot",
-  "Colours: Infinity Blanc, Crimson Red, Jet Black, Desert Silver, Zenith Grey, Urban Mint",
+  "Colours: Infinity Blanc, Crimson Red, Jet Black, Desert Silver, Zenith Grey, Moonlit Ocean, Ivy Green",
 ];
 
 const vf7GalleryFeature: { src: string; title: string; description: string; alt: string }[] = [
@@ -729,7 +731,7 @@ const ModelVF7 = () => {
       </section> */}
 
       {/* Gallery */}
-      <section className="py-12 sm:py-16 lg:py-24 bg-background border-y border-border/50">
+      <section className="py-14 sm:py-20 lg:py-24 bg-background border-y border-border/50">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="max-w-3xl mb-12 lg:mb-16">
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Gallery</p>
@@ -785,12 +787,12 @@ const ModelVF7 = () => {
       </section>
 
       {/* Color Studio */}
-      <section className="py-14 sm:py-20 section-surface">
+      <section className="py-14 sm:py-20 lg:py-24 section-surface">
         <div className="container mx-auto px-4 lg:px-8 text-center">
           <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Color Studio</p>
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-8">Choose Your Shade</h2>
           <p className="text-muted-foreground text-sm max-w-xl mx-auto mb-8">
-            Infinity Blanc, Crimson Red, Jet Black, Desert Silver, Zenith Grey, Urban Mint.
+            Infinity Blanc, Crimson Red, Jet Black, Desert Silver, Zenith Grey, Moonlit Ocean, Ivy Green.
           </p>
           <div className="max-w-5xl mx-auto mb-8 rounded-3xl overflow-hidden bg-[#F0F0F0]">
             <img
@@ -819,7 +821,7 @@ const ModelVF7 = () => {
       </section>
 
       {/* Full specifications */}
-      <section className="py-16 sm:py-24 section-dark">
+      <section className="py-14 sm:py-20 lg:py-24 section-dark">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12 max-w-3xl mx-auto">
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Specifications</p>
@@ -883,7 +885,7 @@ const ModelVF7 = () => {
       </section>
 
       {/* Highlights */}
-      <section className="py-16 sm:py-24 section-surface">
+      <section className="py-14 sm:py-20 lg:py-24 section-surface">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-10 sm:gap-12 lg:gap-16 items-center">
             <div>

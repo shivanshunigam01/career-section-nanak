@@ -10,7 +10,8 @@ export const VF6_VF7_EXTERIOR_COLOURS = [
   "Jet Black",
   "Desat Silver",
   "Zenith Grey",
-  "Urban Mint",
+  "Moonlit Ocean",
+  "Ivy Green",
 ] as const;
 
 export const MPV7_EXTERIOR_COLOURS = [

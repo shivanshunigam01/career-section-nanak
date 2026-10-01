@@ -49,6 +49,9 @@ type Props = {
   completingId: string | null;
   onStartComplete: (id: string) => void;
   completeForm: ReactNode;
+  reschedulingId: string | null;
+  onStartReschedule: (id: string) => void;
+  rescheduleForm: ReactNode;
 };
 
 export function LeadFollowUpTimeline({
@@ -58,6 +61,9 @@ export function LeadFollowUpTimeline({
   completingId,
   onStartComplete,
   completeForm,
+  reschedulingId,
+  onStartReschedule,
+  rescheduleForm,
 }: Props) {
   if (followUps.length === 0) {
     return <p className="text-xs text-muted-foreground text-center py-4">No follow-ups yet.</p>;
@@ -108,16 +114,28 @@ export function LeadFollowUpTimeline({
                     <p className="text-[10px] text-muted-foreground mt-0.5">Interest: {fu.interestLevel}</p>
                   ) : null}
                   {fu.status === "pending" && canUpdate ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="mt-2 h-7 text-[10px]"
-                      disabled={saving}
-                      onClick={() => onStartComplete(fu._id)}
-                    >
-                      <CheckCircle2 className="w-3 h-3 mr-1" /> Mark done
-                    </Button>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px]"
+                        disabled={saving}
+                        onClick={() => onStartReschedule(fu._id)}
+                      >
+                        Reschedule
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-[10px]"
+                        disabled={saving}
+                        onClick={() => onStartComplete(fu._id)}
+                      >
+                        <CheckCircle2 className="w-3 h-3 mr-1" /> Mark done
+                      </Button>
+                    </div>
                   ) : null}
+                  {reschedulingId === fu._id ? rescheduleForm : null}
                   {completingId === fu._id ? completeForm : null}
                 </div>
               );

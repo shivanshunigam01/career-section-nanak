@@ -23,6 +23,7 @@ import {
   addPvCrmFollowUp,
   assignPvCrmLeadExecutive,
   completePvCrmFollowUp,
+  updatePvCrmFollowUp,
   fetchAssignableStaffUsers,
   fetchPvCrmLeadDetail,
   fetchPvCrmLeads,
@@ -69,6 +70,7 @@ import { AddPvLeadDialog } from "@/components/admin/AddPvLeadDialog";
 import { CreLeadSheetPanel } from "@/components/admin/CreLeadSheetPanel";
 import { BookTestDriveDialog } from "@/components/admin/BookTestDriveDialog";
 import { LeadFollowUpTimeline } from "@/components/admin/LeadFollowUpTimeline";
+import { isoToDatetimeLocal } from "@/lib/dateTime";
 import { fetchBuyerTypes, type BuyerTypeDoc } from "@/lib/buyerTypesApi";
 import { ModelTrimMultiSelect, primaryTrimFromSelection } from "@/components/ModelTrimMultiSelect";
 import { leadProductLines, parseStoredModelLine } from "@/data/vinfastModels";
@@ -171,6 +173,8 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const canUpdate = canPerformAction(adminUser, moduleKey, "update");
   const canAssignLeads =
     isCre || isCrmDesk || canPerformManagerAction(adminUser, moduleKey, "assign");
+  /** Dealership unassigned pool — CRE / CRM desk / admin portal only (not SM/SE). */
+  const canViewUnassignedPool = isCre || isCrmDesk || isAdminPortal;
   const canEditDetails = canPerformManagerAction(adminUser, moduleKey, "update");
   const canDelete =
     isCre || isCrmDesk || canPerformManagerAction(adminUser, moduleKey, "delete");
@@ -203,6 +207,11 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [filterStatus, setFilterStatus] = useState("all");
   // CRE sees all leads by default (can still filter Unassigned / by executive).
   const [filterExecutive, setFilterExecutive] = useState("all");
+  useEffect(() => {
+    if (!canViewUnassignedPool && filterExecutive === "unassigned") {
+      setFilterExecutive("all");
+    }
+  }, [canViewUnassignedPool, filterExecutive]);
   const [followUpDueOnly, setFollowUpDueOnly] = useState(false);
   const [customerFollowUpsOnly, setCustomerFollowUpsOnly] = useState(false);
   const [favouriteOnly, setFavouriteOnly] = useState(false);
@@ -222,6 +231,8 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [completeNextAt, setCompleteNextAt] = useState("");
   const [completeInterest, setCompleteInterest] = useState("");
   const [completeRemarks, setCompleteRemarks] = useState("");
+  const [reschedulingId, setReschedulingId] = useState<string | null>(null);
+  const [rescheduleAt, setRescheduleAt] = useState("");
   const [followUpNextAction, setFollowUpNextAction] = useState("");
   const [followUpInterest, setFollowUpInterest] = useState("");
   const [filterDateFrom, setFilterDateFrom] = useState("");
@@ -763,6 +774,26 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     }
   };
 
+  const handleRescheduleFollowUp = async (followUpId: string) => {
+    if (!selected) return;
+    if (!rescheduleAt.trim()) {
+      toast.error("Choose a follow-up date and time");
+      return;
+    }
+    setSaving(true);
+    try {
+      await updatePvCrmFollowUp(selected._id, followUpId, { scheduledAt: rescheduleAt });
+      toast.success("Follow-up rescheduled");
+      setReschedulingId(null);
+      setRescheduleAt("");
+      await refreshDetail(selected._id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleCompleteFollowUp = async (followUpId: string) => {
     if (!selected) return;
     if (!completeOutcome.trim()) {
@@ -1193,25 +1224,27 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                 Assigned: {assignedCount.toLocaleString("en-IN")}
               </Badge>
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setPage(1);
-                setFilterExecutive((prev) => (prev === "unassigned" ? "all" : "unassigned"));
-              }}
-            >
-              <Badge
-                variant={filterExecutive === "unassigned" ? "default" : "outline"}
-                className={cn(
-                  "text-xs cursor-pointer",
-                  filterExecutive === "unassigned"
-                    ? "bg-amber-600 hover:bg-amber-600"
-                    : "border-amber-200 text-amber-900 dark:text-amber-300",
-                )}
+            {canViewUnassignedPool ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setPage(1);
+                  setFilterExecutive((prev) => (prev === "unassigned" ? "all" : "unassigned"));
+                }}
               >
-                Unassigned: {unassignedCount.toLocaleString("en-IN")}
-              </Badge>
-            </button>
+                <Badge
+                  variant={filterExecutive === "unassigned" ? "default" : "outline"}
+                  className={cn(
+                    "text-xs cursor-pointer",
+                    filterExecutive === "unassigned"
+                      ? "bg-amber-600 hover:bg-amber-600"
+                      : "border-amber-200 text-amber-900 dark:text-amber-300",
+                  )}
+                >
+                  Unassigned: {unassignedCount.toLocaleString("en-IN")}
+                </Badge>
+              </button>
+            ) : null}
           </>
         ) : null}
         <button
@@ -1355,9 +1388,11 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
               <SelectItem value="assigned">
                 Assigned{assignedCount > 0 ? ` (${assignedCount.toLocaleString("en-IN")})` : ""}
               </SelectItem>
-              <SelectItem value="unassigned">
-                Unassigned{unassignedCount > 0 ? ` (${unassignedCount.toLocaleString("en-IN")})` : ""}
-              </SelectItem>
+              {canViewUnassignedPool ? (
+                <SelectItem value="unassigned">
+                  Unassigned{unassignedCount > 0 ? ` (${unassignedCount.toLocaleString("en-IN")})` : ""}
+                </SelectItem>
+              ) : null}
               {staffUsers.map((e) => (
                 <SelectItem key={e._id} value={e._id}>
                   {e.name}{e.designationLabel ? ` · ${e.designationLabel}` : ""}
@@ -2231,6 +2266,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                     saving={saving}
                     completingId={completingId}
                     onStartComplete={(id) => {
+                      setReschedulingId(null);
                       setCompletingId(id);
                       setCompleteOutcome("");
                       setCompleteRemarks("");
@@ -2238,6 +2274,31 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                       setCompleteNextAt("");
                       setCompleteInterest("");
                     }}
+                    reschedulingId={reschedulingId}
+                    onStartReschedule={(id) => {
+                      setCompletingId(null);
+                      setReschedulingId(id);
+                      const fu = detailFollowUps.find((f) => f._id === id);
+                      setRescheduleAt(isoToDatetimeLocal(fu?.scheduledAt || fu?.createdAt));
+                    }}
+                    rescheduleForm={
+                      <div className="mt-2 rounded-md border border-border/60 p-2 space-y-2 bg-background">
+                        <Input
+                          type="datetime-local"
+                          value={rescheduleAt}
+                          onChange={(e) => setRescheduleAt(e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                        <Button
+                          size="sm"
+                          className="h-7 text-[10px] w-full"
+                          disabled={saving}
+                          onClick={() => reschedulingId && void handleRescheduleFollowUp(reschedulingId)}
+                        >
+                          Save time
+                        </Button>
+                      </div>
+                    }
                     completeForm={
                       <div className="mt-2 rounded-md border border-border/60 p-2 space-y-2 bg-background">
                         <Input

@@ -37,7 +37,8 @@ const initialProducts: Product[] = [
       { name: "Jet Black", hex: "#18191D", image: "" },
       { name: "Desat Silver", hex: "#D8D9D4", image: "" },
       { name: "Zenith Grey", hex: "#61656B", image: "" },
-      { name: "Urban Mint", hex: "#727A67", image: "" },
+      { name: "Moonlit Ocean", hex: "#1E4A7A", image: "" },
+      { name: "Ivy Green", hex: "#1F3D2E", image: "" },
     ],
   },
   {
@@ -53,7 +54,8 @@ const initialProducts: Product[] = [
       { name: "Jet Black", hex: "#18191D", image: "" },
       { name: "Desat Silver", hex: "#D8D9D4", image: "" },
       { name: "Zenith Grey", hex: "#61656B", image: "" },
-      { name: "Urban Mint", hex: "#727A67", image: "" },
+      { name: "Moonlit Ocean", hex: "#1E4A7A", image: "" },
+      { name: "Ivy Green", hex: "#1F3D2E", image: "" },
     ],
   },
   {

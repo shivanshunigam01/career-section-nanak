@@ -87,7 +87,15 @@ const emptyVehicle = {
   availableAgainAt: "",
 };
 
-const WEBSITE_COLORS = ["Infinity Blanc", "Crimson Red", "Jet Black", "Desert Silver", "Zenith Grey", "Urban Mint"];
+const WEBSITE_COLORS = [
+  "Infinity Blanc",
+  "Crimson Red",
+  "Jet Black",
+  "Desert Silver",
+  "Zenith Grey",
+  "Moonlit Ocean",
+  "Ivy Green",
+];
 
 export default function AdminTDDemoVehicles() {
   const { models: catalogModels, trimsFor } = useVehicleCatalog();
