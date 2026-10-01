@@ -12,13 +12,27 @@ export const SHOWROOM_GOOGLE_MAPS_URL =
 /** Reliable iframe embed (no API key) — uses lat/lng so the map matches the pin above. */
 const SHOWROOM_EMBED_SRC = `https://www.google.com/maps?q=${SHOWROOM_LAT}%2C${SHOWROOM_LNG}&z=16&hl=en&output=embed`;
 
-/** Extract Google Maps embed `src` from raw iframe HTML, or accept a direct https URL. */
+/** Only iframe-safe Google Maps URLs (search/share links refuse to connect in iframes). */
+function isEmbeddableGoogleMapsUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    const hostPath = `${u.hostname}${u.pathname}`;
+    if (!/google\./i.test(u.hostname) || !hostPath.includes("/maps")) return false;
+    if (hostPath.includes("/maps/embed")) return true;
+    if (u.searchParams.get("output") === "embed") return true;
+    return false;
+  } catch {
+    return false;
+  }
+}
+
+/** Extract Google Maps embed `src` from raw iframe HTML, or accept a direct embed https URL. */
 export function mapsEmbedSrc(address: string, mapEmbedUrl?: string): string {
   const raw = (mapEmbedUrl ?? "").trim();
   if (raw) {
     const srcMatch = raw.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
-    if (srcMatch?.[1]?.trim()) return srcMatch[1].trim();
-    if (/^https?:\/\//i.test(raw)) return raw;
+    const candidate = srcMatch?.[1]?.trim() || (/^https?:\/\//i.test(raw) ? raw : "");
+    if (candidate && isEmbeddableGoogleMapsUrl(candidate)) return candidate;
   }
   return SHOWROOM_EMBED_SRC;
 }

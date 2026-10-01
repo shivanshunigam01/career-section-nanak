@@ -1,7 +1,7 @@
 import vf6DesatSilver from "@/assets/vf6-desat-silver.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
-import mpv7Card from "@/assets/mpv7-gallery/mpv7-new.png";
-import limoGreenCard from "@/assets/limo-green/modal-car.webp";
+import mpv7Card from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
+import limoGreenCard from "@/assets/limo-green/color-silver.webp";
 import { VF6_TRIM_0_100_KMH, VF7_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
 
 export type CompareModelKey = "vf6" | "vf7" | "mpv7" | "limo-green";

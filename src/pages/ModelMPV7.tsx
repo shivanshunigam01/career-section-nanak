@@ -262,7 +262,7 @@ const ModelMPV7 = () => {
       </section>
 
       {/* Your drive, your way. — highlights from official page */}
-      <section className="py-12 sm:py-16 lg:py-20 border-b border-border/60 bg-muted/25">
+      <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-muted/25">
         <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-1 text-foreground">Your drive, your way.</h2>
           <h3 className="font-display font-bold text-xl md:text-2xl text-foreground/95 mt-3 mb-4">VF MPV 7</h3>
@@ -292,7 +292,7 @@ const ModelMPV7 = () => {
       </section>
 
       {/* Interior — illustration only (official site uses cabin imagery; no extra spec copy here) */}
-      <section className="py-12 sm:py-16 bg-background border-b border-border/50">
+      <section className="py-14 sm:py-20 lg:py-24 bg-background border-b border-border/50">
         <div className="w-full">
           <div className="relative w-full overflow-hidden">
             <img
@@ -311,7 +311,7 @@ const ModelMPV7 = () => {
       </section>
 
       {/* Vehicle Specification — same rows as vinfastauto.in/en/mpv7 */}
-      <section className="py-16 sm:py-24 section-dark border-t border-border/60">
+      <section className="py-14 sm:py-20 lg:py-24 section-dark border-t border-border/60">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12 max-w-3xl mx-auto">
             <h2 className="font-display font-bold text-3xl md:text-5xl mb-3 text-foreground">Vehicle Specification</h2>

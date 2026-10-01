@@ -273,7 +273,7 @@ const ModelLimoGreen = () => {
       </section>
 
       {/* Built for your business — highlights */}
-      <section className="py-12 sm:py-16 lg:py-20 border-b border-border/60 bg-muted/25">
+      <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-muted/25">
         <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-1 text-foreground">Built for your business.</h2>
           <h3 className="font-display font-bold text-xl md:text-2xl text-foreground/95 mt-3 mb-4">Limo Green</h3>
@@ -314,7 +314,7 @@ const ModelLimoGreen = () => {
       </section>
 
       {/* Design */}
-      <section className="py-12 sm:py-16 lg:py-20 border-b border-border/60 bg-background">
+      <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-background">
         <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
           <h2 className="font-display font-bold text-3xl md:text-4xl mb-4 text-foreground">Design that works as hard as you do.</h2>
           <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-3xl">
@@ -336,7 +336,7 @@ const ModelLimoGreen = () => {
       </section>
 
       {/* Interior */}
-      <section className="py-12 sm:py-16 bg-background border-b border-border/50">
+      <section className="py-14 sm:py-20 lg:py-24 bg-background border-b border-border/50">
         <div className="w-full">
           <div className="container mx-auto px-4 lg:px-8 max-w-5xl mb-8">
             <h2 className="font-display font-bold text-3xl md:text-4xl mb-4 text-foreground">Room for everyone.</h2>
@@ -362,7 +362,7 @@ const ModelLimoGreen = () => {
       </section>
 
       {/* Colour */}
-      <section className="py-12 sm:py-16 lg:py-20 border-b border-border/60 bg-muted/25">
+      <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-muted/25">
         <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
           <div className="text-center mb-8">
             <h2 className="font-display font-bold text-3xl md:text-4xl mb-3 text-foreground">Choose your colour</h2>
@@ -383,7 +383,7 @@ const ModelLimoGreen = () => {
       </section>
 
       {/* Vehicle Specification */}
-      <section className="py-16 sm:py-24 section-dark border-t border-border/60">
+      <section className="py-14 sm:py-20 lg:py-24 section-dark border-t border-border/60">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12 max-w-3xl mx-auto">
             <h2 className="font-display font-bold text-3xl md:text-5xl mb-3 text-foreground">Vehicle Specification</h2>

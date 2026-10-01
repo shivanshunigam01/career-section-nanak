@@ -186,7 +186,7 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
   };
 
   return (
-    <section className="py-12 sm:py-16 lg:py-24 section-dark relative overflow-hidden">
+    <section className="py-14 sm:py-20 lg:py-24 section-dark relative overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-transparent to-primary/5" />
       <div className="container mx-auto px-4 lg:px-8 relative">
         <motion.div
@@ -210,7 +210,7 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
           onSubmit={handleSubmit}
           className="max-w-4xl mx-auto glass-card p-4 sm:p-6 lg:p-8"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <input
               type="text"
               placeholder="Your Name"
@@ -242,6 +242,8 @@ const LeadCaptureStrip = ({ includeMpv7InModelSelect = true }: LeadCaptureStripP
               onDistrictChange={(city) => setFormData({ ...formData, city, otherCity: "" })}
               onOtherChange={(otherCity) => setFormData({ ...formData, otherCity })}
             />
+          </div>
+          <div className="mt-4">
             <ModelMultiSelect
               value={formData.models}
               onChange={(models) => setFormData({ ...formData, models })}

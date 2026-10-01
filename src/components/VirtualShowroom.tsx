@@ -39,7 +39,7 @@ const interiorModels = [
 
 const VirtualShowroom = () => {
   return (
-    <section className="py-12 sm:py-16 lg:py-24 section-surface overflow-hidden">
+    <section className="py-14 sm:py-20 lg:py-24 section-surface overflow-hidden">
       <div className="container mx-auto px-4 lg:px-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
