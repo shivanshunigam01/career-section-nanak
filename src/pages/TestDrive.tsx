@@ -102,7 +102,6 @@ const TestDrivePage = () => {
     title: "Book a VinFast Test Drive in Bihar | Patliputra VinFast Patna",
     description:
       "Schedule a VinFast VF6, VF7, MPV7 or Limo Green test drive with Patliputra VinFast — Bihar’s authorised EV dealer.",
-    keywords: ["VinFast test drive Patna", "EV test drive Bihar", "VF7 test drive"],
     canonical: "/test-drive",
   });
   const vehicleCatalog = useVehicleCatalog();

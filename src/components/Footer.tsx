@@ -5,7 +5,7 @@ import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { telHref, waMeUrl } from "@/lib/contactLinks";
 import { mapsDirectionsHref } from "@/lib/dealerMap";
-//test
+
 const Footer = () => {
   const { dealer, siteConfig } = usePublicSite();
   const address = dealer.address;
@@ -110,10 +110,11 @@ const Footer = () => {
             <ul className="space-y-3">
               {[
                 { label: "About Us", href: "/about" },
-                { label: "Offers", href: "/contact" },
-                { label: "Exchange Car", href: "/contact" },
+                { label: "EV Buying Guide", href: "/ev-buying-guide" },
+                { label: "Bihar District Hubs", href: "/bihar" },
+                { label: "Knowledge Hub", href: "/blogs" },
                 { label: "Finance Options", href: "/emi-calculator" },
-                { label: "FAQ", href: "/about" },
+                { label: "FAQ", href: "/faq" },
                 { label: "Contact Us", href: "/contact" },
               ].map((link) => (
                 <li key={link.label}>

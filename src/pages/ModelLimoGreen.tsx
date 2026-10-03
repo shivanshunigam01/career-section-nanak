@@ -19,6 +19,7 @@ import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePublicPricing } from "@/hooks/usePublicPricing";
 import { usePageSeo } from "@/hooks/usePageSeo";
+import { LIMO_GREEN_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import limoGreenHeroDesktop from "@/assets/limo-green/hero-desktop.jpg";
 import limoGreenHeroPortrait from "@/assets/limo-green/modal-car.webp";
@@ -76,13 +77,7 @@ const ModelLimoGreen = () => {
   const displayPrice = bySlug("limo-green")?.priceFrom || siteConfig.limoGreenPrice || "₹22.99 Lakh*";
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();
-  usePageSeo({
-    title: "VinFast Limo Green | Premium 7-Seater EV MPV | Patliputra VinFast",
-    description:
-      "Explore VinFast Limo Green electric MPV for executive and family travel. Book at Patliputra VinFast, Patna, Bihar.",
-    keywords: ["VinFast Limo Green", "Limo Green Bihar", "electric MPV fleet"],
-    canonical: "/models/limo-green",
-  });
+  usePageSeo(LIMO_GREEN_PAGE_SEO);
   const [prebookUnlocked, setPrebookUnlocked] = useState(
     () => typeof sessionStorage !== "undefined" && sessionStorage.getItem(LIMO_GREEN_PREBOOK_SESSION_KEY) === "1",
   );

@@ -4,11 +4,27 @@
   RewriteEngine On
   RewriteBase /
 
-  # Dynamic SEO files from API (Google follows the redirect for sitemap)
+  # Dynamic SEO from API — one robots/sitemap for all crawlers (User-agent: *), no stale static copies
+  RewriteRule ^robots\.txt$ https://apivnfast.patliputragroup.com/api/v1/robots.txt [R=302,L]
   RewriteRule ^sitemap\.xml$ https://apivnfast.patliputragroup.com/api/v1/sitemap.xml [R=302,L]
+  RewriteRule ^llms\.txt$ https://apivnfast.patliputragroup.com/api/v1/llms.txt [R=302,L]
   RewriteRule ^api/v1/sitemap\.xml$ https://apivnfast.patliputragroup.com/api/v1/sitemap.xml [R=302,L]
 
-  # Don't rewrite real files or directories (robots.txt + llms.txt are static in /public)
+  # Legacy blog URLs → current knowledge hub (301 for crawlers)
+  RedirectMatch 301 ^/blogs/why-electric-vehicles-are-the-future-of-bihar/?$ /blogs/electric-suv-buying-checklist-bihar
+  RedirectMatch 301 ^/blogs/how-to-choose-the-right-electric-suv/?$ /blogs/electric-suv-buying-checklist-bihar
+  RedirectMatch 301 ^/blogs/charging-infrastructure-in-bihar/?$ /blogs/home-ev-charging-bihar
+  RedirectMatch 301 ^/blogs/cost-of-owning-an-ev/?$ /blogs/ev-running-cost-bihar
+  RedirectMatch 301 ^/blogs/top-10-reasons-to-buy-the-vf6/?$ /blogs/vf6-ownership-guide-bihar
+  RedirectMatch 301 ^/blogs/is-the-vf6-worth-buying/?$ /blogs/vf6-vs-vf7-bihar
+  RedirectMatch 301 ^/blogs/vf6-running-cost-analysis/?$ /blogs/ev-running-cost-bihar
+  RedirectMatch 301 ^/blogs/why-the-vf7-stands-out/?$ /blogs/vf7-highway-guide-bihar
+  RedirectMatch 301 ^/blogs/adas-explained/?$ /blogs/vf7-highway-guide-bihar
+  RedirectMatch 301 ^/blogs/best-electric-mpv-in-india/?$ /blogs/7-seater-ev-bihar
+  RedirectMatch 301 ^/blogs/family-road-trips-with-mpv7/?$ /blogs/7-seater-ev-bihar
+  RedirectMatch 301 ^/blogs/corporate-fleet-benefits-electric-mpv/?$ /blogs/7-seater-ev-bihar
+
+  # Don't rewrite real files or directories
   RewriteCond %{REQUEST_FILENAME} !-f
   RewriteCond %{REQUEST_FILENAME} !-d
 

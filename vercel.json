@@ -1,4 +1,18 @@
 {
+  "redirects": [
+    { "source": "/blogs/why-electric-vehicles-are-the-future-of-bihar", "destination": "/blogs/electric-suv-buying-checklist-bihar", "permanent": true },
+    { "source": "/blogs/how-to-choose-the-right-electric-suv", "destination": "/blogs/electric-suv-buying-checklist-bihar", "permanent": true },
+    { "source": "/blogs/charging-infrastructure-in-bihar", "destination": "/blogs/home-ev-charging-bihar", "permanent": true },
+    { "source": "/blogs/cost-of-owning-an-ev", "destination": "/blogs/ev-running-cost-bihar", "permanent": true },
+    { "source": "/blogs/top-10-reasons-to-buy-the-vf6", "destination": "/blogs/vf6-ownership-guide-bihar", "permanent": true },
+    { "source": "/blogs/is-the-vf6-worth-buying", "destination": "/blogs/vf6-vs-vf7-bihar", "permanent": true },
+    { "source": "/blogs/vf6-running-cost-analysis", "destination": "/blogs/ev-running-cost-bihar", "permanent": true },
+    { "source": "/blogs/why-the-vf7-stands-out", "destination": "/blogs/vf7-highway-guide-bihar", "permanent": true },
+    { "source": "/blogs/adas-explained", "destination": "/blogs/vf7-highway-guide-bihar", "permanent": true },
+    { "source": "/blogs/best-electric-mpv-in-india", "destination": "/blogs/7-seater-ev-bihar", "permanent": true },
+    { "source": "/blogs/family-road-trips-with-mpv7", "destination": "/blogs/7-seater-ev-bihar", "permanent": true },
+    { "source": "/blogs/corporate-fleet-benefits-electric-mpv", "destination": "/blogs/7-seater-ev-bihar", "permanent": true }
+  ],
   "rewrites": [
     {
       "source": "/sitemap.xml",

@@ -6,13 +6,13 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { Button } from "@/components/ui/button";
 import { usePageSeo } from "@/hooks/usePageSeo";
+import { CALCULATOR_METHODOLOGY_NOTE } from "@/lib/seoBlueprint";
 
 export default function RunningCostCalculator() {
   usePageSeo({
     title: "EV Running Cost Calculator | Patliputra VinFast Bihar",
     description:
       "Compare estimated monthly running cost of a VinFast EV versus a petrol SUV for Bihar driving patterns.",
-    keywords: ["EV running cost calculator", "electric vs petrol cost Bihar"],
     canonical: "/running-cost-calculator",
   });
 
@@ -69,6 +69,7 @@ export default function RunningCostCalculator() {
           <Button asChild><Link to="/test-drive">Book test drive</Link></Button>
           <Button asChild variant="outline"><Link to="/charging-calculator">Charging calculator</Link></Button>
         </div>
+        <p className="mt-10 text-xs text-muted-foreground leading-relaxed max-w-2xl">{CALCULATOR_METHODOLOGY_NOTE}</p>
       </div>
       <Footer />
       <StickyMobileCTA />

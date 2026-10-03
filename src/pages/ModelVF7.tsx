@@ -6,6 +6,7 @@ import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { usePageSeo } from "@/hooks/usePageSeo";
+import { VF7_PAGE_SEO } from "@/lib/seoBlueprint";
 import vf7FrontHero from "@/assets/VF7 Front Page.png";
 import vf7HeroPagePortrait from "@/assets/vf7-hero-page-portrait.png";
 import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
@@ -449,13 +450,7 @@ const ModelVF7 = () => {
   const [selectedColor, setSelectedColor] = useState(0);
   const [variant, setVariant] = useState<VariantId>("earth");
 
-  usePageSeo({
-    title: "VinFast VF7 Price, Specs & Test Drive in Bihar | Patliputra VinFast",
-    description:
-      "Explore VinFast VF7 premium electric SUV — ADAS, range, variants and booking at Patliputra VinFast, Patna.",
-    keywords: ["VinFast VF7", "VF7 price Bihar", "VF7 ADAS", "electric SUV Patna"],
-    canonical: "/models/vf7",
-  });
+  usePageSeo(VF7_PAGE_SEO);
 
   useEffect(() => {
     // Preload all colour images so palette switches feel instant.

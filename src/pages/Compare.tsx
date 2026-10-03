@@ -69,7 +69,6 @@ const ComparePage = () => {
     title: "Compare VinFast Models | VF6 VF7 MPV7 | Patliputra VinFast",
     description:
       "Compare VinFast electric models side by side — specs, variants and features. Patliputra VinFast, Bihar.",
-    keywords: ["compare VinFast", "VF6 vs VF7", "electric SUV compare"],
     canonical: "/compare",
   });
   const { loaded: offersLoaded, hasOffers } = usePublicOffers();

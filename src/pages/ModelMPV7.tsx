@@ -20,6 +20,7 @@ import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePageSeo } from "@/hooks/usePageSeo";
+import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import mpv7HeroPagePortrait from "@/assets/mpv7-hero-page-portrait.png";
@@ -74,13 +75,7 @@ const ModelMPV7 = () => {
   const { siteConfig } = usePublicSite();
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();
-  usePageSeo({
-    title: "VinFast VF MPV7 | 7-Seater Electric MPV in Bihar | Patliputra VinFast",
-    description:
-      "Discover VinFast VF MPV7 — spacious 7-seater electric MPV for families and fleets. Book with Patliputra VinFast, Patna.",
-    keywords: ["VinFast MPV7", "7 seater electric car Bihar", "VF MPV7 Patna"],
-    canonical: "/models/mpv7",
-  });
+  usePageSeo(MPV7_PAGE_SEO);
   const [prebookUnlocked, setPrebookUnlocked] = useState(
     () => typeof sessionStorage !== "undefined" && sessionStorage.getItem(MPV7_PREBOOK_SESSION_KEY) === "1",
   );
