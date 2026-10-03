@@ -6,13 +6,13 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { Button } from "@/components/ui/button";
 import { usePageSeo } from "@/hooks/usePageSeo";
+import { CALCULATOR_METHODOLOGY_NOTE } from "@/lib/seoBlueprint";
 
 export default function ChargingCalculator() {
   usePageSeo({
     title: "EV Charging Cost Calculator | Patliputra VinFast Bihar",
     description:
       "Estimate home charging cost for VinFast EVs in Bihar. Plan electricity spend for VF6, VF7, MPV7 and Limo Green.",
-    keywords: ["EV charging calculator", "charging cost Bihar", "VinFast charger cost"],
     canonical: "/charging-calculator",
   });
 
@@ -57,6 +57,7 @@ export default function ChargingCalculator() {
           <Button asChild><Link to="/test-drive">Book test drive</Link></Button>
           <Button asChild variant="outline"><Link to="/emi-calculator">EMI calculator</Link></Button>
         </div>
+        <p className="mt-10 text-xs text-muted-foreground leading-relaxed max-w-2xl">{CALCULATOR_METHODOLOGY_NOTE}</p>
       </div>
       <Footer />
       <StickyMobileCTA />

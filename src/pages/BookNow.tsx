@@ -47,7 +47,6 @@ const BookNowPage = () => {
     title: "Book VinFast Online | Token Booking | Patliputra VinFast",
     description:
       "Book your VinFast EV online with Patliputra VinFast. Start your VF6, VF7, MPV7 or Limo Green booking from Patna, Bihar.",
-    keywords: ["book VinFast online", "VinFast booking Bihar", "VF7 book now"],
     canonical: "/book-now",
   });
   const paymentCardRef = useRef<HTMLDivElement | null>(null);
