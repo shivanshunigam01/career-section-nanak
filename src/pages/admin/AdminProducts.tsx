@@ -60,7 +60,7 @@ const initialProducts: Product[] = [
   },
   {
     id: "P3", slug: "limo-green", name: "VinFast Limo Green", tagline: "Built for your business.",
-    priceFrom: "₹22,99,000*", range: "450 km", battery: "60.13 kWh", power: "201 HP",
+    priceFrom: "₹18,59,000*", range: "450 km", battery: "60.13 kWh", power: "201 HP",
     torque: "280 Nm", topSpeed: "—", driveType: "FWD", fastCharge: "10-70% in 30 min",
     homeCharge: "—", safety: "ABS, EBD, ESC", airbags: "—",
     adas: "—", touchscreen: '10.1"', variants: "Single lineup",

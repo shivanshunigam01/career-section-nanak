@@ -14,6 +14,7 @@ export type PublicVehiclePricing = {
   slug: string;
   name: string;
   priceFrom: string;
+  listPrice?: string;
   range?: string;
   variants: PublicPricingVariant[];
 };

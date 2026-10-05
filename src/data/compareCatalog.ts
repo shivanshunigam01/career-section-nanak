@@ -360,9 +360,9 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
       {
         id: "base",
         label: "Base",
-        price: "₹24.49L*",
+        price: "₹20,39,000*",
         specs: {
-          ex_showroom: "₹24.49L*",
+          ex_showroom: "₹20,39,000*",
           power: "150 kW",
           torque: "—",
           range_midc: "517 km (ARAI)",
@@ -407,9 +407,9 @@ export const compareModels: Record<CompareModelKey, CatalogModel> = {
       {
         id: "base",
         label: "Standard",
-        price: "₹22.99 Lakh*",
+        price: "₹18,59,000*",
         specs: {
-          ex_showroom: "₹22.99 Lakh*",
+          ex_showroom: "₹18,59,000*",
           power: "150 kW (201 hp)",
           torque: "280 Nm",
           range_midc: "Up to 450 km (NEDC)",

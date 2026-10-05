@@ -19,6 +19,9 @@ import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
+import { usePublicPricing } from "@/hooks/usePublicPricing";
+import { FestivePriceDisplay } from "@/components/FestivePriceDisplay";
+import { resolveFestivePricing } from "@/lib/festivePricing";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
@@ -73,6 +76,8 @@ const inputClass =
 
 const ModelMPV7 = () => {
   const { siteConfig } = usePublicSite();
+  const { bySlug } = usePublicPricing();
+  const festive = resolveFestivePricing("mpv7", { pricingRow: bySlug("mpv7"), siteConfig });
   const { getToken } = usePublicFormRecaptcha();
   const location = useLocation();
   usePageSeo(MPV7_PAGE_SEO);
@@ -249,6 +254,14 @@ const ModelMPV7 = () => {
         <div className="container mx-auto px-4 lg:px-8 py-8 sm:py-10 lg:py-12">
           <div className="mx-auto flex max-w-lg flex-col items-center gap-5 text-center">
             <div className="h-1 w-12 rounded-full bg-primary/80" aria-hidden />
+            {festive ? (
+              <FestivePriceDisplay
+                listPrice={festive.list}
+                offerPrice={festive.offer}
+                size="lg"
+                align="center"
+              />
+            ) : null}
             <Button variant="hero" size="lg" className="h-12 min-w-[min(100%,17rem)] rounded-full px-8 text-sm font-semibold shadow-md shadow-primary/25 sm:h-14 sm:px-10" asChild>
               <Link to="#mpv7-prebook">Register for Book Now</Link>
             </Button>

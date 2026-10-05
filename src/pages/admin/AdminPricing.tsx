@@ -22,6 +22,7 @@ export type VehiclePricingRow = {
   slug: string;
   name: string;
   priceFrom: string;
+  listPrice?: string;
   range: string;
   active: boolean;
   variants: PricingVariant[];
@@ -99,6 +100,7 @@ const AdminPricing = () => {
       const updated = await adminPutJson<VehiclePricingRow>(`/admin/pricing/${row.slug}`, {
         name: row.name,
         priceFrom: row.priceFrom,
+        listPrice: row.listPrice,
         range: row.range,
         active: row.active,
         variants: row.variants,
@@ -134,8 +136,21 @@ const AdminPricing = () => {
                 <p className="font-medium">{row.name}</p>
                 <p className="text-xs text-muted-foreground">{row.slug}</p>
               </div>
+              {(row.slug === "mpv7" || row.slug === "limo-green") && (
+                <div className="flex-1 min-w-[160px]">
+                  <Label className="text-xs">List price (struck through)</Label>
+                  <Input
+                    value={row.listPrice || ""}
+                    disabled={!canUpdate}
+                    onChange={(e) => updateRow(row.slug, { listPrice: e.target.value })}
+                    placeholder="₹24,49,000*"
+                  />
+                </div>
+              )}
               <div className="flex-1 min-w-[160px]">
-                <Label className="text-xs">Price from</Label>
+                <Label className="text-xs">
+                  {row.slug === "mpv7" || row.slug === "limo-green" ? "Festive offer price" : "Price from"}
+                </Label>
                 <Input
                   value={row.priceFrom}
                   disabled={!canUpdate}
