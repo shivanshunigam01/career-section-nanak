@@ -30,6 +30,9 @@ import {
 import { hasApi } from "@/lib/apiConfig";
 import { usePublicOffers } from "@/hooks/usePublicOffers";
 import { priceFromSlugMap, usePublicPricing } from "@/hooks/usePublicPricing";
+import { FestivePriceDisplay } from "@/components/FestivePriceDisplay";
+import { isFestivePricingSlug, resolveFestivePricing } from "@/lib/festivePricing";
+import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { CatalogVehicleImage } from "@/components/CatalogVehicleImage";
 
@@ -72,7 +75,8 @@ const ComparePage = () => {
     canonical: "/compare",
   });
   const { loaded: offersLoaded, hasOffers } = usePublicOffers();
-  const { pricing, variantPrice } = usePublicPricing();
+  const { siteConfig } = usePublicSite();
+  const { pricing, variantPrice, bySlug } = usePublicPricing();
   const [slots, setSlots] = useState<[Slot, Slot, Slot]>(defaultSlots);
   const [hideCommon, setHideCommon] = useState(false);
   const [thirdModelDraft, setThirdModelDraft] = useState<CompareModelKey>("vf6");
@@ -117,13 +121,14 @@ const ComparePage = () => {
             if (values.every((v) => v === "—" || v === "")) return null;
             const allEqual = values.length > 1 && values.every((v) => v === values[0]);
             if (hideCommon && allEqual) return null;
-            return { key, label, values };
+            const modelKeys = key === "ex_showroom" ? activeSelections.map((s) => s.modelKey) : undefined;
+            return { key, label, values, modelKeys };
           })
-          .filter(Boolean) as { key: string; label: string; values: string[] }[];
+          .filter(Boolean) as { key: string; label: string; values: string[]; modelKeys?: CompareModelKey[] }[];
         return { title: section.title, rows };
       })
       .filter((s) => s.rows.length > 0);
-  }, [activeSelections, hideCommon, resolvePrice]);
+  }, [activeSelections, hideCommon, resolvePrice, bySlug, siteConfig]);
 
   const colCount = comparisonColumns.length;
   const gridTemplate = `minmax(140px,1.1fr) repeat(${colCount}, minmax(120px,1fr))`;
@@ -278,6 +283,9 @@ const ComparePage = () => {
               {COMPARE_MODEL_ORDER.map((key) => {
                 const m = compareModels[key];
                 const fromPrice = priceFromSlugMap(pricing, key, m.variants[0]?.price ?? "");
+                const festive = isFestivePricingSlug(key)
+                  ? resolveFestivePricing(key, { pricingRow: bySlug(key), siteConfig })
+                  : null;
                 return (
                   <div key={key} className="flex flex-col items-center justify-center py-4 sm:py-2 px-2 min-w-0">
                     <CatalogVehicleImage
@@ -287,9 +295,21 @@ const ComparePage = () => {
                     />
                     <p className="text-[10px] sm:text-xs text-muted-foreground mb-0.5">{m.brand}</p>
                     <p className="font-display font-bold text-sm sm:text-base leading-tight text-center">{m.name}</p>
-                    <p className="text-[11px] sm:text-xs text-foreground/90 mt-2 tabular-nums leading-snug text-center px-1">
-                      From {fromPrice}
-                    </p>
+                    <div className="mt-2 px-1 w-full flex justify-center">
+                      {festive ? (
+                        <FestivePriceDisplay
+                          listPrice={festive.list}
+                          offerPrice={festive.offer}
+                          size="sm"
+                          align="center"
+                          showBadge={false}
+                        />
+                      ) : (
+                        <p className="text-[11px] sm:text-xs text-foreground/90 tabular-nums leading-snug text-center">
+                          From {fromPrice}
+                        </p>
+                      )}
+                    </div>
                   </div>
                 );
               })}
@@ -515,14 +535,31 @@ const ComparePage = () => {
                           <div className="px-4 py-3 text-sm text-muted-foreground bg-muted/20 font-medium">
                             {row.label}
                           </div>
-                          {row.values.map((val, vi) => (
-                            <div
-                              key={vi}
-                              className="px-3 sm:px-4 py-3 text-sm text-foreground/95 border-l border-border/40 bg-background/40"
-                            >
-                              {val}
-                            </div>
-                          ))}
+                          {row.values.map((val, vi) => {
+                            const mk = row.modelKeys?.[vi];
+                            const festive =
+                              row.key === "ex_showroom" && mk && isFestivePricingSlug(mk)
+                                ? resolveFestivePricing(mk, { pricingRow: bySlug(mk), siteConfig })
+                                : null;
+                            return (
+                              <div
+                                key={vi}
+                                className="px-3 sm:px-4 py-3 text-sm text-foreground/95 border-l border-border/40 bg-background/40"
+                              >
+                                {festive ? (
+                                  <FestivePriceDisplay
+                                    listPrice={festive.list}
+                                    offerPrice={festive.offer}
+                                    size="sm"
+                                    align="left"
+                                    showBadge={false}
+                                  />
+                                ) : (
+                                  val
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       ))}
                     </div>

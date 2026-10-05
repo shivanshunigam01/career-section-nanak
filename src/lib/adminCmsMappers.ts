@@ -121,6 +121,8 @@ export function slugifyFromName(name: string): string {
   );
 }
 
+export type OfferMediaType = "image" | "video" | "gif";
+
 export type AdminOfferRow = {
   id: string;
   title: string;
@@ -130,7 +132,17 @@ export type AdminOfferRow = {
   active: boolean;
   type: string;
   imageUrl?: string;
+  mediaType: OfferMediaType;
+  ctaLabel: string;
+  ctaLink: string;
+  displayOrder: number;
 };
+
+function normalizeOfferMediaType(raw: unknown): OfferMediaType {
+  const v = String(raw ?? "image").toLowerCase();
+  if (v === "video" || v === "gif") return v;
+  return "image";
+}
 
 export function adminOfferFromApi(doc: Record<string, unknown>): AdminOfferRow {
   const vt = doc.validTill ? new Date(String(doc.validTill)).toISOString().slice(0, 10) : "";
@@ -143,6 +155,10 @@ export function adminOfferFromApi(doc: Record<string, unknown>): AdminOfferRow {
     active: doc.active !== false,
     type: String(doc.type ?? "Promo"),
     imageUrl: doc.imageUrl ? String(doc.imageUrl) : "",
+    mediaType: normalizeOfferMediaType(doc.mediaType),
+    ctaLabel: String(doc.ctaLabel ?? "Know more"),
+    ctaLink: String(doc.ctaLink ?? "/contact"),
+    displayOrder: Number(doc.displayOrder ?? 0) || 0,
   };
 }
 
@@ -155,6 +171,10 @@ export function adminOfferToApiPayload(o: AdminOfferRow): Record<string, unknown
     validTill: o.validTill ? new Date(`${o.validTill}T12:00:00`).toISOString() : undefined,
     active: o.active,
     imageUrl: o.imageUrl?.trim() || undefined,
+    mediaType: o.mediaType,
+    ctaLabel: o.ctaLabel?.trim() || undefined,
+    ctaLink: o.ctaLink?.trim() || undefined,
+    displayOrder: Number(o.displayOrder) || 0,
   };
 }
 

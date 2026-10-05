@@ -41,7 +41,9 @@ interface SiteConfig {
   vf7Price: string;
   vf6Price: string;
   mpv7Price: string;
+  mpv7ListPrice: string;
   limoGreenPrice: string;
+  limoGreenListPrice: string;
   vf7Range: string;
   vf6Range: string;
   mpv7Range: string;
@@ -69,8 +71,10 @@ const initialConfig: SiteConfig = {
   leadStripSubtitle: "Leave your details and our EV advisor will reach out in 10 minutes.",
   vf7Price: "₹22.99L*",
   vf6Price: "₹18.19L*",
-  mpv7Price: "₹24.49L*",
-  limoGreenPrice: "₹22.99L*",
+  mpv7Price: "₹20,39,000*",
+  mpv7ListPrice: "₹24,49,000*",
+  limoGreenPrice: "₹18,59,000*",
+  limoGreenListPrice: "₹22,99,000*",
   vf7Range: "532 km",
   vf6Range: "468 km",
   mpv7Range: "517 km (ARAI)",
@@ -87,7 +91,9 @@ const emptySiteConfig: SiteConfig = {
   vf7Price: "",
   vf6Price: "",
   mpv7Price: "",
+  mpv7ListPrice: "",
   limoGreenPrice: "",
+  limoGreenListPrice: "",
   vf7Range: "",
   vf6Range: "",
   mpv7Range: "",
@@ -140,7 +146,9 @@ function siteConfigFromApi(doc: Record<string, unknown>): SiteConfig {
     vf7Price: String(doc.vf7Price ?? initialConfig.vf7Price),
     vf6Price: String(doc.vf6Price ?? initialConfig.vf6Price),
     mpv7Price: String(doc.mpv7Price ?? initialConfig.mpv7Price),
+    mpv7ListPrice: String(doc.mpv7ListPrice ?? initialConfig.mpv7ListPrice),
     limoGreenPrice: String(doc.limoGreenPrice ?? initialConfig.limoGreenPrice),
+    limoGreenListPrice: String(doc.limoGreenListPrice ?? initialConfig.limoGreenListPrice),
     vf7Range: String(doc.vf7Range ?? initialConfig.vf7Range),
     vf6Range: String(doc.vf6Range ?? initialConfig.vf6Range),
     mpv7Range: String(doc.mpv7Range ?? initialConfig.mpv7Range),
@@ -386,12 +394,20 @@ const AdminHomepage = () => {
                 <Input value={config.vf6Price} onChange={e => updateConfig("vf6Price", e.target.value)} className="bg-secondary/50" placeholder="₹18.19L*" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">MPV 7 Display Price</Label>
-                <Input value={config.mpv7Price} onChange={e => updateConfig("mpv7Price", e.target.value)} className="bg-secondary/50" placeholder="₹24.49L*" />
+                <Label className="text-xs">MPV 7 list price (struck through)</Label>
+                <Input value={config.mpv7ListPrice} onChange={e => updateConfig("mpv7ListPrice", e.target.value)} className="bg-secondary/50" placeholder="₹24,49,000*" />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Limo Green Display Price</Label>
-                <Input value={config.limoGreenPrice} onChange={e => updateConfig("limoGreenPrice", e.target.value)} className="bg-secondary/50" placeholder="₹22.99L*" />
+                <Label className="text-xs">MPV 7 festive offer price</Label>
+                <Input value={config.mpv7Price} onChange={e => updateConfig("mpv7Price", e.target.value)} className="bg-secondary/50" placeholder="₹20,39,000*" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Limo Green list price (struck through)</Label>
+                <Input value={config.limoGreenListPrice} onChange={e => updateConfig("limoGreenListPrice", e.target.value)} className="bg-secondary/50" placeholder="₹22,99,000*" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Limo Green festive offer price</Label>
+                <Input value={config.limoGreenPrice} onChange={e => updateConfig("limoGreenPrice", e.target.value)} className="bg-secondary/50" placeholder="₹18,59,000*" />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs">VF 7 Range</Label>
