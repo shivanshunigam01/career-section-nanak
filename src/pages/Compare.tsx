@@ -297,13 +297,7 @@ const ComparePage = () => {
                     <p className="font-display font-bold text-sm sm:text-base leading-tight text-center">{m.name}</p>
                     <div className="mt-2 px-1 w-full flex justify-center">
                       {festive ? (
-                        <FestivePriceDisplay
-                          listPrice={festive.list}
-                          offerPrice={festive.offer}
-                          size="sm"
-                          align="center"
-                          showBadge={false}
-                        />
+                        <FestivePriceDisplay slug={key} size="sm" align="center" showBadge={false} />
                       ) : (
                         <p className="text-[11px] sm:text-xs text-foreground/90 tabular-nums leading-snug text-center">
                           From {fromPrice}
@@ -547,13 +541,7 @@ const ComparePage = () => {
                                 className="px-3 sm:px-4 py-3 text-sm text-foreground/95 border-l border-border/40 bg-background/40"
                               >
                                 {festive ? (
-                                  <FestivePriceDisplay
-                                    listPrice={festive.list}
-                                    offerPrice={festive.offer}
-                                    size="sm"
-                                    align="left"
-                                    showBadge={false}
-                                  />
+                                  <FestivePriceDisplay slug={mk} size="sm" align="left" showBadge={false} />
                                 ) : (
                                   val
                                 )}

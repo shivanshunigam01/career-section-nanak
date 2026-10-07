@@ -1,8 +1,16 @@
 import { cn } from "@/lib/utils";
+import {
+  FESTIVE_PRICE_DEFAULTS,
+  type FestivePriceSlug,
+  isFestivePricingSlug,
+  parseIndianVehiclePriceToRupees,
+} from "@/lib/festivePricing";
 
 type FestivePriceDisplayProps = {
-  listPrice: string;
-  offerPrice: string;
+  /** When set, list + offer always come from campaign constants (homepage-safe). */
+  slug?: FestivePriceSlug;
+  listPrice?: string;
+  offerPrice?: string;
   size?: "sm" | "md" | "lg";
   align?: "left" | "center" | "right";
   className?: string;
@@ -27,15 +35,40 @@ const sizeClasses = {
   },
 };
 
+function resolveDisplayPair(
+  slug: FestivePriceSlug | undefined,
+  listPrice: string,
+  offerPrice: string,
+): { list: string; offer: string } {
+  if (slug && isFestivePricingSlug(slug)) {
+    return FESTIVE_PRICE_DEFAULTS[slug];
+  }
+  const listR = parseIndianVehiclePriceToRupees(listPrice);
+  const offerR = parseIndianVehiclePriceToRupees(offerPrice);
+  if (listR != null && Math.abs(listR - 2_449_000) < 50_000) {
+    return FESTIVE_PRICE_DEFAULTS.mpv7;
+  }
+  if (listR != null && Math.abs(listR - 2_299_000) < 50_000) {
+    return FESTIVE_PRICE_DEFAULTS["limo-green"];
+  }
+  if (listR != null && offerR != null && offerR >= listR - 15_000) {
+    if (Math.abs(listR - 2_449_000) < 80_000) return FESTIVE_PRICE_DEFAULTS.mpv7;
+    if (Math.abs(listR - 2_299_000) < 80_000) return FESTIVE_PRICE_DEFAULTS["limo-green"];
+  }
+  return { list: listPrice, offer: offerPrice };
+}
+
 /** Amazon-style: struck-through list price + festive offer price. */
 export function FestivePriceDisplay({
-  listPrice,
-  offerPrice,
+  slug,
+  listPrice = "",
+  offerPrice = "",
   size = "md",
   align = "left",
   className,
   showBadge = true,
 }: FestivePriceDisplayProps) {
+  const { list, offer } = resolveDisplayPair(slug, listPrice, offerPrice);
   const s = sizeClasses[size];
   const alignClass =
     align === "center" ? "items-center text-center" : align === "right" ? "items-end text-right" : "items-start text-left";
@@ -53,9 +86,9 @@ export function FestivePriceDisplay({
         </span>
       )}
       <p className={cn("text-muted-foreground line-through decoration-muted-foreground/70 tabular-nums", s.list)}>
-        {listPrice}
+        {list}
       </p>
-      <p className={cn("font-display font-bold text-foreground tabular-nums leading-none", s.offer)}>{offerPrice}</p>
+      <p className={cn("font-display font-bold text-foreground tabular-nums leading-none", s.offer)}>{offer}</p>
       <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Ex-showroom*</p>
     </div>
   );
