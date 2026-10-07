@@ -9,8 +9,7 @@ import mpv7Card from "@/assets/mpv7-gallery/mpv7-new.png";
 import limoGreenCard from "@/assets/limo-green/modal-car.webp";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { FestivePriceDisplay } from "@/components/FestivePriceDisplay";
-import { resolveFestivePricing, type FestivePricePair } from "@/lib/festivePricing";
-import type { PublicVehiclePricing } from "@/hooks/usePublicPricing";
+import { FESTIVE_PRICE_DEFAULTS, festiveSlugFromHref, type FestivePricePair } from "@/lib/festivePricing";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
 import { useRefetchWhenVisible } from "@/hooks/useRefetchWhenVisible";
@@ -26,12 +25,6 @@ type ModelCard = {
   href: string;
   specs: Spec[];
 };
-
-function festiveSlugFromHref(href: string): "mpv7" | "limo-green" | null {
-  if (href.includes("/models/mpv7")) return "mpv7";
-  if (href.includes("limo-green")) return "limo-green";
-  return null;
-}
 
 const BASE_MODELS: Omit<ModelCard, "price">[] = [
   {
@@ -96,7 +89,6 @@ function slugMatchesHref(href: string, slug: string): boolean {
 function mergeModels(
   base: Omit<ModelCard, "price" | "festive">[],
   apiList: Record<string, unknown>[] | null,
-  pricingRows: PublicVehiclePricing[],
   site: {
     vf7Price: string;
     vf6Price: string;
@@ -113,10 +105,7 @@ function mergeModels(
   return base.map((m) => {
     const api = apiList?.find((p) => slugMatchesHref(m.href, String(p.slug ?? "")));
     const festiveSlug = festiveSlugFromHref(m.href);
-    const pricingRow = festiveSlug ? pricingRows.find((p) => p.slug === festiveSlug) : undefined;
-    const festive = festiveSlug
-      ? resolveFestivePricing(festiveSlug, { pricingRow, siteConfig: site })
-      : null;
+    const festive = festiveSlug ? { ...FESTIVE_PRICE_DEFAULTS[festiveSlug] } : null;
     const sitePrice = m.href.includes("vf7")
       ? site.vf7Price
       : m.href.includes("mpv7")
@@ -160,19 +149,11 @@ function mergeModels(
 const ModelDiscovery = () => {
   const { siteConfig } = usePublicSite();
   const [apiProducts, setApiProducts] = useState<Record<string, unknown>[] | null>(null);
-  const [pricingRows, setPricingRows] = useState<PublicVehiclePricing[]>([]);
-
   const loadProducts = useCallback(async () => {
     if (!hasApi()) return;
-    const [products, pricing] = await Promise.all([
-      publicGet<unknown[]>("/public/products"),
-      publicGet<PublicVehiclePricing[]>("/public/pricing"),
-    ]);
+    const products = await publicGet<unknown[]>("/public/products");
     if (Array.isArray(products) && products.length > 0) {
       setApiProducts(products as Record<string, unknown>[]);
-    }
-    if (Array.isArray(pricing)) {
-      setPricingRows(pricing);
     }
   }, []);
 
@@ -184,8 +165,8 @@ const ModelDiscovery = () => {
   useRefetchWhenVisible(loadProducts, hasApi());
 
   const models = useMemo(
-    () => mergeModels(BASE_MODELS, apiProducts, pricingRows, siteConfig),
-    [apiProducts, pricingRows, siteConfig],
+    () => mergeModels(BASE_MODELS, apiProducts, siteConfig),
+    [apiProducts, siteConfig],
   );
 
   return (
