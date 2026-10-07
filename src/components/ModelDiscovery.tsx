@@ -216,10 +216,9 @@ const ModelDiscovery = () => {
                     <p className="text-muted-foreground text-sm mt-1">{model.tagline}</p>
                   </div>
                   <div className="text-left sm:text-right shrink-0">
-                    {model.festive ? (
+                    {model.festive && festiveSlugFromHref(model.href) ? (
                       <FestivePriceDisplay
-                        listPrice={model.festive.list}
-                        offerPrice={model.festive.offer}
+                        slug={festiveSlugFromHref(model.href)!}
                         size="sm"
                         align="right"
                       />
