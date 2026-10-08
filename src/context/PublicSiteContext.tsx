@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { hasApi } from "@/lib/apiConfig";
 import { publicGet } from "@/lib/api";
+import { coerceFestiveListPrice, coerceFestiveOfferPrice } from "@/lib/festivePricing";
 
 export type DealerInfo = {
   dealerName: string;
@@ -120,10 +121,22 @@ function mergeSite(doc: Record<string, unknown> | null): SiteConfigPublic {
     leadStripSubtitle: coalesceStr(doc.leadStripSubtitle, DEFAULT_SITE.leadStripSubtitle),
     vf7Price: coalesceStr(doc.vf7Price, DEFAULT_SITE.vf7Price),
     vf6Price: coalesceStr(doc.vf6Price, DEFAULT_SITE.vf6Price),
-    mpv7Price: coalesceStr(doc.mpv7Price, DEFAULT_SITE.mpv7Price),
-    mpv7ListPrice: coalesceStr(doc.mpv7ListPrice, DEFAULT_SITE.mpv7ListPrice),
-    limoGreenPrice: coalesceStr(doc.limoGreenPrice, DEFAULT_SITE.limoGreenPrice),
-    limoGreenListPrice: coalesceStr(doc.limoGreenListPrice, DEFAULT_SITE.limoGreenListPrice),
+    mpv7Price: coerceFestiveOfferPrice(
+      "mpv7",
+      coalesceStr(doc.mpv7Price, DEFAULT_SITE.mpv7Price),
+    ),
+    mpv7ListPrice: coerceFestiveListPrice(
+      "mpv7",
+      coalesceStr(doc.mpv7ListPrice, DEFAULT_SITE.mpv7ListPrice),
+    ),
+    limoGreenPrice: coerceFestiveOfferPrice(
+      "limo-green",
+      coalesceStr(doc.limoGreenPrice, DEFAULT_SITE.limoGreenPrice),
+    ),
+    limoGreenListPrice: coerceFestiveListPrice(
+      "limo-green",
+      coalesceStr(doc.limoGreenListPrice, DEFAULT_SITE.limoGreenListPrice),
+    ),
     vf7Range: coalesceStr(doc.vf7Range, DEFAULT_SITE.vf7Range),
     vf6Range: coalesceStr(doc.vf6Range, DEFAULT_SITE.vf6Range),
     mpv7Range: coalesceStr(doc.mpv7Range, DEFAULT_SITE.mpv7Range),
