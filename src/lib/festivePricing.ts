@@ -18,6 +18,29 @@ export function isFestivePricingSlug(slug: string): slug is FestivePriceSlug {
   return slug === "mpv7" || slug === "limo-green";
 }
 
+/** CMS sometimes stores list MRP in Lakh format as the “offer” — always return campaign offer. */
+export function coerceFestiveOfferPrice(slug: FestivePriceSlug, raw: string): string {
+  const compact = String(raw || "").replace(/\s/g, "").toLowerCase();
+  const defaults = FESTIVE_PRICE_DEFAULTS[slug];
+  if (slug === "mpv7") {
+    if (/20[,.]?39/.test(compact)) return String(raw).trim();
+    return defaults.offer;
+  }
+  if (/18[,.]?59/.test(compact)) return String(raw).trim();
+  return defaults.offer;
+}
+
+export function coerceFestiveListPrice(slug: FestivePriceSlug, raw: string): string {
+  const compact = String(raw || "").replace(/\s/g, "").toLowerCase();
+  const defaults = FESTIVE_PRICE_DEFAULTS[slug];
+  if (slug === "mpv7") {
+    if (/24[,.]?49/.test(compact)) return String(raw).trim();
+    return defaults.list;
+  }
+  if (/22[,.]?99/.test(compact)) return String(raw).trim();
+  return defaults.list;
+}
+
 export function festiveSlugFromHref(href: string): FestivePriceSlug | null {
   if (href.includes("/models/mpv7")) return "mpv7";
   if (href.includes("limo-green")) return "limo-green";
