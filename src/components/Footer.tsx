@@ -183,6 +183,18 @@ const Footer = () => {
               © 2026 Patliputra VinFast. All rights reserved. Authorized VinFast
               Dealer, Bihar.
             </p>
+            <p className="text-muted-foreground text-[10px] leading-snug">
+              Created and managed by{" "}
+              <a
+                href="https://zentroverse.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:text-foreground transition-colors"
+              >
+                Zentroverse Global Pvt Ltd
+              </a>
+              .
+            </p>
             <p className="text-muted-foreground text-[10px] leading-snug max-w-xl">
               This site is protected by reCAPTCHA and the Google{" "}
               <a

@@ -5,8 +5,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf6Hero from "@/assets/vf6-product-hero.png";
-import vf6HeroPagePortrait from "@/assets/vf6-hero-page-portrait.png";
+import vf6HeroBanner from "@/assets/model-heroes/vf6-hero-banner.jpg";
 import vf6WhyInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
@@ -376,27 +375,24 @@ const ModelVF6 = () => {
         className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF 6 hero"
       >
-        {/* Mobile only: HeroSection-style shell + portrait art */}
         <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
-              src={vf6HeroPagePortrait}
-              alt="Silver VinFast VF 6 electric SUV with family and wildflower field under a bright sky"
-              className="hero-slider-image h-full w-full object-cover"
-              style={{ objectPosition: "center 42%" }}
+              src={vf6HeroBanner}
+              alt="VinFast VF 6 — Boundless Range for emotions in motion."
+              className="hero-slider-image h-full w-full object-cover object-[center_38%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
             />
           </div>
         </div>
-        {/* lg and up: original wide hero */}
-        <div className="relative hidden min-h-[42vh] sm:min-h-[52vh] lg:block lg:absolute lg:inset-0 lg:min-h-0">
+        <div className="relative hidden lg:block lg:absolute lg:inset-0 lg:min-h-0">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden">
             <img
-              src={vf6Hero}
-              alt="Silver VinFast VF 6 electric SUV on a modern patio with a family and coastal bay view in the background"
-              className="hero-slider-image h-full w-full object-cover object-[38%_52%]"
+              src={vf6HeroBanner}
+              alt="VinFast VF 6 — Boundless Range for emotions in motion."
+              className="hero-slider-image h-full w-full object-cover object-[center_40%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"

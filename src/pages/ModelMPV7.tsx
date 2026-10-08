@@ -23,8 +23,7 @@ import { FestivePriceDisplay } from "@/components/FestivePriceDisplay";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
-import mpv7HeroDesktop from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
-import mpv7HeroPagePortrait from "@/assets/mpv7-hero-page-portrait.png";
+import mpv7HeroBanner from "@/assets/model-heroes/mpv7-hero-banner.jpg";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
@@ -220,10 +219,9 @@ const ModelMPV7 = () => {
         <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
-              src={mpv7HeroPagePortrait}
-              alt="Black VinFast VF MPV 7 electric MPV on a coastal road above the ocean"
-              className="hero-slider-image h-full w-full object-cover"
-              style={{ objectPosition: "center 38%" }}
+              src={mpv7HeroBanner}
+              alt="VinFast VF MPV 7 — Your World on the Move"
+              className="hero-slider-image h-full w-full object-cover object-[center_42%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
@@ -233,9 +231,9 @@ const ModelMPV7 = () => {
         <div className="relative hidden lg:block lg:absolute lg:inset-0 lg:min-h-0">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden">
             <img
-              src={mpv7HeroDesktop}
-              alt="VinFast VF MPV 7"
-              className="hero-slider-image h-full w-full object-cover object-[50%_45%]"
+              src={mpv7HeroBanner}
+              alt="VinFast VF MPV 7 — Your World on the Move"
+              className="hero-slider-image h-full w-full object-cover object-[center_45%]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"

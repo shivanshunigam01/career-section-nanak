@@ -2,14 +2,13 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import heroSlide01 from "@/assets/hero-slideshow/slide-01.png";
 import heroSlide02 from "@/assets/hero-slideshow/slide-02.png";
-import heroSlide03 from "@/assets/hero-slideshow/slide-03.png";
+import heroSlide03Alloy from "@/assets/hero-slideshow/slide-03-alloy.jpg";
 import heroVf7LedHighway from "@/assets/hero-slideshow/hero-vf7-led-highway.png";
 import heroVf7Cockpit from "@/assets/hero-slideshow/hero-vf7-cockpit.png";
-import heroSlide05 from "@/assets/hero-slideshow/slide-05.png";
+import heroSlide07Interior from "@/assets/hero-slideshow/hero-slide-07-interior.jpg";
 import heroSlide06 from "@/assets/vf6-earth-hero-family.png";
 import heroMpv7 from "@/assets/mpv7-gallery/mpv7-hero-shared.png";
 import heroMobileDealerLineup from "@/assets/hero-slideshow/mobile/hero-mobile-dealer-lineup.png";
-import heroMobileRearSignature from "@/assets/hero-slideshow/mobile/hero-mobile-rear-signature.png";
 import heroMobileMpv7 from "@/assets/hero-slideshow/mobile/hero-mobile-mpv7.png";
 import heroMobileVf6Family from "@/assets/hero-slideshow/mobile/hero-mobile-vf6-family.png";
 import heroMobileCockpit from "@/assets/hero-slideshow/mobile/hero-mobile-cockpit.png";
@@ -113,6 +112,33 @@ function buildMpv7LaunchSlide(): HeroSlideView {
   };
 }
 
+function buildAlloyDetailSlide(): HeroSlideView {
+  return {
+    image: heroSlide03Alloy,
+    imageMobile: heroSlide03Alloy,
+    objectPositionMobile: "center 48%",
+    title: "Precision in every detail",
+    subLines: ["Alloys, colour, unmistakable VF form.", "", ""],
+    objectPosition: "center 55%",
+  };
+}
+
+/** 7th slide in the default hero rotation — VF 6 cabin. */
+function buildVf6HeroSlide(): HeroSlideView {
+  return {
+    image: heroSlide07Interior,
+    imageMobile: heroSlide07Interior,
+    objectPositionMobile: "center 45%",
+    title: "VinFast VF 6",
+    subLines: [
+      "Compact, smart, and electrifying — minimal dash, large screen, driver-focused layout.",
+      "",
+      "",
+    ],
+    objectPosition: "center 48%",
+  };
+}
+
 const HERO_FALLBACK_TAIL: HeroSlideView[] = [
   {
     image: heroSlide02,
@@ -126,14 +152,7 @@ const HERO_FALLBACK_TAIL: HeroSlideView[] = [
     ],
     objectPosition: "center 48%",
   },
-  {
-    image: heroSlide03,
-    imageMobile: heroMobileRearSignature,
-    objectPositionMobile: "center 48%",
-    title: "Precision in every detail",
-    subLines: ["Alloys, colour, unmistakable VF form.", "", ""],
-    objectPosition: "center 55%",
-  },
+  buildAlloyDetailSlide(),
   {
     image: heroVf7LedHighway,
     imageMobile: heroMobileDealerLineup,
@@ -150,18 +169,7 @@ const HERO_FALLBACK_TAIL: HeroSlideView[] = [
     subLines: ["Touchscreen, connected services, refined cabin.", "", ""],
     objectPosition: "center 48%",
   },
-  {
-    image: heroSlide05,
-    imageMobile: heroMobileVf6Family,
-    objectPositionMobile: "center 42%",
-    title: "VinFast VF 6",
-    subLines: [
-      "Compact, smart, and electrifying — minimal dash, large screen, driver-focused layout.",
-      "",
-      "",
-    ],
-    objectPosition: "center 50%",
-  },
+  buildVf6HeroSlide(),
   {
     image: heroSlide06,
     imageMobile: heroMobileVf6Family,
@@ -182,6 +190,25 @@ function buildHeroFallbackSlides(): HeroSlideView[] {
     buildMpv7LaunchSlide(),
     ...HERO_FALLBACK_TAIL,
   ];
+}
+
+/** CMS may still point at the old alloy hero asset — swap in the updated artwork. */
+function isLegacyAlloyHeroSlide(slide: HeroSlideView): boolean {
+  const title = slide.title.trim().toLowerCase();
+  if (title === "precision in every detail") return true;
+  const copy = (slide.subLines?.join(" ") ?? "").toLowerCase();
+  if (copy.includes("unmistakable vf form")) return true;
+  return false;
+}
+
+function isVf6HeroCarouselSlide(slide: HeroSlideView): boolean {
+  return slide.title.trim().toLowerCase() === "vinfast vf 6";
+}
+
+function normalizeHeroSlideFromApi(slide: HeroSlideView): HeroSlideView {
+  if (isLegacyAlloyHeroSlide(slide)) return buildAlloyDetailSlide();
+  if (isVf6HeroCarouselSlide(slide)) return buildVf6HeroSlide();
+  return slide;
 }
 
 function mapHeroFromApi(doc: Record<string, unknown>): HeroSlideView | null {
@@ -235,7 +262,8 @@ const HeroSection = () => {
     if (!Array.isArray(raw) || raw.length === 0) return;
     const mapped = (raw as Record<string, unknown>[])
       .map(mapHeroFromApi)
-      .filter(Boolean) as HeroSlideView[];
+      .filter(Boolean)
+      .map((s) => normalizeHeroSlideFromApi(s as HeroSlideView)) as HeroSlideView[];
     if (mapped.length > 0) {
       const opening = buildDealerOpeningSlide();
       const mpv7 = buildMpv7LaunchSlide();
