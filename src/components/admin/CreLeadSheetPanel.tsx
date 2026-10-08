@@ -124,11 +124,14 @@ export function CreLeadSheetPanel({ lead, followUpSlots, canEdit, onSaved }: Pro
   const handleSave = async () => {
     setSaving(true);
     try {
+      const hasSlotPayload = form.slots.some(
+        (s) => s.creDate || s.creRemark || s.salesDate || s.salesRemark,
+      );
       await updatePvCrmLeadCreSheet(lead._id, {
         followUp: form.followUp,
         salesConsultant: form.salesConsultant,
         exchangeNeeded: form.exchange === "YES",
-        followUpSlots: form.slots,
+        followUpSlots: hasSlotPayload ? form.slots : undefined,
         creSheet: {
           enquiryDate: form.enquiryDate || undefined,
           callDate: form.callDate || undefined,
