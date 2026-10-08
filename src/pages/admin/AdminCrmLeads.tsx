@@ -157,6 +157,30 @@ function followUpColor(highlight?: string) {
   return "text-muted-foreground";
 }
 
+/** List card: nextFollowUp empty does not mean call history exists — use followUpCount. */
+function leadListFollowUpLine(lead: PvCrmLead): { className: string; text: string; showClock: boolean } {
+  if (lead.nextFollowUp) {
+    return {
+      className: followUpColor(lead.followUpHighlight),
+      text: `Follow-up: ${formatDateTime(lead.nextFollowUp)}`,
+      showClock: true,
+    };
+  }
+  const logged = lead.followUpCount ?? 0;
+  if (logged > 0) {
+    return {
+      className: followUpColor("none"),
+      text: `No upcoming call · ${logged} in follow-up history`,
+      showClock: false,
+    };
+  }
+  return {
+    className: "text-amber-600 dark:text-amber-400",
+    text: "No follow-ups logged (remarks below are not the timeline)",
+    showClock: false,
+  };
+}
+
 export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: { pageConfig?: CrmLeadsPageConfig }) {
   const adminUser = getAdminUser();
   const navigate = useNavigate();
@@ -1608,14 +1632,15 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                   <UserCheck className="w-3 h-3 shrink-0" />
                   {lead.assignedTo?.name ?? "Unassigned"}
                 </p>
-                {lead.nextFollowUp ? (
-                  <p className={followUpColor(lead.followUpHighlight)}>
-                    <Clock className="w-3 h-3 inline mr-1" />
-                    Follow-up: {formatDateTime(lead.nextFollowUp)}
-                  </p>
-                ) : (
-                  <p className={followUpColor("none")}>Follow-up completed / none pending</p>
-                )}
+                {(() => {
+                  const fu = leadListFollowUpLine(lead);
+                  return (
+                    <p className={fu.className}>
+                      {fu.showClock ? <Clock className="w-3 h-3 inline mr-1" /> : null}
+                      {fu.text}
+                    </p>
+                  );
+                })()}
                 {lead.buyerType ? <p>Buyer: {lead.buyerType}</p> : null}
                 {lead.remarks ? <p className="line-clamp-2">“{lead.remarks}”</p> : null}
                 <p>Age: {lead.leadAgeDays ?? 0} day{(lead.leadAgeDays ?? 0) === 1 ? "" : "s"}</p>
