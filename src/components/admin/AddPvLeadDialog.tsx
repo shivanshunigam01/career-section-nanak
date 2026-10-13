@@ -212,11 +212,22 @@ export function AddPvLeadDialog({
                   className="flex items-center gap-1 text-[11px] text-amber-600 dark:text-amber-400 hover:underline"
                 >
                   <History className="w-3 h-3" />
-                  Existing customer {existingHistory.customer.customerId ? `(${existingHistory.customer.customerId})` : ""} — view history
+                  {existingHistory.summary.totalLeads > 0
+                    ? `Existing customer ${existingHistory.customer.customerId ? `(${existingHistory.customer.customerId})` : ""} — view history`
+                    : `Customer profile ${existingHistory.customer.customerId ? `(${existingHistory.customer.customerId})` : ""} — no CRM lead yet`}
                 </button>
               ) : null}
             </div>
-            {existingHistory ? (
+            {existingHistory && existingHistory.summary.totalLeads === 0 ? (
+              <div className="sm:col-span-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 text-xs text-foreground leading-snug">
+                <span className="font-medium">This mobile is in the customer master only.</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  There is no lead in Lead CRM yet (0 leads in history). Click <strong>Save</strong> below to create a new lead — this is not a duplicate.
+                </span>
+              </div>
+            ) : null}
+            {existingHistory && existingHistory.summary.openLeads > 0 ? (
               <div className="sm:col-span-2 flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
                 <Checkbox
                   id="force-new-opp"
@@ -228,10 +239,7 @@ export function AddPvLeadDialog({
                   <span className="font-medium text-foreground">Create as new opportunity</span>
                   <span className="text-muted-foreground">
                     {" "}
-                    (different vehicle / test drive)
-                    {existingHistory.summary.openLeads > 0
-                      ? ` — ${existingHistory.summary.openLeads} open opportunity(ies) already`
-                      : ""}
+                    (different vehicle / test drive) — {existingHistory.summary.openLeads} open opportunity(ies) already
                   </span>
                 </label>
               </div>
@@ -349,7 +357,11 @@ export function AddPvLeadDialog({
         open={showHistory}
         onOpenChange={setShowHistory}
         history={existingHistory}
-        headline="Existing customer — full history"
+        headline={
+          existingHistory && existingHistory.summary.totalLeads === 0
+            ? "Customer on file — no CRM lead yet"
+            : "Existing customer — full history"
+        }
       />
     </Dialog>
   );
