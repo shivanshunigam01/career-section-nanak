@@ -5,7 +5,32 @@
 
 export const TCO_OWNERSHIP_YEAR_OPTIONS = [3, 5, 7, 10] as const;
 
-export const TCO_DEFAULTS = {
+export type TcoDefaultsConfig = {
+  ownershipYears: number;
+  monthlyKm: number;
+  monthlyKmMin: number;
+  monthlyKmMax: number;
+  petrolMileageKmPerLitre: number;
+  petrolPricePerLitre: number;
+  homeChargingPercent: number;
+  publicChargingPercent: number;
+  homeTariffPerKwh: number;
+  publicTariffPerKwh: number;
+  fallbackEvEfficiencyKwhPer100Km: number;
+  petrolComparisonPrice: number;
+  evInsuranceAnnual: number;
+  petrolInsuranceAnnual: number;
+  evMaintenanceAnnual: number;
+  petrolMaintenanceAnnual: number;
+  evResalePercent: number;
+  petrolResalePercent: number;
+  batterySubscriptionMonthly: number;
+  otherEvAnnual: number;
+  otherPetrolAnnual: number;
+};
+
+/** Plain `number` fields so React state setters are not narrowed to literals. */
+export const TCO_DEFAULTS: TcoDefaultsConfig = {
   ownershipYears: 5,
   monthlyKm: 1200,
   monthlyKmMin: 200,
@@ -16,22 +41,27 @@ export const TCO_DEFAULTS = {
   publicChargingPercent: 20,
   homeTariffPerKwh: 8,
   publicTariffPerKwh: 18,
-  /** Used when model efficiency cannot be derived from catalog specs. */
   fallbackEvEfficiencyKwhPer100Km: 18,
   petrolComparisonPrice: 2_000_000,
   evInsuranceAnnual: 28_000,
   petrolInsuranceAnnual: 24_000,
   evMaintenanceAnnual: 15_000,
   petrolMaintenanceAnnual: 28_000,
-  /** Residual value as % of indicative ex-showroom at end of ownership (user-adjustable). */
   evResalePercent: 45,
   petrolResalePercent: 38,
   batterySubscriptionMonthly: 0,
   otherEvAnnual: 0,
   otherPetrolAnnual: 0,
-} as const;
+};
 
-export const PETROL_COMPARISON_PRESETS = [
+export type PetrolComparisonPreset = {
+  id: string;
+  label: string;
+  purchasePrice: number;
+  mileageKmPerLitre: number;
+};
+
+export const PETROL_COMPARISON_PRESETS: PetrolComparisonPreset[] = [
   {
     id: "midsize-suv",
     label: "Mid-size petrol SUV (planning assumption)",
@@ -50,4 +80,4 @@ export const PETROL_COMPARISON_PRESETS = [
     purchasePrice: 2_800_000,
     mileageKmPerLitre: 11,
   },
-] as const;
+];

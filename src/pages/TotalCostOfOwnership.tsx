@@ -138,7 +138,7 @@ export default function TotalCostOfOwnership() {
   const [batterySubMonthly, setBatterySubMonthly] = useState(TCO_DEFAULTS.batterySubscriptionMonthly);
   const [otherEvAnnual, setOtherEvAnnual] = useState(TCO_DEFAULTS.otherEvAnnual);
   const [otherPetrolAnnual, setOtherPetrolAnnual] = useState(TCO_DEFAULTS.otherPetrolAnnual);
-  const [petrolPreset, setPetrolPreset] = useState(PETROL_COMPARISON_PRESETS[0].id);
+  const [petrolPreset, setPetrolPreset] = useState<string>(PETROL_COMPARISON_PRESETS[0].id);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [breakdownOpen, setBreakdownOpen] = useState(false);
 
