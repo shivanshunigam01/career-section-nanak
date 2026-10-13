@@ -34,7 +34,7 @@ const EMICalculator = () => {
   const [tenure, setTenure] = useState(60);
   const [rate, setRate] = useState(8.5);
   const [ownershipYears, setOwnershipYears] = useState<number>(TCO_DEFAULTS.ownershipYears);
-  const [monthlyKm, setMonthlyKm] = useState(TCO_DEFAULTS.monthlyKm);
+  const [monthlyKm, setMonthlyKm] = useState<number>(TCO_DEFAULTS.monthlyKm);
 
   const onVehicleChange = (id: string) => {
     setVehicleId(id);
