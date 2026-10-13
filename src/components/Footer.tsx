@@ -89,6 +89,7 @@ const Footer = () => {
                 { label: "Book Now", href: "/book-now" },
                 { label: "Book Test Drive", href: "/test-drive" },
                 { label: "EMI Calculator", href: "/emi-calculator" },
+                { label: "Total Cost of Ownership", href: "/total-cost-of-ownership" },
               ].map((link) => (
                 <li key={link.href}>
                   <Link

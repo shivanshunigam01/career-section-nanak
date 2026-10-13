@@ -2,21 +2,50 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { CALCULATOR_METHODOLOGY_NOTE, EMI_PAGE_SEO } from "@/lib/seoBlueprint";
+import { TCO_OWNERSHIP_YEAR_OPTIONS, TCO_DEFAULTS } from "@/lib/tco/tcoDefaults";
+import { findTcoVehicle, TCO_VEHICLE_OPTIONS } from "@/lib/tco/tcoVehicleData";
+import { formatInr } from "@/lib/tco/formatInr";
 
 const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
 
 const EMICalculator = () => {
   usePageSeo(EMI_PAGE_SEO);
 
-  const [price, setPrice] = useState(2299000);
-  const [downPayment, setDownPayment] = useState(500000);
+  const [vehicleId, setVehicleId] = useState("vf7:earth");
+  const vehicle = useMemo(
+    () => findTcoVehicle(vehicleId) ?? TCO_VEHICLE_OPTIONS[0],
+    [vehicleId],
+  );
+
+  const [price, setPrice] = useState(vehicle.priceRupees || 2_299_000);
+  const [downPayment, setDownPayment] = useState(500_000);
   const [tenure, setTenure] = useState(60);
   const [rate, setRate] = useState(8.5);
+  const [ownershipYears, setOwnershipYears] = useState<number>(TCO_DEFAULTS.ownershipYears);
+  const [monthlyKm, setMonthlyKm] = useState(TCO_DEFAULTS.monthlyKm);
+
+  const onVehicleChange = (id: string) => {
+    setVehicleId(id);
+    const v = findTcoVehicle(id);
+    if (v?.priceRupees) {
+      setPrice(v.priceRupees);
+      setDownPayment((prev) =>
+        Math.min(prev, Math.floor(v.priceRupees * 0.9 / 10_000) * 10_000),
+      );
+    }
+  };
 
   const maxDownPayment = Math.floor(price * 0.9 / 10000) * 10000;
 
@@ -33,7 +62,10 @@ const EMICalculator = () => {
 
   const totalAmount = emi * tenure;
   const totalInterest = totalAmount - (price - downPayment);
-  const formatINR = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
+  const yearlyKm = monthlyKm * 12;
+  const totalKmOwnership = yearlyKm * ownershipYears;
+
+  const tcoHref = `/total-cost-of-ownership?vehicle=${encodeURIComponent(vehicleId)}&years=${ownershipYears}&km=${monthlyKm}`;
 
   const labelCls = "text-sm text-muted-foreground";
   const inputCls = "w-28 text-right text-sm font-semibold tabular-nums bg-background/60 border border-border/60 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground";
@@ -47,7 +79,8 @@ const EMICalculator = () => {
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Easy Finance</p>
             <h1 className="font-display font-bold text-4xl md:text-5xl mb-4">EMI Calculator</h1>
             <p className="text-muted-foreground max-w-xl mx-auto">
-              Calculate your monthly EMI for VinFast VF 6, VF 7, VF MPV 7, or Limo Green.
+              Calculate your monthly EMI for VinFast VF 6, VF 7, VF MPV 7, or Limo Green — and estimate how far you
+              drive each year for total cost of ownership planning.
             </p>
           </motion.div>
 
@@ -55,6 +88,25 @@ const EMICalculator = () => {
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-5 sm:p-8 min-w-0">
               <h3 className="font-display font-bold text-lg mb-6">Customize Your Plan</h3>
               <div className="space-y-6">
+                <div>
+                  <label className={labelCls + " block mb-2"}>VinFast model & variant</label>
+                  <Select value={vehicleId} onValueChange={onVehicleChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[min(20rem,60vh)]">
+                      {TCO_VEHICLE_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.id} value={opt.id}>
+                          {opt.fullLabel}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Indicative price: {vehicle.priceDisplay} — on-road may differ.
+                  </p>
+                </div>
+
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <label className={labelCls}>Vehicle Price</label>
@@ -161,6 +213,83 @@ const EMICalculator = () => {
                     onChange={(e) => setRate(Number(e.target.value))}
                   />
                 </div>
+
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-4">
+                  <p className="text-sm font-display font-semibold text-foreground">
+                    Estimated yearly & monthly travel distance
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Used to plan fuel versus charging costs over time. Open the total cost of ownership calculator
+                    with these assumptions pre-filled.
+                  </p>
+                  <div>
+                    <p className={labelCls + " mb-2"}>Ownership horizon (for running-cost planning)</p>
+                    <div className="flex flex-wrap gap-2">
+                      {TCO_OWNERSHIP_YEAR_OPTIONS.map((y) => (
+                        <button
+                          key={y}
+                          type="button"
+                          onClick={() => setOwnershipYears(y)}
+                          className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                            ownershipYears === y
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "border-border hover:border-primary/50"
+                          }`}
+                        >
+                          {y} yr
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex justify-between items-center mb-2">
+                      <label className={labelCls}>Monthly km driven</label>
+                      <input
+                        type="number"
+                        className={inputCls}
+                        min={TCO_DEFAULTS.monthlyKmMin}
+                        max={TCO_DEFAULTS.monthlyKmMax}
+                        step={50}
+                        value={monthlyKm}
+                        onChange={(e) =>
+                          setMonthlyKm(
+                            clamp(
+                              Number(e.target.value) || TCO_DEFAULTS.monthlyKmMin,
+                              TCO_DEFAULTS.monthlyKmMin,
+                              TCO_DEFAULTS.monthlyKmMax,
+                            ),
+                          )
+                        }
+                      />
+                    </div>
+                    <input
+                      type="range"
+                      className="w-full accent-primary"
+                      min={TCO_DEFAULTS.monthlyKmMin}
+                      max={TCO_DEFAULTS.monthlyKmMax}
+                      step={50}
+                      value={monthlyKm}
+                      onChange={(e) => setMonthlyKm(Number(e.target.value))}
+                    />
+                  </div>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>
+                      Estimated yearly distance: <strong className="text-foreground">{yearlyKm.toLocaleString("en-IN")} km</strong>
+                    </li>
+                    <li>
+                      Over {ownershipYears} years: <strong className="text-foreground">{totalKmOwnership.toLocaleString("en-IN")} km</strong>
+                    </li>
+                    <li>
+                      Finance plan uses vehicle price <strong className="text-foreground">{formatInr(price)}</strong> (ex-showroom
+                      estimate — not EMI on energy savings).
+                    </li>
+                  </ul>
+                  <Link to={tcoHref} className="block">
+                    <Button variant="outline" size="sm" className="w-full">
+                      Compare EV vs petrol total cost
+                    </Button>
+                  </Link>
+                </div>
               </div>
             </motion.div>
 
@@ -169,21 +298,22 @@ const EMICalculator = () => {
 
               <div className="rounded-2xl bg-primary/5 border border-primary/20 p-6 text-center mb-6">
                 <p className="text-sm text-muted-foreground mb-2">Your Monthly EMI</p>
-                <p className="font-display font-bold text-4xl text-primary">{formatINR(emi)}</p>
+                <p className="font-display font-bold text-4xl text-primary">{formatInr(emi)}</p>
+                <p className="text-xs text-muted-foreground mt-2">{vehicle.fullLabel}</p>
               </div>
 
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Loan Amount</span>
-                  <span className="font-semibold">{formatINR(price - downPayment)}</span>
+                  <span className="font-semibold">{formatInr(price - downPayment)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total Interest</span>
-                  <span className="font-semibold">{formatINR(totalInterest)}</span>
+                  <span className="font-semibold">{formatInr(totalInterest)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Total Amount</span>
-                  <span className="font-semibold">{formatINR(totalAmount)}</span>
+                  <span className="font-semibold">{formatInr(totalAmount)}</span>
                 </div>
               </div>
 
@@ -193,6 +323,9 @@ const EMICalculator = () => {
                 </Link>
                 <Link to="/test-drive" className="block">
                   <Button variant="outline" size="lg" className="w-full">Book Test Drive</Button>
+                </Link>
+                <Link to={tcoHref} className="block">
+                  <Button variant="outline" size="lg" className="w-full">Total cost of ownership</Button>
                 </Link>
               </div>
             </motion.div>
@@ -209,4 +342,3 @@ const EMICalculator = () => {
 };
 
 export default EMICalculator;
-
