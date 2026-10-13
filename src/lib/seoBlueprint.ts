@@ -46,5 +46,12 @@ export const EMI_PAGE_SEO = {
   canonical: "/emi-calculator",
 } as const;
 
+export const TCO_PAGE_SEO = {
+  title: "VinFast Total Cost of Ownership | EV vs Petrol Savings | Patliputra VinFast",
+  description:
+    "Compare estimated total ownership cost of a VinFast EV versus a petrol car over your driving years and monthly kilometres. Planning tool for Bihar buyers — Patliputra VinFast, Patna.",
+  canonical: "/total-cost-of-ownership",
+} as const;
+
 export const CALCULATOR_METHODOLOGY_NOTE =
   "About this information: results are planning estimates only. Bank EMI approval, on-road tax, insurance and your electricity tariff are not quotes from Patliputra VinFast or any lender.";

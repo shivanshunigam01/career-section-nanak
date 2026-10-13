@@ -17,6 +17,7 @@ import BookNow from "./pages/BookNow";
 import EMICalculator from "./pages/EMICalculator";
 import ChargingCalculator from "./pages/ChargingCalculator";
 import RunningCostCalculator from "./pages/RunningCostCalculator";
+import TotalCostOfOwnership from "./pages/TotalCostOfOwnership";
 import ComparePage from "./pages/Compare";
 import AboutPage from "./pages/About";
 import ContactPage from "./pages/Contact";
@@ -138,6 +139,7 @@ const App = () => {
           <Route path="/emi-calculator" element={<EMICalculator />} />
           <Route path="/charging-calculator" element={<ChargingCalculator />} />
           <Route path="/running-cost-calculator" element={<RunningCostCalculator />} />
+          <Route path="/total-cost-of-ownership" element={<TotalCostOfOwnership />} />
           <Route path="/compare" element={<ComparePage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/contact" element={<ContactPage />} />
