@@ -9,10 +9,13 @@ lerna-debug.log*
 
 node_modules/
 dist
+dist-ssr
+*.tsbuildinfo
+src/assets.zip
+career-section-nanak/
 .env
 .env.*
 !.env.example
-dist-ssr
 *.local
 
 # Optional local overrides
