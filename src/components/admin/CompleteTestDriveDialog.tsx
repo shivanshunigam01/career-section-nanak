@@ -343,7 +343,7 @@ export function CompleteTestDriveDialog({
               ) : null}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Completion location</Label>
+              <Label className="text-xs">Completion location (optional)</Label>
               <div className="rounded-md border border-border/50 bg-secondary/30 px-3 py-2 text-xs flex items-center gap-2 min-h-10">
                 {geoStatus === "loading" ? (
                   <>
@@ -572,10 +572,6 @@ export function UpdateCompletionMediaDialog({ open, onOpenChange, log, onSaved }
     }
     if (!hasExistingPhoto && !customerPhoto.file) {
       toast.error("Customer photo is required.");
-      return;
-    }
-    if (!geo && !hasExistingLocation) {
-      toast.error("Capture GPS or paste a Google Maps pin for the test drive location.");
       return;
     }
     if (!customerPhoto.file && !vehiclePhoto.file && !geo) {
