@@ -1006,19 +1006,32 @@ export default function AdminTDBookings() {
 
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-xs">Assign staff</Label>
+                        <Label className="text-xs">
+                          Assign staff
+                          {executives.length > 0 ? (
+                            <span className="text-muted-foreground font-normal"> · {executives.length} active users</span>
+                          ) : null}
+                        </Label>
                         {canAssign ? (
                           <>
                         <Select value={assignExecutiveId} onValueChange={setAssignExecutiveId}>
-                          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Choose staff member" /></SelectTrigger>
-                          <SelectContent>
+                          <SelectTrigger className="bg-secondary/50">
+                            <SelectValue placeholder="Choose staff member by name" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[min(360px,55vh)]">
                             {executives.map((e) => (
                               <SelectItem key={e._id} value={e._id}>
-                                {e.name} ({e.designationLabel || designationLabel(e.designation) || e.role})
+                                {e.name}
+                                {" · "}
+                                {e.designationLabel || designationLabel(e.designation) || e.role || "Staff"}
+                                {e.email ? ` · ${e.email}` : ""}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
+                        {executives.length === 0 ? (
+                          <p className="text-[11px] text-muted-foreground">No staff list loaded. Refresh the page or check User Master.</p>
+                        ) : null}
                         <Button
                           size="sm"
                           variant="outline"
