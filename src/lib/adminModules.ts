@@ -63,6 +63,7 @@ export type AdminModuleAction =
   | "update"
   | "delete"
   | "assign"
+  | "reassign"
   | "export"
   | "reschedule"
   | "cancel"
@@ -101,6 +102,7 @@ export const ACTION_LABELS: Record<AdminModuleAction, string> = {
   update: "Edit",
   delete: "Delete",
   assign: "Assign",
+  reassign: "Re-assign to executive",
   export: "Export",
   reschedule: "Reschedule",
   cancel: "Cancel",
@@ -135,7 +137,7 @@ export const ADMIN_MODULES: AdminModule[] = [
   { key: "media", label: "Media", path: "/admin/media", group: "Core", actions: ["view", "create", "update", "delete"] },
   { key: "settings", label: "Settings", path: "/admin/settings", group: "Core", actions: ["view", "update"] },
   { key: "my_dashboard", label: "My Dashboard", path: "/admin/my-dashboard", group: "Employee portal", actions: ["view"] },
-  { key: "td_my_bookings", label: "My Test Drives", path: "/admin/td/my-bookings", group: "Employee portal", actions: ["view", "update", "verify_dl", "start_drive", "reschedule", "cancel", "complete"] },
+  { key: "td_my_bookings", label: "My Test Drives", path: "/admin/td/my-bookings", group: "Employee portal", actions: ["view", "update", "reassign", "verify_dl", "start_drive", "reschedule", "cancel", "complete"] },
   { key: "feedback_test_drive", label: "TD Feedback Forms", path: "/admin/feedback/test-drive", group: "Feedback", actions: ["view", "delete"] },
   { key: "feedback_post_delivery", label: "Delivery Feedback Forms", path: "/admin/feedback/post-delivery", group: "Feedback", actions: ["view", "delete"] },
   { key: "complaint_inbound", label: "Complaint Inbound", path: "/admin/complaints/inbound", group: "Feedback", actions: ["view", "create", "update", "delete"] },

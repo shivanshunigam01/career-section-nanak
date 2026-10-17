@@ -124,7 +124,9 @@ export default function AdminTDBookings() {
   const { models: catalogModels } = useVehicleCatalog();
   const canCreate = canPerformAction(adminUser, "td_bookings", "create");
   const canUpdate = canPerformAction(adminUser, "td_bookings", "update");
-  const canAssign = canPerformAction(adminUser, "td_bookings", "assign");
+  const canAssign =
+    canPerformAction(adminUser, "td_bookings", "assign") ||
+    canPerformAction(adminUser, "td_my_bookings", "reassign");
   const canVerifyDl = canPerformAction(adminUser, "td_bookings", "verify_dl");
   const canStartDrive = canPerformAction(adminUser, "td_bookings", "start_drive");
   const canCancel = canPerformAction(adminUser, "td_bookings", "cancel");
@@ -1007,9 +1009,9 @@ export default function AdminTDBookings() {
                     <div className="grid sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label className="text-xs">
-                          Assign staff
+                          Assign sales executive
                           {executives.length > 0 ? (
-                            <span className="text-muted-foreground font-normal"> · {executives.length} active users</span>
+                            <span className="text-muted-foreground font-normal"> · {executives.length} available</span>
                           ) : null}
                         </Label>
                         {canAssign ? (

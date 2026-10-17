@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Textarea } from "@/components/ui/textarea";
 import {
   CalendarCheck, Search, RefreshCw, Car, Clock, Building2,
-  CheckCircle2, XCircle, Loader2, Eye, Ban, Play, CalendarClock, User, Plus, Camera,
+  CheckCircle2, XCircle, Loader2, Eye, Ban, Play, CalendarClock, User, Plus, Camera, UserCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatTime12h } from "@/lib/tdSlotSchedule";
@@ -70,6 +70,16 @@ type Booking = {
     purchaseTimeline?: string;
     remarks?: string;
   } | null;
+  assignedExecutive?: { _id: string; name: string; email?: string } | null;
+};
+
+type Executive = {
+  _id: string;
+  name: string;
+  email?: string;
+  role?: string;
+  designation?: string;
+  designationLabel?: string;
 };
 
 const STATUS_COLORS: Record<string, string> = {
@@ -128,6 +138,13 @@ export default function AdminTDMyBookings() {
   const canCreateLead = canPerformAction(adminUser, "crm_leads", "create");
   const canManageDrive =
     canUpdateAssignment || canStartDrive || canComplete || canReschedule || canCancel;
+  const canDelegateTd =
+    !isExecutive &&
+    (canPerformAction(adminUser, "td_bookings", "assign") ||
+      canPerformAction(adminUser, "td_my_bookings", "reassign"));
+
+  const [executives, setExecutives] = useState<Executive[]>([]);
+  const [assignExecutiveId, setAssignExecutiveId] = useState("");
 
   const isTerminalStatus = (status: string) => ["COMPLETED", "CANCELLED", "MISSED"].includes(status);
 
@@ -148,10 +165,25 @@ export default function AdminTDMyBookings() {
 
   useEffect(() => { void fetchBookings(); }, [fetchBookings]);
 
+  useEffect(() => {
+    if (!canDelegateTd) return;
+    void (async () => {
+      try {
+        const { data } = await adminGet<Executive[]>("/admin/td/bookings/executives/list");
+        setExecutives(data ?? []);
+      } catch {
+        setExecutives([]);
+      }
+    })();
+  }, [canDelegateTd]);
+
   const refreshSelected = useCallback(async (id: string) => {
     try {
       const { data } = await adminGet<Booking>(`/admin/td/bookings/${id}`);
-      if (data) setSelected(data);
+      if (data) {
+        setSelected(data);
+        setAssignExecutiveId(data.assignedExecutive?._id ?? "");
+      }
       return data ?? null;
     } catch {
       return null;
@@ -276,6 +308,24 @@ export default function AdminTDMyBookings() {
     try {
       await adminPatchJson(`/admin/td/bookings/${id}/accept-assignment`, {});
       toast.success("Assignment accepted");
+      void fetchBookings();
+      await refreshSelected(id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDelegateExecutive = async (id: string) => {
+    if (!assignExecutiveId) {
+      toast.error("Choose a sales executive");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      await adminPatchJson(`/admin/td/bookings/${id}/assign-executive`, { executiveId: assignExecutiveId });
+      toast.success("Test drive assigned to executive — they must accept it");
       void fetchBookings();
       await refreshSelected(id);
     } catch (e) {
@@ -462,6 +512,53 @@ export default function AdminTDMyBookings() {
                     </div>
                   </div>
 
+                  {canDelegateTd && !isTerminalStatus(selected.bookingStatus) ? (
+                    <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                        Assign to your team
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        TD coordinator assigned this drive to you. Pick a sales executive on your team to run the test
+                        drive — they will get a notification to accept.
+                      </p>
+                      {selected.assignedExecutive?.name ? (
+                        <p className="text-xs text-foreground">
+                          Currently assigned: <span className="font-medium">{selected.assignedExecutive.name}</span>
+                        </p>
+                      ) : null}
+                      <Select value={assignExecutiveId} onValueChange={setAssignExecutiveId}>
+                        <SelectTrigger className="bg-secondary/50">
+                          <SelectValue placeholder="Choose sales executive by name" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[min(360px,55vh)]">
+                          {executives.map((e) => (
+                            <SelectItem key={e._id} value={e._id}>
+                              {e.name}
+                              {e.designationLabel || designationLabel(e.designation)
+                                ? ` · ${e.designationLabel || designationLabel(e.designation)}`
+                                : ""}
+                              {e.email ? ` · ${e.email}` : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {executives.length === 0 ? (
+                        <p className="text-[11px] text-muted-foreground">
+                          No executives found under your team. Check User Master reporting lines.
+                        </p>
+                      ) : null}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="w-full"
+                        disabled={actionLoading || !assignExecutiveId}
+                        onClick={() => void handleDelegateExecutive(selected._id)}
+                      >
+                        <UserCheck className="w-4 h-4 mr-2" /> Assign to executive
+                      </Button>
+                    </div>
+                  ) : null}
+
                   <div className="rounded-lg border border-border/50 bg-muted/20 p-4 space-y-3">
                     <DrivingLicenceVerify
                       bookingId={selected._id}
@@ -485,7 +582,8 @@ export default function AdminTDMyBookings() {
                         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 space-y-2">
                           <p className="text-sm text-foreground font-medium">Assignment awaiting your response</p>
                           <p className="text-xs text-muted-foreground">
-                            Accept to confirm this test drive, or reject to return it for reassignment.
+                            Assign a sales executive above, or accept only if you will run this test drive yourself.
+                            Reject returns it to the TD coordinator.
                           </p>
                           <div className="grid grid-cols-2 gap-2">
                             <Button
