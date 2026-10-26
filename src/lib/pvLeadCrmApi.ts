@@ -295,6 +295,11 @@ export async function fetchPvCrmLeadDetail(id: string): Promise<PvCrmLeadDetail>
     lead,
     history: asArray<LeadStageHistoryItem>(wrapped?.history),
     followUps: asArray<LeadFollowUpItem>(wrapped?.followUps),
+    followUpCount:
+      typeof wrapped?.followUpCount === "number"
+        ? wrapped.followUpCount
+        : asArray<LeadFollowUpItem>(wrapped?.followUps).length,
+    latestFollowUp: wrapped?.latestFollowUp ?? null,
     followUpSlots: asArray<CreSheetFollowUpSlot>(wrapped?.followUpSlots),
     siblingLeads: asArray(wrapped?.siblingLeads),
     stages: asArray<CrmLeadStage>(wrapped?.stages).length

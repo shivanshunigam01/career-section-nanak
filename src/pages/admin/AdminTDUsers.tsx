@@ -109,6 +109,9 @@ export default function AdminTDUsers() {
   const [form, setForm] = useState<typeof emptyForm & { _id?: string }>(emptyForm);
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<StaffUser | null>(null);
+  const [deleteLeadTransfer, setDeleteLeadTransfer] = useState<"sales_manager" | "sales_head" | "unassigned">(
+    "sales_manager",
+  );
   const [revealedPasswords, setRevealedPasswords] = useState<Record<string, string>>({});
   const [revealLoadingId, setRevealLoadingId] = useState<string | null>(null);
   const [showFormPassword, setShowFormPassword] = useState(false);
@@ -374,14 +377,22 @@ export default function AdminTDUsers() {
     if (!deleteTarget) return;
     setActionLoading(true);
     try {
-      const result = await adminDeleteJson<{ unassignedLeads?: number; unassignedBookings?: number }>(
-        `/admin/td/users/${deleteTarget._id}`,
-      );
-      const leads = result?.unassignedLeads ?? 0;
-      const bookings = result?.unassignedBookings ?? 0;
+      const q = new URLSearchParams({ leadTransferTo: deleteLeadTransfer });
+      const result = await adminDeleteJson<{
+        unassignedLeads?: number;
+        unassignedBookings?: number;
+        transferredLeads?: number;
+        transferredBookings?: number;
+        transferredTo?: { name?: string };
+      }>(`/admin/td/users/${deleteTarget._id}?${q}`);
+      const leads = (result?.transferredLeads ?? 0) + (result?.unassignedLeads ?? 0);
+      const bookings = (result?.transferredBookings ?? 0) + (result?.unassignedBookings ?? 0);
+      const transferName = result?.transferredTo?.name;
       toast.success(
         leads > 0 || bookings > 0
-          ? `${deleteTarget.name} deleted — ${leads} lead(s) and ${bookings} test drive(s) moved to Unassigned`
+          ? transferName
+            ? `${deleteTarget.name} deleted — ${leads} lead(s) and ${bookings} test drive(s) transferred to ${transferName}`
+            : `${deleteTarget.name} deleted — ${leads} lead(s) and ${bookings} test drive(s) moved to Unassigned`
           : `${deleteTarget.name} deleted`,
       );
       setDeleteTarget(null);
@@ -827,11 +838,45 @@ export default function AdminTDUsers() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {deleteTarget?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This permanently removes <span className="font-medium text-foreground">{deleteTarget?.email}</span> from
-              the User Master and they will no longer be able to log in. Any leads or test drive bookings assigned to
-              them will automatically move to <span className="font-medium text-foreground">Unassigned</span> so you
-              can reassign them. This action cannot be undone.
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p>
+                  This permanently removes{" "}
+                  <span className="font-medium text-foreground">{deleteTarget?.email}</span> from the User Master. They
+                  will no longer be able to log in.
+                </p>
+                <div className="space-y-2 rounded-lg border border-border/50 p-3 bg-muted/20">
+                  <p className="text-xs font-semibold text-foreground">Transfer assigned leads & test drives to</p>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="leadTransfer"
+                      checked={deleteLeadTransfer === "sales_manager"}
+                      onChange={() => setDeleteLeadTransfer("sales_manager")}
+                    />
+                    <span>Sales Manager (direct manager in User Master)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="leadTransfer"
+                      checked={deleteLeadTransfer === "sales_head"}
+                      onChange={() => setDeleteLeadTransfer("sales_head")}
+                    />
+                    <span>Sales Head (reporting chain)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="leadTransfer"
+                      checked={deleteLeadTransfer === "unassigned"}
+                      onChange={() => setDeleteLeadTransfer("unassigned")}
+                    />
+                    <span>Unassigned (manual reassignment later)</span>
+                  </label>
+                </div>
+                <p className="text-xs">This action cannot be undone. Follow-up history on leads is preserved.</p>
+              </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

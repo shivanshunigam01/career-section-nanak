@@ -82,10 +82,56 @@ export type DetailedReportUnassignedSheet = {
   totalTestDriveMtd: number;
 };
 
+export type DetailedReportLeadRow = {
+  leadId: string;
+  name: string;
+  mobile: string;
+  model: string;
+  status: string;
+  source: string;
+  assignedTo: string;
+  enquiryAt: string | null;
+  remarks: string;
+  isWalkInSheet: boolean;
+  isDigitalSheet: boolean;
+  bookingDone: boolean;
+};
+
+export type DetailedReportTestDriveRow = {
+  bookingId: string;
+  slotDate: string | null;
+  bookingStatus: string;
+  customerName: string;
+  customerMobile: string;
+  model: string;
+  source: string;
+  leadId: string | null;
+};
+
+export type DetailedReportFollowUpCallRow = {
+  followUpId: string;
+  leadId: string | null;
+  customerName: string;
+  customerMobile: string;
+  model: string;
+  note: string;
+  status: string;
+  scheduledAt: string | null;
+  completedAt: string | null;
+  executive: string;
+};
+
+export type DetailedReportPeriodBounds = {
+  mtdFrom: string;
+  mtdTo: string;
+  todayFrom: string;
+  todayTo: string;
+};
+
 export type DetailedReport = {
   generatedAt: string;
   period: {
-    mtdFrom: string;
+    mtdFrom?: string;
     mtdTo: string;
     today: string;
     label: string;
@@ -101,6 +147,12 @@ export type DetailedReport = {
   monthlyTestDrivesTotal: number;
   unassignedSheet?: DetailedReportUnassignedSheet;
   attributionNote?: string;
+  leadDetailRows?: DetailedReportLeadRow[];
+  leadDetailRowsTotal?: number;
+  leadDetailRowsTruncated?: boolean;
+  testDriveDetailRows?: DetailedReportTestDriveRow[];
+  followUpCallRows?: DetailedReportFollowUpCallRow[];
+  periodBounds?: DetailedReportPeriodBounds;
 };
 
 export async function fetchDetailedReport(): Promise<DetailedReport> {

@@ -4,12 +4,25 @@ import { BarChart3, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { formatApiErrors } from "@/lib/api";
 import {
   fetchDetailedReport,
   type DetailedReport,
-  type DetailedReportSummaryBlock,
+  type DetailedReportFollowUpCallRow,
+  type DetailedReportLeadRow,
+  type DetailedReportTestDriveRow,
 } from "@/lib/detailedReportApi";
+import {
+  filterDetailedFollowUpCalls,
+  filterDetailedLeadRows,
+  filterDetailedTestDriveRows,
+} from "@/lib/detailedReportKpi";
 import { cn } from "@/lib/utils";
 import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
 import { downloadDetailedReportExcel } from "@/lib/exports/detailedReportExport";
@@ -43,7 +56,7 @@ function KpiBox({
 }: {
   title: string;
   headerClass: string;
-  metrics: { label: string; value: number }[];
+  metrics: { label: string; value: number; onClick?: () => void }[];
 }) {
   return (
     <Card className="overflow-hidden border shadow-sm">
@@ -52,7 +65,18 @@ function KpiBox({
         {metrics.map((m) => (
           <div key={m.label} className="flex items-center justify-between gap-3 px-3 py-2.5 text-sm">
             <span className="text-muted-foreground">{m.label}</span>
-            <span className="font-bold tabular-nums text-foreground">{fmt(m.value)}</span>
+            {m.onClick ? (
+              <button
+                type="button"
+                onClick={m.onClick}
+                className="font-bold tabular-nums text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                title="View detailed records"
+              >
+                {fmt(m.value)}
+              </button>
+            ) : (
+              <span className="font-bold tabular-nums text-foreground">{fmt(m.value)}</span>
+            )}
           </div>
         ))}
       </div>
@@ -60,12 +84,13 @@ function KpiBox({
   );
 }
 
-function tripletMetrics(prefix: string, block: DetailedReportSummaryBlock) {
-  return [
-    { label: `${prefix} (All)`, value: block.all },
-    { label: `${prefix} MTD`, value: block.mtd },
-    { label: `${prefix} Today`, value: block.today },
-  ];
+type PopupMode = "leads" | "testDrives" | "followUps";
+
+function fmtDateShort(iso: string | null | undefined) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
 function ReportTableCard({
@@ -91,6 +116,12 @@ export default function AdminDetailedReport() {
   const [data, setData] = useState<DetailedReport | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [popupTitle, setPopupTitle] = useState("");
+  const [popupMode, setPopupMode] = useState<PopupMode>("leads");
+  const [popupLeads, setPopupLeads] = useState<DetailedReportLeadRow[]>([]);
+  const [popupTestDrives, setPopupTestDrives] = useState<DetailedReportTestDriveRow[]>([]);
+  const [popupFollowUps, setPopupFollowUps] = useState<DetailedReportFollowUpCallRow[]>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -132,6 +163,38 @@ export default function AdminDetailedReport() {
   }
 
   const { summary } = data;
+  const leadRows = data.leadDetailRows ?? [];
+  const tdRows = data.testDriveDetailRows ?? [];
+  const callRows = data.followUpCallRows ?? [];
+  const periodBounds = data.periodBounds ?? {
+    mtdFrom: data.period.mtdFrom,
+    mtdTo: data.period.mtdTo,
+    todayFrom: data.period.mtdTo,
+    todayTo: data.period.mtdTo,
+  };
+  const todayKey = data.period.today;
+
+  const openLeadPopup = (title: string, rows: DetailedReportLeadRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("leads");
+    setPopupLeads(rows);
+    setPopupOpen(true);
+  };
+
+  const openTestDrivePopup = (title: string, rows: DetailedReportTestDriveRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("testDrives");
+    setPopupTestDrives(rows);
+    setPopupOpen(true);
+  };
+
+  const openFollowUpPopup = (title: string, rows: DetailedReportFollowUpCallRow[]) => {
+    setPopupTitle(title);
+    setPopupMode("followUps");
+    setPopupFollowUps(rows);
+    setPopupOpen(true);
+  };
+
   const mgrTotals = data.salesManagers.reduce(
     (acc, r) => ({
       leads: acc.leads + r.totalLeads,
@@ -191,29 +254,247 @@ export default function AdminDetailedReport() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6 gap-3">
-        <KpiBox title="Total Leads" headerClass="bg-blue-600" metrics={tripletMetrics("Total Leads", summary.totalLeads)} />
-        <KpiBox title="Total Walk-In" headerClass="bg-rose-700" metrics={tripletMetrics("Walk-In", summary.walkIn)} />
-        <KpiBox title="Total Digital Leads" headerClass="bg-teal-700" metrics={tripletMetrics("Digital", summary.digital)} />
+        <KpiBox
+          title="Total Leads"
+          headerClass="bg-blue-600"
+          metrics={[
+            {
+              label: "Total Leads (All)",
+              value: summary.totalLeads.all,
+              onClick: () => openLeadPopup("Total Leads (All)", filterDetailedLeadRows("totalLeads", "all", leadRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Total Leads MTD",
+              value: summary.totalLeads.mtd,
+              onClick: () =>
+                openLeadPopup("Total Leads MTD", filterDetailedLeadRows("totalLeads", "mtd", leadRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Total Leads Today",
+              value: summary.totalLeads.today,
+              onClick: () =>
+                openLeadPopup("Total Leads Today", filterDetailedLeadRows("totalLeads", "today", leadRows, todayKey, periodBounds)),
+            },
+          ]}
+        />
+        <KpiBox
+          title="Total Walk-In"
+          headerClass="bg-rose-700"
+          metrics={[
+            {
+              label: "Walk-In (All)",
+              value: summary.walkIn.all,
+              onClick: () => openLeadPopup("Walk-In (All)", filterDetailedLeadRows("walkIn", "all", leadRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Walk-In MTD",
+              value: summary.walkIn.mtd,
+              onClick: () => openLeadPopup("Walk-In MTD", filterDetailedLeadRows("walkIn", "mtd", leadRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Walk-In Today",
+              value: summary.walkIn.today,
+              onClick: () => openLeadPopup("Walk-In Today", filterDetailedLeadRows("walkIn", "today", leadRows, todayKey, periodBounds)),
+            },
+          ]}
+        />
+        <KpiBox
+          title="Total Digital Leads"
+          headerClass="bg-teal-700"
+          metrics={[
+            {
+              label: "Digital (All)",
+              value: summary.digital.all,
+              onClick: () => openLeadPopup("Digital Leads (All)", filterDetailedLeadRows("digital", "all", leadRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Digital MTD",
+              value: summary.digital.mtd,
+              onClick: () => openLeadPopup("Digital Leads MTD", filterDetailedLeadRows("digital", "mtd", leadRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Digital Today",
+              value: summary.digital.today,
+              onClick: () => openLeadPopup("Digital Leads Today", filterDetailedLeadRows("digital", "today", leadRows, todayKey, periodBounds)),
+            },
+          ]}
+        />
         <KpiBox
           title="Test Drive"
           headerClass="bg-sky-600"
           metrics={[
-            { label: "Test Drive Till Date", value: summary.testDrives.all },
-            { label: "Test Drive MTD", value: summary.testDrives.mtd },
-            { label: "Test Drive Done Today", value: summary.testDrives.doneToday },
+            {
+              label: "Test Drive Till Date",
+              value: summary.testDrives.all,
+              onClick: () =>
+                openTestDrivePopup("Test Drive Till Date", filterDetailedTestDriveRows("all", tdRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Test Drive MTD",
+              value: summary.testDrives.mtd,
+              onClick: () =>
+                openTestDrivePopup("Test Drive MTD", filterDetailedTestDriveRows("mtd", tdRows, todayKey, periodBounds)),
+            },
+            {
+              label: "Test Drive Done Today",
+              value: summary.testDrives.doneToday,
+              onClick: () =>
+                openTestDrivePopup("Test Drive Done Today", filterDetailedTestDriveRows("doneToday", tdRows, todayKey, periodBounds)),
+            },
           ]}
         />
         <KpiBox
           title="Booking Count"
           headerClass="bg-violet-700"
-          metrics={[{ label: "Booking Count", value: summary.bookingCount }]}
+          metrics={[
+            {
+              label: "Booking Count",
+              value: summary.bookingCount,
+              onClick: () =>
+                openLeadPopup("Booking Count", filterDetailedLeadRows("booking", "all", leadRows, todayKey, periodBounds)),
+            },
+          ]}
         />
         <KpiBox
           title="Calls Made Today"
           headerClass="bg-indigo-800"
-          metrics={[{ label: "Follow-ups Today", value: summary.callsMadeToday }]}
+          metrics={[
+            {
+              label: "Follow-ups Today",
+              value: summary.callsMadeToday,
+              onClick: () => openFollowUpPopup("Follow-ups Today", filterDetailedFollowUpCalls(callRows)),
+            },
+          ]}
         />
       </div>
+
+      <Dialog open={popupOpen} onOpenChange={setPopupOpen}>
+        <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>{popupTitle}</DialogTitle>
+            {popupMode === "leads" && data.leadDetailRowsTruncated ? (
+              <p className="text-xs text-muted-foreground">
+                Showing {popupLeads.length} of {data.leadDetailRowsTotal ?? popupLeads.length} leads in scope — open Lead CRM for the full list.
+              </p>
+            ) : null}
+          </DialogHeader>
+          {popupMode === "leads" ? (
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 text-muted-foreground">
+                    <th className="text-left p-2">Customer</th>
+                    <th className="text-left p-2">Model</th>
+                    <th className="text-left p-2">Stage</th>
+                    <th className="text-left p-2">Source</th>
+                    <th className="text-left p-2">Assigned to</th>
+                    <th className="text-left p-2">Enquiry</th>
+                    <th className="text-left p-2">Remarks</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupLeads.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="p-8 text-center text-muted-foreground">
+                        No records match this KPI
+                      </td>
+                    </tr>
+                  ) : (
+                    popupLeads.map((row) => (
+                      <tr key={row.leadId} className="border-b border-border/20 hover:bg-secondary/10">
+                        <td className="p-2">
+                          <p className="font-medium">{row.name}</p>
+                          <p className="text-muted-foreground">{row.mobile}</p>
+                        </td>
+                        <td className="p-2">{row.model}</td>
+                        <td className="p-2">{row.status}</td>
+                        <td className="p-2">{row.source}</td>
+                        <td className="p-2">{row.assignedTo}</td>
+                        <td className="p-2 whitespace-nowrap">{fmtDateShort(row.enquiryAt)}</td>
+                        <td className="p-2 max-w-[14rem] truncate" title={row.remarks}>
+                          {row.remarks}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : popupMode === "testDrives" ? (
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 text-muted-foreground">
+                    <th className="text-left p-2">Customer</th>
+                    <th className="text-left p-2">Model</th>
+                    <th className="text-left p-2">Slot date</th>
+                    <th className="text-left p-2">Status</th>
+                    <th className="text-left p-2">Source</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupTestDrives.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                        No test drive records match this KPI
+                      </td>
+                    </tr>
+                  ) : (
+                    popupTestDrives.map((row) => (
+                      <tr key={row.bookingId} className="border-b border-border/20 hover:bg-secondary/10">
+                        <td className="p-2">
+                          <p className="font-medium">{row.customerName}</p>
+                          <p className="text-muted-foreground">{row.customerMobile}</p>
+                        </td>
+                        <td className="p-2">{row.model}</td>
+                        <td className="p-2 whitespace-nowrap">{fmtDateShort(row.slotDate)}</td>
+                        <td className="p-2">{row.bookingStatus}</td>
+                        <td className="p-2">{row.source}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="max-h-[65vh] overflow-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border/50 text-muted-foreground">
+                    <th className="text-left p-2">Customer</th>
+                    <th className="text-left p-2">Executive</th>
+                    <th className="text-left p-2">Note</th>
+                    <th className="text-left p-2">Scheduled</th>
+                    <th className="text-left p-2">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {popupFollowUps.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                        No follow-ups logged for today
+                      </td>
+                    </tr>
+                  ) : (
+                    popupFollowUps.map((row) => (
+                      <tr key={row.followUpId} className="border-b border-border/20 hover:bg-secondary/10">
+                        <td className="p-2">
+                          <p className="font-medium">{row.customerName}</p>
+                          <p className="text-muted-foreground">{row.customerMobile}</p>
+                        </td>
+                        <td className="p-2">{row.executive}</td>
+                        <td className="p-2 max-w-[16rem]">{row.note}</td>
+                        <td className="p-2 whitespace-nowrap">{fmtDateShort(row.scheduledAt || row.completedAt)}</td>
+                        <td className="p-2">{row.status}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-4">
         <ReportTableCard title="Lead Source" className="xl:col-span-3">

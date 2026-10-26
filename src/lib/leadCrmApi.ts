@@ -126,6 +126,7 @@ export async function fetchCrmLeadDetail(id: string): Promise<CrmLeadDetail> {
     lead,
     history: asArray<LeadStageHistoryItem>(wrapped?.history),
     followUps: asArray<LeadFollowUpItem>(wrapped?.followUps),
+    latestFollowUp: wrapped?.latestFollowUp ?? null,
     stages: asArray<CrmLeadStage>(wrapped?.stages).length
       ? asArray<CrmLeadStage>(wrapped?.stages)
       : [...CRM_LEAD_STAGES],
