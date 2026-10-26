@@ -15,6 +15,7 @@ import {
   fetchDetailedReport,
   fetchDetailedReportKpiRecords,
   type DetailedReport,
+  type DetailedReportDrillParams,
   type DetailedReportFollowUpCallRow,
   type DetailedReportLeadRow,
   type DetailedReportTestDriveRow,
@@ -87,6 +88,19 @@ function fmtDateShort(iso: string | null | undefined) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function ClickableCount({ value, onClick }: { value: number; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full font-bold tabular-nums text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+      title="View detailed records"
+    >
+      {fmt(value)}
+    </button>
+  );
 }
 
 function ReportTableCard({
@@ -163,7 +177,7 @@ export default function AdminDetailedReport() {
 
   const { summary } = data;
 
-  const loadKpiPopup = async (title: string, kpi: string, scope: string) => {
+  const loadDrill = async (title: string, params: DetailedReportDrillParams) => {
     setPopupTitle(title);
     setPopupOpen(true);
     setPopupLoading(true);
@@ -173,7 +187,7 @@ export default function AdminDetailedReport() {
     setPopupTestDrives([]);
     setPopupFollowUps([]);
     try {
-      const res = await fetchDetailedReportKpiRecords(kpi, scope);
+      const res = await fetchDetailedReportKpiRecords(params);
       setPopupTotal(res.total);
       setPopupTruncated(Boolean(res.truncated));
       if (res.kind === "leads") {
@@ -193,6 +207,9 @@ export default function AdminDetailedReport() {
       setPopupLoading(false);
     }
   };
+
+  const loadKpiPopup = (title: string, kpi: string, scope: string) =>
+    void loadDrill(title, { kpi, scope });
 
   const mgrTotals = data.salesManagers.reduce(
     (acc, r) => ({
@@ -508,14 +525,51 @@ export default function AdminDetailedReport() {
               {data.leadSources.map((row, i) => (
                 <tr key={row.source} className={i % 2 ? STRIPE : undefined}>
                   <td className={TD_L}>{row.source}</td>
-                  <td className={TD}>{fmt(row.count)}</td>
-                  <td className={TD}>{fmt(row.assignedCount)}</td>
+                  <td className={TD}>
+                    <ClickableCount
+                      value={row.count}
+                      onClick={() =>
+                        void loadDrill(`${row.source} · Count`, {
+                          table: "leadSource",
+                          source: row.source,
+                          metric: "count",
+                        })
+                      }
+                    />
+                  </td>
+                  <td className={TD}>
+                    <ClickableCount
+                      value={row.assignedCount}
+                      onClick={() =>
+                        void loadDrill(`${row.source} · Assigned`, {
+                          table: "leadSource",
+                          source: row.source,
+                          metric: "assigned",
+                        })
+                      }
+                    />
+                  </td>
                 </tr>
               ))}
               <tr className={TOTAL_ROW}>
                 <td className={cn(TD_L, "font-bold")}>Total</td>
-                <td className={TD}>{fmt(data.leadSourcesTotal.count)}</td>
-                <td className={TD}>{fmt(data.leadSourcesTotal.assignedCount)}</td>
+                <td className={TD}>
+                  <ClickableCount
+                    value={data.leadSourcesTotal.count}
+                    onClick={() => void loadKpiPopup("Total Leads (All)", "totalLeads", "all")}
+                  />
+                </td>
+                <td className={TD}>
+                  <ClickableCount
+                    value={data.leadSourcesTotal.assignedCount}
+                    onClick={() =>
+                      void loadDrill("All sources · Assigned on sheet", {
+                        table: "leadSource",
+                        metric: "assigned",
+                      })
+                    }
+                  />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -540,11 +594,66 @@ export default function AdminDetailedReport() {
                     <td className={cn(TD_L, "whitespace-nowrap")}>
                       {row.name} ({row.abbr})
                     </td>
-                    <td className={TD}>{fmt(row.totalLeads)}</td>
-                    <td className={TD}>{fmt(row.totalTestDrive)}</td>
-                    <td className={TD}>{fmt(row.totalTestDriveMtd)}</td>
-                    <td className={TD}>{fmt(row.teamTestDrive ?? 0)}</td>
-                    <td className={TD}>{fmt(row.teamTestDriveMtd ?? 0)}</td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.totalLeads}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · Total Leads`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "leads",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.totalTestDrive}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · Total TD (sheet)`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "td",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.totalTestDriveMtd}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · TD This Month`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "tdmtd",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.teamTestDrive ?? 0}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · TD By Team`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "teamtd",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.teamTestDriveMtd ?? 0}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · Team TD MTD`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "teamtdmtd",
+                          })
+                        }
+                      />
+                    </td>
                   </tr>
                 ))}
                 {data.salesManagers.length === 0 && (
@@ -557,16 +666,48 @@ export default function AdminDetailedReport() {
                 {data.unassignedSheet && data.unassignedSheet.totalLeads > 0 ? (
                   <tr className="bg-muted/50 text-muted-foreground">
                     <td className={cn(TD_L, "italic")}>Unassigned (sheet)</td>
-                    <td className={TD}>{fmt(data.unassignedSheet.totalLeads)}</td>
-                    <td className={TD}>{fmt(data.unassignedSheet.totalTestDrive)}</td>
-                    <td className={TD}>{fmt(data.unassignedSheet.totalTestDriveMtd)}</td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={data.unassignedSheet.totalLeads}
+                        onClick={() =>
+                          void loadDrill("Unassigned (sheet) · Leads", { table: "unassigned", metric: "leads" })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={data.unassignedSheet.totalTestDrive}
+                        onClick={() =>
+                          void loadDrill("Unassigned (sheet) · Total TD", { table: "unassigned", metric: "td" })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={data.unassignedSheet.totalTestDriveMtd}
+                        onClick={() =>
+                          void loadDrill("Unassigned (sheet) · TD MTD", { table: "unassigned", metric: "tdmtd" })
+                        }
+                      />
+                    </td>
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
                   </tr>
                 ) : null}
                 <tr className={TOTAL_ROW}>
                   <td className={cn(TD_L, "font-bold")}>TOTAL (managers)</td>
-                  <td className={TD}>{fmt(mgrTotals.leads)}</td>
+                  <td className={TD}>
+                    <ClickableCount
+                      value={mgrTotals.leads}
+                      onClick={() =>
+                        void loadDrill("All sales managers · Total Leads", {
+                          table: "staff",
+                          staffId: "__managers__",
+                          metric: "leads",
+                        })
+                      }
+                    />
+                  </td>
                   <td className={TD}>{fmt(mgrTotals.td)}</td>
                   <td className={TD}>{fmt(mgrTotals.tdMtd)}</td>
                   <td className={TD}>{fmt(mgrTotals.teamTd)}</td>
@@ -592,9 +733,42 @@ export default function AdminDetailedReport() {
                     <td className={cn(TD_L, "whitespace-nowrap")}>
                       {row.name} ({row.abbr})
                     </td>
-                    <td className={TD}>{fmt(row.totalLeads)}</td>
-                    <td className={TD}>{fmt(row.totalTestDrive)}</td>
-                    <td className={TD}>{fmt(row.totalTestDriveMtd)}</td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.totalLeads}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · Total Leads`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "leads",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.totalTestDrive}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · Total TD (sheet)`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "td",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.totalTestDriveMtd}
+                        onClick={() =>
+                          void loadDrill(`${row.name} · TD This Month`, {
+                            table: "staff",
+                            staffId: row.staffId,
+                            metric: "tdmtd",
+                          })
+                        }
+                      />
+                    </td>
                   </tr>
                 ))}
                 {data.salesExecutives.length === 0 && (
@@ -606,7 +780,18 @@ export default function AdminDetailedReport() {
                 )}
                 <tr className={TOTAL_ROW}>
                   <td className={cn(TD_L, "font-bold")}>TOTAL (executives)</td>
-                  <td className={TD}>{fmt(execTotals.leads)}</td>
+                  <td className={TD}>
+                    <ClickableCount
+                      value={execTotals.leads}
+                      onClick={() =>
+                        void loadDrill("All sales executives · Total Leads", {
+                          table: "staff",
+                          staffId: "__executives__",
+                          metric: "leads",
+                        })
+                      }
+                    />
+                  </td>
                   <td className={TD}>{fmt(execTotals.td)}</td>
                   <td className={TD}>{fmt(execTotals.tdMtd)}</td>
                 </tr>
@@ -637,12 +822,33 @@ export default function AdminDetailedReport() {
                 {data.monthlyTestDrives.map((row, i) => (
                   <tr key={row.monthNum} className={i % 2 ? STRIPE : undefined}>
                     <td className={TD_L}>{row.month}</td>
-                    <td className={TD}>{fmt(row.count)}</td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={row.count}
+                        onClick={() =>
+                          void loadDrill(`${row.month} · Test Drives`, {
+                            table: "monthlyTd",
+                            monthNum: row.monthNum,
+                            year: new Date(data.generatedAt).getFullYear(),
+                          })
+                        }
+                      />
+                    </td>
                   </tr>
                 ))}
                 <tr className={TOTAL_ROW}>
                   <td className={cn(TD_L, "font-bold")}>TOTAL</td>
-                  <td className={cn(TD, "font-bold")}>{fmt(data.monthlyTestDrivesTotal)}</td>
+                  <td className={cn(TD, "font-bold")}>
+                    <ClickableCount
+                      value={data.monthlyTestDrivesTotal}
+                      onClick={() =>
+                        void loadDrill("YTD · Test Drives", {
+                          table: "monthlyTd",
+                          year: new Date(data.generatedAt).getFullYear(),
+                        })
+                      }
+                    />
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -661,7 +867,17 @@ export default function AdminDetailedReport() {
               {data.leadTypes.map((row, i) => (
                 <tr key={row.leadType} className={i % 2 ? STRIPE : undefined}>
                   <td className={TD_L}>{row.leadType}</td>
-                  <td className={TD}>{fmt(row.count)}</td>
+                  <td className={TD}>
+                    <ClickableCount
+                      value={row.count}
+                      onClick={() =>
+                        void loadDrill(`${row.leadType} · Lead Type`, {
+                          table: "leadType",
+                          leadType: row.leadType,
+                        })
+                      }
+                    />
+                  </td>
                 </tr>
               ))}
               {data.leadTypes.length === 0 && (
@@ -673,7 +889,12 @@ export default function AdminDetailedReport() {
               )}
               <tr className={TOTAL_ROW}>
                 <td className={cn(TD_L, "font-bold")}>Total</td>
-                <td className={TD}>{fmt(data.leadTypesTotal)}</td>
+                <td className={TD}>
+                  <ClickableCount
+                    value={data.leadTypesTotal}
+                    onClick={() => void loadDrill("All lead types", { table: "leadType" })}
+                  />
+                </td>
               </tr>
             </tbody>
           </table>

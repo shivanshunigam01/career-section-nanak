@@ -172,11 +172,33 @@ export type DetailedKpiRecordsResponse = {
   truncated?: boolean;
 };
 
+export type DetailedReportDrillParams = {
+  kpi?: string;
+  scope?: string;
+  table?: string;
+  source?: string;
+  metric?: string;
+  leadType?: string;
+  staffId?: string;
+  monthNum?: number | string;
+  year?: number | string;
+};
+
 export async function fetchDetailedReportKpiRecords(
-  kpi: string,
-  scope: string,
+  params: DetailedReportDrillParams | string,
+  scope?: string,
 ): Promise<DetailedKpiRecordsResponse> {
-  const q = new URLSearchParams({ kpi, scope });
+  const q = new URLSearchParams();
+  if (typeof params === "string") {
+    q.set("kpi", params);
+    if (scope) q.set("scope", scope);
+  } else {
+    for (const [key, val] of Object.entries(params)) {
+      if (val !== undefined && val !== null && String(val).trim() !== "") {
+        q.set(key, String(val));
+      }
+    }
+  }
   const { data } = await adminGet<DetailedKpiRecordsResponse>(`/admin/reports/detailed/kpi-records?${q}`);
   if (!data) throw new Error("KPI records could not be loaded");
   return data;
