@@ -13,16 +13,12 @@ import {
 import { formatApiErrors } from "@/lib/api";
 import {
   fetchDetailedReport,
+  fetchDetailedReportKpiRecords,
   type DetailedReport,
   type DetailedReportFollowUpCallRow,
   type DetailedReportLeadRow,
   type DetailedReportTestDriveRow,
 } from "@/lib/detailedReportApi";
-import {
-  filterDetailedFollowUpCalls,
-  filterDetailedLeadRows,
-  filterDetailedTestDriveRows,
-} from "@/lib/detailedReportKpi";
 import { cn } from "@/lib/utils";
 import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
 import { downloadDetailedReportExcel } from "@/lib/exports/detailedReportExport";
@@ -122,6 +118,9 @@ export default function AdminDetailedReport() {
   const [popupLeads, setPopupLeads] = useState<DetailedReportLeadRow[]>([]);
   const [popupTestDrives, setPopupTestDrives] = useState<DetailedReportTestDriveRow[]>([]);
   const [popupFollowUps, setPopupFollowUps] = useState<DetailedReportFollowUpCallRow[]>([]);
+  const [popupLoading, setPopupLoading] = useState(false);
+  const [popupTruncated, setPopupTruncated] = useState(false);
+  const [popupTotal, setPopupTotal] = useState(0);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -163,36 +162,36 @@ export default function AdminDetailedReport() {
   }
 
   const { summary } = data;
-  const leadRows = data.leadDetailRows ?? [];
-  const tdRows = data.testDriveDetailRows ?? [];
-  const callRows = data.followUpCallRows ?? [];
-  const periodBounds = data.periodBounds ?? {
-    mtdFrom: data.period.mtdFrom,
-    mtdTo: data.period.mtdTo,
-    todayFrom: data.period.mtdTo,
-    todayTo: data.period.mtdTo,
-  };
-  const todayKey = data.period.today;
 
-  const openLeadPopup = (title: string, rows: DetailedReportLeadRow[]) => {
+  const loadKpiPopup = async (title: string, kpi: string, scope: string) => {
     setPopupTitle(title);
-    setPopupMode("leads");
-    setPopupLeads(rows);
     setPopupOpen(true);
-  };
-
-  const openTestDrivePopup = (title: string, rows: DetailedReportTestDriveRow[]) => {
-    setPopupTitle(title);
-    setPopupMode("testDrives");
-    setPopupTestDrives(rows);
-    setPopupOpen(true);
-  };
-
-  const openFollowUpPopup = (title: string, rows: DetailedReportFollowUpCallRow[]) => {
-    setPopupTitle(title);
-    setPopupMode("followUps");
-    setPopupFollowUps(rows);
-    setPopupOpen(true);
+    setPopupLoading(true);
+    setPopupTruncated(false);
+    setPopupTotal(0);
+    setPopupLeads([]);
+    setPopupTestDrives([]);
+    setPopupFollowUps([]);
+    try {
+      const res = await fetchDetailedReportKpiRecords(kpi, scope);
+      setPopupTotal(res.total);
+      setPopupTruncated(Boolean(res.truncated));
+      if (res.kind === "leads") {
+        setPopupMode("leads");
+        setPopupLeads(res.rows as DetailedReportLeadRow[]);
+      } else if (res.kind === "testDrives") {
+        setPopupMode("testDrives");
+        setPopupTestDrives(res.rows as DetailedReportTestDriveRow[]);
+      } else {
+        setPopupMode("followUps");
+        setPopupFollowUps(res.rows as DetailedReportFollowUpCallRow[]);
+      }
+    } catch (e) {
+      toast.error(formatApiErrors(e) || "Could not load KPI records");
+      setPopupOpen(false);
+    } finally {
+      setPopupLoading(false);
+    }
   };
 
   const mgrTotals = data.salesManagers.reduce(
@@ -261,19 +260,17 @@ export default function AdminDetailedReport() {
             {
               label: "Total Leads (All)",
               value: summary.totalLeads.all,
-              onClick: () => openLeadPopup("Total Leads (All)", filterDetailedLeadRows("totalLeads", "all", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Total Leads (All)", "totalLeads", "all"),
             },
             {
               label: "Total Leads MTD",
               value: summary.totalLeads.mtd,
-              onClick: () =>
-                openLeadPopup("Total Leads MTD", filterDetailedLeadRows("totalLeads", "mtd", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Total Leads MTD", "totalLeads", "mtd"),
             },
             {
               label: "Total Leads Today",
               value: summary.totalLeads.today,
-              onClick: () =>
-                openLeadPopup("Total Leads Today", filterDetailedLeadRows("totalLeads", "today", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Total Leads Today", "totalLeads", "today"),
             },
           ]}
         />
@@ -284,17 +281,17 @@ export default function AdminDetailedReport() {
             {
               label: "Walk-In (All)",
               value: summary.walkIn.all,
-              onClick: () => openLeadPopup("Walk-In (All)", filterDetailedLeadRows("walkIn", "all", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Walk-In (All)", "walkIn", "all"),
             },
             {
               label: "Walk-In MTD",
               value: summary.walkIn.mtd,
-              onClick: () => openLeadPopup("Walk-In MTD", filterDetailedLeadRows("walkIn", "mtd", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Walk-In MTD", "walkIn", "mtd"),
             },
             {
               label: "Walk-In Today",
               value: summary.walkIn.today,
-              onClick: () => openLeadPopup("Walk-In Today", filterDetailedLeadRows("walkIn", "today", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Walk-In Today", "walkIn", "today"),
             },
           ]}
         />
@@ -305,17 +302,17 @@ export default function AdminDetailedReport() {
             {
               label: "Digital (All)",
               value: summary.digital.all,
-              onClick: () => openLeadPopup("Digital Leads (All)", filterDetailedLeadRows("digital", "all", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Digital Leads (All)", "digital", "all"),
             },
             {
               label: "Digital MTD",
               value: summary.digital.mtd,
-              onClick: () => openLeadPopup("Digital Leads MTD", filterDetailedLeadRows("digital", "mtd", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Digital Leads MTD", "digital", "mtd"),
             },
             {
               label: "Digital Today",
               value: summary.digital.today,
-              onClick: () => openLeadPopup("Digital Leads Today", filterDetailedLeadRows("digital", "today", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Digital Leads Today", "digital", "today"),
             },
           ]}
         />
@@ -326,20 +323,17 @@ export default function AdminDetailedReport() {
             {
               label: "Test Drive Till Date",
               value: summary.testDrives.all,
-              onClick: () =>
-                openTestDrivePopup("Test Drive Till Date", filterDetailedTestDriveRows("all", tdRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Test Drive Till Date", "testDrive", "all"),
             },
             {
               label: "Test Drive MTD",
               value: summary.testDrives.mtd,
-              onClick: () =>
-                openTestDrivePopup("Test Drive MTD", filterDetailedTestDriveRows("mtd", tdRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Test Drive MTD", "testDrive", "mtd"),
             },
             {
               label: "Test Drive Done Today",
               value: summary.testDrives.doneToday,
-              onClick: () =>
-                openTestDrivePopup("Test Drive Done Today", filterDetailedTestDriveRows("doneToday", tdRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Test Drive Done Today", "testDrive", "doneToday"),
             },
           ]}
         />
@@ -350,8 +344,7 @@ export default function AdminDetailedReport() {
             {
               label: "Booking Count",
               value: summary.bookingCount,
-              onClick: () =>
-                openLeadPopup("Booking Count", filterDetailedLeadRows("booking", "all", leadRows, todayKey, periodBounds)),
+              onClick: () => void loadKpiPopup("Booking Count", "booking", "all"),
             },
           ]}
         />
@@ -362,7 +355,7 @@ export default function AdminDetailedReport() {
             {
               label: "Follow-ups Today",
               value: summary.callsMadeToday,
-              onClick: () => openFollowUpPopup("Follow-ups Today", filterDetailedFollowUpCalls(callRows)),
+              onClick: () => void loadKpiPopup("Follow-ups Today", "followUps", "today"),
             },
           ]}
         />
@@ -372,13 +365,18 @@ export default function AdminDetailedReport() {
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>{popupTitle}</DialogTitle>
-            {popupMode === "leads" && data.leadDetailRowsTruncated ? (
+            {popupTruncated ? (
               <p className="text-xs text-muted-foreground">
-                Showing {popupLeads.length} of {data.leadDetailRowsTotal ?? popupLeads.length} leads in scope — open Lead CRM for the full list.
+                Showing first {popupLeads.length || popupTestDrives.length || popupFollowUps.length} of {popupTotal}{" "}
+                records — open Lead CRM for the full list.
               </p>
             ) : null}
           </DialogHeader>
-          {popupMode === "leads" ? (
+          {popupLoading ? (
+            <div className="flex items-center justify-center py-16 text-muted-foreground">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" /> Loading records…
+            </div>
+          ) : popupMode === "leads" ? (
             <div className="max-h-[65vh] overflow-auto">
               <table className="w-full text-xs">
                 <thead>

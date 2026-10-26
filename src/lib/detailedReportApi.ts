@@ -160,3 +160,24 @@ export async function fetchDetailedReport(): Promise<DetailedReport> {
   if (!data) throw new Error("Detailed report response was empty");
   return data;
 }
+
+export type DetailedKpiRecordsKind = "leads" | "testDrives" | "followUps";
+
+export type DetailedKpiRecordsResponse = {
+  kind: DetailedKpiRecordsKind;
+  kpi: string;
+  scope: string;
+  rows: DetailedReportLeadRow[] | DetailedReportTestDriveRow[] | DetailedReportFollowUpCallRow[];
+  total: number;
+  truncated?: boolean;
+};
+
+export async function fetchDetailedReportKpiRecords(
+  kpi: string,
+  scope: string,
+): Promise<DetailedKpiRecordsResponse> {
+  const q = new URLSearchParams({ kpi, scope });
+  const { data } = await adminGet<DetailedKpiRecordsResponse>(`/admin/reports/detailed/kpi-records?${q}`);
+  if (!data) throw new Error("KPI records could not be loaded");
+  return data;
+}
