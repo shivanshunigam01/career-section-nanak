@@ -216,34 +216,22 @@ const ModelMPV7 = () => {
     <div className="public-page-shell">
       <Navbar />
 
-      {/* Mobile: HeroSection-style portrait; lg+: original shared wide hero */}
+      {/* Full banner top-aligned — contain (never cover) so collage headline is not cropped */}
       <section
-        className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
         aria-label="VF MPV 7 hero"
       >
-        {/* Mobile: portrait art — full width, no top crop (headline stays in frame) */}
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden bg-muted/20 lg:hidden">
+        <picture className="block w-full">
+          <source media="(min-width: 1024px)" srcSet={mpv7HeroBanner} />
           <img
             src={heroMobileMpv7}
             alt="VinFast VF MPV 7 — Your World on the Move"
-            className="block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] object-contain object-top mx-auto"
+            className="mpv7-model-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] object-contain object-top mx-auto"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
           />
-        </div>
-        <div className="relative hidden lg:block lg:absolute lg:inset-0 lg:min-h-0">
-          <div className="hero-media-scrim absolute inset-0 overflow-hidden">
-            <img
-              src={mpv7HeroBanner}
-              alt="VinFast VF MPV 7 — Your World on the Move"
-              className="hero-slider-image h-full w-full object-cover object-[50%_top]"
-              sizes="100vw"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
-        </div>
+        </picture>
         <h1 className="sr-only">VinFast VF MPV 7</h1>
       </section>
 

@@ -237,6 +237,12 @@
     transform: translateZ(0);
   }
 
+  /** VF MPV 7 model page — wide collage hero; always show from the top edge. */
+  .mpv7-model-hero-image {
+    object-fit: contain;
+    object-position: top center;
+  }
+
   /*
    * Only on very small landscape phones — never on tablet/desktop widths.
    * Using object-contain on wider short viewports left a letterbox gap on the sides.
