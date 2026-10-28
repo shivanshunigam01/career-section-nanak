@@ -32,6 +32,8 @@ export type PvCrmLead = {
   leadType?: string;
   buyerType?: string;
   interestLevel?: string;
+  /** Effective HOT / WARM / COLD from interestLevel or legacy CRE fields. */
+  leadFlag?: string;
   model: string;
   /** Public multi-interest product list (VF 6, VF 7, …). */
   interestedModels?: string[];
@@ -215,6 +217,7 @@ export async function fetchPvCrmLeads(params?: {
   limit?: number;
   apiBase?: string;
   moduleView?: CrmModuleView;
+  interestLevel?: string;
 }): Promise<{ leads: PvCrmLead[]; total: number; page: number; limit: number; stages: CrmLeadStage[] }> {
   const page = Math.max(params?.page ?? 1, 1);
   const limit = Math.max(params?.limit ?? 20, 1);
@@ -237,6 +240,7 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.pvCustomerId) q.set("pvCustomerId", params.pvCustomerId);
   if (params?.moduleView && params.moduleView !== "all") q.set("moduleView", params.moduleView);
+  if (params?.interestLevel && params.interestLevel !== "all") q.set("interestLevel", params.interestLevel);
 
   const base = params?.apiBase || CRM_BASE;
   const res = await adminGet<PvCrmLead[]>(`${base}?${q}`);
@@ -427,6 +431,9 @@ export type CrmLeadStats = {
   followUpOverdue: number;
   newEnquiries: number;
   pendingFollowUps: number;
+  hotCount?: number;
+  warmCount?: number;
+  coldCount?: number;
 };
 
 export async function fetchPvCrmLeadStats(params?: {
@@ -444,6 +451,7 @@ export async function fetchPvCrmLeadStats(params?: {
   favourite?: boolean;
   apiBase?: string;
   moduleView?: CrmModuleView;
+  interestLevel?: string;
 }): Promise<CrmLeadStats> {
   const q = new URLSearchParams();
   if (params?.source && params.source !== "all") q.set("source", params.source);
@@ -459,6 +467,7 @@ export async function fetchPvCrmLeadStats(params?: {
   if (params?.customerFollowUps) q.set("customerFollowUps", "true");
   if (params?.favourite) q.set("favourite", "true");
   if (params?.moduleView && params.moduleView !== "all") q.set("moduleView", params.moduleView);
+  if (params?.interestLevel && params.interestLevel !== "all") q.set("interestLevel", params.interestLevel);
   const qs = q.toString();
   const base = params?.apiBase || CRM_BASE;
   const { data } = await adminGet<CrmLeadStats>(`${base}/stats${qs ? `?${qs}` : ""}`);

@@ -81,6 +81,26 @@ function stageBadgeClass(stage: string) {
   return STAGE_COLORS[normalized] ?? "bg-muted text-muted-foreground";
 }
 
+const LEAD_FLAG_OPTIONS = ["HOT", "WARM", "COLD"] as const;
+
+function effectiveLeadFlag(lead: Pick<PvCrmLead, "leadFlag" | "interestLevel">): string {
+  const raw = (lead.leadFlag || lead.interestLevel || "").trim().toUpperCase();
+  return LEAD_FLAG_OPTIONS.includes(raw as (typeof LEAD_FLAG_OPTIONS)[number]) ? raw : "";
+}
+
+function leadFlagBadgeClass(flag: string) {
+  switch (flag) {
+    case "HOT":
+      return "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30";
+    case "WARM":
+      return "bg-orange-500/15 text-orange-800 dark:text-orange-300 border-orange-500/30";
+    case "COLD":
+      return "bg-sky-500/15 text-sky-800 dark:text-sky-300 border-sky-500/30";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
 function leadSheetDateRows(lead: PvCrmLead, followUpSlots?: CreSheetFollowUpSlot[]) {
   const cs = (lead.creSheet || {}) as Record<string, unknown>;
   const rows: { label: string; value: string }[] = [
@@ -240,6 +260,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [customerFollowUpsOnly, setCustomerFollowUpsOnly] = useState(false);
   const [favouriteOnly, setFavouriteOnly] = useState(false);
   const [filterBuyerType, setFilterBuyerType] = useState("all");
+  const [filterInterestLevel, setFilterInterestLevel] = useState<"all" | (typeof LEAD_FLAG_OPTIONS)[number]>("all");
   const isLeadCrmModule = pageConfig.moduleKey === "crm_leads";
   const [filterTestDrive, setFilterTestDrive] = useState<CrmTestDriveListFilter>("all");
   const moduleViewParam = isLeadCrmModule ? testDriveListFilterToModuleView(filterTestDrive) : undefined;
@@ -248,6 +269,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [unassignedCount, setUnassignedCount] = useState(0);
   const [assignedCount, setAssignedCount] = useState(0);
   const [favouriteCount, setFavouriteCount] = useState(0);
+  const [hotCount, setHotCount] = useState(0);
+  const [warmCount, setWarmCount] = useState(0);
+  const [coldCount, setColdCount] = useState(0);
   const [buyerTypes, setBuyerTypes] = useState<BuyerTypeDoc[]>([]);
   const [completingId, setCompletingId] = useState<string | null>(null);
   const [completeOutcome, setCompleteOutcome] = useState("");
@@ -304,6 +328,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [editSelectedTrims, setEditSelectedTrims] = useState<string[]>([]);
   const [editSource, setEditSource] = useState("");
   const [editBuyerType, setEditBuyerType] = useState("");
+  const [editInterestLevel, setEditInterestLevel] = useState("");
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
@@ -340,6 +365,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     );
     setEditSource(lead.source ?? "");
     setEditBuyerType(lead.buyerType ?? "");
+    setEditInterestLevel(effectiveLeadFlag(lead));
   };
 
   const loadStaffUsers = useCallback(async () => {
@@ -384,6 +410,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                 : filterExecutive
             : undefined,
         moduleView: moduleViewParam,
+        interestLevel: filterInterestLevel !== "all" ? filterInterestLevel : undefined,
       });
       setLeads(Array.isArray(res.leads) ? res.leads : []);
       setTotal(res.total ?? 0);
@@ -394,7 +421,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase, moduleViewParam]);
+  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterInterestLevel, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase, moduleViewParam]);
 
   const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
 
@@ -434,17 +461,25 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
           customerFollowUps: customerFollowUpsOnly || undefined,
           favourite: favouriteOnly || undefined,
           moduleView: moduleViewParam,
+          interestLevel: filterInterestLevel !== "all" ? filterInterestLevel : undefined,
         });
         setPipelineCounts(stats.pipeline || {});
         setStatsTotal(stats.total ?? 0);
         setUnassignedCount(stats.unassignedCount ?? 0);
         setAssignedCount(stats.assignedCount ?? 0);
         setFavouriteCount(stats.favouriteCount || 0);
+        setHotCount(stats.hotCount ?? 0);
+        setWarmCount(stats.warmCount ?? 0);
+        setColdCount(stats.coldCount ?? 0);
       } catch {
         setPipelineCounts({});
         setStatsTotal(0);
         setUnassignedCount(0);
         setAssignedCount(0);
+        setFavouriteCount(0);
+        setHotCount(0);
+        setWarmCount(0);
+        setColdCount(0);
       }
     })();
   }, [
@@ -460,6 +495,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     followUpDueOnly,
     customerFollowUpsOnly,
     favouriteOnly,
+    filterInterestLevel,
     canAssignLeads,
     pageConfig.apiBase,
     moduleViewParam,
@@ -581,8 +617,24 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         interestedModels: editSelectedTrims,
         source: editSource || undefined,
         buyerType: editBuyerType || undefined,
+        interestLevel: editInterestLevel || "",
       });
       toast.success("Lead details updated");
+      await refreshDetail(selected._id);
+    } catch (e) {
+      toast.error(formatApiErrors(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleLeadFlagChange = async (value: string) => {
+    if (!selected || !canUpdate) return;
+    const next = value === "none" ? "" : value;
+    setSaving(true);
+    try {
+      await updatePvCrmLeadDetails(selected._id, { interestLevel: next });
+      toast.success(next ? `Lead flag set to ${next}` : "Lead flag cleared");
       await refreshDetail(selected._id);
     } catch (e) {
       toast.error(formatApiErrors(e));
@@ -1280,9 +1332,30 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         >
           <Badge variant={favouriteOnly ? "default" : "outline"} className="text-xs cursor-pointer">
             <Star className={cn("w-3 h-3 mr-1", favouriteOnly ? "fill-current" : "")} />
-            Favourite / HOT Leads — {favouriteCount}
+            Favourites — {favouriteCount}
           </Badge>
         </button>
+        {LEAD_FLAG_OPTIONS.map((level) => {
+          const count = level === "HOT" ? hotCount : level === "WARM" ? warmCount : coldCount;
+          const active = filterInterestLevel === level;
+          return (
+            <button
+              key={level}
+              type="button"
+              onClick={() => {
+                setPage(1);
+                setFilterInterestLevel((prev) => (prev === level ? "all" : level));
+              }}
+            >
+              <Badge
+                variant={active ? "default" : "outline"}
+                className={cn("text-xs cursor-pointer", !active && leadFlagBadgeClass(level))}
+              >
+                {level} leads — {count.toLocaleString("en-IN")}
+              </Badge>
+            </button>
+          );
+        })}
       </div>
 
       <div
@@ -1393,6 +1466,28 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             <SelectItem value="all">All buyer types</SelectItem>
             {buyerTypes.map((b) => (
               <SelectItem key={b._id} value={b.label}>{b.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={filterInterestLevel}
+          onValueChange={(v) => {
+            setPage(1);
+            setFilterInterestLevel(v as typeof filterInterestLevel);
+          }}
+        >
+          <SelectTrigger className="bg-secondary/50">
+            <SelectValue placeholder="Lead flag" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All lead flags</SelectItem>
+            {LEAD_FLAG_OPTIONS.map((level) => (
+              <SelectItem key={level} value={level}>
+                {level}
+                {level === "HOT" && hotCount > 0 ? ` (${hotCount.toLocaleString("en-IN")})` : ""}
+                {level === "WARM" && warmCount > 0 ? ` (${warmCount.toLocaleString("en-IN")})` : ""}
+                {level === "COLD" && coldCount > 0 ? ` (${coldCount.toLocaleString("en-IN")})` : ""}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
@@ -1600,7 +1695,12 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                   </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
+                <div className="flex items-center gap-1 shrink-0 flex-wrap justify-end">
+                {effectiveLeadFlag(lead) ? (
+                  <Badge variant="outline" className={cn("text-[10px] shrink-0", leadFlagBadgeClass(effectiveLeadFlag(lead)))}>
+                    {effectiveLeadFlag(lead)}
+                  </Badge>
+                ) : null}
                 <Badge variant="outline" className={cn("text-[10px] shrink-0", stageBadgeClass(lead.status))}>
                   {normalizeCrmStage(lead.status)}
                 </Badge>
@@ -1725,6 +1825,28 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                   <Badge className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 text-[10px]">
                     <Trophy className="w-3 h-3 mr-1" /> Converted to sale
                   </Badge>
+                ) : null}
+                {effectiveLeadFlag(detail.lead) && !canUpdate ? (
+                  <Badge variant="outline" className={cn("text-[10px]", leadFlagBadgeClass(effectiveLeadFlag(detail.lead)))}>
+                    {effectiveLeadFlag(detail.lead)}
+                  </Badge>
+                ) : null}
+                {canUpdate ? (
+                  <Select
+                    value={effectiveLeadFlag(detail.lead) || "none"}
+                    onValueChange={(v) => void handleLeadFlagChange(v)}
+                    disabled={saving}
+                  >
+                    <SelectTrigger className="h-7 w-[7.5rem] text-xs bg-secondary/50">
+                      <SelectValue placeholder="Lead flag" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No flag</SelectItem>
+                      {LEAD_FLAG_OPTIONS.map((level) => (
+                        <SelectItem key={level} value={level}>{level}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 ) : null}
                 <div className="ml-auto flex gap-2">
                   <Button
@@ -2026,7 +2148,22 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                           </SelectContent>
                         </Select>
                       </div>
-                      <div className="space-y-1.5 sm:col-span-2">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs">Lead flag (HOT / WARM / COLD)</Label>
+                        <Select
+                          value={editInterestLevel || "none"}
+                          onValueChange={(v) => setEditInterestLevel(v === "none" ? "" : v)}
+                        >
+                          <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select" /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">— Not set —</SelectItem>
+                            {LEAD_FLAG_OPTIONS.map((level) => (
+                              <SelectItem key={level} value={level}>{level}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1.5">
                         <Label className="text-xs">Buyer type</Label>
                         <Select value={editBuyerType || "none"} onValueChange={(v) => setEditBuyerType(v === "none" ? "" : v)}>
                           <SelectTrigger className="bg-secondary/50"><SelectValue placeholder="Select" /></SelectTrigger>
