@@ -538,9 +538,10 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     return counts;
   }, [pipelineCounts, stageList]);
 
-  const displayTotal = filterStatus && filterStatus !== "all"
-    ? stageCounts[filterStatus] ?? total
-    : statsTotal;
+  const displayTotal =
+    filterStatus && filterStatus !== "all"
+      ? stageCounts[filterStatus] ?? total
+      : statsTotal;
 
   const safeLeads = Array.isArray(leads) ? leads : [];
   const staffUsers = Array.isArray(executives) ? executives : [];
@@ -1757,7 +1758,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             Showing {rangeStart}–{rangeEnd} of {total} leads
             {filterStatus && filterStatus !== "all" && total !== (stageCounts[filterStatus] ?? total)
               ? ` · ${stageCounts[filterStatus] ?? 0} in ${filterStatus}`
-              : !filterStatus && total !== statsTotal
+              : filterStatus === "all" && total !== statsTotal
                 ? ` · ${statsTotal} match filters`
                 : ""}{" "}
             · recent activity first

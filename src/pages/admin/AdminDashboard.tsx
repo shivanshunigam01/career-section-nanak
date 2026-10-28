@@ -178,7 +178,7 @@ const AdminDashboard = () => {
       return base;
     }
     if (!opts?.from && !opts?.to && !opts?.interestLevel && allLeadsRef.current) return allLeadsRef.current;
-    const q = new URLSearchParams({ limit: "500", page: "1" });
+    const q = new URLSearchParams({ limit: "5000", page: "1" });
     if (opts?.from) q.set("from", opts.from);
     if (opts?.to) q.set("to", opts.to);
     if (opts?.interestLevel) q.set("interestLevel", opts.interestLevel);
