@@ -100,7 +100,7 @@ function buildMpv7LaunchSlide(): HeroSlideView {
   return {
     image: heroMpv7,
     imageMobile: heroMobileMpv7,
-    objectPositionMobile: "center 38%",
+    objectPositionMobile: "center top",
     title: "The all-new VF MPV 7",
     subLines: [
       "Seven-seat electric MPV · 60.13 kWh battery · Book Now open.",

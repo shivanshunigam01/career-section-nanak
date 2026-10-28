@@ -24,6 +24,7 @@ import { usePageSeo } from "@/hooks/usePageSeo";
 import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import mpv7HeroBanner from "@/assets/model-heroes/mpv7-hero-banner.jpg";
+import heroMobileMpv7 from "@/assets/hero-slideshow/mobile/hero-mobile-mpv7.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
@@ -216,24 +217,23 @@ const ModelMPV7 = () => {
         className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VF MPV 7 hero"
       >
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[clamp(240px,72dvh,calc(100dvh-4.25rem))] min-h-[240px] max-h-[calc(100dvh-4.25rem)] lg:hidden">
-          <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
-            <img
-              src={mpv7HeroBanner}
-              alt="VinFast VF MPV 7 — Your World on the Move"
-              className="hero-slider-image h-full w-full object-cover object-[center_42%]"
-              sizes="100vw"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
+        {/* Mobile: portrait art — full width, no top crop (headline stays in frame) */}
+        <div className="relative w-full max-w-none shrink-0 overflow-hidden bg-muted/20 lg:hidden">
+          <img
+            src={heroMobileMpv7}
+            alt="VinFast VF MPV 7 — Your World on the Move"
+            className="block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] object-contain object-top mx-auto"
+            sizes="100vw"
+            fetchPriority="high"
+            decoding="async"
+          />
         </div>
         <div className="relative hidden lg:block lg:absolute lg:inset-0 lg:min-h-0">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden">
             <img
               src={mpv7HeroBanner}
               alt="VinFast VF MPV 7 — Your World on the Move"
-              className="hero-slider-image h-full w-full object-cover object-[center_45%]"
+              className="hero-slider-image h-full w-full object-cover object-[50%_top]"
               sizes="100vw"
               fetchPriority="high"
               decoding="async"
