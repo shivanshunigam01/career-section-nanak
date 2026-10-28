@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
-import { ModelHeroTagline } from "@/components/ModelHeroTagline";
 import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
@@ -247,7 +246,6 @@ const ModelLimoGreen = () => {
             />
           </div>
         </div>
-        <ModelHeroTagline modelName="Limo Green" tagline="Built for your business." />
         <h1 className="sr-only">VinFast Limo Green — Built for your business.</h1>
       </section>
 
