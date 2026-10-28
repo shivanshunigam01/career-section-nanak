@@ -23,7 +23,6 @@ import { usePageSeo } from "@/hooks/usePageSeo";
 import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import mpv7HeroBanner from "@/assets/model-heroes/mpv7-hero-banner.jpg";
-import heroMobileMpv7 from "@/assets/hero-slideshow/mobile/hero-mobile-mpv7.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 import { ModelPagePriceBand } from "@/components/model/ModelPagePriceBand";
 import { ModelPageHighlightsBlock } from "@/components/model/ModelPageHighlightsBlock";
@@ -221,17 +220,14 @@ const ModelMPV7 = () => {
         className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
         aria-label="VF MPV 7 hero"
       >
-        <picture className="block w-full">
-          <source media="(min-width: 1024px)" srcSet={mpv7HeroBanner} />
-          <img
-            src={heroMobileMpv7}
-            alt="VinFast VF MPV 7 — Your World on the Move"
-            className="mpv7-model-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] object-contain object-top mx-auto"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-        </picture>
+        <img
+          src={mpv7HeroBanner}
+          alt="VinFast VF MPV 7 — Your World on the Move"
+          className="mpv7-model-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] object-contain object-top mx-auto"
+          sizes="100vw"
+          fetchPriority="high"
+          decoding="async"
+        />
         <h1 className="sr-only">VinFast VF MPV 7</h1>
       </section>
 
