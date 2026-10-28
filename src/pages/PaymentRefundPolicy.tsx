@@ -7,7 +7,7 @@ const PaymentRefundPolicyPage = () => {
   const { dealer } = usePublicSite();
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
       <main className="pt-24 pb-16 lg:pt-32 lg:pb-24">
         <section className="container mx-auto px-4 lg:px-8 max-w-3xl">

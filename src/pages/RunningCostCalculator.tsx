@@ -31,7 +31,7 @@ export default function RunningCostCalculator() {
   const fmt = (n: number) => `₹${Math.round(n).toLocaleString("en-IN")}`;
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
       <div className="pt-24 pb-20 lg:pt-32 container mx-auto px-4 lg:px-8 max-w-2xl">
         <motion.h1 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="font-display font-bold text-3xl md:text-4xl mb-3">

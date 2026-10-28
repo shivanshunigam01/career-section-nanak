@@ -32,7 +32,7 @@ const AboutPage = () => {
   }, [location.pathname, location.hash]);
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
 
       {/* Hero */}
@@ -49,10 +49,10 @@ const AboutPage = () => {
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
         </div>
-        <div className="relative container mx-auto px-4 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+        <div className="relative container mx-auto min-w-0 px-4 lg:px-8">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="min-w-0">
             <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
-            <h1 className="text-on-image-lg font-display font-bold text-4xl md:text-6xl lg:text-7xl leading-tight mb-3">
+            <h1 className="text-on-image-lg font-display font-bold text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-tight mb-3 break-words">
               {dealer.dealerName}
             </h1>
             <p className="text-on-image-soft text-base md:text-lg max-w-xl">

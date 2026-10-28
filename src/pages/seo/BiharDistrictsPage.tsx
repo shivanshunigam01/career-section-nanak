@@ -29,7 +29,7 @@ export default function BiharDistrictsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
       <section className="pt-24 lg:pt-32 pb-10 bg-gradient-to-b from-secondary/40 to-background">
         <div className="container mx-auto px-4 lg:px-8 max-w-5xl">

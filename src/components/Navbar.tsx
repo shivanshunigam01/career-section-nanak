@@ -321,7 +321,7 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="fixed inset-0 z-40 flex flex-col bg-background pt-16 sm:pt-[4.25rem] lg:hidden"
+            className="fixed inset-0 z-[60] flex flex-col bg-background pt-16 sm:pt-[4.25rem] lg:hidden"
           >
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <div className="mx-auto flex w-full max-w-lg flex-col gap-1 px-4 py-5 pb-[max(1.5rem,env(safe-area-inset-bottom))]">

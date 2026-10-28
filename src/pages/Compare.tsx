@@ -234,13 +234,13 @@ const ComparePage = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
 
       {/* Fixed column legend — sits flush under navbar while spec block is on screen */}
       {pinnedSpecHeader && (
         <div
-          className="fixed top-16 lg:top-20 left-0 right-0 z-[45] border-b border-border/80 bg-background/98 backdrop-blur-md shadow-md"
+          className="fixed top-16 sm:top-[4.25rem] left-0 right-0 z-40 border-b border-border/80 bg-background/98 backdrop-blur-md shadow-md"
           role="region"
           aria-label="Comparison columns — model and variant"
         >

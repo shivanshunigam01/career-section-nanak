@@ -70,9 +70,9 @@ const VirtualShowroom = () => {
             decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent pointer-events-none" />
-          <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-8 lg:left-10 lg:right-10 pointer-events-none">
-            <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-2xl">Right-hand drive luxury</p>
-            <p className="text-on-image-soft text-xs sm:text-sm mt-1 max-w-lg">
+          <div className="absolute bottom-4 left-4 right-4 sm:bottom-6 sm:left-6 sm:right-6 lg:bottom-8 lg:left-10 lg:right-10 pointer-events-none min-w-0">
+            <p className="text-on-image-lg font-display font-bold text-lg sm:text-xl lg:text-2xl break-words">Right-hand drive luxury</p>
+            <p className="text-on-image-soft text-xs sm:text-sm mt-1 max-w-lg break-words">
               Tan leather, ambient light, and a portrait infotainment experience — the VF cabin, built for India.
             </p>
           </div>

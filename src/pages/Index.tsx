@@ -16,7 +16,7 @@ const Index = () => {
   usePageSeo(HOME_PAGE_SEO);
 
   return (
-    <div className="min-h-screen w-full max-w-[100%] overflow-x-clip bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
       <HeroSection />
       <section className="border-b border-border/40 bg-muted/30 px-4 py-6 lg:py-8" aria-labelledby="home-seo-intro">

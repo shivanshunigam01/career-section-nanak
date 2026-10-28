@@ -381,7 +381,7 @@ const TestDrivePage = () => {
   const tel = telHref(siteConfig.phoneNumber || dealer.phone);
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
 
       {/* Mobile hero band */}
@@ -407,7 +407,7 @@ const TestDrivePage = () => {
         </div>
       </div>
 
-      <div className="pt-6 pb-36 lg:pt-28 lg:pb-16">
+      <div className="pt-6 pb-10 xl:pt-28 xl:pb-16">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-8 sm:gap-10 lg:gap-10 items-start">
             <motion.aside

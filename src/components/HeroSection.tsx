@@ -327,8 +327,8 @@ const HeroSection = () => {
   const slide = slides[current] ?? fallbackSlides[0];
 
   return (
-    <section className="relative z-0 w-full max-w-[100%] overflow-x-clip overflow-y-hidden bg-background pt-16 sm:pt-[4.25rem] lg:pt-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-0">
-      <div className="relative w-full max-w-[100%] shrink-0 overflow-hidden h-[calc(100dvh-4rem)] sm:h-[calc(100dvh-4.25rem)] min-h-[18rem] lg:h-full lg:absolute lg:inset-0 lg:z-0 lg:min-h-0">
+    <section className="relative z-0 w-full max-w-[100%] overflow-x-clip bg-background pt-16 sm:pt-[4.25rem] lg:pt-0 lg:h-[100dvh] lg:max-h-[100dvh] lg:min-h-0 lg:overflow-y-hidden">
+      <div className="relative w-full max-w-[100%] shrink-0 overflow-hidden h-[clamp(280px,78dvh,calc(100dvh-4.25rem))] min-h-[280px] max-h-[calc(100dvh-4.25rem)] lg:h-full lg:max-h-none lg:absolute lg:inset-0 lg:z-0 lg:min-h-0">
         {slides.map((s, i) => {
           // Keep cross-fade wrappers mounted, but only request nearby slide images.
           // This avoids front-loading all hero assets on first paint.
@@ -382,10 +382,10 @@ const HeroSection = () => {
 
         {/* Full-bleed bottom stack: same pattern as desktop — copy pinned bottom-left, dots centered above safe area */}
         <div className="pointer-events-none absolute inset-0 z-20 flex flex-col justify-end">
-          <div className="pointer-events-auto w-full">
+          <div className="pointer-events-auto relative z-[2] w-full">
             <div className="container mx-auto px-4 pb-3 sm:pb-4 lg:px-8 lg:pb-5 lg:pt-4">
-              <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl">
-                <h2 className="text-hero-plain-lg font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl lg:tracking-tight leading-[1.08] mb-2 sm:mb-3 lg:mb-4 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]">
+              <div key={current} className="max-w-xl sm:max-w-2xl lg:max-w-3xl min-w-0">
+                <h2 className="text-hero-plain-lg font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl lg:tracking-tight leading-[1.12] mb-2 sm:mb-3 lg:mb-4 drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)] break-words">
                   {slide.title}
                 </h2>
                 {slide.subLines?.some((l) => l.trim()) && (

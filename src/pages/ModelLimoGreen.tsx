@@ -209,7 +209,7 @@ const ModelLimoGreen = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
 
       {/* Mobile: portrait hero; lg+: official wide hero banner */}
@@ -217,7 +217,7 @@ const ModelLimoGreen = () => {
         className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
         aria-label="VinFast Limo Green hero"
       >
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[calc(100dvh-4.25rem)] lg:hidden">
+        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[clamp(240px,72dvh,calc(100dvh-4.25rem))] min-h-[240px] max-h-[calc(100dvh-4.25rem)] lg:hidden">
           <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
             <img
               src={limoGreenHeroPortrait}

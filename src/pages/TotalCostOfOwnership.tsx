@@ -276,7 +276,7 @@ export default function TotalCostOfOwnership() {
   const yearlyKm = monthlyKm * 12;
 
   return (
-    <div className="min-h-screen bg-background pb-36 lg:pb-0">
+    <div className="public-page-shell">
       <Navbar />
 
       <section className="relative pt-24 lg:pt-28 pb-12 overflow-hidden">
