@@ -26,6 +26,10 @@ import { usePublicPricing } from "@/hooks/usePublicPricing";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { VF6_PAGE_SEO } from "@/lib/seoBlueprint";
 import { VF6_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
+import { ModelPagePriceBand } from "@/components/model/ModelPagePriceBand";
+import { ModelPageVariantBar } from "@/components/model/ModelPageVariantBar";
+import { ModelPageHighlightsBlock } from "@/components/model/ModelPageHighlightsBlock";
+import { ModelPageNextStepSection } from "@/components/model/ModelPageNextStepSection";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E8E8E4", image: vf6InfinityBlanc },
@@ -402,49 +406,32 @@ const ModelVF6 = () => {
         <h1 className="sr-only">VinFast VF 6</h1>
       </section>
 
-      <section className="border-b border-border/60 bg-background/95 py-5 sm:py-6">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-1">Select variant</p>
-              <p className="text-sm text-muted-foreground">{vMeta.name}</p>
-            </div>
-            <div className="hidden sm:flex flex-wrap items-center gap-2">
-              {vf6Variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariant(v.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                    variant === v.id
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border/80 hover:bg-muted"
-                  }`}
-                >
-                  {v.shortLabel}
-                </button>
-              ))}
-            </div>
-            <div className="sm:hidden">
-              <label htmlFor="vf6-variant-selector" className="sr-only">
-                Select VF 6 variant
-              </label>
-              <select
-                id="vf6-variant-selector"
-                value={variant}
-                onChange={(e) => setVariant(e.target.value as VariantId)}
-                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
-              >
-                {vf6Variants.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ModelPagePriceBand
+        exShowroomPrice={displayExShowroom}
+        priceCaption={`Indicative ex-showroom · ${vMeta.shortLabel}`}
+        primaryCta={{ href: "/book-now?model=VF%206", label: "Book Now — VF 6" }}
+        secondaryCta={{ href: "/test-drive", label: "Book a test drive" }}
+      />
+
+      <ModelPageVariantBar
+        productLabel="VF 6"
+        selectedVariantName={vMeta.name}
+        variants={vf6Variants}
+        selectedId={variant}
+        onSelect={(id) => setVariant(id as VariantId)}
+        selectId="vf6-variant-selector"
+      />
+
+      <ModelPageHighlightsBlock
+        sectionTitle="Your drive, your way."
+        productName="VF 6"
+        description="Compact, smart, and electrifying — three trims on one VinFast SUV platform."
+        highlights={[
+          { label: "Range (MIDC)", value: stats.range },
+          { label: "0–100 km/h", value: stats.accel },
+          { label: "Max. power", value: stats.power },
+        ]}
+      />
 
       {/* Exterior colour + selected variant (aligned with VF 7) */}
       <section className="py-10 sm:py-14 lg:py-20 border-b border-border/60 bg-muted/25">
@@ -748,7 +735,8 @@ const ModelVF6 = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12 max-w-3xl mx-auto">
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Specifications</p>
-            <h2 className="font-display font-bold text-3xl md:text-5xl mb-4">VF 6 Earth, Wind & Wind Infinity</h2>
+            <h2 className="font-display font-bold text-3xl md:text-5xl mb-4">Vehicle Specification</h2>
+            <p className="text-sm text-muted-foreground mb-2">VF 6 Earth, Wind & Wind Infinity</p>
             <p className="text-muted-foreground text-sm md:text-base">
               Full technical, safety, ADAS, and feature breakdown for VF 6 Earth, Wind & Wind Infinity — as per the official model specification brief.
             </p>
@@ -874,6 +862,18 @@ const ModelVF6 = () => {
           </div>
         </div>
       </section>
+
+      <ModelPageNextStepSection
+        eyebrow="VF 6 · Book Now"
+        description={
+          <>
+            Reserve or enquire with Patliputra VinFast — we&apos;ll confirm pricing for your{" "}
+            <strong className="text-foreground font-medium">{vMeta.shortLabel}</strong> trim and arrange finance or a test drive.
+          </>
+        }
+        bookHref="/book-now?model=VF%206"
+        bookLabel="Book Now — VF 6"
+      />
 
       <LeadCaptureStrip />
       <Footer />

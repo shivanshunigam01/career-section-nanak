@@ -19,13 +19,17 @@ import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
-import { FestivePriceDisplay } from "@/components/FestivePriceDisplay";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import mpv7HeroBanner from "@/assets/model-heroes/mpv7-hero-banner.jpg";
 import heroMobileMpv7 from "@/assets/hero-slideshow/mobile/hero-mobile-mpv7.png";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
+import { ModelPagePriceBand } from "@/components/model/ModelPagePriceBand";
+import { ModelPageHighlightsBlock } from "@/components/model/ModelPageHighlightsBlock";
+import { ModelPageInteriorBand } from "@/components/model/ModelPageInteriorBand";
+import { ModelPageVehicleSpecSection } from "@/components/model/ModelPageVehicleSpecSection";
+import { ModelPageNextStepSection } from "@/components/model/ModelPageNextStepSection";
 
 const MPV7_PREBOOK_SESSION_KEY = "vinfast_mpv7_prebook_unlocked";
 const MPV7_PREBOOK_UNLOCK_EVENT = "vinfast-mpv7-prebook-unlock";
@@ -243,37 +247,20 @@ const ModelMPV7 = () => {
         <h1 className="sr-only">VinFast VF MPV 7</h1>
       </section>
 
-      <section className="relative border-b border-border/50 bg-gradient-to-b from-background via-background to-muted/30">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" aria-hidden />
-        <div className="container mx-auto px-4 lg:px-8 py-8 sm:py-10 lg:py-12">
-          <div className="mx-auto flex max-w-lg flex-col items-center gap-5 text-center">
-            <div className="h-1 w-12 rounded-full bg-primary/80" aria-hidden />
-            <FestivePriceDisplay slug="mpv7" size="lg" align="center" />
-            <Button variant="hero" size="lg" className="h-12 min-w-[min(100%,17rem)] rounded-full px-8 text-sm font-semibold shadow-md shadow-primary/25 sm:h-14 sm:px-10" asChild>
-              <Link to="#mpv7-prebook">Register for Book Now</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <ModelPagePriceBand
+        festiveSlug="mpv7"
+        primaryCta={{ href: "#mpv7-prebook", label: "Register for Book Now" }}
+        secondaryCta={{ href: "/test-drive", label: "Book a test drive" }}
+      />
 
-      {/* Your drive, your way. — highlights from official page */}
-      <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-muted/25">
-        <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-          <h2 className="font-display font-bold text-3xl md:text-4xl mb-1 text-foreground">Your drive, your way.</h2>
-          <h3 className="font-display font-bold text-xl md:text-2xl text-foreground/95 mt-3 mb-4">VF MPV 7</h3>
-          <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-3xl">
-            A space curated with intention — bringing together comfort, technology, and design in one complete experience.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {mpv7HighlightTriplet.map((h) => (
-              <div key={h.label} className="rounded-2xl border border-border/70 bg-card/90 p-5 text-center shadow-sm">
-                <p className="font-display font-bold text-2xl md:text-3xl tabular-nums text-foreground">{h.value}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-2">{h.label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground max-w-3xl mb-8">{VINFAST_MPV7_DISCLAIMER}</p>
-          <div className="flex flex-wrap gap-3">
+      <ModelPageHighlightsBlock
+        sectionTitle="Your drive, your way."
+        productName="VF MPV 7"
+        description="A space curated with intention — bringing together comfort, technology, and design in one complete experience."
+        highlights={mpv7HighlightTriplet}
+        disclaimer={VINFAST_MPV7_DISCLAIMER}
+        actions={
+          <>
             <Button asChild variant="default" size="default">
               <Link to="#mpv7-prebook">Register for Book Now</Link>
             </Button>
@@ -282,81 +269,59 @@ const ModelMPV7 = () => {
                 <Link to="/book-now?model=VF%20MPV%207">Book Now — VF MPV 7</Link>
               </Button>
             ) : null}
-          </div>
-        </div>
-      </section>
+          </>
+        }
+      />
 
-      {/* Interior — illustration only (official site uses cabin imagery; no extra spec copy here) */}
-      <section className="py-14 sm:py-20 lg:py-24 bg-background border-b border-border/50">
-        <div className="w-full">
-          <div className="relative w-full overflow-hidden">
-            <img
-              src={mpv7DtlInterior1}
-              alt="VinFast VF MPV 7 interior"
-              className="image-high-quality w-full h-[34vh] min-h-[230px] max-h-[520px] sm:h-[46vh] lg:h-[62vh] object-cover object-center"
-              sizes="100vw"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <div className="container mx-auto px-4 lg:px-8">
-            <p className="text-xs text-muted-foreground mt-4 text-center max-w-2xl mx-auto">{VINFAST_MPV7_DISCLAIMER}</p>
-          </div>
-        </div>
-      </section>
+      <ModelPageInteriorBand
+        imageSrc={mpv7DtlInterior1}
+        imageAlt="VinFast VF MPV 7 interior"
+        disclaimer={VINFAST_MPV7_DISCLAIMER}
+      />
 
-      {/* Vehicle Specification — same rows as vinfastauto.in/en/mpv7 */}
-      <section className="py-14 sm:py-20 lg:py-24 section-dark border-t border-border/60">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12 max-w-3xl mx-auto">
-            <h2 className="font-display font-bold text-3xl md:text-5xl mb-3 text-foreground">Vehicle Specification</h2>
-            <p className="text-muted-foreground text-sm md:text-base">{VINFAST_MPV7_DISCLAIMER}</p>
-          </div>
-          <div className="overflow-x-auto touch-pan-x rounded-2xl border border-border/80 bg-card/40 max-w-4xl mx-auto">
-            <table className="w-full min-w-[320px] text-sm text-left">
-              <tbody>
-                {specRows.map(([k, v]) => (
-                  <tr key={k} className="border-b border-border/60 last:border-0">
-                    <th className="px-4 py-3 font-medium text-muted-foreground w-[45%] align-top">{k}</th>
-                    <td className="px-4 py-3 align-top text-foreground/90">{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <BrochureDownloadButton
-              brochureHref="/brochures/VF-MPV7-Brochure.pdf"
-              downloadFileName="VinFast-VF-MPV7-Brochure.pdf"
-              modelDisplay="VF MPV 7"
-              pageSource="VF MPV 7 Model Page"
-              variant="outline"
-              size="lg"
-              className="border-white/25 bg-white/5 text-white hover:bg-white/10"
-            >
-              <Download className="w-4 h-4 mr-2" />
-              Download brochure
-            </BrochureDownloadButton>
-          </div>
-        </div>
-      </section>
-
-      {/* Book Now — Patliputra VinFast */}
-      <section
-        id="mpv7-prebook"
-        className="scroll-mt-20 sm:scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-primary/[0.07] via-muted/40 to-muted/30 py-14 sm:py-16 lg:py-20"
+      <ModelPageVehicleSpecSection
+        disclaimer={VINFAST_MPV7_DISCLAIMER}
+        footer={
+          <BrochureDownloadButton
+            brochureHref="/brochures/VF-MPV7-Brochure.pdf"
+            downloadFileName="VinFast-VF-MPV7-Brochure.pdf"
+            modelDisplay="VF MPV 7"
+            pageSource="VF MPV 7 Model Page"
+            variant="outline"
+            size="lg"
+            className="border-white/25 bg-white/5 text-white hover:bg-white/10"
+          >
+            <Download className="w-4 h-4 mr-2" />
+            Download brochure
+          </BrochureDownloadButton>
+        }
       >
-        <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-          <div className="text-center mb-8 sm:mb-10">
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">VF MPV 7 · Book Now</p>
-            <h2 className="font-display font-bold text-3xl sm:text-4xl mb-3">Ready to take the next step?</h2>
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-              Share your details — we’ll call you back from Patna. After you submit, the{" "}
-              <strong className="text-foreground font-medium">Book Now — VF MPV 7</strong> action unlocks on this page.
-            </p>
-          </div>
+        <div className="overflow-x-auto touch-pan-x rounded-2xl border border-border/80 bg-card/40 max-w-4xl mx-auto">
+          <table className="w-full min-w-[320px] text-sm text-left">
+            <tbody>
+              {specRows.map(([k, v]) => (
+                <tr key={k} className="border-b border-border/60 last:border-0">
+                  <th className="px-4 py-3 font-medium text-muted-foreground w-[45%] align-top">{k}</th>
+                  <td className="px-4 py-3 align-top text-foreground/90">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </ModelPageVehicleSpecSection>
 
-          <div className="rounded-2xl border border-border/70 bg-card/95 p-5 sm:p-6 lg:p-8 shadow-sm">
+      <ModelPageNextStepSection
+        id="mpv7-prebook"
+        eyebrow="VF MPV 7 · Book Now"
+        description={
+          <>
+            Share your details — we’ll call you back from Patna. After you submit, the{" "}
+            <strong className="text-foreground font-medium">Book Now — VF MPV 7</strong> action unlocks on this page.
+          </>
+        }
+        bookHref="/book-now?model=VF%20MPV%207"
+        bookLabel="Book Now — VF MPV 7"
+      >
             {!prebookUnlocked ? (
               <form onSubmit={handlePrebookInterestSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:gap-3 lg:items-start">
                 <div className="sm:col-span-2 lg:col-span-3">
@@ -458,9 +423,7 @@ const ModelMPV7 = () => {
                 </Button>
               </div>
             )}
-          </div>
-        </div>
-      </section>
+      </ModelPageNextStepSection>
 
       <LeadCaptureStrip />
       <Footer />

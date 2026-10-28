@@ -18,7 +18,12 @@ import { FormCaptcha } from "@/components/FormCaptcha";
 import { BIHAR_DEFAULT_DISTRICT, DISTRICT_OTHER } from "@/data/biharDistricts";
 import { usePublicFormRecaptcha } from "@/context/PublicRecaptchaContext";
 import { usePublicSite } from "@/context/PublicSiteContext";
-import { FestivePriceDisplay } from "@/components/FestivePriceDisplay";
+import { ModelPagePriceBand } from "@/components/model/ModelPagePriceBand";
+import { ModelPageHighlightsBlock } from "@/components/model/ModelPageHighlightsBlock";
+import { ModelPageInteriorBand } from "@/components/model/ModelPageInteriorBand";
+import { ModelPageVehicleSpecSection } from "@/components/model/ModelPageVehicleSpecSection";
+import { ModelPageNextStepSection } from "@/components/model/ModelPageNextStepSection";
+import { MODEL_SECTION_PY } from "@/components/model/modelPageLayout";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { LIMO_GREEN_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
@@ -246,30 +251,35 @@ const ModelLimoGreen = () => {
         <h1 className="sr-only">VinFast Limo Green — Built for your business.</h1>
       </section>
 
-      {/* Price + Book Now CTA */}
-      <section className="relative border-b border-border/50 bg-gradient-to-b from-background via-background to-muted/30">
-        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/25 to-transparent" aria-hidden />
-        <div className="container mx-auto px-4 lg:px-8 py-8 sm:py-10 lg:py-12">
-          <div className="mx-auto flex max-w-lg flex-col items-center gap-5 text-center">
-            <div className="h-1 w-12 rounded-full bg-primary/80" aria-hidden />
-            <FestivePriceDisplay slug="limo-green" size="lg" align="center" />
-            <Button variant="hero" size="lg" className="h-12 min-w-[min(100%,17rem)] rounded-full px-8 text-sm font-semibold shadow-md shadow-primary/25 sm:h-14 sm:px-10" asChild>
+      <ModelPagePriceBand
+        festiveSlug="limo-green"
+        primaryCta={{ href: "#limo-green-prebook", label: "Register for Book Now" }}
+        secondaryCta={{ href: "/test-drive", label: "Book a test drive" }}
+      />
+
+      <ModelPageHighlightsBlock
+        sectionTitle="Built for your business."
+        productName="Limo Green"
+        description="A seven-seat electric MPV made for long days on the road — spacious, dependable, and affordable to run, for families and fleets alike."
+        highlights={limoGreenHighlightTriplet}
+        disclaimer={VINFAST_LIMO_GREEN_DISCLAIMER}
+        actions={
+          <>
+            <Button asChild variant="default" size="default">
               <Link to="#limo-green-prebook">Register for Book Now</Link>
             </Button>
-          </div>
-        </div>
-      </section>
+            {prebookUnlocked ? (
+              <Button asChild variant="default" size="default" className="bg-primary">
+                <Link to="/book-now?model=Limo%20Green">Book Now — Limo Green</Link>
+              </Button>
+            ) : null}
+          </>
+        }
+      />
 
-      {/* Built for your business — highlights */}
-      <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-muted/25">
+      <section className={`${MODEL_SECTION_PY} border-b border-border/60 bg-background`}>
         <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-          <h2 className="font-display font-bold text-3xl md:text-4xl mb-1 text-foreground">Built for your business.</h2>
-          <h3 className="font-display font-bold text-xl md:text-2xl text-foreground/95 mt-3 mb-4">Limo Green</h3>
-          <p className="text-muted-foreground text-sm md:text-base leading-relaxed mb-8 max-w-3xl">
-            A seven-seat electric MPV made for long days on the road — spacious, dependable, and
-            affordable to run, for families and fleets alike.
-          </p>
-          <div className="relative w-full overflow-hidden rounded-2xl bg-card/60 border border-border/60 mb-8">
+          <div className="relative w-full overflow-hidden rounded-2xl bg-card/60 border border-border/60">
             <img
               src={limoGreenIntro}
               alt="VinFast Limo Green — rear three-quarter studio view"
@@ -279,25 +289,7 @@ const ModelLimoGreen = () => {
               decoding="async"
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-            {limoGreenHighlightTriplet.map((h) => (
-              <div key={h.label} className="rounded-2xl border border-border/70 bg-card/90 p-5 text-center shadow-sm">
-                <p className="font-display font-bold text-2xl md:text-3xl tabular-nums text-foreground">{h.value}</p>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mt-2">{h.label}</p>
-              </div>
-            ))}
-          </div>
-          <p className="text-xs text-muted-foreground max-w-3xl mb-8">{VINFAST_LIMO_GREEN_DISCLAIMER}</p>
-          <div className="flex flex-wrap gap-3">
-            <Button asChild variant="default" size="default">
-              <Link to="#limo-green-prebook">Register for Book Now</Link>
-            </Button>
-            {prebookUnlocked ? (
-              <Button asChild variant="default" size="default" className="bg-primary">
-                <Link to="/book-now?model=Limo%20Green">Book Now — Limo Green</Link>
-              </Button>
-            ) : null}
-          </div>
+          <p className="text-xs text-muted-foreground mt-4 text-center max-w-2xl mx-auto">{VINFAST_LIMO_GREEN_DISCLAIMER}</p>
         </div>
       </section>
 
@@ -323,31 +315,13 @@ const ModelLimoGreen = () => {
         </div>
       </section>
 
-      {/* Interior */}
-      <section className="py-14 sm:py-20 lg:py-24 bg-background border-b border-border/50">
-        <div className="w-full">
-          <div className="container mx-auto px-4 lg:px-8 max-w-5xl mb-8">
-            <h2 className="font-display font-bold text-3xl md:text-4xl mb-4 text-foreground">Room for everyone.</h2>
-            <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-3xl">
-              A 2+3+2 layout with a quick-folding middle row, a long 2,840 mm wheelbase, and up to
-              1,240 litres of boot space with the rear seats folded.
-            </p>
-          </div>
-          <div className="relative w-full overflow-hidden">
-            <img
-              src={limoGreenInterior}
-              alt="VinFast Limo Green interior — seven-seat cabin with 10.1-inch touchscreen"
-              className="image-high-quality w-full h-[34vh] min-h-[230px] max-h-[520px] sm:h-[46vh] lg:h-[62vh] object-cover object-center"
-              sizes="100vw"
-              loading="lazy"
-              decoding="async"
-            />
-          </div>
-          <div className="container mx-auto px-4 lg:px-8">
-            <p className="text-xs text-muted-foreground mt-4 text-center max-w-2xl mx-auto">{VINFAST_LIMO_GREEN_DISCLAIMER}</p>
-          </div>
-        </div>
-      </section>
+      <ModelPageInteriorBand
+        title="Room for everyone."
+        description="A 2+3+2 layout with a quick-folding middle row, a long 2,840 mm wheelbase, and up to 1,240 litres of boot space with the rear seats folded."
+        imageSrc={limoGreenInterior}
+        imageAlt="VinFast Limo Green interior — seven-seat cabin with 10.1-inch touchscreen"
+        disclaimer={VINFAST_LIMO_GREEN_DISCLAIMER}
+      />
 
       {/* Colour */}
       <section className="py-14 sm:py-20 lg:py-24 border-b border-border/60 bg-muted/25">
@@ -370,44 +344,33 @@ const ModelLimoGreen = () => {
         </div>
       </section>
 
-      {/* Vehicle Specification */}
-      <section className="py-14 sm:py-20 lg:py-24 section-dark border-t border-border/60">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="text-center mb-12 max-w-3xl mx-auto">
-            <h2 className="font-display font-bold text-3xl md:text-5xl mb-3 text-foreground">Vehicle Specification</h2>
-            <p className="text-muted-foreground text-sm md:text-base">{VINFAST_LIMO_GREEN_DISCLAIMER}</p>
-          </div>
-          <div className="overflow-x-auto touch-pan-x rounded-2xl border border-border/80 bg-card/40 max-w-4xl mx-auto">
-            <table className="w-full min-w-[320px] text-sm text-left">
-              <tbody>
-                {specRows.map(([k, v]) => (
-                  <tr key={k} className="border-b border-border/60 last:border-0">
-                    <th className="px-4 py-3 font-medium text-muted-foreground w-[45%] align-top">{k}</th>
-                    <td className="px-4 py-3 align-top text-foreground/90">{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <ModelPageVehicleSpecSection disclaimer={VINFAST_LIMO_GREEN_DISCLAIMER}>
+        <div className="overflow-x-auto touch-pan-x rounded-2xl border border-border/80 bg-card/40 max-w-4xl mx-auto">
+          <table className="w-full min-w-[320px] text-sm text-left">
+            <tbody>
+              {specRows.map(([k, v]) => (
+                <tr key={k} className="border-b border-border/60 last:border-0">
+                  <th className="px-4 py-3 font-medium text-muted-foreground w-[45%] align-top">{k}</th>
+                  <td className="px-4 py-3 align-top text-foreground/90">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-      </section>
+      </ModelPageVehicleSpecSection>
 
-      {/* Book Now — Patliputra VinFast */}
-      <section
+      <ModelPageNextStepSection
         id="limo-green-prebook"
-        className="scroll-mt-20 sm:scroll-mt-24 border-t border-border/60 bg-gradient-to-b from-primary/[0.07] via-muted/40 to-muted/30 py-14 sm:py-16 lg:py-20"
+        eyebrow="Limo Green · Book Now"
+        description={
+          <>
+            Share your details — we’ll call you back from Patna. After you submit, the{" "}
+            <strong className="text-foreground font-medium">Book Now — Limo Green</strong> action unlocks on this page.
+          </>
+        }
+        bookHref="/book-now?model=Limo%20Green"
+        bookLabel="Book Now — Limo Green"
       >
-        <div className="container mx-auto px-4 lg:px-8 max-w-5xl">
-          <div className="text-center mb-8 sm:mb-10">
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">Limo Green · Book Now</p>
-            <h2 className="font-display font-bold text-3xl sm:text-4xl mb-3">Ready to take the next step?</h2>
-            <p className="text-muted-foreground text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
-              Share your details — we’ll call you back from Patna. After you submit, the{" "}
-              <strong className="text-foreground font-medium">Book Now — Limo Green</strong> action unlocks on this page.
-            </p>
-          </div>
-
-          <div className="rounded-2xl border border-border/70 bg-card/95 p-5 sm:p-6 lg:p-8 shadow-sm">
             {!prebookUnlocked ? (
               <form onSubmit={handlePrebookInterestSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-12 lg:gap-3 lg:items-start">
                 <div className="sm:col-span-2 lg:col-span-3">
@@ -509,9 +472,7 @@ const ModelLimoGreen = () => {
                 </Button>
               </div>
             )}
-          </div>
-        </div>
-      </section>
+      </ModelPageNextStepSection>
 
       {/* Closing banner */}
       <section className="relative w-full overflow-hidden">

@@ -35,6 +35,10 @@ import vf7GalIntEnh08 from "@/assets/vf7-gallery/vf7-gallery-interior-enhanced-0
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePublicPricing } from "@/hooks/usePublicPricing";
 import { VF7_TRIM_0_100_KMH } from "@/data/vinfastCompareSpecAnchors";
+import { ModelPagePriceBand } from "@/components/model/ModelPagePriceBand";
+import { ModelPageVariantBar } from "@/components/model/ModelPageVariantBar";
+import { ModelPageHighlightsBlock } from "@/components/model/ModelPageHighlightsBlock";
+import { ModelPageNextStepSection } from "@/components/model/ModelPageNextStepSection";
 
 const colors = [
   { name: "Infinity Blanc", hex: "#E6E6E2", image: vf7InfinityBlanc },
@@ -503,49 +507,32 @@ const ModelVF7 = () => {
         <h1 className="sr-only">VinFast VF 7</h1>
       </section>
 
-      <section className="border-b border-border/60 bg-background/95 py-5 sm:py-6">
-        <div className="container mx-auto px-4 lg:px-8">
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-1">Select variant</p>
-              <p className="text-sm text-muted-foreground">{vMeta.name}</p>
-            </div>
-            <div className="hidden sm:flex flex-wrap items-center gap-2">
-              {vf7Variants.map((v) => (
-                <button
-                  key={v.id}
-                  type="button"
-                  onClick={() => setVariant(v.id)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors ${
-                    variant === v.id
-                      ? "bg-foreground text-background border-foreground"
-                      : "bg-background text-foreground border-border/80 hover:bg-muted"
-                  }`}
-                >
-                  {v.shortLabel}
-                </button>
-              ))}
-            </div>
-            <div className="sm:hidden">
-              <label htmlFor="vf7-variant-selector" className="sr-only">
-                Select VF 7 variant
-              </label>
-              <select
-                id="vf7-variant-selector"
-                value={variant}
-                onChange={(e) => setVariant(e.target.value as VariantId)}
-                className="h-11 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground"
-              >
-                {vf7Variants.map((v) => (
-                  <option key={v.id} value={v.id}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ModelPagePriceBand
+        exShowroomPrice={displayExShowroom}
+        priceCaption={`Indicative ex-showroom · ${vMeta.shortLabel}`}
+        primaryCta={{ href: "/book-now?model=VF%207", label: "Book Now — VF 7" }}
+        secondaryCta={{ href: "/test-drive", label: "Book a test drive" }}
+      />
+
+      <ModelPageVariantBar
+        productLabel="VF 7"
+        selectedVariantName={vMeta.name}
+        variants={vf7Variants}
+        selectedId={variant}
+        onSelect={(id) => setVariant(id as VariantId)}
+        selectId="vf7-variant-selector"
+      />
+
+      <ModelPageHighlightsBlock
+        sectionTitle="Your drive, your way."
+        productName="VF 7"
+        description="Born sporty and effortlessly sophisticated — five trims with FWD and AWD options."
+        highlights={[
+          { label: "Range (MIDC)", value: heroRange },
+          { label: "0–100 km/h", value: heroAccel },
+          { label: "Max. power", value: stats.power },
+        ]}
+      />
 
       {/* Exterior colour + selected variant (aligned with VF 6) */}
       {/* <section className="py-10 sm:py-14 lg:py-20 border-b border-border/60 bg-muted/25">
@@ -816,7 +803,8 @@ const ModelVF7 = () => {
         <div className="container mx-auto px-4 lg:px-8">
           <div className="text-center mb-12 max-w-3xl mx-auto">
             <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Specifications</p>
-            <h2 className="font-display font-bold text-3xl md:text-5xl mb-4">VF 7 — all five variants</h2>
+            <h2 className="font-display font-bold text-3xl md:text-5xl mb-4">Vehicle Specification</h2>
+            <p className="text-sm text-muted-foreground mb-2">VF 7 — all five variants</p>
             <p className="text-muted-foreground text-sm md:text-base">
               Technical brief: FWD Earth (59.6 kWh); Wind & Wind Infinity (70 kWh); AWD Sky / Sky Infinity (70 kWh, 353 PS).
             </p>
@@ -904,6 +892,18 @@ const ModelVF7 = () => {
           </div>
         </div>
       </section>
+
+      <ModelPageNextStepSection
+        eyebrow="VF 7 · Book Now"
+        description={
+          <>
+            Reserve or enquire with Patliputra VinFast — we&apos;ll confirm pricing for{" "}
+            <strong className="text-foreground font-medium">{vMeta.shortLabel}</strong> and help you book a test drive.
+          </>
+        }
+        bookHref="/book-now?model=VF%207"
+        bookLabel="Book Now — VF 7"
+      />
 
       <LeadCaptureStrip />
       <Footer />
