@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useRef, useState } from "react";
+import { useMemo, useEffect, useRef, useState, useCallback } from "react";
 import { mockLeads, mockTestDrives, mockEnquiries, LEAD_STATUSES } from "@/data/mockData";
 import type { Lead, TestDriveBooking, Enquiry } from "@/data/mockData";
 import {
@@ -15,7 +15,9 @@ import { dashboardStatsFromApi, leadFromApi, testDriveFromApi, enquiryFromApi } 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Users, Car, TestTube, MessageSquare, TrendingUp, Clock, Phone, CalendarCheck, Loader2 } from "lucide-react";
+import { Users, Car, TestTube, MessageSquare, TrendingUp, Clock, Phone, CalendarCheck, Loader2, Flame, Snowflake } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { localDateKey } from "@/lib/reportPeriod";
 
@@ -27,12 +29,36 @@ type CardAction =
   | "open-enquiries"
   | "all-enquiries"
   | "hot-leads"
+  | "warm-leads"
+  | "cold-leads"
   | "bookings"
   | "contact-pending"
   | "pending-followups"
   | "models";
 
 type DetailMode = "leads" | "testdrives" | "enquiries" | "models";
+
+type LeadFlagFilter = "all" | "HOT" | "WARM" | "COLD";
+
+const LEAD_FLAG_OPTIONS = ["HOT", "WARM", "COLD"] as const;
+
+function effectiveLeadFlag(l: Lead): string {
+  const raw = (l.leadFlag || l.interestLevel || "").trim().toUpperCase();
+  return LEAD_FLAG_OPTIONS.includes(raw as (typeof LEAD_FLAG_OPTIONS)[number]) ? raw : "";
+}
+
+function leadFlagBadgeClass(flag: string) {
+  switch (flag) {
+    case "HOT":
+      return "bg-red-500/15 text-red-700 dark:text-red-300 border-red-500/30";
+    case "WARM":
+      return "bg-orange-500/15 text-orange-800 dark:text-orange-300 border-orange-500/30";
+    case "COLD":
+      return "bg-sky-500/15 text-sky-800 dark:text-sky-300 border-sky-500/30";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
 
 function fmtDate(v?: string) {
   if (!v) return "—";
@@ -60,8 +86,16 @@ const AdminDashboard = () => {
   const [apiRecentLeads, setApiRecentLeads] = useState<Lead[]>([]);
   const [apiRecentTd, setApiRecentTd] = useState<TestDriveBooking[]>([]);
   const [apiLoading, setApiLoading] = useState(false);
+  const [leadFlagFilter, setLeadFlagFilter] = useState<LeadFlagFilter>("all");
 
   const useRemote = hasApi();
+
+  const fetchRecentLeads = useCallback(async (flag: LeadFlagFilter) => {
+    const q = new URLSearchParams({ limit: "5", page: "1" });
+    if (flag !== "all") q.set("interestLevel", flag);
+    const leadsRes = await adminGet<unknown[]>(`/admin/leads?${q}`);
+    return (leadsRes.data as Record<string, unknown>[]).map((d) => leadFromApi(d));
+  }, []);
 
   useEffect(() => {
     if (!useRemote) {
@@ -80,13 +114,13 @@ const AdminDashboard = () => {
       setApiLoading(true);
       try {
         const s = await adminGet<Record<string, unknown>>("/admin/dashboard/stats");
-        const [leadsRes, tdRes] = await Promise.all([
-          adminGet<unknown[]>("/admin/leads?limit=5&page=1"),
+        const [recentLeads, tdRes] = await Promise.all([
+          fetchRecentLeads(leadFlagFilter),
           adminGet<unknown[]>("/admin/test-drives?limit=5&page=1"),
         ]);
         if (cancelled) return;
         setStats(dashboardStatsFromApi(s.data));
-        setApiRecentLeads((leadsRes.data as Record<string, unknown>[]).map((d) => leadFromApi(d)));
+        setApiRecentLeads(recentLeads);
         setApiRecentTd((tdRes.data as Record<string, unknown>[]).map((d) => testDriveFromApi(d)));
       } catch (e) {
         if (!cancelled) toast.error(formatApiErrors(e));
@@ -97,13 +131,18 @@ const AdminDashboard = () => {
     return () => {
       cancelled = true;
     };
-  }, [useRemote]);
+  }, [useRemote, leadFlagFilter, fetchRecentLeads]);
 
   const leads = useMemo(() => {
-    if (useRemote) return apiRecentLeads;
-    const { seedMock, leads: L } = getLeadsAdminInitial();
-    return seedMock ? mockLeads : L;
-  }, [useRemote, apiRecentLeads, storageRev]);
+    let rows: Lead[];
+    if (useRemote) rows = apiRecentLeads;
+    else {
+      const { seedMock, leads: L } = getLeadsAdminInitial();
+      rows = seedMock ? mockLeads : L;
+    }
+    if (leadFlagFilter === "all") return rows;
+    return rows.filter((l) => effectiveLeadFlag(l) === leadFlagFilter);
+  }, [useRemote, apiRecentLeads, storageRev, leadFlagFilter]);
 
   const testDrives = useMemo(() => {
     if (useRemote) return apiRecentTd;
@@ -132,15 +171,20 @@ const AdminDashboard = () => {
   const allTdsRef = useRef<TestDriveBooking[] | null>(null);
   const allEnquiriesRef = useRef<Enquiry[] | null>(null);
 
-  const loadAllLeads = async (opts?: { from?: string; to?: string }): Promise<Lead[]> => {
-    if (!useRemote) return leads;
-    if (!opts?.from && !opts?.to && allLeadsRef.current) return allLeadsRef.current;
+  const loadAllLeads = async (opts?: { from?: string; to?: string; interestLevel?: string }): Promise<Lead[]> => {
+    if (!useRemote) {
+      const base = leads;
+      if (opts?.interestLevel) return base.filter((l) => effectiveLeadFlag(l) === opts.interestLevel);
+      return base;
+    }
+    if (!opts?.from && !opts?.to && !opts?.interestLevel && allLeadsRef.current) return allLeadsRef.current;
     const q = new URLSearchParams({ limit: "500", page: "1" });
     if (opts?.from) q.set("from", opts.from);
     if (opts?.to) q.set("to", opts.to);
+    if (opts?.interestLevel) q.set("interestLevel", opts.interestLevel);
     const res = await adminGet<unknown[]>(`/admin/leads?${q}`);
     const rows = (res.data as Record<string, unknown>[]).map((d) => leadFromApi(d));
-    if (!opts?.from && !opts?.to) allLeadsRef.current = rows;
+    if (!opts?.from && !opts?.to && !opts?.interestLevel) allLeadsRef.current = rows;
     return rows;
   };
 
@@ -162,7 +206,11 @@ const AdminDashboard = () => {
     return rows;
   };
 
-  const showLeadRows = (title: string, filter?: (l: Lead) => boolean, range?: { from?: string; to?: string }) => {
+  const showLeadRows = (
+    title: string,
+    filter?: (l: Lead) => boolean,
+    range?: { from?: string; to?: string; interestLevel?: string },
+  ) => {
     setDetailTitle(title);
     setDetailMode("leads");
     setDetailOpen(true);
@@ -250,7 +298,13 @@ const AdminDashboard = () => {
         showEnquiryRows("Enquiries");
         break;
       case "hot-leads":
-        showLeadRows("Hot Leads", (l) => l.status === "Interested" || l.status === "Negotiation");
+        showLeadRows("HOT leads (flag)", undefined, { interestLevel: "HOT" });
+        break;
+      case "warm-leads":
+        showLeadRows("WARM leads (flag)", undefined, { interestLevel: "WARM" });
+        break;
+      case "cold-leads":
+        showLeadRows("COLD leads (flag)", undefined, { interestLevel: "COLD" });
         break;
       case "bookings":
         showLeadRows("Bookings", (l) => l.status === "Booked");
@@ -277,7 +331,9 @@ const AdminDashboard = () => {
         { label: "Leads Today", value: stats.newLeadsToday, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10", action: "leads-today" as CardAction },
         { label: "Pending / Scheduled TD", value: pendingTestDrives, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10", action: "td-pending" as CardAction },
         { label: "Open Enquiries", value: stats.openEnquiries, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10", action: "open-enquiries" as CardAction },
-        { label: "Hot Leads", value: stats.hotLeads, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10", action: "hot-leads" as CardAction },
+        { label: "HOT leads", value: stats.hotFlagLeads, icon: Flame, color: "text-red-500", bg: "bg-red-500/10", action: "hot-leads" as CardAction },
+        { label: "WARM leads", value: stats.warmFlagLeads, icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10", action: "warm-leads" as CardAction },
+        { label: "COLD leads", value: stats.coldFlagLeads, icon: Snowflake, color: "text-sky-500", bg: "bg-sky-500/10", action: "cold-leads" as CardAction },
         { label: "Bookings", value: stats.bookings, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10", action: "bookings" as CardAction },
         { label: "Contact Pending", value: byStatus("Contact Attempted"), icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10", action: "contact-pending" as CardAction },
         { label: "Model groups", value: Object.keys(stats.leadsByModel ?? {}).length, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", action: "models" as CardAction },
@@ -292,7 +348,9 @@ const AdminDashboard = () => {
         { label: "Leads Today", value: ph, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10", action: noAction },
         { label: "Pending / Scheduled TD", value: ph, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10", action: noAction },
         { label: "Open Enquiries", value: ph, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10", action: noAction },
-        { label: "Hot Leads", value: ph, icon: TrendingUp, color: "text-orange-400", bg: "bg-orange-400/10", action: noAction },
+        { label: "HOT leads", value: ph, icon: Flame, color: "text-red-500", bg: "bg-red-500/10", action: noAction },
+        { label: "WARM leads", value: ph, icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10", action: noAction },
+        { label: "COLD leads", value: ph, icon: Snowflake, color: "text-sky-500", bg: "bg-sky-500/10", action: noAction },
         { label: "Bookings", value: ph, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10", action: noAction },
         { label: "Contact Pending", value: ph, icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10", action: noAction },
         { label: "Model groups", value: ph, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", action: noAction },
@@ -346,11 +404,55 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          {useRemote ? (apiLoading ? "Loading live stats…" : "Live data from API") : "Welcome back — here's your dealership overview"}
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold text-foreground">Dashboard</h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            {useRemote ? (apiLoading ? "Loading live stats…" : "Live data from API") : "Welcome back — here's your dealership overview"}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select
+            value={leadFlagFilter}
+            onValueChange={(v) => setLeadFlagFilter(v as LeadFlagFilter)}
+          >
+            <SelectTrigger className="w-[11rem] h-9 bg-secondary/50">
+              <SelectValue placeholder="Lead flag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All lead flags</SelectItem>
+              {LEAD_FLAG_OPTIONS.map((level) => (
+                <SelectItem key={level} value={level}>{level} leads only</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {LEAD_FLAG_OPTIONS.map((level) => {
+            const count =
+              stats && useRemote
+                ? level === "HOT"
+                  ? stats.hotFlagLeads
+                  : level === "WARM"
+                    ? stats.warmFlagLeads
+                    : stats.coldFlagLeads
+                : null;
+            const active = leadFlagFilter === level;
+            return (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setLeadFlagFilter((prev) => (prev === level ? "all" : level))}
+              >
+                <Badge
+                  variant={active ? "default" : "outline"}
+                  className={cn("text-xs cursor-pointer", !active && leadFlagBadgeClass(level))}
+                >
+                  {level}
+                  {count != null ? ` · ${count.toLocaleString("en-IN")}` : ""}
+                </Badge>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -390,7 +492,12 @@ const AdminDashboard = () => {
 
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="bg-card border-border/50 p-5">
-          <h3 className="font-display font-semibold text-foreground mb-4">Recent Leads</h3>
+          <h3 className="font-display font-semibold text-foreground mb-1">Recent Leads</h3>
+          {leadFlagFilter !== "all" ? (
+            <p className="text-xs text-muted-foreground mb-4">Showing {leadFlagFilter} flagged leads only</p>
+          ) : (
+            <p className="text-xs text-muted-foreground mb-4">Latest enquiries — use lead flag filter above for HOT / WARM / COLD</p>
+          )}
           <div className="space-y-3">
             {useRemote && apiLoading && leads.length === 0 ? (
               <p className="text-sm text-muted-foreground py-2">Loading…</p>
@@ -401,15 +508,22 @@ const AdminDashboard = () => {
                     <p className="text-sm font-medium text-foreground">{lead.name}</p>
                     <p className="text-xs text-muted-foreground">{lead.model} · {lead.source}</p>
                   </div>
-                  <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
-                    lead.status === "New Lead" ? "bg-blue-400/10 text-blue-400" :
-                    lead.status === "Interested" ? "bg-green-400/10 text-green-400" :
-                    lead.status === "Booked" ? "bg-primary/10 text-primary" :
-                    lead.status === "Lost" ? "bg-destructive/10 text-destructive" :
-                    "bg-secondary text-muted-foreground"
-                  }`}>
-                    {lead.status}
-                  </span>
+                  <div className="flex flex-col items-end gap-1">
+                    {effectiveLeadFlag(lead) ? (
+                      <Badge variant="outline" className={cn("text-[10px]", leadFlagBadgeClass(effectiveLeadFlag(lead)))}>
+                        {effectiveLeadFlag(lead)}
+                      </Badge>
+                    ) : null}
+                    <span className={`text-[10px] px-2 py-1 rounded-full font-medium ${
+                      lead.status === "New Lead" ? "bg-blue-400/10 text-blue-400" :
+                      lead.status === "Interested" ? "bg-green-400/10 text-green-400" :
+                      lead.status === "Booked" ? "bg-primary/10 text-primary" :
+                      lead.status === "Lost" ? "bg-destructive/10 text-destructive" :
+                      "bg-secondary text-muted-foreground"
+                    }`}>
+                      {lead.status}
+                    </span>
+                  </div>
                 </div>
               ))
             )}
@@ -477,6 +591,7 @@ const AdminDashboard = () => {
                   <tr className="border-b border-border/50 text-muted-foreground">
                     <th className="text-left p-2">Customer</th>
                     <th className="text-left p-2">Model</th>
+                    <th className="text-left p-2">Flag</th>
                     <th className="text-left p-2">Status</th>
                     <th className="text-left p-2">Source</th>
                     <th className="text-left p-2">Assigned to</th>
@@ -486,7 +601,7 @@ const AdminDashboard = () => {
                 </thead>
                 <tbody>
                   {detailLeads.length === 0 ? (
-                    <tr><td colSpan={7} className="p-8 text-center text-muted-foreground">No records found</td></tr>
+                    <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">No records found</td></tr>
                   ) : (
                     detailLeads.map((row) => (
                       <tr key={row.id} className="border-b border-border/20 hover:bg-secondary/10">
@@ -495,6 +610,15 @@ const AdminDashboard = () => {
                           <p className="text-muted-foreground">{row.mobile}</p>
                         </td>
                         <td className="p-2">{row.model}</td>
+                        <td className="p-2">
+                          {effectiveLeadFlag(row) ? (
+                            <Badge variant="outline" className={cn("text-[10px]", leadFlagBadgeClass(effectiveLeadFlag(row)))}>
+                              {effectiveLeadFlag(row)}
+                            </Badge>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                         <td className="p-2">
                           <Badge className={`text-[10px] ${LEAD_STATUS_BADGE[row.status] ?? "bg-secondary text-muted-foreground"}`}>
                             {row.status}

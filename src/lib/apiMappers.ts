@@ -89,6 +89,16 @@ export function normalizeTestDriveModel(display: string): string {
   return m;
 }
 
+function resolveLeadFlagFromApiDoc(doc: Record<string, unknown>): string {
+  const levels = new Set(["HOT", "WARM", "COLD"]);
+  const cre = doc.creSheet && typeof doc.creSheet === "object" ? (doc.creSheet as Record<string, unknown>) : null;
+  for (const raw of [doc.leadFlag, doc.interestLevel, doc.leadType, cre?.followUp]) {
+    const s = String(raw ?? "").trim().toUpperCase();
+    if (levels.has(s)) return s;
+  }
+  return "";
+}
+
 export function leadFromApi(doc: Record<string, unknown>): Lead {
   const assigned = populatedName(doc.assignedTo) || (typeof doc.assignedTo === "string" && !isMongoId(doc.assignedTo) ? String(doc.assignedTo) : "");
   const modelLine = String(doc.model ?? "");
@@ -112,6 +122,8 @@ export function leadFromApi(doc: Record<string, unknown>): Lead {
     remarks: String(doc.remarks ?? ""),
     financeNeeded: Boolean(doc.financeNeeded),
     exchangeNeeded: Boolean(doc.exchangeNeeded),
+    interestLevel: String(doc.interestLevel ?? ""),
+    leadFlag: resolveLeadFlagFromApiDoc(doc),
   };
 }
 
@@ -217,6 +229,9 @@ export type DashboardStats = {
   totalLeads: number;
   newLeadsToday: number;
   hotLeads: number;
+  hotFlagLeads: number;
+  warmFlagLeads: number;
+  coldFlagLeads: number;
   bookings: number;
   pendingFollowUps: number;
   totalTestDrives: number;
@@ -262,6 +277,9 @@ export function dashboardStatsFromApi(raw: Record<string, unknown> | null | unde
     totalLeads: Number(d.totalLeads) || 0,
     newLeadsToday: Number(d.newLeadsToday ?? d.leadsToday) || 0,
     hotLeads: Number(d.hotLeads) || 0,
+    hotFlagLeads: Number(d.hotFlagLeads ?? d.hotCount) || 0,
+    warmFlagLeads: Number(d.warmFlagLeads ?? d.warmCount) || 0,
+    coldFlagLeads: Number(d.coldFlagLeads ?? d.coldCount) || 0,
     bookings: Number(d.bookings) || 0,
     pendingFollowUps: Number(d.pendingFollowUps) || 0,
     totalTestDrives: Number(d.totalTestDrives) || 0,

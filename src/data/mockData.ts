@@ -17,6 +17,9 @@ export interface Lead {
   remarks: string;
   financeNeeded: boolean;
   exchangeNeeded: boolean;
+  /** HOT / WARM / COLD lead flag from CRM. */
+  interestLevel?: string;
+  leadFlag?: string;
 }
 
 /** Matches backend `testDriveStatuses` (legacy mock values normalized in admin when using API). */
