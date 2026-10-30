@@ -242,9 +242,9 @@ export default function AdminDetailedReport() {
             {data.period.label} · Generated {fmtTime(data.generatedAt)}
           </p>
           <p className="text-xs text-muted-foreground mt-1 max-w-3xl">
-            Staff lead counts match Excel <strong className="font-medium text-foreground">SALES CONSULTANT</strong> on
-            each lead (same as your per-user sheets). CRM assignee can differ — fix those under Unassigned until the
-            sheet consultant is updated.{" "}
+            Staff tables follow Excel <strong className="font-medium text-foreground">SALES CONSULTANT</strong>.{" "}
+            <strong className="font-medium text-foreground">CRM Unassigned</strong> matches the Lead CRM pill (no owner + blank sheet).{" "}
+            <strong className="font-medium text-foreground">Not matched to User Master</strong> is wider (includes sheet names that do not match any staff).{" "}
             <Link to="/admin/reports/team-assigned-leads" className="text-primary hover:underline font-medium">
               Team-wise matrix →
             </Link>
@@ -402,10 +402,13 @@ export default function AdminDetailedReport() {
       {data.leadAssignment ? (
         <p className="text-xs text-muted-foreground px-1 -mt-2">
           <strong className="font-medium text-foreground">Lead CRM alignment:</strong> assigned{" "}
-          {fmt(data.leadAssignment.crmAssigned)} + unassigned {fmt(data.leadAssignment.crmUnassigned)} = total{" "}
-          {fmt(data.leadAssignment.total)} (same rules as Lead CRM). Lead Source “Assigned” uses this count. Staff
-          manager/executive tables still attribute by sheet consultant ({fmt(data.leadAssignment.sheetConsultantNamed)}{" "}
-          leads with a named consultant on sheet).
+          {fmt(data.leadAssignment.crmAssigned)} + CRM unassigned {fmt(data.leadAssignment.crmUnassigned)} = total{" "}
+          {fmt(data.leadAssignment.total)}. Sheet staff attribution gap:{" "}
+          {fmt(data.unassignedSheet?.totalLeads ?? 0)} leads not matched to User Master
+          {data.unassignedSheet && data.leadAssignment.crmUnassigned !== data.unassignedSheet.totalLeads
+            ? ` (${fmt(data.unassignedSheet.totalLeads - data.leadAssignment.crmUnassigned)} have a sheet name or CRM owner but no staff match)`
+            : ""}
+          .
         </p>
       ) : null}
 
@@ -694,14 +697,39 @@ export default function AdminDetailedReport() {
                     </td>
                   </tr>
                 )}
+                {data.leadAssignment && data.leadAssignment.crmUnassigned > 0 ? (
+                  <tr className="bg-primary/5 border-t border-primary/20">
+                    <td className={cn(TD_L, "font-medium text-foreground")}>
+                      CRM Unassigned
+                      <span className="block text-[10px] font-normal text-muted-foreground">Same as Lead CRM pill</span>
+                    </td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={data.leadAssignment.crmUnassigned}
+                        onClick={() =>
+                          void loadDrill("CRM Unassigned · Leads", { table: "crmUnassigned" })
+                        }
+                      />
+                    </td>
+                    <td className={TD}>—</td>
+                    <td className={TD}>—</td>
+                    <td className={TD}>—</td>
+                    <td className={TD}>—</td>
+                  </tr>
+                ) : null}
                 {data.unassignedSheet && data.unassignedSheet.totalLeads > 0 ? (
                   <tr className="bg-muted/50 text-muted-foreground">
-                    <td className={cn(TD_L, "italic")}>Unassigned (sheet)</td>
+                    <td className={cn(TD_L, "italic")}>
+                      Not matched to User Master
+                      <span className="block text-[10px] font-normal not-italic">
+                        Sheet consultant ≠ any active staff
+                      </span>
+                    </td>
                     <td className={TD}>
                       <ClickableCount
                         value={data.unassignedSheet.totalLeads}
                         onClick={() =>
-                          void loadDrill("Unassigned (sheet) · Leads", { table: "unassigned", metric: "leads" })
+                          void loadDrill("Not matched to User Master · Leads", { table: "unassigned", metric: "leads" })
                         }
                       />
                     </td>
@@ -832,7 +860,7 @@ export default function AdminDetailedReport() {
 
           {data.unassignedSheet ? (
             <p className="text-xs text-muted-foreground px-1">
-              Sheet attribution check: managers {fmt(mgrTotals.leads)} + executives {fmt(execTotals.leads)} + unassigned{" "}
+              Sheet attribution check: managers {fmt(mgrTotals.leads)} + executives {fmt(execTotals.leads)} + not matched{" "}
               {fmt(data.unassignedSheet.totalLeads)} ={" "}
               <strong className="text-foreground tabular-nums">
                 {fmt(mgrTotals.leads + execTotals.leads + data.unassignedSheet.totalLeads)}
