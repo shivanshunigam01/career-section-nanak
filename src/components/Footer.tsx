@@ -81,8 +81,8 @@ const Footer = () => {
             <ul className="space-y-3">
               {[
                 { label: "Home", href: "/" },
-                { label: "VF 7", href: "/models/vf7" },
                 { label: "VF 6", href: "/models/vf6" },
+                { label: "VF 7", href: "/models/vf7" },
                 { label: "VF MPV 7", href: "/models/mpv7" },
                 { label: "Limo Green", href: "/models/limo-green" },
                 { label: "Compare Models", href: "/compare" },
