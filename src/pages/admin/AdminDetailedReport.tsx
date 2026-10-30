@@ -376,7 +376,38 @@ export default function AdminDetailedReport() {
             },
           ]}
         />
+        <KpiBox
+          title="Lead age (enquiry date)"
+          headerClass="bg-orange-700"
+          metrics={[
+            {
+              label: "Hot (≤30 days)",
+              value: summary.leadTemperature?.hot ?? 0,
+              onClick: () => void loadKpiPopup("Hot Leads (≤30 days)", "hotLeads", "all"),
+            },
+            {
+              label: "Warm (31–60 days)",
+              value: summary.leadTemperature?.warm ?? 0,
+              onClick: () => void loadKpiPopup("Warm Leads (31–60 days)", "warmLeads", "all"),
+            },
+            {
+              label: "Cold (>60 days)",
+              value: summary.leadTemperature?.cold ?? 0,
+              onClick: () => void loadKpiPopup("Cold Leads (>60 days)", "coldLeads", "all"),
+            },
+          ]}
+        />
       </div>
+
+      {data.leadAssignment ? (
+        <p className="text-xs text-muted-foreground px-1 -mt-2">
+          <strong className="font-medium text-foreground">Lead CRM alignment:</strong> assigned{" "}
+          {fmt(data.leadAssignment.crmAssigned)} + unassigned {fmt(data.leadAssignment.crmUnassigned)} = total{" "}
+          {fmt(data.leadAssignment.total)} (same rules as Lead CRM). Lead Source “Assigned” uses this count. Staff
+          manager/executive tables still attribute by sheet consultant ({fmt(data.leadAssignment.sheetConsultantNamed)}{" "}
+          leads with a named consultant on sheet).
+        </p>
+      ) : null}
 
       <Dialog open={popupOpen} onOpenChange={setPopupOpen}>
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -518,7 +549,7 @@ export default function AdminDetailedReport() {
               <tr>
                 <th className={cn(TH, "text-left")}>Lead Source</th>
                 <th className={TH}>Count</th>
-                <th className={TH}>Assigned</th>
+                <th className={TH}>CRM assigned</th>
               </tr>
             </thead>
             <tbody>
@@ -563,7 +594,7 @@ export default function AdminDetailedReport() {
                   <ClickableCount
                     value={data.leadSourcesTotal.assignedCount}
                     onClick={() =>
-                      void loadDrill("All sources · Assigned on sheet", {
+                      void loadDrill("All sources · CRM assigned", {
                         table: "leadSource",
                         metric: "assigned",
                       })

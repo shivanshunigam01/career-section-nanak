@@ -1952,6 +1952,17 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                 ) : null}
                 <p><span className="text-muted-foreground">Buyer type</span><br />{detail.lead.buyerType || "—"}</p>
                 <p><span className="text-muted-foreground">Assigned to</span><br />{detail.lead.assignedTo?.name || "—"}</p>
+                <p>
+                  <span className="text-muted-foreground">Lead entered by</span>
+                  <br />
+                  {detail.lead.enteredBy?.name ||
+                    detail.lead.enteredByName ||
+                    (typeof detail.lead.createdBy === "object" && detail.lead.createdBy?.name) ||
+                    "—"}
+                  {detail.lead.enteredBy?.designation ? (
+                    <span className="text-muted-foreground"> · {detail.lead.enteredBy.designation.replace(/_/g, " ")}</span>
+                  ) : null}
+                </p>
                 <p><span className="text-muted-foreground">Enquiry date</span><br />{formatDateOnly(detail.lead.enquiryDate || detail.lead.createdAt)}</p>
                 <p><span className="text-muted-foreground">Next follow-up</span><br />{formatDateTime(detail.lead.nextFollowUp)}</p>
                 <p className="sm:col-span-2">

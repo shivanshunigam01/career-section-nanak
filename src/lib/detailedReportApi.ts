@@ -13,6 +13,15 @@ export type DetailedReportSummary = {
   testDrives: { all: number; mtd: number; doneToday: number };
   bookingCount: number;
   callsMadeToday: number;
+  leadTemperature?: { hot: number; warm: number; cold: number };
+};
+
+export type DetailedReportLeadAssignment = {
+  total: number;
+  crmAssigned: number;
+  crmUnassigned: number;
+  sheetConsultantNamed: number;
+  crmAssignedOnly: number;
 };
 
 export type DetailedReportLeadSourceRow = {
@@ -137,6 +146,7 @@ export type DetailedReport = {
     label: string;
   };
   summary: DetailedReportSummary;
+  leadAssignment?: DetailedReportLeadAssignment;
   leadSources: DetailedReportLeadSourceRow[];
   leadSourcesTotal: { count: number; assignedCount: number };
   salesManagers: DetailedReportStaffRow[];

@@ -49,6 +49,10 @@ export type PvCrmLead = {
   exchangeNeeded?: boolean;
   financeNeeded?: boolean;
   assignedTo?: { _id: string; name: string; email?: string } | null;
+  /** Staff who created or entered the lead in CRM (null for legacy imports). */
+  enteredBy?: { _id: string; name: string; email?: string; designation?: string } | null;
+  enteredByName?: string | null;
+  createdBy?: { _id: string; name: string; email?: string; designation?: string } | string | null;
   createdAt?: string;
   updatedAt?: string;
   lastActivityAt?: string;
