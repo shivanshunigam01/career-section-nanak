@@ -278,6 +278,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [followUpDueOnly, setFollowUpDueOnly] = useState(false);
   const [customerFollowUpsOnly, setCustomerFollowUpsOnly] = useState(false);
   const [favouriteOnly, setFavouriteOnly] = useState(false);
+  const [websiteDirectOnly, setWebsiteDirectOnly] = useState(false);
   const [filterBuyerType, setFilterBuyerType] = useState("all");
   const [filterInterestLevel, setFilterInterestLevel] = useState<"all" | (typeof LEAD_FLAG_OPTIONS)[number]>("all");
   const isLeadCrmModule = pageConfig.moduleKey === "crm_leads";
@@ -286,6 +287,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   const [pipelineCounts, setPipelineCounts] = useState<Record<string, number>>({});
   const [statsTotal, setStatsTotal] = useState(0);
   const [unassignedCount, setUnassignedCount] = useState(0);
+  const [websiteDirectCount, setWebsiteDirectCount] = useState(0);
   const [assignedCount, setAssignedCount] = useState(0);
   const [favouriteCount, setFavouriteCount] = useState(0);
   const [hotCount, setHotCount] = useState(0);
@@ -430,6 +432,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             : undefined,
         moduleView: moduleViewParam,
         interestLevel: filterInterestLevel !== "all" ? filterInterestLevel : undefined,
+        entryOrigin: websiteDirectOnly ? "website" : undefined,
       });
       setLeads(Array.isArray(res.leads) ? res.leads : []);
       setTotal(res.total ?? 0);
@@ -440,7 +443,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     } finally {
       setLoading(false);
     }
-  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, filterBuyerType, filterInterestLevel, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase, moduleViewParam]);
+  }, [search, filterStatus, filterSource, filterModel, followUpDueOnly, customerFollowUpsOnly, favouriteOnly, websiteDirectOnly, filterBuyerType, filterInterestLevel, filterDateFrom, filterDateTo, filterDateField, filterExecutive, canAssignLeads, page, pageConfig.apiBase, moduleViewParam]);
 
   const hasDateFilter = Boolean(filterDateFrom || filterDateTo);
 
@@ -485,6 +488,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         setPipelineCounts(stats.pipeline || {});
         setStatsTotal(stats.total ?? 0);
         setUnassignedCount(stats.unassignedCount ?? 0);
+        setWebsiteDirectCount(stats.websiteDirectCount ?? 0);
         setAssignedCount(stats.assignedCount ?? 0);
         setFavouriteCount(stats.favouriteCount || 0);
         setHotCount(stats.hotCount ?? 0);
@@ -494,6 +498,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
         setPipelineCounts({});
         setStatsTotal(0);
         setUnassignedCount(0);
+        setWebsiteDirectCount(0);
         setAssignedCount(0);
         setFavouriteCount(0);
         setHotCount(0);
@@ -1277,6 +1282,11 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             {filterTestDrive === "pipeline" ? "Pipeline (TD pending)" : "TD done only"}
           </Badge>
         ) : null}
+        {isLeadCrmModule && websiteDirectOnly ? (
+          <Badge variant="outline" className="text-xs border-sky-300 text-sky-800 dark:text-sky-300">
+            Website / test drive only (customer forms)
+          </Badge>
+        ) : null}
         {filterStatus && filterStatus !== "all" ? (
           <Badge variant="outline" className="text-xs">
             Filtered: {filterStatus} ({total})
@@ -1342,6 +1352,27 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
               </button>
             ) : null}
           </>
+        ) : null}
+        {isLeadCrmModule ? (
+          <button
+            type="button"
+            onClick={() => {
+              setPage(1);
+              setWebsiteDirectOnly((v) => !v);
+            }}
+          >
+            <Badge
+              variant={websiteDirectOnly ? "default" : "outline"}
+              className={cn(
+                "text-xs cursor-pointer",
+                websiteDirectOnly
+                  ? "bg-sky-600 hover:bg-sky-600"
+                  : "border-sky-200 text-sky-900 dark:text-sky-300",
+              )}
+            >
+              Website / test drive — {websiteDirectCount.toLocaleString("en-IN")}
+            </Badge>
+          </button>
         ) : null}
         <button
           type="button"

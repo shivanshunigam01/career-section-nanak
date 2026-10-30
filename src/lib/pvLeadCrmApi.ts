@@ -229,6 +229,8 @@ export async function fetchPvCrmLeads(params?: {
   apiBase?: string;
   moduleView?: CrmModuleView;
   interestLevel?: string;
+  /** Customer website / test-drive form leads (no staff createdBy). */
+  entryOrigin?: "website";
 }): Promise<{ leads: PvCrmLead[]; total: number; page: number; limit: number; stages: CrmLeadStage[] }> {
   const page = Math.max(params?.page ?? 1, 1);
   const limit = Math.max(params?.limit ?? 20, 1);
@@ -252,6 +254,7 @@ export async function fetchPvCrmLeads(params?: {
   if (params?.pvCustomerId) q.set("pvCustomerId", params.pvCustomerId);
   if (params?.moduleView && params.moduleView !== "all") q.set("moduleView", params.moduleView);
   if (params?.interestLevel && params.interestLevel !== "all") q.set("interestLevel", params.interestLevel);
+  if (params?.entryOrigin === "website") q.set("entryOrigin", "website");
 
   const base = params?.apiBase || CRM_BASE;
   const res = await adminGet<PvCrmLead[]>(`${base}?${q}`);
@@ -446,6 +449,7 @@ export type CrmLeadStats = {
   hotCount?: number;
   warmCount?: number;
   coldCount?: number;
+  websiteDirectCount?: number;
 };
 
 export async function fetchPvCrmLeadStats(params?: {
