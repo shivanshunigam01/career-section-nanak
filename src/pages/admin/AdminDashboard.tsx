@@ -11,7 +11,7 @@ import {
 import { hasApi } from "@/lib/apiConfig";
 import { adminGet, formatApiErrors } from "@/lib/api";
 import type { DashboardStats } from "@/lib/apiMappers";
-import { dashboardStatsFromApi, leadFromApi, testDriveFromApi, enquiryFromApi } from "@/lib/apiMappers";
+import { dashboardStatsFromApi, leadFromApi, testDriveFromApi, tdBookingFromApi, enquiryFromApi } from "@/lib/apiMappers";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -32,6 +32,10 @@ type CardAction =
   | "warm-leads"
   | "cold-leads"
   | "bookings"
+  | "bookings-mtd"
+  | "delivered"
+  | "delivered-mtd"
+  | "test-drives-mtd"
   | "contact-pending"
   | "pending-followups"
   | "models";
@@ -58,6 +62,15 @@ function leadFlagBadgeClass(flag: string) {
     default:
       return "bg-muted text-muted-foreground";
   }
+}
+
+function isBookingLeadStatus(status: string) {
+  return status === "Booking" || status === "Booked";
+}
+
+function mtdRangeKeys(now = new Date()) {
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  return { from: localDateKey(start), to: localDateKey(now) };
 }
 
 function fmtDate(v?: string) {
@@ -116,12 +129,12 @@ const AdminDashboard = () => {
         const s = await adminGet<Record<string, unknown>>("/admin/dashboard/stats");
         const [recentLeads, tdRes] = await Promise.all([
           fetchRecentLeads(leadFlagFilter),
-          adminGet<unknown[]>("/admin/test-drives?limit=5&page=1"),
+          adminGet<unknown[]>("/admin/td/bookings?limit=5&page=1"),
         ]);
         if (cancelled) return;
         setStats(dashboardStatsFromApi(s.data));
         setApiRecentLeads(recentLeads);
-        setApiRecentTd((tdRes.data as Record<string, unknown>[]).map((d) => testDriveFromApi(d)));
+        setApiRecentTd((tdRes.data as Record<string, unknown>[]).map((d) => tdBookingFromApi(d)));
       } catch (e) {
         if (!cancelled) toast.error(formatApiErrors(e));
       } finally {
@@ -171,28 +184,43 @@ const AdminDashboard = () => {
   const allTdsRef = useRef<TestDriveBooking[] | null>(null);
   const allEnquiriesRef = useRef<Enquiry[] | null>(null);
 
-  const loadAllLeads = async (opts?: { from?: string; to?: string; interestLevel?: string }): Promise<Lead[]> => {
+  const loadAllLeads = async (opts?: {
+    from?: string;
+    to?: string;
+    interestLevel?: string;
+    crmBase?: string;
+    status?: string;
+    dateField?: string;
+  }): Promise<Lead[]> => {
     if (!useRemote) {
       const base = leads;
       if (opts?.interestLevel) return base.filter((l) => effectiveLeadFlag(l) === opts.interestLevel);
+      if (opts?.status === "Delivered") return base.filter((l) => l.status === "Delivered");
+      if (opts?.crmBase?.includes("booking")) return base.filter((l) => isBookingLeadStatus(l.status));
       return base;
     }
-    if (!opts?.from && !opts?.to && !opts?.interestLevel && allLeadsRef.current) return allLeadsRef.current;
+    const cacheable = !opts?.from && !opts?.to && !opts?.interestLevel && !opts?.status && !opts?.crmBase && !opts?.dateField;
+    if (cacheable && allLeadsRef.current) return allLeadsRef.current;
     const q = new URLSearchParams({ limit: "5000", page: "1" });
     if (opts?.from) q.set("from", opts.from);
     if (opts?.to) q.set("to", opts.to);
     if (opts?.interestLevel) q.set("interestLevel", opts.interestLevel);
-    const res = await adminGet<unknown[]>(`/admin/leads?${q}`);
+    if (opts?.status) q.set("status", opts.status);
+    if (opts?.dateField) q.set("dateField", opts.dateField);
+    const basePath = opts?.crmBase || "/admin/leads";
+    const res = await adminGet<unknown[]>(`${basePath}?${q}`);
     const rows = (res.data as Record<string, unknown>[]).map((d) => leadFromApi(d));
-    if (!opts?.from && !opts?.to && !opts?.interestLevel) allLeadsRef.current = rows;
+    if (cacheable) allLeadsRef.current = rows;
     return rows;
   };
 
   const loadAllTestDrives = async (): Promise<TestDriveBooking[]> => {
     if (!useRemote) return testDrives;
     if (allTdsRef.current) return allTdsRef.current;
-    const res = await adminGet<unknown[]>("/admin/test-drives?limit=500&page=1");
-    const rows = (res.data as Record<string, unknown>[]).map((d) => testDriveFromApi(d));
+    const res = await adminGet<unknown[]>("/admin/td/bookings?limit=500&page=1");
+    const rows = (res.data as Record<string, unknown>[])
+      .filter((d) => !["CANCELLED", "MISSED"].includes(String(d.bookingStatus ?? "").toUpperCase()))
+      .map((d) => tdBookingFromApi(d));
     allTdsRef.current = rows;
     return rows;
   };
@@ -209,7 +237,14 @@ const AdminDashboard = () => {
   const showLeadRows = (
     title: string,
     filter?: (l: Lead) => boolean,
-    range?: { from?: string; to?: string; interestLevel?: string },
+    range?: {
+      from?: string;
+      to?: string;
+      interestLevel?: string;
+      crmBase?: string;
+      status?: string;
+      dateField?: string;
+    },
   ) => {
     setDetailTitle(title);
     setDetailMode("leads");
@@ -288,6 +323,14 @@ const AdminDashboard = () => {
       case "td-pending":
         showTdRows("Pending / Scheduled Test Drives", (t) => t.status === "Pending" || t.status === "Scheduled");
         break;
+      case "test-drives-mtd": {
+        const mtd = mtdRangeKeys();
+        showTdRows("Test drives MTD", (t) => {
+          if (!t.preferredDate) return false;
+          return t.preferredDate >= mtd.from && t.preferredDate <= mtd.to;
+        });
+        break;
+      }
       case "all-testdrives":
         showTdRows("Test Drives");
         break;
@@ -307,8 +350,34 @@ const AdminDashboard = () => {
         showLeadRows("COLD leads (flag)", undefined, { interestLevel: "COLD" });
         break;
       case "bookings":
-        showLeadRows("Bookings", (l) => l.status === "Booked");
+        showLeadRows("Bookings (all)", (l) => isBookingLeadStatus(l.status), {
+          crmBase: "/admin/crm/booking-leads",
+        });
         break;
+      case "bookings-mtd": {
+        const mtd = mtdRangeKeys();
+        showLeadRows("Bookings MTD", (l) => isBookingLeadStatus(l.status), {
+          crmBase: "/admin/crm/booking-leads",
+          from: mtd.from,
+          to: mtd.to,
+          dateField: "booking",
+        });
+        break;
+      }
+      case "delivered":
+        showLeadRows("Delivered (all)", (l) => l.status === "Delivered", { status: "Delivered", crmBase: "/admin/crm/leads" });
+        break;
+      case "delivered-mtd": {
+        const mtd = mtdRangeKeys();
+        showLeadRows("Delivered MTD", (l) => l.status === "Delivered", {
+          crmBase: "/admin/crm/leads",
+          status: "Delivered",
+          from: mtd.from,
+          to: mtd.to,
+          dateField: "delivery",
+        });
+        break;
+      }
       case "contact-pending":
         showLeadRows("Contact Pending", (l) => l.status === "Contact Attempted");
         break;
@@ -325,16 +394,23 @@ const AdminDashboard = () => {
     if (useRemote && stats) {
       const byStatus = (id: string) => stats.leadsByStatus?.[id] ?? 0;
       const tdByStatus = stats.testDrivesByStatus ?? {};
-      const pendingTestDrives = (tdByStatus.Pending ?? 0) + (tdByStatus.Scheduled ?? 0);
+      const pendingTestDrives =
+        (tdByStatus.PENDING ?? tdByStatus.Pending ?? 0) +
+        (tdByStatus.CONFIRMED ?? tdByStatus.Scheduled ?? 0);
       return [
         { label: "Total Leads", value: stats.totalLeads, icon: Users, color: "text-blue-400", bg: "bg-blue-400/10", action: "all-leads" as CardAction },
         { label: "Leads Today", value: stats.newLeadsToday, icon: Users, color: "text-sky-400", bg: "bg-sky-400/10", action: "leads-today" as CardAction },
-        { label: "Pending / Scheduled TD", value: pendingTestDrives, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10", action: "td-pending" as CardAction },
+        { label: "Test drives (active)", value: stats.totalTestDrives, icon: TestTube, color: "text-green-400", bg: "bg-green-400/10", action: "all-testdrives" as CardAction },
+        { label: "Test drives MTD", value: stats.testDrivesMtd, icon: TestTube, color: "text-emerald-400", bg: "bg-emerald-400/10", action: "test-drives-mtd" as CardAction },
+        { label: "Pending / scheduled TD", value: pendingTestDrives, icon: Clock, color: "text-lime-400", bg: "bg-lime-400/10", action: "td-pending" as CardAction },
+        { label: "Bookings (all)", value: stats.bookings, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10", action: "bookings" as CardAction },
+        { label: "Bookings MTD", value: stats.bookingsMtd, icon: CalendarCheck, color: "text-violet-400", bg: "bg-violet-400/10", action: "bookings-mtd" as CardAction },
+        { label: "Delivered (all)", value: stats.delivered, icon: CalendarCheck, color: "text-indigo-400", bg: "bg-indigo-400/10", action: "delivered" as CardAction },
+        { label: "Delivered MTD", value: stats.deliveredMtd, icon: CalendarCheck, color: "text-fuchsia-400", bg: "bg-fuchsia-400/10", action: "delivered-mtd" as CardAction },
         { label: "Open Enquiries", value: stats.openEnquiries, icon: MessageSquare, color: "text-amber-400", bg: "bg-amber-400/10", action: "open-enquiries" as CardAction },
         { label: "HOT leads", value: stats.hotFlagLeads, icon: Flame, color: "text-red-500", bg: "bg-red-500/10", action: "hot-leads" as CardAction },
         { label: "WARM leads", value: stats.warmFlagLeads, icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10", action: "warm-leads" as CardAction },
         { label: "COLD leads", value: stats.coldFlagLeads, icon: Snowflake, color: "text-sky-500", bg: "bg-sky-500/10", action: "cold-leads" as CardAction },
-        { label: "Bookings", value: stats.bookings, icon: CalendarCheck, color: "text-primary", bg: "bg-primary/10", action: "bookings" as CardAction },
         { label: "Contact Pending", value: byStatus("Contact Attempted"), icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10", action: "contact-pending" as CardAction },
         { label: "Model groups", value: Object.keys(stats.leadsByModel ?? {}).length, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", action: "models" as CardAction },
       ];

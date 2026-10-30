@@ -150,6 +150,42 @@ export function leadToApiPayload(lead: Lead): Record<string, unknown> {
   return payload;
 }
 
+/** Map TDBooking module row for dashboard / lists (excludes cancelled in caller when needed). */
+export function tdBookingFromApi(doc: Record<string, unknown>): TestDriveBooking {
+  const executive = populatedName(doc.assignedExecutive);
+  const leadRef = doc.leadId;
+  let leadId = "";
+  if (typeof leadRef === "string") leadId = leadRef;
+  else if (leadRef && typeof leadRef === "object" && "_id" in leadRef) leadId = String((leadRef as { _id?: unknown })._id ?? "");
+
+  const raw = String(doc.bookingStatus ?? "PENDING").toUpperCase();
+  let status: TestDriveStatus = "Pending";
+  if (raw === "CONFIRMED" || raw === "IN_PROGRESS") status = "Scheduled";
+  else if (raw === "COMPLETED") status = "Completed";
+  else if (raw === "CANCELLED" || raw === "MISSED") status = "Cancelled";
+
+  const customer = doc.customerId && typeof doc.customerId === "object" ? (doc.customerId as Record<string, unknown>) : null;
+
+  return {
+    id: String(doc._id ?? doc.bookingId ?? ""),
+    leadId,
+    customerName: String(doc.customerName ?? customer?.name ?? ""),
+    mobile: String(doc.customerMobile ?? customer?.mobile ?? ""),
+    model: String(doc.preferredModel ?? doc.model ?? ""),
+    preferredDate: isoDateOnly(doc.slotDate ?? doc.preferredDate),
+    preferredTime: String(doc.slotTime ?? doc.preferredTime ?? ""),
+    branch: String(doc.branch ?? ""),
+    preferredTestDriveLocation: String(doc.preferredTestDriveLocation ?? ""),
+    ownsCar: String(doc.ownsCar ?? ""),
+    currentCarDetails: String(doc.currentCarDetails ?? ""),
+    purchaseTimeline: String(doc.purchaseTimeline ?? ""),
+    status,
+    assignedExecutive: executive,
+    feedback: String(doc.feedback ?? ""),
+    createdAt: isoDateOnly(doc.createdAt),
+  };
+}
+
 export function testDriveFromApi(doc: Record<string, unknown>): TestDriveBooking {
   const executive = populatedName(doc.assignedExecutive);
   const leadRef = doc.leadId;
@@ -233,9 +269,13 @@ export type DashboardStats = {
   warmFlagLeads: number;
   coldFlagLeads: number;
   bookings: number;
+  bookingsMtd: number;
+  delivered: number;
+  deliveredMtd: number;
   pendingFollowUps: number;
   totalTestDrives: number;
   testDrivesThisWeek: number;
+  testDrivesMtd: number;
   totalEnquiries: number;
   openEnquiries: number;
   leadsBySource: Record<string, number>;
@@ -281,9 +321,13 @@ export function dashboardStatsFromApi(raw: Record<string, unknown> | null | unde
     warmFlagLeads: Number(d.warmFlagLeads ?? d.warmCount) || 0,
     coldFlagLeads: Number(d.coldFlagLeads ?? d.coldCount) || 0,
     bookings: Number(d.bookings) || 0,
+    bookingsMtd: Number(d.bookingsMtd) || 0,
+    delivered: Number(d.delivered) || 0,
+    deliveredMtd: Number(d.deliveredMtd) || 0,
     pendingFollowUps: Number(d.pendingFollowUps) || 0,
     totalTestDrives: Number(d.totalTestDrives) || 0,
     testDrivesThisWeek: Number(d.testDrivesThisWeek) || 0,
+    testDrivesMtd: Number(d.testDrivesMtd) || 0,
     totalEnquiries: Number(d.totalEnquiries) || 0,
     openEnquiries: Number(d.openEnquiries) || 0,
     leadsBySource: countRecordFromApi(d.leadsBySource),
