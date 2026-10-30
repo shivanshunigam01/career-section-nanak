@@ -616,6 +616,7 @@ export default function AdminDetailedReport() {
                 <tr>
                   <th className={cn(TH, "text-left")}>Sales Manager</th>
                   <th className={TH}>Total Leads</th>
+                  <th className={TH}>Team Leads</th>
                   <th className={TH}>Total TD</th>
                   <th className={TH}>TD This Month</th>
                   <th className={TH}>TD By Team</th>
@@ -639,6 +640,11 @@ export default function AdminDetailedReport() {
                           })
                         }
                       />
+                    </td>
+                    <td className={TD}>
+                      <span className="tabular-nums" title="Manager + direct SE (sheet attribution)">
+                        {fmt(row.teamTotalLeads ?? row.totalLeads)}
+                      </span>
                     </td>
                     <td className={TD}>
                       <ClickableCount
@@ -692,7 +698,7 @@ export default function AdminDetailedReport() {
                 ))}
                 {data.salesManagers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className={cn(TD, "text-muted-foreground py-6")}>
+                    <td colSpan={7} className={cn(TD, "text-muted-foreground py-6")}>
                       No sales managers found
                     </td>
                   </tr>
@@ -711,6 +717,7 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
+                    <td className={TD}>—</td>
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
@@ -751,13 +758,16 @@ export default function AdminDetailedReport() {
                     </td>
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
+                    <td className={TD}>—</td>
                   </tr>
                 ) : null}
-                <tr className={TOTAL_ROW}>
-                  <td className={cn(TD_L, "font-bold")}>TOTAL (managers)</td>
+                <tr className="bg-muted/40 border-t border-border">
+                  <td className={cn(TD_L, "font-semibold text-muted-foreground")}>
+                    Subtotal (managers · direct sheet name)
+                  </td>
                   <td className={TD}>
                     <ClickableCount
-                      value={mgrTotals.leads}
+                      value={data.attributionTotals?.managersDirect ?? mgrTotals.leads}
                       onClick={() =>
                         void loadDrill("All sales managers · Total Leads", {
                           table: "staff",
@@ -767,10 +777,75 @@ export default function AdminDetailedReport() {
                       }
                     />
                   </td>
+                  <td className={TD}>—</td>
                   <td className={TD}>{fmt(mgrTotals.td)}</td>
                   <td className={TD}>{fmt(mgrTotals.tdMtd)}</td>
                   <td className={TD}>{fmt(mgrTotals.teamTd)}</td>
                   <td className={TD}>{fmt(mgrTotals.teamTdMtd)}</td>
+                </tr>
+                {(data.attributionTotals?.executives ?? execTotals.leads) > 0 ? (
+                  <tr className="bg-muted/30 text-muted-foreground">
+                    <td className={cn(TD_L, "italic pl-6")}>+ Sales executives (sheet name)</td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={data.attributionTotals?.executives ?? execTotals.leads}
+                        onClick={() =>
+                          void loadDrill("All sales executives · Total Leads", {
+                            table: "staff",
+                            staffId: "__executives__",
+                            metric: "leads",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD} colSpan={5}>
+                      See Sales Executive table
+                    </td>
+                  </tr>
+                ) : null}
+                {(data.attributionTotals?.otherStaff ?? 0) > 0 ? (
+                  <tr className="bg-muted/30 text-muted-foreground">
+                    <td className={cn(TD_L, "italic pl-6")}>+ Other staff (CRE / CRM / …)</td>
+                    <td className={TD}>{fmt(data.attributionTotals?.otherStaff ?? 0)}</td>
+                    <td className={TD} colSpan={5}>
+                      Attributed to active staff not listed as SM/SE above
+                    </td>
+                  </tr>
+                ) : null}
+                {(data.attributionTotals?.sheetUnmatched ?? data.unassignedSheet?.totalLeads ?? 0) > 0 ? (
+                  <tr className="bg-muted/30 text-muted-foreground">
+                    <td className={cn(TD_L, "italic pl-6")}>+ Not matched to User Master</td>
+                    <td className={TD}>
+                      <ClickableCount
+                        value={data.attributionTotals?.sheetUnmatched ?? data.unassignedSheet?.totalLeads ?? 0}
+                        onClick={() =>
+                          void loadDrill("Not matched to User Master · Leads", {
+                            table: "unassigned",
+                            metric: "leads",
+                          })
+                        }
+                      />
+                    </td>
+                    <td className={TD} colSpan={5} />
+                  </tr>
+                ) : null}
+                <tr className={TOTAL_ROW}>
+                  <td className={cn(TD_L, "font-bold")}>TOTAL ALL LEADS (matches KPI)</td>
+                  <td className={TD}>
+                    <ClickableCount
+                      value={data.attributionTotals?.grandTotal ?? summary.totalLeads.all}
+                      onClick={() => void loadKpiPopup("Total Leads (All)", "totalLeads", "all")}
+                    />
+                  </td>
+                  <td className={TD} colSpan={5}>
+                    {data.attributionTotals && !data.attributionTotals.inBalance ? (
+                      <span className="text-amber-600 text-xs">Reconciliation mismatch — refresh report</span>
+                    ) : (
+                      <span className="text-[10px] font-normal text-muted-foreground">
+                        Same as Total Leads (All) at top
+                      </span>
+                    )}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -858,14 +933,16 @@ export default function AdminDetailedReport() {
             </table>
           </ReportTableCard>
 
-          {data.unassignedSheet ? (
+          {data.attributionTotals ? (
             <p className="text-xs text-muted-foreground px-1">
-              Sheet attribution check: managers {fmt(mgrTotals.leads)} + executives {fmt(execTotals.leads)} + not matched{" "}
-              {fmt(data.unassignedSheet.totalLeads)} ={" "}
-              <strong className="text-foreground tabular-nums">
-                {fmt(mgrTotals.leads + execTotals.leads + data.unassignedSheet.totalLeads)}
-              </strong>{" "}
-              (all leads {fmt(summary.totalLeads.all)})
+              Each lead is counted once: managers (direct name) {fmt(data.attributionTotals.managersDirect)} + executives{" "}
+              {fmt(data.attributionTotals.executives)}
+              {data.attributionTotals.otherStaff > 0
+                ? ` + other staff ${fmt(data.attributionTotals.otherStaff)}`
+                : ""}{" "}
+              + not matched {fmt(data.attributionTotals.sheetUnmatched)} ={" "}
+              <strong className="text-foreground tabular-nums">{fmt(data.attributionTotals.grandTotal)}</strong> (Total Leads All).
+              CRM Unassigned ({fmt(data.leadAssignment?.crmUnassigned ?? 0)}) is a separate CRM filter.
             </p>
           ) : null}
 

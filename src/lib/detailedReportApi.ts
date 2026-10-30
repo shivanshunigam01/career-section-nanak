@@ -41,6 +41,18 @@ export type DetailedReportStaffRow = {
   totalTestDriveMtd: number;
   teamTestDrive?: number;
   teamTestDriveMtd?: number;
+  /** Manager + direct-report SE leads (sheet attribution). */
+  teamTotalLeads?: number;
+};
+
+export type DetailedReportAttributionTotals = {
+  grandTotal: number;
+  managersDirect: number;
+  executives: number;
+  otherStaff: number;
+  sheetUnmatched: number;
+  attributedSubtotal: number;
+  inBalance: boolean;
 };
 
 export type DetailedReportLeadTypeRow = {
@@ -156,6 +168,7 @@ export type DetailedReport = {
   monthlyTestDrives: DetailedReportMonthlyTd[];
   monthlyTestDrivesTotal: number;
   unassignedSheet?: DetailedReportUnassignedSheet;
+  attributionTotals?: DetailedReportAttributionTotals;
   attributionNote?: string;
   leadDetailRows?: DetailedReportLeadRow[];
   leadDetailRowsTotal?: number;
