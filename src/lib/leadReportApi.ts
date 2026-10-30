@@ -2,6 +2,10 @@ import { adminGet } from "@/lib/api";
 
 export type LeadReportOverview = {
   totalLeads: number;
+  /** Same as Detailed Report — all CRM leads in scope. */
+  totalLeadsAllTime?: number;
+  totalLeadsMtd?: number;
+  totalLeadsToday?: number;
   activeLeads: number;
   unassigned: number;
   convertedCount: number;
@@ -131,6 +135,8 @@ export type LeadDetailReportRow = {
   // Management attention
   delayStatus: "Closed" | "Overdue" | "Delayed" | "On Track";
   actionRequired: string;
+  /** Enquiry / received date (aligned with Detailed Report KPI filters). */
+  enquiryDate?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };
@@ -152,6 +158,12 @@ export type LeadAdminReport = {
   leadDetailRowsTruncated?: boolean;
   leadAgeing: LeadAgeingBucket[];
   stages: string[];
+  managementKpiPeriod?: {
+    label?: string;
+    mtdFrom?: string;
+    mtdTo?: string;
+    today?: string;
+  };
   kpis?: {
     today: Record<string, number>;
     mtd: Record<string, number>;

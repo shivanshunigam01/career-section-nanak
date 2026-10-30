@@ -18,7 +18,7 @@ import { formatApiErrors } from "@/lib/api";
 import { fetchAssignableStaffUsers, type AssignableStaffUser } from "@/lib/leadCrmApi";
 import ReportPeriodPresets, { type ReportPeriod } from "@/components/admin/ReportPeriodPresets";
 import ReportStageSourceFilters from "@/components/admin/ReportStageSourceFilters";
-import { isLocalToday, localDateKey, resolvePeriodRange } from "@/lib/reportPeriod";
+import { isLocalToday, localDateKey, resolvePeriodRange, toDateKey } from "@/lib/reportPeriod";
 import { fetchLeadAdminReport,
   type LeadAdminReport,
   type LeadActivityRow,
@@ -173,6 +173,27 @@ function isWalkInSource(source?: string) {
   return /^walk[\s-]?in$/i.test(s);
 }
 
+/** Walk-in definition aligned with Detailed Report / sheet logic. */
+function isSheetWalkInSource(source?: string) {
+  return /^walk[\s-]?in$/i.test(String(source || "").trim());
+}
+
+function enquiryDateKey(row: LeadDetailReportRow): string {
+  return localDateKey(row.enquiryDate || row.createdAt);
+}
+
+function isEnquiryInDateRange(row: LeadDetailReportRow, fromKey: string, toKey: string): boolean {
+  const d = enquiryDateKey(row);
+  if (!d) return false;
+  return d >= fromKey && d <= toKey;
+}
+
+function mtdEnquiryBounds(period?: { mtdFrom?: string; mtdTo?: string; today?: string }) {
+  const toKey = period?.today || toDateKey(new Date());
+  const fromKey = period?.mtdFrom ? localDateKey(period.mtdFrom) : toKey.slice(0, 8) + "01";
+  return { fromKey, toKey };
+}
+
 function kpiTodayMatch(key: string, row: LeadDetailReportRow, today: string): boolean {
   const inToday = (d?: string | null) => isLocalToday(d, today);
   if (key === "overdueFollowUps") return true;
@@ -181,22 +202,31 @@ function kpiTodayMatch(key: string, row: LeadDetailReportRow, today: string): bo
   if (key === "tdCompleted" || key === "negotiation" || key === "bookings" || key === "deliveries" || key === "lost") {
     return inToday(row.updatedAt) || inToday(row.createdAt);
   }
-  return inToday(row.createdAt);
+  return inToday(row.enquiryDate || row.createdAt);
 }
 
 function kpiLeadRows(
   key: string,
   rows: LeadDetailReportRow[],
   scope: "today" | "mtd" = "today",
+  period?: { mtdFrom?: string; mtdTo?: string; today?: string },
 ): LeadDetailReportRow[] {
-  const today = localDateKey(new Date());
-  const scoped = scope === "today" ? rows.filter((r) => kpiTodayMatch(key, r, today)) : rows;
+  const today = period?.today || localDateKey(new Date());
+  const { fromKey, toKey } = mtdEnquiryBounds(period);
+  let scoped = rows;
+  if (scope === "today") {
+    scoped = rows.filter((r) => kpiTodayMatch(key, r, today));
+  } else if (key === "followUpDue" || key === "overdueFollowUps" || key.startsWith("td")) {
+    scoped = rows;
+  } else {
+    scoped = rows.filter((r) => isEnquiryInDateRange(r, fromKey, toKey));
+  }
 
   switch (key) {
     case "walkIn":
-      return scoped.filter((r) => isWalkInSource(r.source));
+      return scoped.filter((r) => isSheetWalkInSource(r.source));
     case "digital":
-      return scoped.filter((r) => !isWalkInSource(r.source));
+      return scoped.filter((r) => !isSheetWalkInSource(r.source));
     case "negotiation":
       return scoped.filter((r) => r.status === "Negotiation");
     case "bookings":
@@ -545,43 +575,62 @@ export default function AdminTDLeadReports() {
 
       {data.kpis ? (
         <div className="space-y-2 print:block">
-          <p className="text-xs font-semibold text-muted-foreground">Management KPI — Today / MTD</p>
+          <p className="text-xs font-semibold text-muted-foreground">
+            Management KPI — same rules as Detailed Report
+            {data.managementKpiPeriod?.label ? (
+              <span className="font-normal text-muted-foreground/80"> · {data.managementKpiPeriod.label}</span>
+            ) : null}
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-6 gap-2">
-            {Object.keys(data.kpis.mtd).map((k) => (
+            {Object.keys(data.kpis.mtd).map((k) => {
+              const label = k.replace(/([A-Z])/g, " $1").trim();
+              const todayVal = data.kpis?.today?.[k] ?? 0;
+              const mtdVal = data.kpis?.mtd?.[k] ?? 0;
+              const openToday = () => {
+                if (k === "followUpDue") {
+                  openFollowUpPopup(
+                    `KPI · ${label} · Today`,
+                    followUpRows.filter((f) => f.status === "pending" && isLocalToday(f.scheduledAt)),
+                  );
+                  return;
+                }
+                openLeadPopup(
+                  `KPI · ${label} · Today`,
+                  kpiLeadRows(k, leadDetailRows, "today", data.managementKpiPeriod),
+                );
+              };
+              const openMtd = () => {
+                if (k === "followUpDue") {
+                  openFollowUpPopup(`KPI · ${label} · MTD`, followUpRows.filter((f) => f.status === "pending"));
+                  return;
+                }
+                openLeadPopup(
+                  `KPI · ${label} · MTD`,
+                  kpiLeadRows(k, leadDetailRows, "mtd", data.managementKpiPeriod),
+                );
+              };
+              return (
               <Card
                 key={k}
-                className="p-3 border-border/50 cursor-pointer hover:bg-secondary/20 transition-colors print:cursor-default"
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  const label = k.replace(/([A-Z])/g, " $1");
-                  if (k === "followUpDue") {
-                    openFollowUpPopup(
-                      `KPI · ${label} · Today`,
-                      followUpRows.filter((f) => f.status === "pending" && isLocalToday(f.scheduledAt)),
-                    );
-                    return;
-                  }
-                  openLeadPopup(`KPI · ${label} · Today`, kpiLeadRows(k, leadDetailRows, "today"));
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    const label = k.replace(/([A-Z])/g, " $1");
-                    if (k === "followUpDue") {
-                      openFollowUpPopup(
-                        `KPI · ${label} · Today`,
-                        followUpRows.filter((f) => f.status === "pending" && isLocalToday(f.scheduledAt)),
-                      );
-                      return;
-                    }
-                    openLeadPopup(`KPI · ${label} · Today`, kpiLeadRows(k, leadDetailRows, "today"));
-                  }
-                }}
+                className="p-3 border-border/50 hover:bg-secondary/20 transition-colors print:cursor-default"
               >
-                <p className="text-[10px] text-muted-foreground capitalize">{k.replace(/([A-Z])/g, " $1")}</p>
-                <p className="text-lg font-bold">{data.kpis?.today?.[k] ?? 0} <span className="text-xs font-normal text-muted-foreground">/ {data.kpis?.mtd?.[k] ?? 0}</span></p>
+                <p className="text-[10px] text-muted-foreground capitalize">{label}</p>
+                <p className="text-base font-bold leading-snug mt-0.5">
+                  <button type="button" className="hover:underline" onClick={openToday}>
+                    {todayVal.toLocaleString("en-IN")} today
+                  </button>
+                  <span className="text-muted-foreground font-normal mx-1">·</span>
+                  <button
+                    type="button"
+                    className="text-sm font-semibold text-muted-foreground hover:underline hover:text-foreground"
+                    onClick={openMtd}
+                  >
+                    {mtdVal.toLocaleString("en-IN")} MTD
+                  </button>
+                </p>
               </Card>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : null}
@@ -604,10 +653,19 @@ export default function AdminTDLeadReports() {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <StatCard
-          label="Total leads"
+          label={
+            period === "all" && !from && !to
+              ? "Total leads (report filter: all time)"
+              : `Total leads (${from || "…"} – ${to || "…"})`
+          }
           value={overview.totalLeads}
           icon={Users}
-          onClick={() => openLeadPopup("Total leads", leadDetailRows)}
+          sub={
+            overview.totalLeadsAllTime != null
+              ? `Detailed Report aligned: ${overview.totalLeadsAllTime.toLocaleString("en-IN")} all · ${(overview.totalLeadsMtd ?? 0).toLocaleString("en-IN")} MTD · ${(overview.totalLeadsToday ?? 0).toLocaleString("en-IN")} today`
+              : undefined
+          }
+          onClick={() => openLeadPopup("Total leads (filtered)", leadDetailRows)}
         />
         <StatCard
           label="Active pipeline"
