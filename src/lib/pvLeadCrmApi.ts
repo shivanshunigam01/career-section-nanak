@@ -72,6 +72,18 @@ export type PvCrmLead = {
   vehicleOrder?: { _id: string; orderNumber: string; stage: string; created: boolean };
   /** Present when Booking stage saved but order ensure failed (e.g. missing model). */
   vehicleOrderError?: string;
+  /** Unassigned customer website / test-drive intake — subject to assignment lock. */
+  websiteDirectUnassigned?: boolean;
+  assignmentLock?: {
+    staffId: string;
+    staffName: string;
+    staffEmail?: string;
+    lockedAt?: string;
+    expiresAt?: string;
+  } | null;
+  websiteAssignmentEditable?: boolean;
+  assignmentLockHeldBySelf?: boolean;
+  assignmentLockMessage?: string | null;
 };
 
 export function displayCrmLeadName(lead?: { customerName?: string; name?: string } | null): string {
@@ -202,6 +214,15 @@ export async function assignPvCrmLeadExecutive(leadId: string, executiveId: stri
   return adminPatchJson<PvCrmLead>(`${CRM_BASE}/${leadId}/assign`, {
     executiveId: executiveId || null,
   });
+}
+
+/** Claim an unassigned website lead for assignment (prevents other CRM/CRE editing at the same time). */
+export async function acquirePvCrmLeadAssignmentLock(leadId: string): Promise<PvCrmLead> {
+  return adminPostJson<PvCrmLead>(`${CRM_BASE}/${leadId}/assignment-lock`, {});
+}
+
+export async function releasePvCrmLeadAssignmentLock(leadId: string): Promise<PvCrmLead> {
+  return adminDeleteJson<PvCrmLead>(`${CRM_BASE}/${leadId}/assignment-lock`);
 }
 
 export type PvCrmLeadDateField = "created" | "enquiry" | "activity";
@@ -450,6 +471,8 @@ export type CrmLeadStats = {
   warmCount?: number;
   coldCount?: number;
   websiteDirectCount?: number;
+  /** Website / test-drive intakes still unassigned (assignment queue). */
+  websiteUnassignedCount?: number;
 };
 
 export async function fetchPvCrmLeadStats(params?: {

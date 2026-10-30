@@ -22,6 +22,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   addPvCrmFollowUp,
   assignPvCrmLeadExecutive,
+  acquirePvCrmLeadAssignmentLock,
+  releasePvCrmLeadAssignmentLock,
   completePvCrmFollowUp,
   updatePvCrmFollowUp,
   fetchAssignableStaffUsers,
@@ -530,6 +532,15 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   }, []);
 
   useEffect(() => {
+    const website =
+      searchParams.get("website") === "1" || searchParams.get("entryOrigin") === "website";
+    if (website) setWebsiteDirectOnly(true);
+    if (searchParams.get("assigned") === "unassigned" && canViewUnassignedPool) {
+      setFilterExecutive("unassigned");
+    }
+  }, [searchParams, canViewUnassignedPool]);
+
+  useEffect(() => {
     const id = searchParams.get("lead") || searchParams.get("leadId");
     if (!id) return;
     void (async () => {
@@ -573,6 +584,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     Array.isArray(detail?.followUps) ? detail.followUps : [],
   );
   const detailHistory = Array.isArray(detail?.history) ? detail.history : [];
+  const detailCanUpdate =
+    canUpdate && detail?.lead?.websiteAssignmentEditable !== false;
+  const detailCanEditDetails = canEditDetails && detail?.lead?.websiteAssignmentEditable !== false;
 
   const openLead = async (lead: PvCrmLead) => {
     setSelected(lead);
@@ -589,8 +603,26 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
     if (canAssignLeads) void loadStaffUsers();
     setDetailLoading(true);
     try {
-      const d = await fetchPvCrmLeadDetail(lead._id);
+      let d = await fetchPvCrmLeadDetail(lead._id);
+      if (
+        canAssignLeads &&
+        d.lead.websiteDirectUnassigned &&
+        d.lead.websiteAssignmentEditable !== false &&
+        !d.lead.assignmentLockHeldBySelf
+      ) {
+        try {
+          const locked = await acquirePvCrmLeadAssignmentLock(lead._id);
+          d = { ...d, lead: { ...d.lead, ...locked } };
+        } catch (e) {
+          d = await fetchPvCrmLeadDetail(lead._id);
+          const msg = d.lead.assignmentLockMessage || formatApiErrors(e);
+          if (msg) toast.info(msg);
+        }
+      } else if (d.lead.assignmentLockMessage && !d.lead.assignmentLockHeldBySelf) {
+        toast.info(d.lead.assignmentLockMessage);
+      }
       setDetail(d);
+      setSelected(d.lead);
       setStageDraft(normalizeCrmStage(d.lead.status));
       setRemarksDraft(d.lead.remarks ?? "");
       setAssignExecutiveId(d.lead.assignedTo?._id ?? "");
@@ -601,6 +633,33 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
       setDetailLoading(false);
     }
   };
+
+  const closeLeadDetail = useCallback(() => {
+    const id = selected?._id;
+    const held = detail?.lead?.assignmentLockHeldBySelf;
+    setSelected(null);
+    setDetail(null);
+    setCompletingId(null);
+    if (id && held && canAssignLeads) {
+      void releasePvCrmLeadAssignmentLock(id).catch(() => {});
+    }
+    if (searchParams.get("lead") || searchParams.get("leadId")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("lead");
+      next.delete("leadId");
+      setSearchParams(next, { replace: true });
+    }
+  }, [selected?._id, detail?.lead?.assignmentLockHeldBySelf, canAssignLeads, searchParams, setSearchParams]);
+
+  useEffect(() => {
+    const id = selected?._id;
+    if (!id || !canAssignLeads || !detail?.lead?.assignmentLockHeldBySelf) return;
+    const heartbeat = () => {
+      void acquirePvCrmLeadAssignmentLock(id).catch(() => {});
+    };
+    const timer = window.setInterval(heartbeat, 3 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, [selected?._id, canAssignLeads, detail?.lead?.assignmentLockHeldBySelf]);
 
   const refreshDetail = async (id: string) => {
     const d = await fetchPvCrmLeadDetail(id);
@@ -613,7 +672,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   };
 
   const handleDetailsSave = async () => {
-    if (!selected || !canEditDetails) return;
+    if (!selected || !detailCanEditDetails) return;
     const mobileDigits = editMobile.replace(/\D/g, "").slice(0, 10);
     if (!editName.trim()) {
       toast.error("Name is required");
@@ -654,7 +713,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   };
 
   const handleLeadFlagChange = async (value: string) => {
-    if (!selected || !canUpdate) return;
+    if (!selected || !detailCanUpdate) return;
     const next = value === "none" ? "" : value;
     setSaving(true);
     try {
@@ -669,7 +728,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   };
 
   const handleAssignExecutive = async () => {
-    if (!selected || !canAssignLeads) return;
+    if (!selected || !canAssignLeads || !detailCanUpdate) return;
     setSaving(true);
     try {
       await assignPvCrmLeadExecutive(selected._id, assignExecutiveId || null);
@@ -791,7 +850,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
   };
 
   const handleReopenLead = async (mode: "same" | "new") => {
-    if (!selected || !canUpdate) return;
+    if (!selected || !detailCanUpdate) return;
     const label = mode === "same" ? "Reopen this lead on the same opportunity?" : "Reopen as a new lead / opportunity?";
     if (!window.confirm(label)) return;
     let executiveId: string | undefined;
@@ -1752,6 +1811,11 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                     {effectiveLeadFlag(lead)}
                   </Badge>
                 ) : null}
+                {lead.assignmentLock && !lead.assignmentLockHeldBySelf ? (
+                  <Badge variant="outline" className="text-[10px] shrink-0 border-amber-300 text-amber-800 dark:text-amber-300" title={lead.assignmentLockMessage || undefined}>
+                    In assignment
+                  </Badge>
+                ) : null}
                 <Badge variant="outline" className={cn("text-[10px] shrink-0", stageBadgeClass(lead.status))}>
                   {normalizeCrmStage(lead.status)}
                 </Badge>
@@ -1862,15 +1926,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
       ) : null}
 
       <Dialog open={!!selected} onOpenChange={(o) => {
-        if (!o) {
-          setSelected(null);
-          setCompletingId(null);
-          if (searchParams.get("lead")) {
-            const next = new URLSearchParams(searchParams);
-            next.delete("lead");
-            setSearchParams(next, { replace: true });
-          }
-        }
+        if (!o) closeLeadDetail();
       }}>
         <DialogContent className="bg-card border-border max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -1883,6 +1939,17 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
             </div>
           ) : selected && detail?.lead ? (
             <div className="space-y-5 text-sm">
+              {detail.lead.assignmentLockMessage && !detail.lead.assignmentLockHeldBySelf ? (
+                <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-950 dark:text-amber-100">
+                  <ShieldAlert className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />
+                  {detail.lead.assignmentLockMessage}. You can view this lead but cannot edit or assign until they finish or the lock expires (~10 min).
+                </div>
+              ) : null}
+              {detail.lead.assignmentLockHeldBySelf ? (
+                <div className="rounded-lg border border-sky-500/30 bg-sky-500/10 px-3 py-2 text-xs text-sky-950 dark:text-sky-100">
+                  You are working on assignment for this website lead. Other CRM/CRE users can view only until you assign or close this window.
+                </div>
+              ) : null}
               <div className="flex flex-wrap gap-2 items-center">
                 <Badge variant="outline" className={stageBadgeClass(detail.lead.status)}>
                   {normalizeCrmStage(detail.lead.status)}
@@ -1897,12 +1964,12 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                     <Trophy className="w-3 h-3 mr-1" /> Converted to sale
                   </Badge>
                 ) : null}
-                {effectiveLeadFlag(detail.lead) && !canUpdate ? (
+                {effectiveLeadFlag(detail.lead) && !detailCanUpdate ? (
                   <Badge variant="outline" className={cn("text-[10px]", leadFlagBadgeClass(effectiveLeadFlag(detail.lead)))}>
                     {effectiveLeadFlag(detail.lead)}
                   </Badge>
                 ) : null}
-                {canUpdate ? (
+                {detailCanUpdate ? (
                   <Select
                     value={effectiveLeadFlag(detail.lead) || "none"}
                     onValueChange={(v) => void handleLeadFlagChange(v)}
@@ -1949,7 +2016,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                     </Button>
                   ) : null}
                   {/* Book Test Drive: hidden for executives once the drive is done — repeats need admin approval. */}
-                  {canUpdate && (canAssignLeads || normalizeCrmStage(detail.lead.status) !== "Test Drive Completed") ? (
+                  {detailCanUpdate && (canAssignLeads || normalizeCrmStage(detail.lead.status) !== "Test Drive Completed") ? (
                     <Button
                       type="button"
                       size="sm"
@@ -1975,7 +2042,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                 </div>
               </div>
 
-              {canUpdate && ["Lost", "Not Interested"].includes(normalizeCrmStage(detail.lead.status)) ? (
+              {detailCanUpdate && ["Lost", "Not Interested"].includes(normalizeCrmStage(detail.lead.status)) ? (
                 <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 flex flex-wrap gap-2 items-center">
                   <p className="text-xs text-muted-foreground mr-auto">This lead is closed — reopen to continue working it.</p>
                   <Button
@@ -2074,6 +2141,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                   <Select
                     value={assignExecutiveId || "none"}
                     onValueChange={(v) => setAssignExecutiveId(v === "none" ? "" : v)}
+                    disabled={!detailCanUpdate}
                   >
                     <SelectTrigger className="bg-secondary/50">
                       <SelectValue placeholder="Choose staff member" />
@@ -2093,7 +2161,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                     variant="outline"
                     size="sm"
                     className="w-full"
-                    disabled={saving || staffUsers.length === 0}
+                    disabled={saving || staffUsers.length === 0 || !detailCanUpdate}
                     onClick={() => void handleAssignExecutive()}
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <UserCheck className="w-4 h-4 mr-2" />}
@@ -2105,7 +2173,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
               <Tabs defaultValue="stage">
                 <TabsList className="bg-secondary/50 w-full flex flex-wrap h-auto">
                   <TabsTrigger value="stage" className="text-xs">Stage</TabsTrigger>
-                  {canEditDetails ? (
+                  {detailCanEditDetails ? (
                     <TabsTrigger value="edit" className="text-xs">Edit details</TabsTrigger>
                   ) : null}
                   {!detail.lead.convertedAt ? (
@@ -2149,7 +2217,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                       className="bg-secondary/50"
                     />
                   </div>
-                  <Button onClick={() => void handleStageUpdate()} disabled={saving || !canUpdate} className="w-full">
+                  <Button onClick={() => void handleStageUpdate()} disabled={saving || !detailCanUpdate} className="w-full">
                     {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <ArrowRight className="w-4 h-4 mr-2" />}
                     Update stage
                   </Button>
@@ -2159,14 +2227,14 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                   <CreLeadSheetPanel
                     lead={detail.lead}
                     followUpSlots={detail.followUpSlots}
-                    canEdit={canUpdate}
+                    canEdit={detailCanUpdate}
                     onSaved={async () => {
                       if (detail.lead._id) await refreshDetail(detail.lead._id);
                     }}
                   />
                 </TabsContent>
 
-                {canEditDetails ? (
+                {detailCanEditDetails ? (
                   <TabsContent value="edit" className="mt-4 space-y-3">
                     <div className="grid sm:grid-cols-2 gap-3">
                       <div className="space-y-1.5">
@@ -2353,7 +2421,7 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                         <Input value={convertRemarks} onChange={(e) => setConvertRemarks(e.target.value)} className="bg-secondary/50" />
                       </div>
                     </div>
-                    <Button onClick={() => void handleConvertToSale()} disabled={saving || !canUpdate} className="w-full">
+                    <Button onClick={() => void handleConvertToSale()} disabled={saving || !detailCanUpdate} className="w-full">
                       {saving ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Trophy className="w-4 h-4 mr-2" />}
                       Convert to sale
                     </Button>
@@ -2426,9 +2494,9 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                     rows={5}
                     className="bg-secondary/50"
                     placeholder="Customer preferences, objections, next steps…"
-                    readOnly={!canUpdate}
+                    readOnly={!detailCanUpdate}
                   />
-                  {canUpdate ? (
+                  {detailCanUpdate ? (
                     <Button onClick={() => void handleRemarksSave()} disabled={saving} variant="outline" className="w-full">
                       Save remarks
                     </Button>
@@ -2499,14 +2567,14 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                       />
                       Mark as completed (call already done)
                     </label>
-                    <Button onClick={() => void handleAddFollowUp()} disabled={saving || !canUpdate} size="sm" className="w-full">
+                    <Button onClick={() => void handleAddFollowUp()} disabled={saving || !detailCanUpdate} size="sm" className="w-full">
                       Add follow-up
                     </Button>
                   </div>
 
                   <LeadFollowUpTimeline
                     followUps={detailFollowUps}
-                    canUpdate={canUpdate}
+                    canUpdate={detailCanUpdate}
                     saving={saving}
                     completingId={completingId}
                     onStartComplete={(id) => {

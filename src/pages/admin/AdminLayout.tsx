@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import vinfastLogo from "@/assets/patliputra-vinfast-logo.png";
 import patliputraOutlineLogo from "@/assets/black outline logo patliputra.png";
+import { WebsiteUnassignedLeadsDialog } from "@/components/admin/WebsiteUnassignedLeadsDialog";
 import { hasApi } from "@/lib/apiConfig";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
@@ -909,6 +910,7 @@ const AdminLayout = () => {
             <Outlet />
           </div>
         </main>
+        <WebsiteUnassignedLeadsDialog />
       </div>
     </div>
   );
