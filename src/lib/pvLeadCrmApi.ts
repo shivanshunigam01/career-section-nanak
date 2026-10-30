@@ -46,6 +46,13 @@ export type PvCrmLead = {
   followUpHighlight?: "overdue" | "today" | "future" | "none";
   isFavourite?: boolean;
   followUpCount?: number;
+  /** Most recent follow-up note/outcome for list cards. */
+  latestFollowUpSummary?: {
+    displayLabel?: string;
+    note?: string;
+    at?: string | null;
+    status?: string;
+  } | null;
   exchangeNeeded?: boolean;
   financeNeeded?: boolean;
   assignedTo?: { _id: string; name: string; email?: string } | null;

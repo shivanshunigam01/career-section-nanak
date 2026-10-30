@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import {
   Users, Search, RefreshCw, Loader2, Phone, Clock,
   MessageSquare, ArrowRight, CheckCircle2, CalendarClock, UserCheck, Plus, ChevronLeft, ChevronRight, Pencil,
-  History, Trophy, ShieldAlert, Trash2, CheckSquare, Square, X, Download, Upload, FileSpreadsheet, Star,
+  History, Trophy, ShieldAlert, Trash2, CheckSquare, Square, X, Download, Upload, FileSpreadsheet, Star, UserCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -178,6 +178,25 @@ function followUpColor(highlight?: string) {
 }
 
 /** List card: nextFollowUp empty does not mean call history exists — use followUpCount. */
+function leadEnteredByLabel(lead: PvCrmLead): string {
+  return (
+    lead.enteredBy?.name?.trim() ||
+    lead.enteredByName?.trim() ||
+    (typeof lead.createdBy === "object" && lead.createdBy?.name?.trim()) ||
+    ""
+  );
+}
+
+function leadLatestFollowUpText(lead: PvCrmLead): string {
+  const summary = lead.latestFollowUpSummary;
+  if (summary?.displayLabel?.trim()) return summary.displayLabel.trim();
+  if (summary?.note?.trim()) {
+    return summary.note.trim().replace(/^(CRE|Sales)\s#\d+:\s*/i, "").trim();
+  }
+  if ((lead.followUpCount ?? 0) > 0 && lead.leadType?.trim()) return lead.leadType.trim();
+  return "";
+}
+
 function leadListFollowUpLine(lead: PvCrmLead): { className: string; text: string; showClock: boolean } {
   if (lead.nextFollowUp) {
     return {
@@ -1733,6 +1752,26 @@ export default function AdminCrmLeads({ pageConfig = DEFAULT_CRM_PAGE_CONFIG }: 
                   <UserCheck className="w-3 h-3 shrink-0" />
                   {lead.assignedTo?.name ?? "Unassigned"}
                 </p>
+                <p className="flex items-start gap-1 text-[11px]">
+                  <UserCircle className="w-3 h-3 shrink-0 mt-0.5" />
+                  <span>
+                    <span className="text-muted-foreground">Entered by </span>
+                    {leadEnteredByLabel(lead) || "—"}
+                  </span>
+                </p>
+                {(() => {
+                  const latestMsg = leadLatestFollowUpText(lead);
+                  if (!latestMsg) return null;
+                  const at = lead.latestFollowUpSummary?.at;
+                  return (
+                    <p className="text-[11px] text-foreground/90 bg-secondary/30 rounded px-2 py-1.5 line-clamp-3">
+                      <span className="text-muted-foreground block mb-0.5">
+                        Latest follow-up{at ? ` · ${formatDateTime(at)}` : ""}
+                      </span>
+                      {latestMsg}
+                    </p>
+                  );
+                })()}
                 {(() => {
                   const fu = leadListFollowUpLine(lead);
                   return (
