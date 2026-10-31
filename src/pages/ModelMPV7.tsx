@@ -222,7 +222,7 @@ const ModelMPV7 = () => {
       >
         <img
           src={mpv7HeroBanner}
-          alt="VinFast VF MPV 7 — Your World on the Move"
+          alt="VinFast VF MPV 7 — Born Sporty. Effortlessly Sophisticated."
           className="mpv7-model-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] object-contain object-top mx-auto"
           sizes="100vw"
           fetchPriority="high"
