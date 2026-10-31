@@ -326,14 +326,16 @@ const ModelVF6 = () => {
         className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
         aria-label="VF 6 hero"
       >
-        <img
-          src={vf6HeroBanner}
-          alt="VinFast VF 6 — Built for a brighter tomorrow."
-          className="model-page-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] mx-auto"
-          sizes="100vw"
-          fetchPriority="high"
-          decoding="async"
-        />
+        <div className="model-page-hero-frame">
+          <img
+            src={vf6HeroBanner}
+            alt="VinFast VF 6 — Built for a brighter tomorrow."
+            className="model-page-hero-image hero-slider-image"
+            sizes="100vw"
+            fetchPriority="high"
+            decoding="async"
+          />
+        </div>
         <h1 className="sr-only">VinFast VF 6</h1>
       </section>
 

@@ -237,11 +237,19 @@
     transform: translateZ(0);
   }
 
-  /** Model page wide banners — show full artwork (no cover crop). */
-  .mpv7-model-hero-image,
+  /** Model page hero — full width × viewport below fixed navbar. */
+  .model-page-hero-frame {
+    width: 100%;
+    height: calc(100dvh - 4.25rem);
+    min-height: 14rem;
+  }
+
   .model-page-hero-image {
-    object-fit: contain;
-    object-position: top center;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
   }
 
   /*
