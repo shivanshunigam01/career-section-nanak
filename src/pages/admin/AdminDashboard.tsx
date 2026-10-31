@@ -234,6 +234,46 @@ const AdminDashboard = () => {
     return rows;
   };
 
+  const fetchDashboardDrill = async (metric: string, status?: string) => {
+    const q = new URLSearchParams({ metric, limit: "10000", page: "1" });
+    if (status) q.set("status", status);
+    const res = await adminGet<unknown[]>(`/admin/dashboard/drill?${q}`);
+    const kind = String(res.meta?.kind ?? "leads");
+    const rows = res.data as Record<string, unknown>[];
+    const total = typeof res.meta?.total === "number" ? res.meta.total : rows.length;
+    if (kind === "td") {
+      return { kind: "testdrives" as DetailMode, rows: rows.map((d) => tdBookingFromApi(d)), total };
+    }
+    if (kind === "enquiries") {
+      return { kind: "enquiries" as DetailMode, rows: rows.map((d) => enquiryFromApi(d)), total };
+    }
+    return { kind: "leads" as DetailMode, rows: rows.map((d) => leadFromApi(d)), total };
+  };
+
+  const openDashboardDrill = (title: string, metric: string, status?: string) => {
+    setDetailTitle(title);
+    setDetailOpen(true);
+    setDetailLoading(true);
+    setDetailLeads([]);
+    setDetailTds([]);
+    setDetailEnquiries([]);
+    void fetchDashboardDrill(metric, status)
+      .then(({ kind, rows, total }) => {
+        setDetailTitle(`${title} (${total.toLocaleString("en-IN")})`);
+        setDetailMode(kind);
+        if (kind === "leads") setDetailLeads(rows as Lead[]);
+        else if (kind === "testdrives") setDetailTds(rows as TestDriveBooking[]);
+        else setDetailEnquiries(rows as Enquiry[]);
+      })
+      .catch((e) => {
+        setDetailLeads([]);
+        setDetailTds([]);
+        setDetailEnquiries([]);
+        toast.error(formatApiErrors(e));
+      })
+      .finally(() => setDetailLoading(false));
+  };
+
   const showLeadRows = (
     title: string,
     filter?: (l: Lead) => boolean,
@@ -310,14 +350,79 @@ const AdminDashboard = () => {
     }
   };
 
+  const handlePipelineClick = (status: string) => {
+    if (useRemote) {
+      openDashboardDrill(`CRM Pipeline — ${status}`, "pipeline-status", status);
+      return;
+    }
+    showLeadRows(`CRM Pipeline — ${status}`, (l) => l.status === status);
+  };
+
   const handleCardClick = (action: CardAction) => {
+    if (useRemote) {
+      switch (action) {
+        case "all-leads":
+          openDashboardDrill("Total Leads", "all-leads");
+          break;
+        case "leads-today":
+          openDashboardDrill("Leads Today", "leads-today");
+          break;
+        case "td-pending":
+          openDashboardDrill("Pending / Scheduled Test Drives", "td-pending");
+          break;
+        case "test-drives-mtd":
+          openDashboardDrill("Test drives MTD", "test-drives-mtd");
+          break;
+        case "all-testdrives":
+          openDashboardDrill("Test Drives", "all-testdrives");
+          break;
+        case "open-enquiries":
+          openDashboardDrill("Open Enquiries", "open-enquiries");
+          break;
+        case "all-enquiries":
+          openDashboardDrill("Enquiries", "all-enquiries");
+          break;
+        case "hot-leads":
+          openDashboardDrill("HOT leads (flag)", "hot-leads");
+          break;
+        case "warm-leads":
+          openDashboardDrill("WARM leads (flag)", "warm-leads");
+          break;
+        case "cold-leads":
+          openDashboardDrill("COLD leads (flag)", "cold-leads");
+          break;
+        case "bookings":
+          openDashboardDrill("Bookings (all)", "bookings");
+          break;
+        case "bookings-mtd":
+          openDashboardDrill("Bookings MTD", "bookings-mtd");
+          break;
+        case "delivered":
+          openDashboardDrill("Delivered (all)", "delivered");
+          break;
+        case "delivered-mtd":
+          openDashboardDrill("Delivered MTD", "delivered-mtd");
+          break;
+        case "contact-pending":
+          openDashboardDrill("Contact Pending", "contact-pending");
+          break;
+        case "pending-followups":
+          openDashboardDrill("Pending Follow-ups", "pending-followups");
+          break;
+        case "models":
+          showModelRows("Leads by Model");
+          break;
+      }
+      return;
+    }
+
     switch (action) {
       case "all-leads":
         showLeadRows("Total Leads");
         break;
       case "leads-today": {
         const today = localDateKey(new Date());
-        showLeadRows("Leads Today", (l) => localDateKey(l.createdAt) === today, { from: today, to: today });
+        showLeadRows("Leads Today", (l) => localDateKey(l.createdAt) === today, { from: today, to: today, dateField: "enquiry" });
         break;
       }
       case "td-pending":
@@ -558,10 +663,15 @@ const AdminDashboard = () => {
         <h2 className="font-display text-lg font-semibold text-foreground mb-4">CRM Pipeline</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
           {pipelineData.map((stage) => (
-            <div key={stage.status} className="glass-card-sm p-3 text-center">
+            <button
+              key={stage.status}
+              type="button"
+              className="glass-card-sm p-3 text-center cursor-pointer transition-colors hover:bg-secondary/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              onClick={() => handlePipelineClick(stage.status)}
+            >
               <p className="text-2xl font-bold text-foreground">{stage.count}</p>
               <p className="text-[10px] text-muted-foreground mt-1 leading-tight">{stage.status}</p>
-            </div>
+            </button>
           ))}
         </div>
       </div>
