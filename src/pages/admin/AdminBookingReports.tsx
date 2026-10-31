@@ -12,7 +12,7 @@ import ReportPeriodPresets, { type ReportPeriod } from "@/components/admin/Repor
 import ReportStageSourceFilters from "@/components/admin/ReportStageSourceFilters";
 import { resolvePeriodRange } from "@/lib/reportPeriod";
 import { formatApiErrors } from "@/lib/api";
-import { fetchBookingReport } from "@/lib/bookingReportApi";
+import { fetchBookingReport, type BookingReport } from "@/lib/bookingReportApi";
 import { ReportExportButtons } from "@/components/admin/ReportExportButtons";
 import { downloadBookingReportExcel } from "@/lib/exports/bookingReportExport";
 import { printReportAsPdf } from "@/lib/reportPdfExport";
@@ -85,7 +85,7 @@ export default function AdminBookingReports() {
             Booking Report
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Customer-wise bookings with car model, variant and colour
+            Same CRM scope as Lead Reports · counts by CRE booking date in range · KPI tiles match Lead CRM
           </p>
         </div>
         <div className="flex flex-wrap gap-2 print:hidden">
@@ -131,13 +131,44 @@ export default function AdminBookingReports() {
         />
       </div>
 
+      {data.alignedWithLeadReport ? (
+        <Card className="bg-card border-border/50 p-4 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Aligned with Lead CRM Reports
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Bookings (all pipeline)</p>
+              <p className="text-xl font-bold tabular-nums">{data.alignedWithLeadReport.all}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Bookings MTD</p>
+              <p className="text-xl font-bold tabular-nums">{data.alignedWithLeadReport.mtd}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Bookings today</p>
+              <p className="text-xl font-bold tabular-nums">{data.alignedWithLeadReport.today}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">In selected range</p>
+              <p className="text-xl font-bold tabular-nums text-primary">
+                {data.totalInSelectedRange ?? data.totalBookings}
+              </p>
+            </div>
+          </div>
+          {data.alignedWithLeadReport.note ? (
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{data.alignedWithLeadReport.note}</p>
+          ) : null}
+        </Card>
+      ) : null}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-card border-border/50 p-4">
-          <p className="text-xs text-muted-foreground">Total bookings</p>
-          <p className="text-2xl font-bold mt-1 tabular-nums">{data.totalBookings}</p>
+          <p className="text-xs text-muted-foreground">Bookings in range (event date)</p>
+          <p className="text-2xl font-bold mt-1 tabular-nums">{data.totalInSelectedRange ?? data.totalBookings}</p>
         </Card>
         <Card className="bg-card border-border/50 p-4">
-          <p className="text-xs text-muted-foreground">Executives with bookings</p>
+          <p className="text-xs text-muted-foreground">Executives / consultants</p>
           <p className="text-2xl font-bold mt-1 tabular-nums">{data.byExecutive.length}</p>
         </Card>
         <Card className="bg-card border-border/50 p-4">
@@ -161,26 +192,71 @@ export default function AdminBookingReports() {
         </Card>
       ) : null}
 
+      {data.byTeam?.length ? (
+        <Card className="bg-card border-border/50 p-4">
+          <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" /> By team (manager rollup)
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground border-b border-border/50">
+                  <th className="py-2 pr-2">Manager</th>
+                  <th className="py-2 pr-2">Own</th>
+                  <th className="py-2 text-right">Team total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.byTeam.map((row) => (
+                  <tr key={row.managerId} className="border-b border-border/30">
+                    <td className="py-2 pr-2 font-medium">{row.managerName}</td>
+                    <td className="py-2 pr-2 tabular-nums text-muted-foreground">{row.ownCount}</td>
+                    <td className="py-2 text-right tabular-nums font-semibold">{row.teamCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : null}
+
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="bg-card border-border/50 p-4">
           <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" /> By executive
+            <Users className="w-4 h-4 text-primary" /> By executive / sheet consultant
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-muted-foreground border-b border-border/50">
                   <th className="py-2 pr-2">Executive</th>
+                  <th className="py-2 pr-2 hidden md:table-cell">Team</th>
                   <th className="py-2 text-right">Bookings</th>
                 </tr>
               </thead>
               <tbody>
                 {data.byExecutive.map((row) => (
                   <tr key={row.executiveId || row.name} className="border-b border-border/30">
-                    <td className="py-2 pr-2">{row.name}</td>
+                    <td className="py-2 pr-2">
+                      <span className="font-medium">{row.name}</span>
+                      {row.sheetConsultant && row.sheetConsultant !== row.name ? (
+                        <span className="block text-[10px] text-muted-foreground">Sheet: {row.sheetConsultant}</span>
+                      ) : null}
+                    </td>
+                    <td className="py-2 pr-2 hidden md:table-cell text-xs text-muted-foreground">
+                      {row.teamManagerName || "—"}
+                    </td>
                     <td className="py-2 text-right tabular-nums">{row.count}</td>
                   </tr>
                 ))}
+                <tr className="bg-muted/30 font-semibold">
+                  <td className="py-2 pr-2" colSpan={2}>
+                    Subtotal (attributed)
+                  </td>
+                  <td className="py-2 text-right tabular-nums">
+                    {data.breakdownTotals?.executiveSum ?? data.byExecutive.reduce((s, r) => s + r.count, 0)}
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -221,13 +297,15 @@ export default function AdminBookingReports() {
               <th className="p-3">Colour</th>
               <th className="p-3">Mobile</th>
               <th className="p-3">Executive</th>
+              <th className="p-3 hidden lg:table-cell">Team</th>
+              <th className="p-3">Stage</th>
               <th className="p-3">Booking Date</th>
             </tr>
           </thead>
           <tbody>
             {data.rows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="p-6 text-center text-muted-foreground">
+                <td colSpan={9} className="p-6 text-center text-muted-foreground">
                   No bookings in this period
                 </td>
               </tr>
@@ -240,6 +318,8 @@ export default function AdminBookingReports() {
                   <td className="p-3">{row.colour || "—"}</td>
                   <td className="p-3 font-mono text-xs">{row.mobile || "—"}</td>
                   <td className="p-3">{row.executiveName}</td>
+                  <td className="p-3 hidden lg:table-cell text-xs text-muted-foreground">{row.teamManager || "—"}</td>
+                  <td className="p-3">{row.status || row.stage || "—"}</td>
                   <td className="p-3 whitespace-nowrap">{fmtDate(row.bookingDate)}</td>
                 </tr>
               ))

@@ -5,6 +5,26 @@ export type DeliveryReportExecutiveRow = {
   executiveId: string | null;
   name: string;
   count: number;
+  designation?: string | null;
+  teamManagerName?: string | null;
+  sheetConsultant?: string | null;
+};
+
+export type DeliveryReportTeamRow = {
+  managerId: string;
+  managerName: string;
+  designation?: string;
+  ownCount: number;
+  teamCount: number;
+  directReports: number;
+};
+
+export type AlignedLeadReportDeliveryCounts = {
+  all: number;
+  mtd: number;
+  today: number;
+  periodLabel?: string;
+  note?: string;
 };
 
 export type DeliveryReportCountRow = {
@@ -30,7 +50,10 @@ export type DeliveryReportLeadRow = {
   source: string;
   executiveName: string;
   executiveId: string | null;
+  sheetConsultant?: string;
+  teamManager?: string;
   deliveryDate: string;
+  status?: string;
 };
 
 export type DeliveryReport = {
@@ -39,11 +62,17 @@ export type DeliveryReport = {
   to: string;
   bucketUnit: "day" | "week" | "month" | string;
   totalDeliveries: number;
+  totalInSelectedRange?: number;
+  alignedWithLeadReport?: AlignedLeadReportDeliveryCounts;
+  breakdownTotals?: { executiveSum: number; matchesPeriodTotal: boolean };
   byExecutive: DeliveryReportExecutiveRow[];
+  byTeam?: DeliveryReportTeamRow[];
   byModel: DeliveryReportCountRow[];
   bySource: DeliveryReportCountRow[];
   byPeriod: DeliveryReportPeriodRow[];
   rows: DeliveryReportLeadRow[];
+  rowsTotal?: number;
+  rowsTruncated?: boolean;
 };
 
 export async function fetchDeliveryReport(params: {

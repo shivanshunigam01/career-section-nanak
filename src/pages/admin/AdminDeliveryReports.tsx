@@ -85,7 +85,7 @@ export default function AdminDeliveryReports() {
             Delivery Reports
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Delivered leads · {fmtDate(data.from)} – {fmtDate(data.to)}
+            Same CRM scope as Lead Reports · CRE delivery date in range · KPI tiles match Lead CRM
           </p>
         </div>
         <div className="flex items-center gap-2 print:hidden">
@@ -127,10 +127,41 @@ export default function AdminDeliveryReports() {
         />
       </Card>
 
+      {data.alignedWithLeadReport ? (
+        <Card className="bg-card border-border/50 p-4 space-y-3">
+          <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+            Aligned with Lead CRM Reports
+          </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <p className="text-xs text-muted-foreground">Deliveries (all)</p>
+              <p className="text-xl font-bold tabular-nums">{data.alignedWithLeadReport.all}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Deliveries MTD</p>
+              <p className="text-xl font-bold tabular-nums">{data.alignedWithLeadReport.mtd}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">Deliveries today</p>
+              <p className="text-xl font-bold tabular-nums">{data.alignedWithLeadReport.today}</p>
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground">In selected range</p>
+              <p className="text-xl font-bold tabular-nums text-primary">
+                {data.totalInSelectedRange ?? data.totalDeliveries}
+              </p>
+            </div>
+          </div>
+          {data.alignedWithLeadReport.note ? (
+            <p className="text-[11px] text-muted-foreground leading-relaxed">{data.alignedWithLeadReport.note}</p>
+          ) : null}
+        </Card>
+      ) : null}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="bg-card border-border/50 p-4">
-          <p className="text-xs text-muted-foreground">Total deliveries</p>
-          <p className="text-2xl font-bold mt-1 tabular-nums">{data.totalDeliveries}</p>
+          <p className="text-xs text-muted-foreground">Deliveries in range (event date)</p>
+          <p className="text-2xl font-bold mt-1 tabular-nums">{data.totalInSelectedRange ?? data.totalDeliveries}</p>
         </Card>
         <Card className="bg-card border-border/50 p-4">
           <p className="text-xs text-muted-foreground">Executives with deliveries</p>
@@ -157,30 +188,77 @@ export default function AdminDeliveryReports() {
         </Card>
       ) : null}
 
+      {data.byTeam?.length ? (
+        <Card className="bg-card border-border/50 p-4">
+          <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Users className="w-4 h-4 text-primary" /> By team (manager rollup)
+          </h2>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left text-xs text-muted-foreground border-b border-border/50">
+                  <th className="py-2 pr-2">Manager</th>
+                  <th className="py-2 pr-2">Own</th>
+                  <th className="py-2 text-right">Team total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.byTeam.map((row) => (
+                  <tr key={row.managerId} className="border-b border-border/30">
+                    <td className="py-2 pr-2 font-medium">{row.managerName}</td>
+                    <td className="py-2 pr-2 tabular-nums text-muted-foreground">{row.ownCount}</td>
+                    <td className="py-2 text-right tabular-nums font-semibold">{row.teamCount}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      ) : null}
+
       <div className="grid lg:grid-cols-2 gap-4">
         <Card className="bg-card border-border/50 p-4">
           <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
-            <Users className="w-4 h-4 text-primary" /> By executive
+            <Users className="w-4 h-4 text-primary" /> By executive / sheet consultant
           </h2>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="text-left text-xs text-muted-foreground border-b border-border/50">
                   <th className="pb-2 pr-3 font-medium">Executive</th>
+                  <th className="pb-2 pr-3 hidden md:table-cell">Team</th>
                   <th className="pb-2 font-medium text-right">Deliveries</th>
                 </tr>
               </thead>
               <tbody>
                 {data.byExecutive.length ? (
-                  data.byExecutive.map((row) => (
-                    <tr key={row.executiveId || row.name} className="border-b border-border/30">
-                      <td className="py-2 pr-3">{row.name}</td>
-                      <td className="py-2 text-right tabular-nums font-semibold">{row.count}</td>
+                  <>
+                    {data.byExecutive.map((row) => (
+                      <tr key={row.executiveId || row.name} className="border-b border-border/30">
+                        <td className="py-2 pr-3">
+                          <span className="font-medium">{row.name}</span>
+                          {row.sheetConsultant && row.sheetConsultant !== row.name ? (
+                            <span className="block text-[10px] text-muted-foreground">Sheet: {row.sheetConsultant}</span>
+                          ) : null}
+                        </td>
+                        <td className="py-2 pr-3 hidden md:table-cell text-xs text-muted-foreground">
+                          {row.teamManagerName || "—"}
+                        </td>
+                        <td className="py-2 text-right tabular-nums font-semibold">{row.count}</td>
+                      </tr>
+                    ))}
+                    <tr className="bg-muted/30 font-semibold">
+                      <td className="py-2 pr-3" colSpan={2}>
+                        Subtotal (attributed)
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {data.breakdownTotals?.executiveSum ?? data.byExecutive.reduce((s, r) => s + r.count, 0)}
+                      </td>
                     </tr>
-                  ))
+                  </>
                 ) : (
                   <tr>
-                    <td colSpan={2} className="py-6 text-center text-muted-foreground text-xs">
+                    <td colSpan={3} className="py-6 text-center text-muted-foreground text-xs">
                       No deliveries in this period
                     </td>
                   </tr>
@@ -231,7 +309,7 @@ export default function AdminDeliveryReports() {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-border/50 bg-muted/30">
-                {["Name", "Mobile", "Car Model", "Car Variant", "Colour", "Source", "Executive", "Delivery date"].map((h) => (
+                {["Name", "Mobile", "Car Model", "Car Variant", "Colour", "Source", "Executive", "Team", "Delivery date"].map((h) => (
                   <th key={h} className="text-left p-3 font-medium text-muted-foreground">{h}</th>
                 ))}
               </tr>
@@ -247,12 +325,13 @@ export default function AdminDeliveryReports() {
                     <td className="p-3">{row.colour || "—"}</td>
                     <td className="p-3">{row.source}</td>
                     <td className="p-3">{row.executiveName}</td>
+                    <td className="p-3 text-xs text-muted-foreground">{row.teamManager || "—"}</td>
                     <td className="p-3 text-muted-foreground">{fmtDate(row.deliveryDate)}</td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                  <td colSpan={9} className="p-8 text-center text-muted-foreground">
                     No delivered leads in this period
                   </td>
                 </tr>

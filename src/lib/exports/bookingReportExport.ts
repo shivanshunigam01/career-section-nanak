@@ -13,18 +13,31 @@ export function downloadBookingReportExcel(report: BookingReport) {
     "Booking No": row.bookingNo ?? "",
     Source: row.source,
     Executive: row.executiveName,
+    Team: row.teamManager ?? "",
+    Stage: row.status || row.stage || "",
     "Booking Date": row.bookingDate ? row.bookingDate.slice(0, 10) : "",
   }));
 
   const summary: Record<string, unknown>[] = [
     { Metric: "Period From", Value: report.from },
     { Metric: "Period To", Value: report.to },
-    { Metric: "Total Bookings", Value: report.totalBookings },
+    { Metric: "Bookings In Range", Value: report.totalInSelectedRange ?? report.totalBookings },
+    { Metric: "Bookings All (Lead CRM)", Value: report.alignedWithLeadReport?.all ?? "" },
+    { Metric: "Bookings MTD (Lead CRM)", Value: report.alignedWithLeadReport?.mtd ?? "" },
+    { Metric: "Bookings Today (Lead CRM)", Value: report.alignedWithLeadReport?.today ?? "" },
     { Metric: "Generated", Value: new Date().toISOString() },
   ];
 
+  const teamRows =
+    report.byTeam?.map((t) => ({
+      Manager: t.managerName,
+      Own: t.ownCount,
+      "Team Total": t.teamCount,
+    })) ?? [];
+
   downloadExcelWorkbook(`booking-report-${report.from}-${report.to}`, [
     { name: "Summary", rows: summary },
+    ...(teamRows.length ? [{ name: "By Team", rows: teamRows }] : []),
     { name: "Bookings", rows },
   ]);
 }

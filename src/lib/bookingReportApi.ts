@@ -5,6 +5,26 @@ export type BookingReportExecutiveRow = {
   executiveId: string | null;
   name: string;
   count: number;
+  designation?: string | null;
+  teamManagerName?: string | null;
+  sheetConsultant?: string | null;
+};
+
+export type BookingReportTeamRow = {
+  managerId: string;
+  managerName: string;
+  designation?: string;
+  ownCount: number;
+  teamCount: number;
+  directReports: number;
+};
+
+export type AlignedLeadReportCounts = {
+  all: number;
+  mtd: number;
+  today: number;
+  periodLabel?: string;
+  note?: string;
 };
 
 export type BookingReportCountRow = {
@@ -35,8 +55,11 @@ export type BookingReportLeadRow = {
   source: string;
   executiveName: string;
   executiveId: string | null;
+  sheetConsultant?: string;
+  teamManager?: string;
   bookingDate: string;
   stage?: string;
+  status?: string;
 };
 
 export type BookingReport = {
@@ -45,11 +68,17 @@ export type BookingReport = {
   to: string;
   bucketUnit: "day" | "week" | "month" | string;
   totalBookings: number;
+  totalInSelectedRange?: number;
+  alignedWithLeadReport?: AlignedLeadReportCounts;
+  breakdownTotals?: { executiveSum: number; matchesPeriodTotal: boolean };
   byExecutive: BookingReportExecutiveRow[];
+  byTeam?: BookingReportTeamRow[];
   byModel: BookingReportCountRow[];
   bySource: BookingReportCountRow[];
   byPeriod: BookingReportPeriodRow[];
   rows: BookingReportLeadRow[];
+  rowsTotal?: number;
+  rowsTruncated?: boolean;
 };
 
 export async function fetchBookingReport(params: {
