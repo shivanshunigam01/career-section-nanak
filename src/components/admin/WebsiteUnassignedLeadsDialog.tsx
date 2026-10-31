@@ -48,7 +48,7 @@ export function WebsiteUnassignedLeadsDialog() {
 
   const goToQueue = () => {
     setOpen(false);
-    navigate("/admin/crm/leads?website=1&assigned=unassigned");
+    navigate("/admin/crm/leads?assigned=unassigned");
   };
 
   return (
@@ -72,7 +72,7 @@ export function WebsiteUnassignedLeadsDialog() {
           </Button>
           <Button type="button" onClick={goToQueue} className="gap-2">
             <UserCheck className="w-4 h-4" />
-            Manage website leads
+            Open unassigned leads
           </Button>
         </DialogFooter>
       </DialogContent>
