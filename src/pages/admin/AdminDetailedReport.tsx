@@ -91,114 +91,65 @@ function fmtDateShort(iso: string | null | undefined) {
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-function StaffPerformanceCells({
-  row,
-  loadDrill,
-  teamLeads,
-  teamTd,
-  teamTdMtd,
-  showTeamColumns,
-}: {
-  row: DetailedReportStaffRow;
-  loadDrill: (title: string, params: DetailedReportDrillParams) => void;
-  teamLeads?: number;
-  teamTd?: number;
-  teamTdMtd?: number;
-  showTeamColumns: boolean;
-}) {
-  return (
-    <>
-      <td className={TD}>
-        <ClickableCount
-          value={row.totalLeads}
-          onClick={() =>
-            void loadDrill(`${row.name} · Total Leads`, {
-              table: "staff",
-              staffId: row.staffId,
-              metric: "leads",
-            })
-          }
-        />
-      </td>
-      <td className={TD}>
-        {showTeamColumns && teamLeads != null ? (
-          <span className="tabular-nums font-semibold" title="Manager + direct sales executives">
-            {fmt(teamLeads)}
-          </span>
-        ) : (
-          "—"
-        )}
-      </td>
-      <td className={TD}>
-        <ClickableCount
-          value={row.totalTestDrive}
-          onClick={() =>
-            void loadDrill(`${row.name} · Total TD (sheet)`, {
-              table: "staff",
-              staffId: row.staffId,
-              metric: "td",
-            })
-          }
-        />
-      </td>
-      <td className={TD}>
-        <ClickableCount
-          value={row.totalTestDriveMtd}
-          onClick={() =>
-            void loadDrill(`${row.name} · TD This Month`, {
-              table: "staff",
-              staffId: row.staffId,
-              metric: "tdmtd",
-            })
-          }
-        />
-      </td>
-      <td className={TD}>
-        {showTeamColumns && teamTd != null ? (
-          <ClickableCount
-            value={teamTd}
-            onClick={() =>
-              void loadDrill(`${row.name} · TD By Team`, {
-                table: "staff",
-                staffId: row.staffId,
-                metric: "teamtd",
-              })
-            }
-          />
-        ) : (
-          "—"
-        )}
-      </td>
-      <td className={TD}>
-        {showTeamColumns && teamTdMtd != null ? (
-          <ClickableCount
-            value={teamTdMtd}
-            onClick={() =>
-              void loadDrill(`${row.name} · Team TD MTD`, {
-                table: "staff",
-                staffId: row.staffId,
-                metric: "teamtdmtd",
-              })
-            }
-          />
-        ) : (
-          "—"
-        )}
-      </td>
-    </>
-  );
-}
+const SHEET_ROW_SH = "bg-[#FCE4D6]";
+const SHEET_ROW_SM = "bg-[#5B9BD5] text-white";
+const SHEET_ROW_SE = "bg-[#DDEBF7]";
+const SHEET_ROW_TOTAL = "bg-white font-bold";
 
-function ClickableCount({ value, onClick }: { value: number; onClick: () => void }) {
+function ClickableCount({
+  value,
+  onClick,
+  light,
+}: {
+  value: number;
+  onClick: () => void;
+  light?: boolean;
+}) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="w-full font-bold tabular-nums text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+      className={cn(
+        "w-full font-bold tabular-nums hover:underline focus:outline-none focus-visible:ring-2 rounded",
+        light ? "text-white focus-visible:ring-white/80" : "text-primary focus-visible:ring-primary",
+      )}
       title="View detailed records"
     >
       {fmt(value)}
     </button>
+  );
+}
+
+function SheetConsultantMetrics({
+  row,
+  loadDrill,
+  light,
+}: {
+  row: DetailedReportStaffRow;
+  loadDrill: (title: string, params: DetailedReportDrillParams) => void;
+  light?: boolean;
+}) {
+  const drill = (metric: string, label: string) =>
+    void loadDrill(`${row.name} · ${label}`, { table: "staff", staffId: row.staffId, metric });
+  return (
+    <>
+      <td className={TD}>
+        <ClickableCount value={row.totalLeads} onClick={() => drill("leads", "Leads Assigned")} light={light} />
+      </td>
+      <td className={TD}>
+        <ClickableCount value={row.totalTestDrive} onClick={() => drill("td", "Total TD Done")} light={light} />
+      </td>
+      <td className={TD}>
+        <ClickableCount value={row.totalTestDriveMtd} onClick={() => drill("tdmtd", "TD MTD")} light={light} />
+      </td>
+      <td className={TD}>
+        <ClickableCount
+          value={row.totalTestDriveToday ?? 0}
+          onClick={() => drill("tdtoday", "TD Today")}
+          light={light}
+        />
+      </td>
+    </>
   );
 }
 
@@ -331,7 +282,7 @@ export default function AdminDetailedReport() {
 
   const managerTeams =
     data.salesManagerTeams ??
-    data.salesManagers.map((manager) => ({
+    data.salesManagers.filter((m) => m.designation !== "sales_head").map((manager) => ({
       manager,
       executives: [] as DetailedReportStaffRow[],
       teamRollup: {
@@ -348,6 +299,8 @@ export default function AdminDetailedReport() {
     }));
 
   const orphanExecutives = data.orphanSalesExecutives ?? data.salesExecutives;
+  const salesHeads = data.salesHeadStandalone ?? [];
+  const roster = data.teamRosterSummary;
 
   return (
     <div className="space-y-6 pb-10 max-w-[1600px]">
@@ -730,91 +683,104 @@ export default function AdminDetailedReport() {
 
         <div className="xl:col-span-6 space-y-4">
           <ReportTableCard title="Sales Manager & Team">
-            <p className="text-[11px] text-muted-foreground px-3 pb-2">
-              Each manager shows their own sheet count, then direct-report executives. Team columns = manager + those executives combined.
-            </p>
-            <table className="w-full border-collapse min-w-[640px]">
+            {roster ? (
+              <div className="grid grid-cols-3 gap-3 px-4 py-3 border-b border-border/60 bg-muted/20 text-sm">
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wide">Team Strength</span>
+                  <span className="font-bold tabular-nums text-lg">{fmt(roster.teamStrength)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wide">Total SM</span>
+                  <span className="font-bold tabular-nums text-lg">{fmt(roster.totalSalesManagers)}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-xs uppercase tracking-wide">Total SE</span>
+                  <span className="font-bold tabular-nums text-lg">{fmt(roster.totalSalesExecutives)}</span>
+                </div>
+              </div>
+            ) : null}
+            <table className="w-full border-collapse min-w-[560px]">
               <thead>
                 <tr>
-                  <th className={cn(TH, "text-left")}>Name</th>
-                  <th className={TH}>Total Leads</th>
-                  <th className={TH}>Team Leads</th>
-                  <th className={TH}>Total TD</th>
-                  <th className={TH}>TD This Month</th>
-                  <th className={TH}>TD By Team</th>
-                  <th className={TH}>Team TD MTD</th>
+                  <th className={cn(TH, "text-left min-w-[200px]")}>Sales Consultant</th>
+                  <th className={TH}>Leads Assigned</th>
+                  <th className={TH}>Total TD Done</th>
+                  <th className={TH}>TD MTD</th>
+                  <th className={TH}>TD Today</th>
                 </tr>
               </thead>
               <tbody>
+                {salesHeads.map((head) => (
+                  <tr key={head.staffId} className={SHEET_ROW_SH}>
+                    <td className={cn(TD_L, "whitespace-nowrap font-semibold")}>
+                      {head.name} ({head.abbr})
+                    </td>
+                    <SheetConsultantMetrics
+                      row={head}
+                      loadDrill={(title, params) => void loadDrill(title, params)}
+                    />
+                  </tr>
+                ))}
                 {managerTeams.map((team) => {
                   const mgr = team.manager;
                   const rollup = team.teamRollup;
                   return (
                     <Fragment key={mgr.staffId}>
-                      <tr className="bg-slate-100/90 dark:bg-slate-800/40">
+                      <tr className={SHEET_ROW_SM}>
                         <td className={cn(TD_L, "whitespace-nowrap font-semibold")}>
                           {mgr.name} ({mgr.abbr})
                         </td>
-                        <StaffPerformanceCells
+                        <SheetConsultantMetrics
                           row={mgr}
                           loadDrill={(title, params) => void loadDrill(title, params)}
-                          showTeamColumns
-                          teamLeads={rollup.teamTotalLeads}
-                          teamTd={rollup.teamTotalTd}
-                          teamTdMtd={rollup.teamTotalTdMtd}
+                          light
                         />
                       </tr>
                       {team.executives.map((exec) => (
-                        <tr key={exec.staffId} className={STRIPE}>
-                          <td className={cn(TD_L, "whitespace-nowrap pl-8 text-muted-foreground")}>
-                            ↳ {exec.name} ({exec.abbr})
+                        <tr key={exec.staffId} className={SHEET_ROW_SE}>
+                          <td className={cn(TD_L, "whitespace-nowrap pl-6")}>
+                            {exec.name} ({exec.abbr})
                           </td>
-                          <StaffPerformanceCells
+                          <SheetConsultantMetrics
                             row={exec}
                             loadDrill={(title, params) => void loadDrill(title, params)}
-                            showTeamColumns={false}
                           />
                         </tr>
                       ))}
                       {team.executives.length > 0 ? (
-                        <tr key={`${mgr.staffId}-rollup`} className="bg-muted/30 text-xs">
-                          <td className={cn(TD_L, "pl-6 italic text-muted-foreground")}>
-                            Team subtotal · {mgr.name}
-                          </td>
-                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.managerOwnLeads)} + {fmt(rollup.executivesLeads)}</td>
-                          <td className={cn(TD, "font-semibold tabular-nums")}>{fmt(rollup.teamTotalLeads)}</td>
-                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.managerOwnTd)} + {fmt(rollup.executivesTd)}</td>
-                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.managerOwnTdMtd)} + {fmt(rollup.executivesTdMtd)}</td>
-                          <td className={cn(TD, "font-semibold tabular-nums")}>{fmt(rollup.teamTotalTd)}</td>
-                          <td className={cn(TD, "font-semibold tabular-nums")}>{fmt(rollup.teamTotalTdMtd)}</td>
+                        <tr key={`${mgr.staffId}-total`} className={SHEET_ROW_TOTAL}>
+                          <td className={TD_L} />
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.teamTotalLeads)}</td>
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.teamTotalTd)}</td>
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.teamTotalTdMtd)}</td>
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.teamTotalTdToday ?? 0)}</td>
                         </tr>
                       ) : null}
                     </Fragment>
                   );
                 })}
-                {managerTeams.length === 0 && (
+                {managerTeams.length === 0 && salesHeads.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className={cn(TD, "text-muted-foreground py-6")}>
+                    <td colSpan={5} className={cn(TD, "text-muted-foreground py-6")}>
                       No sales managers found
                     </td>
                   </tr>
-                )}
+                ) : null}
                 {orphanExecutives.length > 0 ? (
                   <>
                     <tr className="bg-muted/50">
-                      <td colSpan={7} className={cn(TD_L, "font-semibold text-xs uppercase tracking-wide py-2")}>
-                        Other sales executives (no manager link in User Master)
+                      <td colSpan={5} className={cn(TD_L, "font-semibold text-xs uppercase tracking-wide py-2")}>
+                        Other sales executives (no manager in User Master)
                       </td>
                     </tr>
                     {orphanExecutives.map((exec) => (
-                      <tr key={exec.staffId}>
+                      <tr key={exec.staffId} className={SHEET_ROW_SE}>
                         <td className={cn(TD_L, "whitespace-nowrap pl-4")}>
                           {exec.name} ({exec.abbr})
                         </td>
-                        <StaffPerformanceCells
+                        <SheetConsultantMetrics
                           row={exec}
                           loadDrill={(title, params) => void loadDrill(title, params)}
-                          showTeamColumns={false}
                         />
                       </tr>
                     ))}
@@ -837,8 +803,6 @@ export default function AdminDetailedReport() {
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
-                    <td className={TD}>—</td>
-                    <td className={TD}>—</td>
                   </tr>
                 ) : null}
                 {data.unassignedSheet && data.unassignedSheet.totalLeads > 0 ? (
@@ -857,7 +821,6 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
-                    <td className={TD}>—</td>
                     <td className={TD}>
                       <ClickableCount
                         value={data.unassignedSheet.totalTestDrive}
@@ -874,7 +837,6 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
-                    <td className={TD}>—</td>
                     <td className={TD}>—</td>
                   </tr>
                 ) : null}
@@ -894,11 +856,9 @@ export default function AdminDetailedReport() {
                       }
                     />
                   </td>
-                  <td className={TD}>—</td>
                   <td className={TD}>{fmt(mgrTotals.td)}</td>
                   <td className={TD}>{fmt(mgrTotals.tdMtd)}</td>
-                  <td className={TD}>{fmt(mgrTotals.teamTd)}</td>
-                  <td className={TD}>{fmt(mgrTotals.teamTdMtd)}</td>
+                  <td className={TD}>—</td>
                 </tr>
                 {(data.attributionTotals?.executives ?? execTotals.leads) > 0 ? (
                   <tr className="bg-muted/30 text-muted-foreground">
@@ -915,8 +875,8 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
-                    <td className={TD} colSpan={5}>
-                      Shown under each manager above; orphans listed separately
+                    <td className={TD} colSpan={3}>
+                      Listed under each manager above
                     </td>
                   </tr>
                 ) : null}
@@ -943,7 +903,7 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
-                    <td className={TD} colSpan={5} />
+                    <td className={TD} colSpan={4} />
                   </tr>
                 ) : null}
                 <tr className={TOTAL_ROW}>
@@ -954,7 +914,7 @@ export default function AdminDetailedReport() {
                       onClick={() => void loadKpiPopup("Total Leads (All)", "totalLeads", "all")}
                     />
                   </td>
-                  <td className={TD} colSpan={5}>
+                  <td className={TD} colSpan={3}>
                     {data.attributionTotals && !data.attributionTotals.inBalance ? (
                       <span className="text-amber-600 text-xs">Reconciliation mismatch — refresh report</span>
                     ) : (

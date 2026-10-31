@@ -39,6 +39,7 @@ export type DetailedReportStaffRow = {
   totalLeads: number;
   totalTestDrive: number;
   totalTestDriveMtd: number;
+  totalTestDriveToday?: number;
   teamTestDrive?: number;
   teamTestDriveMtd?: number;
   /** Manager + direct-report SE leads (sheet attribution). */
@@ -55,6 +56,16 @@ export type DetailedReportManagerTeamRollup = {
   managerOwnTdMtd: number;
   executivesTdMtd: number;
   teamTotalTdMtd: number;
+  managerOwnTdToday?: number;
+  executivesTdToday?: number;
+  teamTotalTdToday?: number;
+};
+
+export type DetailedReportTeamRosterSummary = {
+  teamStrength: number;
+  totalSalesManagers: number;
+  totalSalesExecutives: number;
+  totalSalesHeads: number;
 };
 
 export type DetailedReportManagerTeam = {
@@ -183,6 +194,8 @@ export type DetailedReport = {
   salesExecutives: DetailedReportStaffRow[];
   /** Managers with nested direct-report sales executives. */
   salesManagerTeams?: DetailedReportManagerTeam[];
+  salesHeadStandalone?: DetailedReportStaffRow[];
+  teamRosterSummary?: DetailedReportTeamRosterSummary;
   /** SE not linked under any manager in User Master. */
   orphanSalesExecutives?: DetailedReportStaffRow[];
   leadTypes: DetailedReportLeadTypeRow[];

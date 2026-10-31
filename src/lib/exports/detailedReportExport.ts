@@ -61,12 +61,10 @@ export function downloadDetailedReportExcel(report: DetailedReport) {
               Name: mgr.name,
               Role: mgr.abbr,
               Level: "Manager",
-              "Total Leads": mgr.totalLeads,
-              "Team Leads": rollup?.teamTotalLeads ?? mgr.teamTotalLeads ?? mgr.totalLeads,
-              "Total TD": mgr.totalTestDrive,
+              "Leads Assigned": mgr.totalLeads,
+              "Total TD Done": mgr.totalTestDrive,
               "TD MTD": mgr.totalTestDriveMtd,
-              "TD By Team": rollup?.teamTotalTd ?? mgr.teamTestDrive ?? 0,
-              "Team TD MTD": rollup?.teamTotalTdMtd ?? mgr.teamTestDriveMtd ?? 0,
+              "TD Today": mgr.totalTestDriveToday ?? 0,
             },
           ];
           for (const exec of team.executives ?? []) {
@@ -74,12 +72,21 @@ export function downloadDetailedReportExcel(report: DetailedReport) {
               Name: `  ${exec.name}`,
               Role: exec.abbr,
               Level: "Executive",
-              "Total Leads": exec.totalLeads,
-              "Team Leads": "",
-              "Total TD": exec.totalTestDrive,
+              "Leads Assigned": exec.totalLeads,
+              "Total TD Done": exec.totalTestDrive,
               "TD MTD": exec.totalTestDriveMtd,
-              "TD By Team": "",
-              "Team TD MTD": "",
+              "TD Today": exec.totalTestDriveToday ?? 0,
+            });
+          }
+          if (team.executives?.length && team.teamRollup) {
+            rows.push({
+              Name: "",
+              Role: "",
+              Level: "Team total",
+              "Leads Assigned": team.teamRollup.teamTotalLeads,
+              "Total TD Done": team.teamRollup.teamTotalTd,
+              "TD MTD": team.teamRollup.teamTotalTdMtd,
+              "TD Today": team.teamRollup.teamTotalTdToday ?? 0,
             });
           }
           return rows;
