@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { BarChart3, RefreshCw, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -18,6 +18,7 @@ import {
   type DetailedReportDrillParams,
   type DetailedReportFollowUpCallRow,
   type DetailedReportLeadRow,
+  type DetailedReportStaffRow,
   type DetailedReportTestDriveRow,
 } from "@/lib/detailedReportApi";
 import { cn } from "@/lib/utils";
@@ -88,6 +89,104 @@ function fmtDateShort(iso: string | null | undefined) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+}
+
+function StaffPerformanceCells({
+  row,
+  loadDrill,
+  teamLeads,
+  teamTd,
+  teamTdMtd,
+  showTeamColumns,
+}: {
+  row: DetailedReportStaffRow;
+  loadDrill: (title: string, params: DetailedReportDrillParams) => void;
+  teamLeads?: number;
+  teamTd?: number;
+  teamTdMtd?: number;
+  showTeamColumns: boolean;
+}) {
+  return (
+    <>
+      <td className={TD}>
+        <ClickableCount
+          value={row.totalLeads}
+          onClick={() =>
+            void loadDrill(`${row.name} · Total Leads`, {
+              table: "staff",
+              staffId: row.staffId,
+              metric: "leads",
+            })
+          }
+        />
+      </td>
+      <td className={TD}>
+        {showTeamColumns && teamLeads != null ? (
+          <span className="tabular-nums font-semibold" title="Manager + direct sales executives">
+            {fmt(teamLeads)}
+          </span>
+        ) : (
+          "—"
+        )}
+      </td>
+      <td className={TD}>
+        <ClickableCount
+          value={row.totalTestDrive}
+          onClick={() =>
+            void loadDrill(`${row.name} · Total TD (sheet)`, {
+              table: "staff",
+              staffId: row.staffId,
+              metric: "td",
+            })
+          }
+        />
+      </td>
+      <td className={TD}>
+        <ClickableCount
+          value={row.totalTestDriveMtd}
+          onClick={() =>
+            void loadDrill(`${row.name} · TD This Month`, {
+              table: "staff",
+              staffId: row.staffId,
+              metric: "tdmtd",
+            })
+          }
+        />
+      </td>
+      <td className={TD}>
+        {showTeamColumns && teamTd != null ? (
+          <ClickableCount
+            value={teamTd}
+            onClick={() =>
+              void loadDrill(`${row.name} · TD By Team`, {
+                table: "staff",
+                staffId: row.staffId,
+                metric: "teamtd",
+              })
+            }
+          />
+        ) : (
+          "—"
+        )}
+      </td>
+      <td className={TD}>
+        {showTeamColumns && teamTdMtd != null ? (
+          <ClickableCount
+            value={teamTdMtd}
+            onClick={() =>
+              void loadDrill(`${row.name} · Team TD MTD`, {
+                table: "staff",
+                staffId: row.staffId,
+                metric: "teamtdmtd",
+              })
+            }
+          />
+        ) : (
+          "—"
+        )}
+      </td>
+    </>
+  );
 }
 
 function ClickableCount({ value, onClick }: { value: number; onClick: () => void }) {
@@ -229,6 +328,26 @@ export default function AdminDetailedReport() {
     }),
     { leads: 0, td: 0, tdMtd: 0 },
   );
+
+  const managerTeams =
+    data.salesManagerTeams ??
+    data.salesManagers.map((manager) => ({
+      manager,
+      executives: [] as DetailedReportStaffRow[],
+      teamRollup: {
+        managerOwnLeads: manager.totalLeads,
+        executivesLeads: 0,
+        teamTotalLeads: manager.teamTotalLeads ?? manager.totalLeads,
+        managerOwnTd: manager.totalTestDrive,
+        executivesTd: 0,
+        teamTotalTd: manager.teamTestDrive ?? manager.totalTestDrive,
+        managerOwnTdMtd: manager.totalTestDriveMtd,
+        executivesTdMtd: 0,
+        teamTotalTdMtd: manager.teamTestDriveMtd ?? manager.totalTestDriveMtd,
+      },
+    }));
+
+  const orphanExecutives = data.orphanSalesExecutives ?? data.salesExecutives;
 
   return (
     <div className="space-y-6 pb-10 max-w-[1600px]">
@@ -610,11 +729,14 @@ export default function AdminDetailedReport() {
         </ReportTableCard>
 
         <div className="xl:col-span-6 space-y-4">
-          <ReportTableCard title="Sales Manager">
+          <ReportTableCard title="Sales Manager & Team">
+            <p className="text-[11px] text-muted-foreground px-3 pb-2">
+              Each manager shows their own sheet count, then direct-report executives. Team columns = manager + those executives combined.
+            </p>
             <table className="w-full border-collapse min-w-[640px]">
               <thead>
                 <tr>
-                  <th className={cn(TH, "text-left")}>Sales Manager</th>
+                  <th className={cn(TH, "text-left")}>Name</th>
                   <th className={TH}>Total Leads</th>
                   <th className={TH}>Team Leads</th>
                   <th className={TH}>Total TD</th>
@@ -624,85 +746,80 @@ export default function AdminDetailedReport() {
                 </tr>
               </thead>
               <tbody>
-                {data.salesManagers.map((row, i) => (
-                  <tr key={row.staffId} className={i % 2 ? STRIPE : undefined}>
-                    <td className={cn(TD_L, "whitespace-nowrap")}>
-                      {row.name} ({row.abbr})
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.totalLeads}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · Total Leads`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "leads",
-                          })
-                        }
-                      />
-                    </td>
-                    <td className={TD}>
-                      <span className="tabular-nums" title="Manager + direct SE (sheet attribution)">
-                        {fmt(row.teamTotalLeads ?? row.totalLeads)}
-                      </span>
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.totalTestDrive}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · Total TD (sheet)`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "td",
-                          })
-                        }
-                      />
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.totalTestDriveMtd}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · TD This Month`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "tdmtd",
-                          })
-                        }
-                      />
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.teamTestDrive ?? 0}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · TD By Team`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "teamtd",
-                          })
-                        }
-                      />
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.teamTestDriveMtd ?? 0}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · Team TD MTD`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "teamtdmtd",
-                          })
-                        }
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {data.salesManagers.length === 0 && (
+                {managerTeams.map((team) => {
+                  const mgr = team.manager;
+                  const rollup = team.teamRollup;
+                  return (
+                    <Fragment key={mgr.staffId}>
+                      <tr className="bg-slate-100/90 dark:bg-slate-800/40">
+                        <td className={cn(TD_L, "whitespace-nowrap font-semibold")}>
+                          {mgr.name} ({mgr.abbr})
+                        </td>
+                        <StaffPerformanceCells
+                          row={mgr}
+                          loadDrill={(title, params) => void loadDrill(title, params)}
+                          showTeamColumns
+                          teamLeads={rollup.teamTotalLeads}
+                          teamTd={rollup.teamTotalTd}
+                          teamTdMtd={rollup.teamTotalTdMtd}
+                        />
+                      </tr>
+                      {team.executives.map((exec) => (
+                        <tr key={exec.staffId} className={STRIPE}>
+                          <td className={cn(TD_L, "whitespace-nowrap pl-8 text-muted-foreground")}>
+                            ↳ {exec.name} ({exec.abbr})
+                          </td>
+                          <StaffPerformanceCells
+                            row={exec}
+                            loadDrill={(title, params) => void loadDrill(title, params)}
+                            showTeamColumns={false}
+                          />
+                        </tr>
+                      ))}
+                      {team.executives.length > 0 ? (
+                        <tr key={`${mgr.staffId}-rollup`} className="bg-muted/30 text-xs">
+                          <td className={cn(TD_L, "pl-6 italic text-muted-foreground")}>
+                            Team subtotal · {mgr.name}
+                          </td>
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.managerOwnLeads)} + {fmt(rollup.executivesLeads)}</td>
+                          <td className={cn(TD, "font-semibold tabular-nums")}>{fmt(rollup.teamTotalLeads)}</td>
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.managerOwnTd)} + {fmt(rollup.executivesTd)}</td>
+                          <td className={cn(TD, "tabular-nums")}>{fmt(rollup.managerOwnTdMtd)} + {fmt(rollup.executivesTdMtd)}</td>
+                          <td className={cn(TD, "font-semibold tabular-nums")}>{fmt(rollup.teamTotalTd)}</td>
+                          <td className={cn(TD, "font-semibold tabular-nums")}>{fmt(rollup.teamTotalTdMtd)}</td>
+                        </tr>
+                      ) : null}
+                    </Fragment>
+                  );
+                })}
+                {managerTeams.length === 0 && (
                   <tr>
                     <td colSpan={7} className={cn(TD, "text-muted-foreground py-6")}>
                       No sales managers found
                     </td>
                   </tr>
                 )}
+                {orphanExecutives.length > 0 ? (
+                  <>
+                    <tr className="bg-muted/50">
+                      <td colSpan={7} className={cn(TD_L, "font-semibold text-xs uppercase tracking-wide py-2")}>
+                        Other sales executives (no manager link in User Master)
+                      </td>
+                    </tr>
+                    {orphanExecutives.map((exec) => (
+                      <tr key={exec.staffId}>
+                        <td className={cn(TD_L, "whitespace-nowrap pl-4")}>
+                          {exec.name} ({exec.abbr})
+                        </td>
+                        <StaffPerformanceCells
+                          row={exec}
+                          loadDrill={(title, params) => void loadDrill(title, params)}
+                          showTeamColumns={false}
+                        />
+                      </tr>
+                    ))}
+                  </>
+                ) : null}
                 {data.leadAssignment && data.leadAssignment.crmUnassigned > 0 ? (
                   <tr className="bg-primary/5 border-t border-primary/20">
                     <td className={cn(TD_L, "font-medium text-foreground")}>
@@ -740,6 +857,7 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
+                    <td className={TD}>—</td>
                     <td className={TD}>
                       <ClickableCount
                         value={data.unassignedSheet.totalTestDrive}
@@ -756,7 +874,6 @@ export default function AdminDetailedReport() {
                         }
                       />
                     </td>
-                    <td className={TD}>—</td>
                     <td className={TD}>—</td>
                     <td className={TD}>—</td>
                   </tr>
@@ -785,7 +902,7 @@ export default function AdminDetailedReport() {
                 </tr>
                 {(data.attributionTotals?.executives ?? execTotals.leads) > 0 ? (
                   <tr className="bg-muted/30 text-muted-foreground">
-                    <td className={cn(TD_L, "italic pl-6")}>+ Sales executives (sheet name)</td>
+                    <td className={cn(TD_L, "italic pl-6")}>+ All sales executives (sheet name)</td>
                     <td className={TD}>
                       <ClickableCount
                         value={data.attributionTotals?.executives ?? execTotals.leads}
@@ -799,7 +916,7 @@ export default function AdminDetailedReport() {
                       />
                     </td>
                     <td className={TD} colSpan={5}>
-                      See Sales Executive table
+                      Shown under each manager above; orphans listed separately
                     </td>
                   </tr>
                 ) : null}
@@ -851,91 +968,12 @@ export default function AdminDetailedReport() {
             </table>
           </ReportTableCard>
 
-          <ReportTableCard title="Sales Executive">
-            <table className="w-full border-collapse min-w-[480px]">
-              <thead>
-                <tr>
-                  <th className={cn(TH, "text-left")}>Sales Executive</th>
-                  <th className={TH}>Total Leads</th>
-                  <th className={TH}>Total TD</th>
-                  <th className={TH}>TD This Month</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.salesExecutives.map((row, i) => (
-                  <tr key={row.staffId} className={i % 2 ? STRIPE : undefined}>
-                    <td className={cn(TD_L, "whitespace-nowrap")}>
-                      {row.name} ({row.abbr})
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.totalLeads}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · Total Leads`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "leads",
-                          })
-                        }
-                      />
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.totalTestDrive}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · Total TD (sheet)`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "td",
-                          })
-                        }
-                      />
-                    </td>
-                    <td className={TD}>
-                      <ClickableCount
-                        value={row.totalTestDriveMtd}
-                        onClick={() =>
-                          void loadDrill(`${row.name} · TD This Month`, {
-                            table: "staff",
-                            staffId: row.staffId,
-                            metric: "tdmtd",
-                          })
-                        }
-                      />
-                    </td>
-                  </tr>
-                ))}
-                {data.salesExecutives.length === 0 && (
-                  <tr>
-                    <td colSpan={4} className={cn(TD, "text-muted-foreground py-6")}>
-                      No sales executives found
-                    </td>
-                  </tr>
-                )}
-                <tr className={TOTAL_ROW}>
-                  <td className={cn(TD_L, "font-bold")}>TOTAL (executives)</td>
-                  <td className={TD}>
-                    <ClickableCount
-                      value={execTotals.leads}
-                      onClick={() =>
-                        void loadDrill("All sales executives · Total Leads", {
-                          table: "staff",
-                          staffId: "__executives__",
-                          metric: "leads",
-                        })
-                      }
-                    />
-                  </td>
-                  <td className={TD}>{fmt(execTotals.td)}</td>
-                  <td className={TD}>{fmt(execTotals.tdMtd)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </ReportTableCard>
-
+          {data.attributionNote ? (
+            <p className="text-xs text-muted-foreground px-1">{data.attributionNote}</p>
+          ) : null}
           {data.attributionTotals ? (
             <p className="text-xs text-muted-foreground px-1">
-              Each lead is counted once: managers (direct name) {fmt(data.attributionTotals.managersDirect)} + executives{" "}
+              Reconciliation: managers (direct) {fmt(data.attributionTotals.managersDirect)} + executives{" "}
               {fmt(data.attributionTotals.executives)}
               {data.attributionTotals.otherStaff > 0
                 ? ` + other staff ${fmt(data.attributionTotals.otherStaff)}`

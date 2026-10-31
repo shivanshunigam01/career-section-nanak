@@ -45,6 +45,24 @@ export type DetailedReportStaffRow = {
   teamTotalLeads?: number;
 };
 
+export type DetailedReportManagerTeamRollup = {
+  managerOwnLeads: number;
+  executivesLeads: number;
+  teamTotalLeads: number;
+  managerOwnTd: number;
+  executivesTd: number;
+  teamTotalTd: number;
+  managerOwnTdMtd: number;
+  executivesTdMtd: number;
+  teamTotalTdMtd: number;
+};
+
+export type DetailedReportManagerTeam = {
+  manager: DetailedReportStaffRow;
+  executives: DetailedReportStaffRow[];
+  teamRollup: DetailedReportManagerTeamRollup;
+};
+
 export type DetailedReportAttributionTotals = {
   grandTotal: number;
   managersDirect: number;
@@ -163,6 +181,10 @@ export type DetailedReport = {
   leadSourcesTotal: { count: number; assignedCount: number };
   salesManagers: DetailedReportStaffRow[];
   salesExecutives: DetailedReportStaffRow[];
+  /** Managers with nested direct-report sales executives. */
+  salesManagerTeams?: DetailedReportManagerTeam[];
+  /** SE not linked under any manager in User Master. */
+  orphanSalesExecutives?: DetailedReportStaffRow[];
   leadTypes: DetailedReportLeadTypeRow[];
   leadTypesTotal: number;
   monthlyTestDrives: DetailedReportMonthlyTd[];

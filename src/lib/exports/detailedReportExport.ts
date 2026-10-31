@@ -51,27 +51,55 @@ export function downloadDetailedReportExcel(report: DetailedReport) {
         : [],
     },
     {
-      name: "Sales Managers",
-      rows: report.salesManagers.map((r) => ({
-        Manager: r.name,
-        Role: r.abbr,
-        "Total Leads": r.totalLeads,
-        "Total TD": r.totalTestDrive,
-        "TD MTD": r.totalTestDriveMtd,
-        "TD By Team": r.teamTestDrive ?? 0,
-        "Team TD MTD": r.teamTestDriveMtd ?? 0,
-      })),
+      name: "Sales Manager & Team",
+      rows: (report.salesManagerTeams ?? report.salesManagers.map((m) => ({ manager: m, executives: [], teamRollup: null }))).flatMap(
+        (team) => {
+          const mgr = team.manager;
+          const rollup = team.teamRollup;
+          const rows: Record<string, unknown>[] = [
+            {
+              Name: mgr.name,
+              Role: mgr.abbr,
+              Level: "Manager",
+              "Total Leads": mgr.totalLeads,
+              "Team Leads": rollup?.teamTotalLeads ?? mgr.teamTotalLeads ?? mgr.totalLeads,
+              "Total TD": mgr.totalTestDrive,
+              "TD MTD": mgr.totalTestDriveMtd,
+              "TD By Team": rollup?.teamTotalTd ?? mgr.teamTestDrive ?? 0,
+              "Team TD MTD": rollup?.teamTotalTdMtd ?? mgr.teamTestDriveMtd ?? 0,
+            },
+          ];
+          for (const exec of team.executives ?? []) {
+            rows.push({
+              Name: `  ${exec.name}`,
+              Role: exec.abbr,
+              Level: "Executive",
+              "Total Leads": exec.totalLeads,
+              "Team Leads": "",
+              "Total TD": exec.totalTestDrive,
+              "TD MTD": exec.totalTestDriveMtd,
+              "TD By Team": "",
+              "Team TD MTD": "",
+            });
+          }
+          return rows;
+        },
+      ),
     },
-    {
-      name: "Sales Executives",
-      rows: report.salesExecutives.map((r) => ({
-        Executive: r.name,
-        Role: r.abbr,
-        "Total Leads": r.totalLeads,
-        "Total TD": r.totalTestDrive,
-        "TD MTD": r.totalTestDriveMtd,
-      })),
-    },
+    ...(report.orphanSalesExecutives?.length
+      ? [
+          {
+            name: "Other Executives",
+            rows: report.orphanSalesExecutives.map((r) => ({
+              Executive: r.name,
+              Role: r.abbr,
+              "Total Leads": r.totalLeads,
+              "Total TD": r.totalTestDrive,
+              "TD MTD": r.totalTestDriveMtd,
+            })),
+          },
+        ]
+      : []),
     {
       name: "Lead Types",
       rows: report.leadTypes.map((r) => ({ "Lead Type": r.leadType, Count: r.count })),
