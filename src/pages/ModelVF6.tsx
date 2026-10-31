@@ -323,33 +323,17 @@ const ModelVF6 = () => {
       <Navbar />
 
       <section
-        className="relative z-0 w-full max-w-none overflow-hidden bg-background pt-[4.25rem] lg:h-screen lg:max-h-[min(100vh,1280px)] lg:min-h-[600px] lg:pt-0"
+        className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
         aria-label="VF 6 hero"
       >
-        <div className="relative w-full max-w-none shrink-0 overflow-hidden h-[clamp(240px,72dvh,calc(100dvh-4.25rem))] min-h-[240px] max-h-[calc(100dvh-4.25rem)] lg:hidden">
-          <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
-            <img
-              src={vf6HeroBanner}
-              alt="VinFast VF 6 — Boundless Range for emotions in motion."
-              className="hero-slider-image h-full w-full object-cover object-[center_38%]"
-              sizes="100vw"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
-        </div>
-        <div className="relative hidden lg:block lg:absolute lg:inset-0 lg:min-h-0">
-          <div className="hero-media-scrim absolute inset-0 overflow-hidden">
-            <img
-              src={vf6HeroBanner}
-              alt="VinFast VF 6 — Boundless Range for emotions in motion."
-              className="hero-slider-image h-full w-full object-cover object-[center_40%]"
-              sizes="100vw"
-              fetchPriority="high"
-              decoding="async"
-            />
-          </div>
-        </div>
+        <img
+          src={vf6HeroBanner}
+          alt="VinFast VF 6 — Boundless Range for emotions in motion."
+          className="model-page-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] mx-auto"
+          sizes="100vw"
+          fetchPriority="high"
+          decoding="async"
+        />
         <h1 className="sr-only">VinFast VF 6</h1>
       </section>
 
