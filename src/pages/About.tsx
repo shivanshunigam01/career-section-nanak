@@ -6,7 +6,7 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import FaqSection from "@/components/FaqSection";
 import { Award, Users, Target, Globe } from "lucide-react";
-import patliputraVinfastHero from "@/assets/patliputra-vinfast-about-hero.png";
+import patliputraShowroomHero from "@/assets/about/patliputra-showroom-hero.jpg";
 import vf8Convoy from "@/assets/vf8-convoy.jpg";
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePageSeo } from "@/hooks/usePageSeo";
@@ -35,27 +35,31 @@ const AboutPage = () => {
     <div className="public-page-shell">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative min-h-[52vh] sm:min-h-[60vh] flex items-end pb-10 sm:pb-14 pt-[4.25rem] lg:pt-20">
-        <div className="absolute inset-0">
-          <img
-            src={patliputraVinfastHero}
-            alt={dealer.dealerName}
-            className="image-high-quality h-full w-full object-cover object-center"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 via-transparent to-transparent" />
-        </div>
-        <div className="relative container mx-auto min-w-0 px-4 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="min-w-0">
-            <p className="text-on-image font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
-            <h1 className="text-on-image-lg font-display font-bold text-3xl sm:text-4xl md:text-6xl lg:text-7xl leading-tight mb-3 break-words">
+      {/* Showroom hero — full image, no overlay */}
+      <section className="pt-[4.25rem] lg:pt-0 border-b border-border/40" aria-label="Patliputra VinFast showroom">
+        <img
+          src={patliputraShowroomHero}
+          alt={`${dealer.dealerName} — VinFast Patna showroom`}
+          className="image-high-quality block w-full h-auto max-h-[min(85dvh,920px)] object-cover object-center"
+          sizes="100vw"
+          fetchPriority="high"
+          decoding="async"
+        />
+      </section>
+
+      <section className="bg-background">
+        <div className="container mx-auto min-w-0 px-4 lg:px-8 py-10 sm:py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="min-w-0 max-w-3xl"
+          >
+            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.25em] mb-3">About Us</p>
+            <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl lg:text-6xl leading-tight mb-3 break-words text-foreground">
               {dealer.dealerName}
             </h1>
-            <p className="text-on-image-soft text-base md:text-lg max-w-xl">
+            <p className="text-muted-foreground text-base md:text-lg max-w-xl">
               Bihar&apos;s first authorized {dealer.brand} dealer — bringing electric excellence to your doorstep.
             </p>
           </motion.div>
