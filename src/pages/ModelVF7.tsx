@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { VF7_PAGE_SEO } from "@/lib/seoBlueprint";
-import vf7HeroBanner from "@/assets/model-heroes/vf7-hero-banner.jpg";
+import { ModelPageHero } from "@/components/model/ModelPageHero";
 import vf7InfinityBlanc from "@/assets/vf7-infinity-blanc.png";
 import vf7CrimsonRed from "@/assets/vf7-crimson-red.png";
 import vf7DesatSilver from "@/assets/vf7-desat-silver.png";
@@ -476,22 +476,14 @@ const ModelVF7 = () => {
     <div className="public-page-shell">
       <Navbar />
 
-      <section
-        className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
-        aria-label="VF 7 hero"
-      >
-        <div className="model-page-hero-frame">
-          <img
-            src={vf7HeroBanner}
-            alt="VinFast VF 7 — Born Sporty. Effortlessly Sophisticated."
-            className="model-page-hero-image"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-        </div>
-        <h1 className="sr-only">VinFast VF 7</h1>
-      </section>
+      <ModelPageHero
+        imageSrc="/model-heroes/vf7-hero.jpg"
+        width={2560}
+        height={1440}
+        alt="VinFast VF 7 — Born Sporty. Effortlessly Sophisticated."
+        ariaLabel="VF 7 hero"
+        srTitle="VinFast VF 7"
+      />
 
       <ModelPagePriceBand
         exShowroomPrice={displayExShowroom}

@@ -22,7 +22,7 @@ import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { MPV7_PAGE_SEO } from "@/lib/seoBlueprint";
 import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
-import mpv7HeroBanner from "@/assets/model-heroes/mpv7-hero-banner.jpg";
+import { ModelPageHero } from "@/components/model/ModelPageHero";
 import mpv7DtlInterior1 from "@/assets/mpv7-details/mpv7-dtl-interior-1.jpg";
 import { ModelPagePriceBand } from "@/components/model/ModelPagePriceBand";
 import { ModelPageHighlightsBlock } from "@/components/model/ModelPageHighlightsBlock";
@@ -215,22 +215,14 @@ const ModelMPV7 = () => {
     <div className="public-page-shell">
       <Navbar />
 
-      <section
-        className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
-        aria-label="VF MPV 7 hero"
-      >
-        <div className="model-page-hero-frame">
-          <img
-            src={mpv7HeroBanner}
-            alt="VinFast VF MPV 7 — Your World. On The Move."
-            className="model-page-hero-image"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-        </div>
-        <h1 className="sr-only">VinFast VF MPV 7</h1>
-      </section>
+      <ModelPageHero
+        imageSrc="/model-heroes/mpv7-hero.jpg"
+        width={2560}
+        height={1350}
+        alt="VinFast VF MPV 7 — Your World. On The Move."
+        ariaLabel="VF MPV 7 hero"
+        srTitle="VinFast VF MPV 7"
+      />
 
       <ModelPagePriceBand
         festiveSlug="mpv7"

@@ -5,7 +5,7 @@ import LeadCaptureStrip from "@/components/LeadCaptureStrip";
 import { BrochureDownloadButton } from "@/components/BrochureDownloadButton";
 import Footer from "@/components/Footer";
 import StickyMobileCTA from "@/components/StickyMobileCTA";
-import vf6HeroBanner from "@/assets/model-heroes/vf6-hero-banner.jpg";
+import { ModelPageHero } from "@/components/model/ModelPageHero";
 import vf6WhyInteriorRhd from "@/assets/interior-rhd-luxury-ambient.png";
 import vf6InfinityBlanc from "@/assets/vf6-infinity-blanc.png";
 import vf6CrimsonRed from "@/assets/vf6-crimson-red.png";
@@ -322,22 +322,14 @@ const ModelVF6 = () => {
     <div className="public-page-shell">
       <Navbar />
 
-      <section
-        className="relative z-0 w-full max-w-none overflow-hidden bg-muted/20 pt-[4.25rem]"
-        aria-label="VF 6 hero"
-      >
-        <div className="model-page-hero-frame">
-          <img
-            src={vf6HeroBanner}
-            alt="VinFast VF 6 — Built for a brighter tomorrow."
-            className="model-page-hero-image"
-            sizes="100vw"
-            fetchPriority="high"
-            decoding="async"
-          />
-        </div>
-        <h1 className="sr-only">VinFast VF 6</h1>
-      </section>
+      <ModelPageHero
+        imageSrc="/model-heroes/vf6-hero.jpg"
+        width={2560}
+        height={1332}
+        alt="VinFast VF 6 — Built for a brighter tomorrow."
+        ariaLabel="VF 6 hero"
+        srTitle="VinFast VF 6"
+      />
 
       <ModelPagePriceBand
         exShowroomPrice={displayExShowroom}
