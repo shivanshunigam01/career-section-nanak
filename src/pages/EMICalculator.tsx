@@ -17,6 +17,7 @@ import { CALCULATOR_METHODOLOGY_NOTE, EMI_PAGE_SEO } from "@/lib/seoBlueprint";
 import { TCO_OWNERSHIP_YEAR_OPTIONS, TCO_DEFAULTS } from "@/lib/tco/tcoDefaults";
 import { findTcoVehicle, TCO_VEHICLE_OPTIONS } from "@/lib/tco/tcoVehicleData";
 import { formatInr } from "@/lib/tco/formatInr";
+import emiHeroBanner from "@/assets/emi/emi-calculator-hero.jpg";
 
 const clamp = (val: number, min: number, max: number) => Math.min(Math.max(val, min), max);
 
@@ -73,17 +74,50 @@ const EMICalculator = () => {
   return (
     <div className="public-page-shell">
       <Navbar />
-      <div className="pt-24 pb-20 lg:pt-32 lg:pb-32">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-16">
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-3">Easy Finance</p>
-            <h1 className="font-display font-bold text-4xl md:text-5xl mb-4">EMI Calculator</h1>
-            <p className="text-muted-foreground max-w-xl mx-auto">
-              Calculate your monthly EMI for VinFast VF 6, VF 7, VF MPV 7, or Limo Green — and estimate how far you
-              drive each year for total cost of ownership planning.
-            </p>
-          </motion.div>
 
+      <section className="border-b border-border/60" aria-label="EMI calculator hero">
+        <div className="relative w-full overflow-hidden pt-[4.25rem] lg:pt-0">
+          <div className="relative h-[clamp(240px,48vw,560px)] min-h-[240px] w-full max-h-[min(88dvh,calc(100dvh-4.25rem))] lg:max-h-[min(620px,calc(100dvh-4.25rem))]">
+            <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
+              <img
+                src={emiHeroBanner}
+                alt="VinFast EMI calculator — plan smarter, drive sooner"
+                className="hero-slider-image h-full w-full object-cover object-[center_42%]"
+                sizes="100vw"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/55 to-background/15"
+              aria-hidden
+            />
+            <div className="absolute inset-0 flex items-end">
+              <div className="container mx-auto px-4 lg:px-8 pb-8 sm:pb-10 md:pb-12 w-full">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-2xl mx-auto lg:mx-0 text-center lg:text-left"
+                >
+                  <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">
+                    Easy Finance
+                  </p>
+                  <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-foreground leading-tight">
+                    EMI Calculator
+                  </h1>
+                  <p className="text-muted-foreground text-sm md:text-base mt-3 max-w-xl mx-auto lg:mx-0">
+                    Calculate monthly EMI for VF 6, VF 7, VF MPV 7, or Limo Green — and link to total cost of ownership
+                    for your driving pattern.
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="py-12 lg:py-16 pb-20 lg:pb-32">
+        <div className="container mx-auto px-4 lg:px-8">
           <div className="max-w-4xl mx-auto grid lg:grid-cols-2 gap-6 sm:gap-8">
             <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="glass-card p-5 sm:p-8 min-w-0">
               <h3 className="font-display font-bold text-lg mb-6">Customize Your Plan</h3>
