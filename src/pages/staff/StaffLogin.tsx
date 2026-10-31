@@ -243,7 +243,7 @@ const StaffLogin = () => {
 
           {sessionExpired && !forgotMode && (
             <div className="mb-4 bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 text-sm text-amber-800 dark:text-amber-200">
-              Your session has expired (after 1 hour). Please sign in again to continue.
+              Your session has expired (after 8 hours). Please sign in again to continue.
             </div>
           )}
 

@@ -70,8 +70,9 @@ const TOKEN_KEY = "vf_admin_token";
 const USER_KEY = "vf_admin_user";
 const SESSION_START_KEY = "vf_admin_session_started_at";
 
-/** Admin panel session length (client-enforced; aligns with typical JWT refresh expectations). */
-export const ADMIN_SESSION_DURATION_MS = 60 * 60 * 1000;
+/** Admin / staff portal session length (client-enforced; should match backend JWT_EXPIRES_IN). */
+export const ADMIN_SESSION_HOURS = 8;
+export const ADMIN_SESSION_DURATION_MS = ADMIN_SESSION_HOURS * 60 * 60 * 1000;
 
 export function getAdminToken(): string | null {
   if (typeof localStorage === "undefined") return null;

@@ -46,7 +46,7 @@ import { toast } from "sonner";
 import { adminMe } from "@/lib/api";
 
 const ADMIN_SESSION_EXPIRED_TOAST =
-  "Your session has expired. Please sign in again — your access token is no longer valid after one hour.";
+  "Your session has expired. Please sign in again — sessions last up to 8 hours.";
 
 const coreNavItems = [
   { label: "Dashboard", icon: LayoutDashboard, path: "/admin/dashboard" },
