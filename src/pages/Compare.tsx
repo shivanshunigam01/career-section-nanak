@@ -35,6 +35,7 @@ import { isFestivePricingSlug, resolveFestivePricing } from "@/lib/festivePricin
 import { usePublicSite } from "@/context/PublicSiteContext";
 import { usePageSeo } from "@/hooks/usePageSeo";
 import { CatalogVehicleImage } from "@/components/CatalogVehicleImage";
+import compareHeroBanner from "@/assets/compare/compare-hero-fleet-sunset.jpg";
 
 type Slot = CompareSelection | null;
 
@@ -265,18 +266,50 @@ const ComparePage = () => {
         </div>
       )}
 
-      <section className="pt-20 pb-8 sm:pt-24 lg:pt-32 lg:pb-10 border-b border-border/60 bg-muted/20">
-        <div className="container mx-auto px-4 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center max-w-2xl mx-auto mb-10">
-            <p className="text-primary font-display font-semibold text-sm uppercase tracking-[0.2em] mb-2">Compare</p>
-            <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 leading-tight px-1">
-              VinFast model comparison
-            </h1>
-            <p className="text-muted-foreground text-sm md:text-base">
-              Pick up to three vehicles across VF 6, VF 7, MPV 7 and Limo Green — hide identical lines and scroll the full spec stack.
-            </p>
-          </motion.div>
+      <section className="border-b border-border/60 bg-muted/20">
+        <div
+          className="relative w-full overflow-hidden pt-[4.25rem] lg:pt-0"
+          aria-label="Compare models hero"
+        >
+          <div className="relative h-[clamp(240px,52vw,580px)] min-h-[240px] w-full max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[min(640px,calc(100dvh-4.25rem))]">
+            <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
+              <img
+                src={compareHeroBanner}
+                alt="VinFast VF 6, VF 7, Limo Green and VF MPV 7 lineup at sunset"
+                className="hero-slider-image h-full w-full object-cover object-[center_55%]"
+                sizes="100vw"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/55 to-background/10"
+              aria-hidden
+            />
+            <div className="absolute inset-0 flex items-end">
+              <div className="container mx-auto px-4 lg:px-8 pb-8 sm:pb-10 md:pb-12 w-full">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-2xl mx-auto md:mx-0 text-center md:text-left"
+                >
+                  <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2 drop-shadow-sm">
+                    Compare
+                  </p>
+                  <h1 className="font-display font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl mb-3 leading-tight text-foreground drop-shadow-sm">
+                    VinFast model comparison
+                  </h1>
+                  <p className="text-muted-foreground text-sm md:text-base max-w-xl mx-auto md:mx-0">
+                    Pick up to three vehicles across VF 6, VF 7, MPV 7 and Limo Green — hide identical lines and scroll the
+                    full spec stack.
+                  </p>
+                </motion.div>
+              </div>
+            </div>
+          </div>
+        </div>
 
+        <div className="container mx-auto px-4 lg:px-8 py-8 sm:py-10 lg:pb-10">
           {/* Quick summary — lineup */}
           <div className="max-w-5xl mx-auto mb-10 sm:mb-12 rounded-2xl border border-border/70 bg-card shadow-sm overflow-hidden">
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-0 bg-muted/40 px-3 py-5 sm:px-4 sm:py-6 divide-y sm:divide-y-0 divide-x-0 sm:divide-x divide-border/50">
