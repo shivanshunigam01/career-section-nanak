@@ -39,6 +39,7 @@ import { WhatsAppOtpVerify } from "@/components/WhatsAppOtpVerify";
 import { TestDriveSlotPicker } from "@/components/TestDriveSlotPicker";
 import { formatSlotLabel } from "@/lib/publicTdApi";
 import { telHref } from "@/lib/contactLinks";
+import testDriveHeroBanner from "@/assets/test-drive/test-drive-hero-sunset.jpg";
 import vf7Driving from "@/assets/slide-vf7-driving.png";
 import vf6Hero from "@/assets/vf6-earth-hero-family.png";
 import vf7Interior from "@/assets/slide-vf7-interior.png";
@@ -384,30 +385,47 @@ const TestDrivePage = () => {
     <div className="public-page-shell">
       <Navbar />
 
-      {/* Mobile hero band */}
-      <div className="relative lg:hidden pt-[4.25rem]">
-        <div className="relative h-44 sm:h-52 overflow-hidden">
-          <img
-            src={vf7Driving}
-            alt="VinFast test drive"
-            className="image-high-quality absolute inset-0 h-full w-full object-cover"
-            loading="eager"
-            decoding="async"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-background/25" />
-          <div className="absolute inset-x-0 bottom-0 px-4 pb-4 text-center">
-            <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-1">
-              Test Drive
-            </p>
-            <h1 className="font-display font-bold text-3xl sm:text-4xl text-foreground">Experience the Future</h1>
-            <p className="text-muted-foreground text-sm mt-2 max-w-md mx-auto">
-              Book a complimentary drive with live showroom slots.
-            </p>
+      <section className="border-b border-border/60" aria-label="Test drive hero">
+        <div className="relative w-full overflow-hidden pt-[4.25rem] lg:pt-0">
+          <div className="relative h-[clamp(240px,48vw,560px)] min-h-[240px] w-full max-h-[min(88dvh,calc(100dvh-4.25rem))] lg:max-h-[min(620px,calc(100dvh-4.25rem))]">
+            <div className="hero-media-scrim absolute inset-0 overflow-hidden [transform:translateZ(0)]">
+              <img
+                src={testDriveHeroBanner}
+                alt="VinFast electric SUVs at sunset — book your test drive"
+                className="hero-slider-image h-full w-full object-cover object-[center_45%]"
+                sizes="100vw"
+                fetchPriority="high"
+                decoding="async"
+              />
+            </div>
+            <div
+              className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/55 to-background/15"
+              aria-hidden
+            />
+            <div className="absolute inset-0 flex items-end">
+              <div className="container mx-auto px-4 lg:px-8 pb-8 sm:pb-10 md:pb-12 w-full">
+                <motion.div
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-2xl mx-auto lg:mx-0 text-center lg:text-left"
+                >
+                  <p className="text-primary font-display font-semibold text-xs sm:text-sm uppercase tracking-[0.2em] mb-2">
+                    Test Drive
+                  </p>
+                  <h1 className="font-display font-bold text-3xl sm:text-4xl md:text-5xl text-foreground leading-tight">
+                    Experience the Future
+                  </h1>
+                  <p className="text-muted-foreground text-sm md:text-base mt-3 max-w-xl mx-auto lg:mx-0">
+                    Book a complimentary drive with live showroom slots at Patliputra VinFast.
+                  </p>
+                </motion.div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="pt-6 pb-10 xl:pt-28 xl:pb-16">
+      <div className="pt-8 pb-10 xl:pb-16">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="grid lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] gap-8 sm:gap-10 lg:gap-10 items-start">
             <motion.aside
@@ -415,18 +433,6 @@ const TestDrivePage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="order-2 lg:order-1 lg:sticky lg:top-28 lg:self-start lg:rounded-2xl lg:border lg:border-border/50 lg:bg-gradient-to-br lg:from-primary/[0.05] lg:via-muted/25 lg:to-background lg:p-5 lg:shadow-sm space-y-5 lg:space-y-4"
             >
-              <div className="hidden lg:block shrink-0">
-                <p className="text-primary font-display font-semibold text-xs uppercase tracking-[0.2em] mb-2">
-                  Test Drive
-                </p>
-                <h1 className="font-display font-bold text-3xl xl:text-[2.15rem] mb-2 leading-tight">
-                  Experience the Future
-                </h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Live showroom slots · complimentary drive at Patliputra VinFast.
-                </p>
-              </div>
-
               <div className="grid grid-cols-2 gap-2 lg:gap-2.5 shrink-0">
                 {[
                   { src: vf7Driving, alt: "VinFast VF 7 on the road" },
