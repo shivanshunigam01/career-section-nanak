@@ -242,14 +242,32 @@
     width: 100%;
     height: calc(100dvh - 4.25rem);
     min-height: 14rem;
+    contain: layout style paint;
   }
 
+  /**
+   * Static model banners — no translateZ/backface tricks (those soften scaled photos).
+   * Do not combine with .hero-slider-image on the same <img>.
+   */
   .model-page-hero-image {
     width: 100%;
     height: 100%;
+    max-width: none;
     object-fit: cover;
     object-position: center center;
     display: block;
+    filter: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+    backface-visibility: visible;
+    -webkit-backface-visibility: visible;
+    image-rendering: auto;
+  }
+
+  @supports (image-rendering: high-quality) {
+    .model-page-hero-image {
+      image-rendering: high-quality;
+    }
   }
 
   /*

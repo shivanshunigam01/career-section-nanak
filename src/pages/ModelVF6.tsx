@@ -330,7 +330,7 @@ const ModelVF6 = () => {
           <img
             src={vf6HeroBanner}
             alt="VinFast VF 6 — Built for a brighter tomorrow."
-            className="model-page-hero-image hero-slider-image"
+            className="model-page-hero-image"
             sizes="100vw"
             fetchPriority="high"
             decoding="async"
