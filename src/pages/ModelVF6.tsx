@@ -328,7 +328,7 @@ const ModelVF6 = () => {
       >
         <img
           src={vf6HeroBanner}
-          alt="VinFast VF 6 — Boundless Range for emotions in motion."
+          alt="VinFast VF 6 — Built sleek. Feels smart."
           className="model-page-hero-image hero-slider-image block w-full h-auto max-h-[min(92dvh,calc(100dvh-4.25rem))] lg:max-h-[calc(100dvh-4.25rem)] mx-auto"
           sizes="100vw"
           fetchPriority="high"
