@@ -3,6 +3,10 @@
  * Shared by the CRM "Add Lead" dialogs and the lead source filters so the
  * dropdown stays consistent everywhere.
  */
+
+/** Stored on CRM leads created from public website forms & test-drive booking. */
+export const PATLIPUTRA_VINFAST_WEBSITE_SOURCE = "Patliputra Vinfast Website";
+
 export const LEAD_SOURCE_OPTIONS = [
   "All Bihar Data",
   "Campaign",

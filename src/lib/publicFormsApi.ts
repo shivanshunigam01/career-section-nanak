@@ -2,6 +2,7 @@ import { publicPost, type PublicPostResult } from "@/lib/api";
 import { isPublicFormPostDisabled, PUBLIC_FORM_POST_DISABLED_MESSAGE } from "@/lib/apiConfig";
 import { normalizeLeadModel, normalizeTestDriveModel } from "@/lib/apiMappers";
 import { leadModelLabel } from "@/data/vinfastModels";
+import { PATLIPUTRA_VINFAST_WEBSITE_SOURCE } from "@/data/leadSources";
 
 function skipWhenPublicFormPostDisabled(): PublicPostResult {
   return { data: null, message: PUBLIC_FORM_POST_DISABLED_MESSAGE };
@@ -62,7 +63,7 @@ export async function submitPublicLead(payload: {
     model,
     interestedModels: interestedModels.length ? interestedModels : undefined,
     interest: payload.interest?.trim() || undefined,
-    source: payload.source?.trim() || "Website",
+    source: PATLIPUTRA_VINFAST_WEBSITE_SOURCE,
     remarks: remarks || undefined,
     financeNeeded: payload.financeNeeded ?? false,
     exchangeNeeded: payload.exchangeNeeded ?? false,
@@ -167,7 +168,7 @@ export async function submitPublicEnquiry(payload: {
     interestedModels: interestedModels.length ? interestedModels : undefined,
     interest: payload.interest,
     message: [payload.message?.trim(), multiNote].filter(Boolean).join(" | ") || undefined,
-    source: payload.source ?? "Contact Form",
+    source: PATLIPUTRA_VINFAST_WEBSITE_SOURCE,
     ...(recaptchaToken ? { recaptchaToken } : {}),
     ...(payload.whatsappVerificationToken
       ? { whatsappVerificationToken: payload.whatsappVerificationToken }

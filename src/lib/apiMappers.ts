@@ -45,20 +45,26 @@ function populatedName(ref: unknown): string {
   return "";
 }
 
-/** Website forms used legacy `source` strings that are not in the admin CRM dropdown — map them to "Website". */
+/** Legacy website intake labels — show as Patliputra Vinfast Website in admin UI. */
 const LEGACY_WEBSITE_LEAD_SOURCES = new Set([
+  "Website",
+  "Enquiry",
   "Book Now",
   "Pre-Booking",
   "Test Drive",
   "Brochure download",
   "VF MPV 7 Pre-book",
+  "Contact Form",
 ]);
+
+const PATLIPUTRA_VINFAST_WEBSITE_SOURCE = "Patliputra Vinfast Website";
 
 export function normalizeLeadSourceFromApi(raw: unknown): string {
   const s = String(raw ?? "").trim();
-  if (!s) return "Website";
-  if (LEGACY_WEBSITE_LEAD_SOURCES.has(s)) return "Website";
-  if (s.startsWith("Contact:") || s.startsWith("Homepage:")) return "Website";
+  if (!s) return PATLIPUTRA_VINFAST_WEBSITE_SOURCE;
+  if (s === PATLIPUTRA_VINFAST_WEBSITE_SOURCE) return s;
+  if (LEGACY_WEBSITE_LEAD_SOURCES.has(s)) return PATLIPUTRA_VINFAST_WEBSITE_SOURCE;
+  if (s.startsWith("Contact:") || s.startsWith("Homepage:")) return PATLIPUTRA_VINFAST_WEBSITE_SOURCE;
   return s;
 }
 
