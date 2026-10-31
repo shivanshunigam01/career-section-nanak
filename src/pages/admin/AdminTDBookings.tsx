@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { adminGet, adminPatchJson, adminPostJson, adminDeleteJson, fetchAllAdminPages, formatApiErrors } from "@/lib/api";
-import { getAdminUser, canPerformAction, canPerformManagerAction } from "@/lib/adminAuth";
+import { getAdminUser, canPerformAction, canPerformManagerAction, canAdminDeleteTdBookings } from "@/lib/adminAuth";
 import { useVehicleCatalog } from "@/hooks/useVehicleCatalog";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -132,7 +132,7 @@ export default function AdminTDBookings() {
   const canCancel = canPerformAction(adminUser, "td_bookings", "cancel");
   const canReschedule = canPerformAction(adminUser, "td_bookings", "reschedule_approve");
   const canEditDetails = canPerformManagerAction(adminUser, "td_bookings", "update");
-  const canDelete = canEditDetails;
+  const canDelete = canAdminDeleteTdBookings(adminUser);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -1468,7 +1468,7 @@ export default function AdminTDBookings() {
         </DialogContent>
       </Dialog>
 
-      {/* Permanent delete — managers only; distinct from Cancel */}
+      {/* Permanent delete — Admin portal / Superadmin only; distinct from Cancel */}
       <Dialog open={!!deleteDialog} onOpenChange={(o) => !o && setDeleteDialog(null)}>
         <DialogContent className="bg-card border-border max-w-sm">
           <DialogHeader><DialogTitle>Delete booking permanently?</DialogTitle></DialogHeader>

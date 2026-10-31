@@ -214,6 +214,14 @@ export function canPerformManagerAction(
   return user.role === "manager" || user.role === "superadmin";
 }
 
+/** Permanent delete in TD Bookings — Admin portal login or Superadmin only. */
+export function canAdminDeleteTdBookings(user: AdminUser | null | undefined): boolean {
+  if (!user) return false;
+  if (user.userType === "admin") return true;
+  if (user.role === "superadmin") return true;
+  return false;
+}
+
 /** True when a restricted user may open this path (unrestricted users always may). */
 export function isPathAllowed(user: AdminUser | null | undefined, pathname: string): boolean {
   const restricted = getRestrictedModules(user);
