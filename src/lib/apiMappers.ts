@@ -287,6 +287,8 @@ export type DashboardStats = {
   leadsBySource: Record<string, number>;
   leadsByModel: Record<string, number>;
   leadsByStatus: Record<string, number>;
+  /** Active CRM pipeline stage labels (same as Lead CRM stats). */
+  crmPipelineStages?: string[];
   testDrivesByStatus: Record<string, number>;
 };
 
@@ -339,6 +341,9 @@ export function dashboardStatsFromApi(raw: Record<string, unknown> | null | unde
     leadsBySource: countRecordFromApi(d.leadsBySource),
     leadsByModel: countRecordFromApi(d.leadsByModel),
     leadsByStatus: countRecordFromApi(d.leadsByStatus),
+    crmPipelineStages: Array.isArray(d.crmPipelineStages)
+      ? (d.crmPipelineStages as unknown[]).map((s) => String(s))
+      : undefined,
     testDrivesByStatus: countRecordFromApi(d.testDrivesByStatus),
   };
 }

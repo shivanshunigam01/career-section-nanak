@@ -404,7 +404,7 @@ const AdminDashboard = () => {
           openDashboardDrill("Delivered MTD", "delivered-mtd");
           break;
         case "contact-pending":
-          openDashboardDrill("Contact Pending", "contact-pending");
+          openDashboardDrill("Enquiry stage", "contact-pending");
           break;
         case "pending-followups":
           openDashboardDrill("Pending Follow-ups", "pending-followups");
@@ -516,7 +516,7 @@ const AdminDashboard = () => {
         { label: "HOT leads", value: stats.hotFlagLeads, icon: Flame, color: "text-red-500", bg: "bg-red-500/10", action: "hot-leads" as CardAction },
         { label: "WARM leads", value: stats.warmFlagLeads, icon: TrendingUp, color: "text-orange-500", bg: "bg-orange-500/10", action: "warm-leads" as CardAction },
         { label: "COLD leads", value: stats.coldFlagLeads, icon: Snowflake, color: "text-sky-500", bg: "bg-sky-500/10", action: "cold-leads" as CardAction },
-        { label: "Contact Pending", value: byStatus("Contact Attempted"), icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10", action: "contact-pending" as CardAction },
+        { label: "Enquiry stage", value: byStatus("Enquiry"), icon: Phone, color: "text-cyan-400", bg: "bg-cyan-400/10", action: "contact-pending" as CardAction },
         { label: "Model groups", value: Object.keys(stats.leadsByModel ?? {}).length, icon: Car, color: "text-emerald-400", bg: "bg-emerald-400/10", action: "models" as CardAction },
       ];
     }
@@ -552,7 +552,9 @@ const AdminDashboard = () => {
 
   const pipelineData = useMemo(() => {
     if (useRemote && stats?.leadsByStatus) {
-      return LEAD_STATUSES.map((status) => ({
+      const stages =
+        stats.crmPipelineStages?.length ? stats.crmPipelineStages : LEAD_STATUSES;
+      return stages.map((status) => ({
         status,
         count: stats.leadsByStatus[status] ?? 0,
       }));
